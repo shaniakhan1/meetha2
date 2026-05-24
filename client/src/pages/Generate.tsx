@@ -172,8 +172,8 @@ export default function Generate() {
                   onClick={() => setPlatform(p)}
                   className={`py-3 px-2 text-center border transition-all duration-200 ${
                     platform === p
-                      ? "border-charcoal bg-charcoal text-cream"
-                      : "border-sand bg-warm-white/60 text-charcoal hover:border-charcoal/40"
+                      ? "border-gold bg-gold/10 text-charcoal"
+                      : "border-sand/60 bg-warm-white/60 text-charcoal hover:border-gold/40"
                   }`}
                 >
                   <p className="font-sans text-xs tracking-[0.1em] uppercase">
@@ -198,8 +198,8 @@ export default function Generate() {
                 onClick={() => setSceneCategory(null)}
                 className={`w-full py-3 px-4 text-left border transition-all duration-200 ${
                   sceneCategory === null
-                    ? "border-charcoal bg-charcoal text-cream"
-                    : "border-sand bg-warm-white/60 text-charcoal hover:border-charcoal/40"
+                    ? "border-gold bg-gold/10 text-charcoal"
+                    : "border-sand/60 bg-warm-white/60 text-charcoal hover:border-gold/40"
                 }`}
               >
                 <p className="font-sans text-xs tracking-[0.1em] uppercase">
@@ -212,8 +212,8 @@ export default function Generate() {
                   onClick={() => setSceneCategory(s)}
                   className={`w-full py-3 px-4 text-left border transition-all duration-200 ${
                     sceneCategory === s
-                      ? "border-charcoal bg-charcoal text-cream"
-                      : "border-sand bg-warm-white/60 text-charcoal hover:border-charcoal/40"
+                      ? "border-gold bg-gold/10 text-charcoal"
+                      : "border-sand/60 bg-warm-white/60 text-charcoal hover:border-gold/40"
                   }`}
                 >
                   <p className="font-sans text-xs tracking-[0.1em] uppercase">

@@ -5,7 +5,6 @@ import { systemRouter } from "./_core/systemRouter";
 import { protectedProcedure, publicProcedure, router } from "./_core/trpc";
 import { invokeLLM } from "./_core/llm";
 import { generateImage } from "./_core/imageGeneration";
-import { storagePut } from "./storage";
 import {
   getProfile,
   upsertProfile,
@@ -209,16 +208,11 @@ export const appRouter = router({
         const archetype = profile?.archetype ?? "luxury_minimal";
         const mood = profile?.mood ?? "soft";
 
-        // Generate image
+        // Generate image — imageGeneration already saves to storage and returns a /manus-storage/ URL
         const imagePrompt = buildImagePrompt(archetype, mood, input.sceneCategory);
-        const { url: tempImageUrl } = await generateImage({ prompt: imagePrompt });
-
-        // Fetch image and save to storage
-        if (!tempImageUrl) throw new Error("Image generation failed: no URL returned");
-        const imageResponse = await fetch(tempImageUrl as string);
-        const imageBuffer = Buffer.from(await imageResponse.arrayBuffer());
-        const imageKey = `generations/${ctx.user.id}/${Date.now()}.png`;
-        const { url: imageUrl } = await storagePut(imageKey, imageBuffer, "image/png");
+        const { url: imageUrl } = await generateImage({ prompt: imagePrompt });
+        if (!imageUrl) throw new Error("Image generation failed: no URL returned");
+        const imageKey = imageUrl.replace("/manus-storage/", "");
 
         // Generate copy
         const copyPrompt = buildCopyPrompt(archetype, mood, input.platform);
