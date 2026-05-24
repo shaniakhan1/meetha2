@@ -65,11 +65,11 @@
 
 ## V2 Features
 
-- [ ] Dev preview mode — bypass auth, credits, and Stripe for owner testing
-- [ ] Caption + hook LLM prompt rewrite — social-native voice, no em-dashes, no wellness clichés
-- [ ] Hook overlay rendered directly on image preview (TikTok/Reels safe zone typography)
-- [ ] Animated cinematic preview — CSS Ken Burns zoom, parallax, film grain
-- [ ] Baseline aesthetic upload — 3-5 reference images, GPT-4o Vision descriptor extraction, injected into prompts
-- [ ] Fal.ai real video generation for Pro tier (Kling v1.6)
+- [x] Dev preview mode — bypass auth, credits, and Stripe for owner testing
+- [x] Caption + hook LLM prompt rewrite — social-native voice, no em-dashes, no wellness clichés
+- [x] Hook overlay rendered directly on image preview (TikTok/Reels safe zone typography)
+- [x] Animated cinematic preview — CSS Ken Burns zoom, parallax, film grain
+- [x] Baseline aesthetic upload — 3-5 reference images, GPT-4o Vision descriptor extraction, injected into prompts
+- [x] Fal.ai real video generation for Pro tier (Kling v1.6)
 - [ ] Referral credit mechanic — invite a friend, both get 3 extra generations
 - [ ] Updated tier structure: Free=stills only, Starter=stills+animated, Pro=stills+animated+real video

@@ -11,6 +11,7 @@ import {
   type SceneCategory,
 } from "@shared/types";
 import CinematicPreview from "@/components/CinematicPreview";
+import { getPreviewTier } from "./Preview";
 
 type GenStep = "select" | "generating" | "hooks" | "preview" | "feedback";
 
@@ -50,6 +51,8 @@ export default function Generate() {
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const [isGeneratingVideo, setIsGeneratingVideo] = useState(false);
 
+  const previewTier = getPreviewTier(); // null when not in preview mode
+
   const profileQuery = trpc.profile.get.useQuery();
   const creditsQuery = trpc.credits.get.useQuery();
   const selectHookMutation = trpc.generations.selectHook.useMutation();
@@ -83,10 +86,13 @@ export default function Generate() {
   const scenes = Object.keys(SCENE_LABELS) as SceneCategory[];
 
   const handleGenerate = () => {
-    const credits = creditsQuery.data;
-    if (credits && credits.credits_remaining <= 0) {
-      toast.error("No credits remaining. Please upgrade to continue.");
-      return;
+    // In preview mode, skip the credit gate entirely
+    if (!previewTier) {
+      const credits = creditsQuery.data;
+      if (credits && credits.credits_remaining <= 0) {
+        toast.error("No credits remaining. Please upgrade to continue.");
+        return;
+      }
     }
     setStep("generating");
     // Cycle through loading phrases
@@ -168,6 +174,14 @@ export default function Generate() {
   const profile = profileQuery.data;
   const credits = creditsQuery.data;
 
+  // In preview mode, synthesize a credits object matching the selected tier
+  const effectiveCredits = previewTier
+    ? {
+        credits_remaining: previewTier === "free" ? 3 : previewTier === "starter" ? 28 : 73,
+        tier: previewTier,
+      }
+    : credits;
+
   return (
     <div className="min-h-screen bg-cream flex flex-col">
       {/* Header */}
@@ -181,7 +195,7 @@ export default function Generate() {
         <span className="font-serif text-lg tracking-widest text-charcoal">MEETHA</span>
         <div className="text-right">
           <p className="font-sans text-xs text-gold">
-            {credits?.credits_remaining ?? "—"} left
+            {effectiveCredits?.credits_remaining ?? "\u2014"} left
           </p>
         </div>
       </div>
@@ -267,7 +281,7 @@ export default function Generate() {
           </div>
 
           {/* Generate CTA */}
-          {credits && credits.credits_remaining <= 0 ? (
+          {effectiveCredits && effectiveCredits.credits_remaining <= 0 && !previewTier ? (
             <div className="space-y-3">
               <div className="p-4 border border-gold/30 bg-warm-white text-center">
                 <p className="font-sans text-xs text-charcoal-soft mb-2">
@@ -424,7 +438,7 @@ export default function Generate() {
               >
                 Download Video
               </a>
-            ) : credits?.tier === "pro" ? (
+            ) : (effectiveCredits?.tier === "pro" || previewTier === "pro") ? (
               <button
                 onClick={handleGenerateVideo}
                 disabled={isGeneratingVideo}
