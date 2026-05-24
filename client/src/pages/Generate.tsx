@@ -16,10 +16,11 @@ type GenStep = "select" | "generating" | "hooks" | "preview" | "feedback";
 interface GenerationResult {
   generation: {
     id: number;
-    imageUrl: string;
+    image_url: string;
     caption: string;
     archetype: string;
     mood: string;
+    [key: string]: unknown;
   };
   hooks: string[];
   caption: string;
@@ -61,7 +62,7 @@ export default function Generate() {
 
   const handleGenerate = () => {
     const credits = creditsQuery.data;
-    if (credits && credits.creditsRemaining <= 0) {
+    if (credits && credits.credits_remaining <= 0) {
       toast.error("No credits remaining. Please upgrade to continue.");
       return;
     }
@@ -78,9 +79,9 @@ export default function Generate() {
   };
 
   const handleDownload = async () => {
-    if (!result?.generation?.imageUrl) return;
+    if (!result?.generation?.image_url) return;
     try {
-      const response = await fetch(result.generation.imageUrl);
+      const response = await fetch(result.generation.image_url as string);
       const blob = await response.blob();
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
@@ -136,7 +137,7 @@ export default function Generate() {
         <span className="font-serif text-lg tracking-widest text-charcoal">MEETHA</span>
         <div className="text-right">
           <p className="font-sans text-xs text-gold">
-            {credits?.creditsRemaining ?? "—"} left
+            {credits?.credits_remaining ?? "—"} left
           </p>
         </div>
       </div>
@@ -225,7 +226,7 @@ export default function Generate() {
           </div>
 
           {/* Generate CTA */}
-          {credits && credits.creditsRemaining <= 0 ? (
+          {credits && credits.credits_remaining <= 0 ? (
             <div className="space-y-3">
               <div className="p-4 border border-gold/30 bg-warm-white text-center">
                 <p className="font-sans text-xs text-charcoal-soft mb-2">
@@ -300,7 +301,7 @@ export default function Generate() {
           <div className="mb-8 relative overflow-hidden bg-sand/30">
             <div className="aspect-story max-h-64 overflow-hidden">
               <img
-                src={result.generation.imageUrl}
+                src={result.generation.image_url as string}
                 alt="Generated content"
                 className="w-full h-full object-cover"
               />
@@ -348,7 +349,7 @@ export default function Generate() {
           <div className="relative mb-6 overflow-hidden bg-charcoal">
             <div className="aspect-story max-h-80 overflow-hidden relative">
               <img
-                src={result.generation.imageUrl}
+                src={result.generation.image_url as string}
                 alt="Generated content"
                 className="w-full h-full object-cover opacity-90"
               />

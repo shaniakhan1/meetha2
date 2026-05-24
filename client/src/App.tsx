@@ -9,6 +9,8 @@ import Onboarding from "./pages/Onboarding";
 import Generate from "./pages/Generate";
 import Dashboard from "./pages/Dashboard";
 import Profile from "./pages/Profile";
+import SignIn from "./pages/SignIn";
+import AuthCallback from "./pages/AuthCallback";
 import { useAuth } from "./_core/hooks/useAuth";
 
 function ProtectedRoute({ component: Component }: { component: React.ComponentType }) {
@@ -28,7 +30,7 @@ function ProtectedRoute({ component: Component }: { component: React.ComponentTy
   }
 
   if (!isAuthenticated) {
-    return <Redirect to="/" />;
+    return <Redirect to="/sign-in" />;
   }
 
   return <Component />;
@@ -50,6 +52,8 @@ function Router() {
       <Route path="/profile">
         {() => <ProtectedRoute component={Profile} />}
       </Route>
+      <Route path="/sign-in" component={SignIn} />
+      <Route path="/auth/callback" component={AuthCallback} />
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />
     </Switch>

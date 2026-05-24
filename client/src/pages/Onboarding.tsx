@@ -46,7 +46,7 @@ export default function Onboarding() {
 
   // Redirect if already onboarded
   useEffect(() => {
-    if (profileQuery.data?.onboardingComplete) {
+    if (profileQuery.data?.onboarding_complete) {
       navigate("/dashboard");
     }
   }, [profileQuery.data, navigate]);

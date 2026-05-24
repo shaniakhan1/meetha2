@@ -86,7 +86,7 @@ export default function Dashboard() {
               Credits
             </p>
             <p className="font-serif text-sm text-charcoal">
-              {credits?.creditsRemaining ?? "—"} remaining
+              {credits?.credits_remaining ?? "—"} remaining
             </p>
           </div>
           <div className="w-full h-0.5 bg-sand">
@@ -95,14 +95,14 @@ export default function Dashboard() {
               style={{
                 width: `${Math.min(
                   100,
-                  ((credits?.creditsRemaining ?? 0) /
+                  ((credits?.credits_remaining ?? 0) /
                     (credits?.tier === "pro" ? 50 : credits?.tier === "starter" ? 20 : 5)) *
                     100
                 )}%`,
               }}
             />
           </div>
-          {credits?.creditsRemaining === 0 && (
+          {credits?.credits_remaining === 0 && (
             <a
               href={import.meta.env.VITE_STRIPE_STARTER_LINK || "#"}
               target="_blank"
@@ -117,7 +117,7 @@ export default function Dashboard() {
         {/* Generate CTA */}
         <button
           onClick={() => navigate("/generate")}
-          disabled={credits?.creditsRemaining === 0}
+          disabled={credits?.credits_remaining === 0}
           className="btn-luxury w-full mb-10 disabled:opacity-40 disabled:cursor-not-allowed"
         >
           Generate New Content
@@ -166,12 +166,12 @@ export default function Dashboard() {
                 >
                   <div className="aspect-story">
                     <img
-                      src={gen.imageUrl}
-                      alt={gen.selectedHook ?? "Generated content"}
+                      src={gen.image_url}
+                      alt={gen.selected_hook ?? "Generated content"}
                       className="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity duration-300"
                     />
                     {/* Hook overlay */}
-                    {gen.selectedHook && (
+                    {gen.selected_hook && (
                       <div className="absolute inset-0 flex items-end justify-center pb-4 px-3">
                         <p
                           className="font-serif text-cream text-center leading-tight"
@@ -180,7 +180,7 @@ export default function Dashboard() {
                             textShadow: "0 1px 8px rgba(0,0,0,0.5)",
                           }}
                         >
-                          {gen.selectedHook}
+                          {gen.selected_hook}
                         </p>
                       </div>
                     )}
@@ -199,18 +199,18 @@ export default function Dashboard() {
                       onClick={(e) => e.stopPropagation()}
                     >
                       <p className="font-sans text-xs tracking-widest uppercase text-gold mb-3">
-                        {gen.sceneCategory
-                          ? SCENE_LABELS[gen.sceneCategory as keyof typeof SCENE_LABELS]
+                        {gen.scene_category
+                          ? SCENE_LABELS[gen.scene_category as keyof typeof SCENE_LABELS]
                           : ""}
                       </p>
                       <p className="font-serif text-sm text-cream text-center leading-snug mb-4">
-                        {gen.selectedHook ?? hooks[0]}
+                        {gen.selected_hook ?? hooks[0]}
                       </p>
                       <p className="font-sans font-light text-xs text-cream/70 text-center leading-relaxed mb-4">
                         {gen.caption}
                       </p>
                       <button
-                        onClick={() => handleDownload(gen.imageUrl, gen.id)}
+                        onClick={() => handleDownload(gen.image_url, gen.id)}
                         className="font-sans text-xs tracking-widest uppercase text-cream border border-cream/40 px-4 py-2 hover:bg-cream/10 transition-colors"
                       >
                         Re-download

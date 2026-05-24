@@ -4,7 +4,7 @@ import axios, { type AxiosInstance } from "axios";
 import { parse as parseCookieHeader } from "cookie";
 import type { Request } from "express";
 import { SignJWT, jwtVerify } from "jose";
-import type { User } from "../../drizzle/schema";
+import type { DbUser } from "../db";
 import * as db from "../db";
 import { ENV } from "./env";
 import type {
@@ -283,14 +283,12 @@ class SDKServer {
     if (!user) {
       try {
         const userInfo = await this.getUserInfoWithJwt(sessionCookie ?? "");
-        await db.upsertUser({
+        user = await db.upsertUser({
           openId: userInfo.openId,
           name: userInfo.name || null,
           email: userInfo.email ?? null,
           loginMethod: userInfo.loginMethod ?? userInfo.platform ?? null,
-          lastSignedIn: signedInAt,
         });
-        user = await db.getUserByOpenId(userInfo.openId);
       } catch (error) {
         console.error("[Auth] Failed to sync user from OAuth:", error);
         throw ForbiddenError("Failed to sync user info");
@@ -301,11 +299,6 @@ class SDKServer {
       throw ForbiddenError("User not found");
     }
 
-    await db.upsertUser({
-      openId: user.openId,
-      lastSignedIn: signedInAt,
-    });
-
     return user;
   }
 }
@@ -313,7 +306,7 @@ class SDKServer {
 const CRON_OPEN_ID_PREFIX = "cron_";
 
 /** Result of `sdk.authenticateRequest`. Cron callbacks set `isCron=true` and `taskUid`; see `references/periodic-updates.md`. */
-export type AuthenticatedUser = User & {
+export type AuthenticatedUser = DbUser & {
   taskUid?: string;
   isCron?: boolean;
 };
@@ -321,17 +314,17 @@ export type AuthenticatedUser = User & {
 function buildCronUser(
   userInfo: GetUserInfoWithJwtResponse
 ): AuthenticatedUser {
-  const now = new Date();
+  const now = new Date().toISOString();
   return {
     id: -1,
-    openId: userInfo.openId,
+    open_id: userInfo.openId,
     name: userInfo.name || "Manus Scheduled Task",
     email: null,
-    loginMethod: null,
+    login_method: null,
     role: "user",
-    createdAt: now,
-    updatedAt: now,
-    lastSignedIn: now,
+    created_at: now,
+    updated_at: now,
+    last_signed_in: now,
     taskUid: userInfo.taskUid ?? undefined,
     isCron: true,
   } as AuthenticatedUser;

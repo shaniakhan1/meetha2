@@ -96,7 +96,7 @@ export default function Profile() {
             <div className="flex items-center justify-between">
               <p className="font-sans text-xs text-charcoal-soft">Credits</p>
               <p className="font-sans text-sm text-charcoal">
-                {credits?.creditsRemaining ?? "—"} remaining
+                {credits?.credits_remaining ?? "—"} remaining
               </p>
             </div>
           </div>

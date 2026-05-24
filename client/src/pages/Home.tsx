@@ -41,7 +41,7 @@ export default function Home() {
 
   useEffect(() => {
     if (isAuthenticated && !loading && profileQuery.data !== undefined) {
-      if (profileQuery.data?.onboardingComplete) {
+      if (profileQuery.data?.onboarding_complete) {
         navigate("/dashboard");
       } else {
         navigate("/onboarding");

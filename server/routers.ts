@@ -3,8 +3,8 @@ import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { protectedProcedure, publicProcedure, router } from "./_core/trpc";
-import { invokeLLM } from "./_core/llm";
-import { generateImage } from "./_core/imageGeneration";
+import { invokeLLMOpenAI } from "./_core/openaiLLM";
+import { generateImageFal } from "./_core/falImageGeneration";
 import {
   getProfile,
   upsertProfile,
@@ -143,8 +143,8 @@ export const appRouter = router({
       .mutation(async ({ ctx, input }) => {
         return upsertProfile({
           userId: ctx.user.id,
-          archetype: input.archetype,
-          mood: input.mood,
+          archetype: input.archetype ?? "luxury_minimal",
+          mood: input.mood ?? "soft",
           onboardingComplete: input.onboardingComplete ?? false,
         });
       }),
@@ -173,7 +173,7 @@ export const appRouter = router({
         })
       )
       .mutation(async ({ input }) => {
-        await updateGenerationHook(input.generationId, input.selectedHook);
+        await updateGenerationHook({ generationId: input.generationId, selectedHook: input.selectedHook });
         return { success: true };
       }),
   }),
@@ -199,7 +199,7 @@ export const appRouter = router({
       .mutation(async ({ ctx, input }) => {
         // Check credits
         const userCredits = await ensureCredits(ctx.user.id);
-        if (!userCredits || userCredits.creditsRemaining <= 0) {
+        if (!userCredits || userCredits.credits_remaining <= 0) {
           throw new Error("No credits remaining. Please upgrade to continue.");
         }
 
@@ -208,15 +208,13 @@ export const appRouter = router({
         const archetype = profile?.archetype ?? "luxury_minimal";
         const mood = profile?.mood ?? "soft";
 
-        // Generate image — imageGeneration already saves to storage and returns a /manus-storage/ URL
+        // Generate image via Fal.ai FLUX 1.1 Pro
         const imagePrompt = buildImagePrompt(archetype, mood, input.sceneCategory);
-        const { url: imageUrl } = await generateImage({ prompt: imagePrompt });
-        if (!imageUrl) throw new Error("Image generation failed: no URL returned");
-        const imageKey = imageUrl.replace("/manus-storage/", "");
+        const { url: imageUrl, key: imageKey } = await generateImageFal({ prompt: imagePrompt });
 
         // Generate copy
         const copyPrompt = buildCopyPrompt(archetype, mood, input.platform);
-        const copyResponse = await invokeLLM({
+        const copyResponse = await invokeLLMOpenAI({
           messages: [{ role: "user", content: copyPrompt }],
           response_format: {
             type: "json_schema",
@@ -284,7 +282,7 @@ export const appRouter = router({
           hooks,
           caption,
           hashtags,
-          creditsRemaining: updatedCredits?.creditsRemaining ?? 0,
+          creditsRemaining: updatedCredits?.credits_remaining ?? 0,
         };
       }),
   }),
