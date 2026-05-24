@@ -122,7 +122,7 @@ export const appRouter = router({
 
   profile: router({
     get: protectedProcedure.query(async ({ ctx }) => {
-      return getProfile(ctx.user.id);
+      return (await getProfile(ctx.user.id)) ?? null;
     }),
 
     upsert: protectedProcedure
@@ -155,7 +155,7 @@ export const appRouter = router({
 
   credits: router({
     get: protectedProcedure.query(async ({ ctx }) => {
-      return ensureCredits(ctx.user.id);
+      return (await ensureCredits(ctx.user.id)) ?? null;
     }),
   }),
 
@@ -163,7 +163,7 @@ export const appRouter = router({
 
   generations: router({
     list: protectedProcedure.query(async ({ ctx }) => {
-      return getUserGenerations(ctx.user.id);
+      return (await getUserGenerations(ctx.user.id)) ?? [];
     }),
 
     selectHook: protectedProcedure
