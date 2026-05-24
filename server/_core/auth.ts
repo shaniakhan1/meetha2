@@ -19,6 +19,7 @@ import * as db from "../db";
 import type { DbUser } from "../db";
 import { COOKIE_NAME, ONE_YEAR_MS } from "@shared/const";
 import { getSessionCookieOptions } from "./cookies";
+import { sendMagicLinkEmail } from "./email";
 
 // ─── Supabase Admin Client ────────────────────────────────────────────────────
 
@@ -92,15 +93,26 @@ export async function handleMagicLink(req: Request, res: Response) {
   const siteUrl = redirectTo || `${req.protocol}://${req.get("host")}`;
   const callbackUrl = `${siteUrl}/auth/callback`;
 
-  const { error } = await supabase.auth.admin.generateLink({
+  const { data: linkData, error } = await supabase.auth.admin.generateLink({
     type: "magiclink",
     email,
     options: { redirectTo: callbackUrl },
   });
 
-  if (error) {
-    console.error("[Auth] Magic link error:", error.message);
-    return res.status(500).json({ error: "Failed to send magic link" });
+  if (error || !linkData?.properties?.action_link) {
+    console.error("[Auth] Magic link error:", error?.message);
+    return res.status(500).json({ error: "Failed to generate magic link" });
+  }
+
+  // Send the magic link via Resend (replaces Supabase's built-in email)
+  try {
+    await sendMagicLinkEmail({
+      to: email,
+      magicLink: linkData.properties.action_link,
+    });
+  } catch (emailErr) {
+    console.error("[Auth] Resend email error:", emailErr);
+    return res.status(500).json({ error: "Failed to send magic link email" });
   }
 
   // If a referral code was provided, create a pending referral row

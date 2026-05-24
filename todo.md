@@ -83,3 +83,4 @@
 ## V3 Features
 
 - [x] Watermark on free-tier downloads — lowercase "meetha" serif, bottom-right, semi-transparent white; removed on Starter+
+- [x] Resend email integration — wire magic link delivery via Resend transactional email
