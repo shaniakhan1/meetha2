@@ -1,5 +1,20 @@
 {
   "version": "7",
   "dialect": "mysql",
-  "entries": []
+  "entries": [
+    {
+      "idx": 0,
+      "version": "5",
+      "when": 1779643383281,
+      "tag": "0000_awesome_princess_powerful",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "5",
+      "when": 1779643512739,
+      "tag": "0001_typical_stellaris",
+      "breakpoints": true
+    }
+  ]
 }
