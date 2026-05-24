@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
@@ -11,7 +11,7 @@ import {
   type Mood,
 } from "@shared/types";
 
-type Step = "archetype" | "insight" | "mood" | "complete";
+type Step = "archetype" | "insight" | "mood" | "aesthetic" | "complete";
 
 const ARCHETYPE_TAGLINES: Record<Archetype, string> = {
   luxury_minimal: "Less is everything.",
@@ -28,11 +28,16 @@ const MOOD_TAGLINES: Record<Mood, string> = {
   untamed: "Wild elegance.",
 };
 
+const ALL_STEPS: Step[] = ["archetype", "insight", "mood", "aesthetic", "complete"];
+
 export default function Onboarding() {
   const [, navigate] = useLocation();
   const [step, setStep] = useState<Step>("archetype");
   const [selectedArchetype, setSelectedArchetype] = useState<Archetype | null>(null);
   const [selectedMood, setSelectedMood] = useState<Mood | null>(null);
+  const [referenceImages, setReferenceImages] = useState<string[]>([]);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const profileQuery = trpc.profile.get.useQuery();
   const upsertProfile = trpc.profile.upsert.useMutation({
@@ -43,6 +48,7 @@ export default function Onboarding() {
       toast.error(err.message);
     },
   });
+  const analyzeAesthetic = trpc.aesthetic.analyzeAndSave.useMutation();
 
   // Redirect if already onboarded
   useEffect(() => {
@@ -62,6 +68,32 @@ export default function Onboarding() {
 
   const handleMoodSelect = (mood: Mood) => {
     setSelectedMood(mood);
+    setStep("aesthetic");
+  };
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files ?? []).slice(0, 5 - referenceImages.length);
+    files.forEach((file) => {
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        const dataUrl = ev.target?.result as string;
+        setReferenceImages((prev) => [...prev, dataUrl].slice(0, 5));
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const handleAestheticContinue = async () => {
+    if (referenceImages.length > 0) {
+      setIsAnalyzing(true);
+      try {
+        await analyzeAesthetic.mutateAsync({ images: referenceImages });
+      } catch {
+        // Non-blocking — continue even if analysis fails
+      } finally {
+        setIsAnalyzing(false);
+      }
+    }
     setStep("complete");
   };
 
@@ -76,6 +108,7 @@ export default function Onboarding() {
 
   const archetypes = Object.keys(ARCHETYPE_LABELS) as Archetype[];
   const moods = Object.keys(MOOD_LABELS) as Mood[];
+  const stepIndex = ALL_STEPS.indexOf(step);
 
   return (
     <div className="min-h-screen bg-cream flex flex-col">
@@ -83,13 +116,13 @@ export default function Onboarding() {
       <div className="flex items-center justify-between px-6 py-5">
         <span className="font-serif text-lg tracking-widest text-charcoal">MEETHA</span>
         <div className="flex gap-1.5">
-          {(["archetype", "insight", "mood", "complete"] as Step[]).map((s, i) => (
+          {ALL_STEPS.map((s, i) => (
             <div
               key={s}
-              className="h-0.5 w-6 transition-all duration-500"
+              className="h-0.5 w-5 transition-all duration-500"
               style={{
                 backgroundColor:
-                  ["archetype", "insight", "mood", "complete"].indexOf(step) >= i
+                  stepIndex >= i
                     ? "oklch(72% 0.090 65)"
                     : "oklch(88% 0.025 70)",
               }}
@@ -103,7 +136,7 @@ export default function Onboarding() {
         <div className="flex-1 flex flex-col px-6 py-8 animate-fade-up opacity-0">
           <div className="mb-10">
             <p className="font-sans text-xs tracking-[0.2em] uppercase text-gold mb-4">
-              Step 1 of 2
+              Step 1 of 3
             </p>
             <h2 className="font-serif font-light text-charcoal mb-3">
               What is your aesthetic identity?
@@ -182,7 +215,7 @@ export default function Onboarding() {
         <div className="flex-1 flex flex-col px-6 py-8 animate-fade-up opacity-0">
           <div className="mb-10">
             <p className="font-sans text-xs tracking-[0.2em] uppercase text-gold mb-4">
-              Step 2 of 2
+              Step 2 of 3
             </p>
             <h2 className="font-serif font-light text-charcoal mb-3">
               What is your creative mood?
@@ -210,6 +243,89 @@ export default function Onboarding() {
                 </p>
               </button>
             ))}
+          </div>
+        </div>
+      )}
+
+      {/* Step: Aesthetic Calibration Upload */}
+      {step === "aesthetic" && (
+        <div className="flex-1 flex flex-col px-6 py-8 animate-fade-up opacity-0">
+          <div className="mb-8">
+            <p className="font-sans text-xs tracking-[0.2em] uppercase text-gold mb-4">
+              Step 3 of 3 — Optional
+            </p>
+            <h2 className="font-serif font-light text-charcoal mb-3">
+              Calibrate your aesthetic
+            </h2>
+            <p className="font-sans font-light text-sm text-charcoal-soft leading-relaxed">
+              Upload 3–5 images that feel like your visual world. Meetha reads the textures, tones, and styling — not faces — to make every generation feel like yours.
+            </p>
+          </div>
+
+          {/* Upload grid */}
+          <div className="grid grid-cols-3 gap-2 mb-6">
+            {referenceImages.map((img, i) => (
+              <div
+                key={i}
+                className="aspect-square relative overflow-hidden border border-sand"
+              >
+                <img
+                  src={img}
+                  alt={`Reference ${i + 1}`}
+                  className="w-full h-full object-cover"
+                />
+                <button
+                  onClick={() =>
+                    setReferenceImages((prev) => prev.filter((_, idx) => idx !== i))
+                  }
+                  className="absolute top-1 right-1 w-5 h-5 bg-charcoal/70 text-cream rounded-full text-xs flex items-center justify-center hover:bg-charcoal transition-colors"
+                >
+                  ×
+                </button>
+              </div>
+            ))}
+            {referenceImages.length < 5 && (
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                className="aspect-square border border-dashed border-sand bg-warm-white/40 hover:bg-warm-white hover:border-gold/50 transition-all duration-250 flex flex-col items-center justify-center gap-1"
+              >
+                <span className="text-gold text-lg leading-none">+</span>
+                <span className="font-sans text-xs text-charcoal-soft">Add image</span>
+              </button>
+            )}
+          </div>
+
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            multiple
+            className="hidden"
+            onChange={handleImageUpload}
+          />
+
+          <div className="mt-auto space-y-3">
+            <button
+              onClick={handleAestheticContinue}
+              disabled={isAnalyzing}
+              className="btn-luxury w-full"
+            >
+              {isAnalyzing ? (
+                <span className="flex items-center justify-center gap-2">
+                  <span className="w-3 h-3 border border-cream border-t-transparent rounded-full animate-spin" />
+                  Reading your aesthetic...
+                </span>
+              ) : referenceImages.length > 0 ? (
+                "Calibrate and continue"
+              ) : (
+                "Skip for now"
+              )}
+            </button>
+            {referenceImages.length === 0 && (
+              <p className="font-sans text-xs text-charcoal-soft text-center">
+                You can add reference images later from your profile.
+              </p>
+            )}
           </div>
         </div>
       )}
@@ -245,6 +361,16 @@ export default function Onboarding() {
                   {MOOD_LABELS[selectedMood]}
                 </p>
               </div>
+              {referenceImages.length > 0 && (
+                <div className="flex items-center justify-between p-4 border border-sand bg-warm-white/60">
+                  <p className="font-sans text-xs tracking-[0.1em] uppercase text-charcoal-soft">
+                    Aesthetic
+                  </p>
+                  <p className="font-serif text-base text-charcoal">
+                    Calibrated
+                  </p>
+                </div>
+              )}
             </div>
 
             <button

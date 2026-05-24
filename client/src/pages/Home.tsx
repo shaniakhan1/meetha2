@@ -1,5 +1,4 @@
 import { useAuth } from "@/_core/hooks/useAuth";
-import { getLoginUrl } from "@/const";
 import { useEffect } from "react";
 import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
@@ -53,7 +52,7 @@ export default function Home() {
     if (isAuthenticated) {
       navigate("/dashboard");
     } else {
-      window.location.href = getLoginUrl();
+      navigate("/sign-in");
     }
   };
 

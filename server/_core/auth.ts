@@ -163,3 +163,35 @@ export async function handleMe(req: Request, res: Response) {
   if (!user) return res.status(401).json({ user: null });
   return res.json({ user });
 }
+
+/**
+ * GET /api/auth/preview
+ * Owner-only dev bypass: creates a real session cookie without requiring
+ * magic link sign-in. Only works when NODE_ENV !== 'production'.
+ * Upserts the owner user in the DB and sets the same JWT cookie as normal auth.
+ */
+export async function handlePreviewAuth(req: Request, res: Response) {
+  if (ENV.isProduction) {
+    return res.status(403).json({ error: "Preview mode is not available in production" });
+  }
+
+  const ownerOpenId = ENV.ownerOpenId || "preview-owner";
+
+  // Upsert owner user
+  const dbUser = await db.upsertUser({
+    openId: ownerOpenId,
+    email: "preview@meetha.app",
+    name: "Preview Owner",
+    loginMethod: "preview",
+  });
+
+  if (!dbUser) {
+    return res.status(500).json({ error: "Failed to create preview user" });
+  }
+
+  const sessionToken = await createSessionToken(ownerOpenId, "preview@meetha.app");
+  const cookieOptions = getSessionCookieOptions(req);
+  res.cookie(COOKIE_NAME, sessionToken, cookieOptions);
+
+  return res.json({ success: true, user: dbUser });
+}

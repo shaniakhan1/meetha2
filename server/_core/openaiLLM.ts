@@ -15,9 +15,13 @@ function getClient(): OpenAI {
   return _client;
 }
 
+export type OpenAIContentPart =
+  | { type: "text"; text: string }
+  | { type: "image_url"; image_url: { url: string; detail?: "auto" | "low" | "high" } };
+
 export type OpenAIMessage = {
   role: "system" | "user" | "assistant";
-  content: string;
+  content: string | OpenAIContentPart[];
 };
 
 export type OpenAIOptions = {
@@ -37,7 +41,7 @@ export async function invokeLLMOpenAI(options: OpenAIOptions): Promise<{ choices
 
   const response = await client.chat.completions.create({
     model: "gpt-4o",
-    messages: options.messages,
+    messages: options.messages as any,
     ...(options.response_format ? { response_format: options.response_format as any } : {}),
   });
 

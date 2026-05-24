@@ -11,6 +11,7 @@ import Dashboard from "./pages/Dashboard";
 import Profile from "./pages/Profile";
 import SignIn from "./pages/SignIn";
 import AuthCallback from "./pages/AuthCallback";
+import Preview from "./pages/Preview";
 import { useAuth } from "./_core/hooks/useAuth";
 
 function ProtectedRoute({ component: Component }: { component: React.ComponentType }) {
@@ -54,6 +55,7 @@ function Router() {
       </Route>
       <Route path="/sign-in" component={SignIn} />
       <Route path="/auth/callback" component={AuthCallback} />
+      <Route path="/preview" component={Preview} />
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />
     </Switch>

@@ -226,6 +226,30 @@
     to { opacity: 1; transform: scale(1); }
   }
 
+  /* ── Cinematic Ken Burns zoom ── */
+  .cinematic-zoom {
+    animation: kenBurns 18s ease-in-out infinite alternate;
+    transform-origin: center center;
+  }
+
+  @keyframes kenBurns {
+    0%   { transform: scale(1.0) translate(0%, 0%); }
+    25%  { transform: scale(1.04) translate(-0.8%, 0.5%); }
+    50%  { transform: scale(1.07) translate(0.5%, -0.8%); }
+    75%  { transform: scale(1.04) translate(0.8%, 0.3%); }
+    100% { transform: scale(1.0) translate(-0.3%, 0.5%); }
+  }
+
+  /* ── Soft light pulse (film breathing) ── */
+  .film-breathe {
+    animation: filmBreathe 6s ease-in-out infinite;
+  }
+
+  @keyframes filmBreathe {
+    0%, 100% { opacity: 0.92; }
+    50%       { opacity: 1.0; }
+  }
+
   /* Stagger delays */
   .delay-100 { animation-delay: 100ms; }
   .delay-200 { animation-delay: 200ms; }

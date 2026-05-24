@@ -10,6 +10,7 @@ import {
   type Platform,
   type SceneCategory,
 } from "@shared/types";
+import CinematicPreview from "@/components/CinematicPreview";
 
 type GenStep = "select" | "generating" | "hooks" | "preview" | "feedback";
 
@@ -28,6 +29,14 @@ interface GenerationResult {
   creditsRemaining: number;
 }
 
+const GENERATING_PHRASES = [
+  "Composing your aesthetic.",
+  "Curating the light.",
+  "Finding your visual voice.",
+  "Calibrating the mood.",
+  "Almost ready.",
+];
+
 export default function Generate() {
   const [, navigate] = useLocation();
   const [step, setStep] = useState<GenStep>("select");
@@ -37,10 +46,23 @@ export default function Generate() {
   const [selectedHook, setSelectedHook] = useState<string | null>(null);
   const [captionCopied, setCaptionCopied] = useState(false);
   const [feedbackGiven, setFeedbackGiven] = useState(false);
+  const [phraseIndex, setPhraseIndex] = useState(0);
+  const [videoUrl, setVideoUrl] = useState<string | null>(null);
+  const [isGeneratingVideo, setIsGeneratingVideo] = useState(false);
 
   const profileQuery = trpc.profile.get.useQuery();
   const creditsQuery = trpc.credits.get.useQuery();
   const selectHookMutation = trpc.generations.selectHook.useMutation();
+  const videoMutation = trpc.video.generate.useMutation({
+    onSuccess: (data) => {
+      setVideoUrl(data.videoUrl);
+      setIsGeneratingVideo(false);
+    },
+    onError: (err) => {
+      toast.error(err.message);
+      setIsGeneratingVideo(false);
+    },
+  });
   const feedbackMutation = trpc.feedback.savePostability.useMutation();
   const utils = trpc.useUtils();
 
@@ -67,7 +89,15 @@ export default function Generate() {
       return;
     }
     setStep("generating");
-    generateMutation.mutate({ platform, sceneCategory: sceneCategory ?? undefined });
+    // Cycle through loading phrases
+    let idx = 0;
+    const interval = setInterval(() => {
+      idx = (idx + 1) % GENERATING_PHRASES.length;
+      setPhraseIndex(idx);
+    }, 3000);
+    generateMutation.mutateAsync({ platform, sceneCategory: sceneCategory ?? undefined }).finally(() => {
+      clearInterval(interval);
+    });
   };
 
   const handleHookSelect = (hook: string) => {
@@ -118,7 +148,21 @@ export default function Generate() {
     setResult(null);
     setSelectedHook(null);
     setFeedbackGiven(false);
+    setVideoUrl(null);
+    setIsGeneratingVideo(false);
     setStep("select");
+  };
+
+  const handleGenerateVideo = () => {
+    if (!result?.generation) return;
+    setIsGeneratingVideo(true);
+    videoMutation.mutate({
+      generationId: result.generation.id,
+      imageUrl: result.generation.image_url as string,
+      archetype: result.generation.archetype,
+      mood: result.generation.mood,
+      sceneCategory: sceneCategory ?? undefined,
+    });
   };
 
   const profile = profileQuery.data;
@@ -194,7 +238,6 @@ export default function Generate() {
               <p className="font-sans text-xs text-charcoal-soft">Optional</p>
             </div>
             <div className="space-y-2">
-              {/* No preference option */}
               <button
                 onClick={() => setSceneCategory(null)}
                 className={`w-full py-3 px-4 text-left border transition-all duration-200 ${
@@ -203,9 +246,7 @@ export default function Generate() {
                     : "border-sand/60 bg-warm-white/60 text-charcoal hover:border-gold/40"
                 }`}
               >
-                <p className="font-sans text-xs tracking-[0.1em] uppercase">
-                  Surprise me
-                </p>
+                <p className="font-sans text-xs tracking-[0.1em] uppercase">Surprise me</p>
               </button>
               {scenes.map((s) => (
                 <button
@@ -264,19 +305,21 @@ export default function Generate() {
       {/* ── Step: Generating ── */}
       {step === "generating" && (
         <div className="flex-1 flex flex-col items-center justify-center px-6 py-8 text-center">
-          <div className="max-w-xs mx-auto animate-fade-in opacity-0">
-            <div className="relative w-24 h-24 mx-auto mb-8">
-              <div className="absolute inset-0 border border-gold/30 rounded-full animate-ping" />
-              <div className="absolute inset-2 border border-gold/50 rounded-full animate-spin" style={{ animationDuration: "3s" }} />
+          <div className="max-w-xs mx-auto">
+            {/* Cinematic loading animation */}
+            <div className="relative w-20 h-20 mx-auto mb-10">
+              <div className="absolute inset-0 border border-gold/20 rounded-full animate-ping" style={{ animationDuration: "2s" }} />
+              <div className="absolute inset-1 border border-gold/40 rounded-full animate-spin" style={{ animationDuration: "4s" }} />
+              <div className="absolute inset-3 border border-gold/60 rounded-full animate-spin" style={{ animationDuration: "6s", animationDirection: "reverse" }} />
               <div className="absolute inset-0 flex items-center justify-center">
-                <div className="w-2 h-2 rounded-full bg-gold" />
+                <div className="w-1.5 h-1.5 rounded-full bg-gold" />
               </div>
             </div>
-            <h3 className="font-serif font-light text-charcoal mb-3">
-              Creating your content.
+            <h3 className="font-serif font-light text-charcoal mb-3 transition-all duration-700">
+              {GENERATING_PHRASES[phraseIndex]}
             </h3>
             <p className="font-sans font-light text-xs text-charcoal-soft leading-relaxed">
-              Meetha is composing your aesthetic. This takes about 15 seconds.
+              Meetha is building your aesthetic. This takes about 15 seconds.
             </p>
           </div>
         </div>
@@ -285,11 +328,11 @@ export default function Generate() {
       {/* ── Step: Hooks ── */}
       {step === "hooks" && result && (
         <div className="flex-1 flex flex-col px-6 py-8 animate-fade-up opacity-0">
-          <div className="mb-8">
-            <p className="font-sans text-xs tracking-[0.2em] uppercase text-gold mb-3">
+          <div className="mb-6">
+            <p className="font-sans text-xs tracking-[0.2em] uppercase text-gold mb-2">
               Choose Your Hook
             </p>
-            <h3 className="font-serif font-light text-charcoal mb-2">
+            <h3 className="font-serif font-light text-charcoal mb-1">
               Three options. Pick one.
             </h3>
             <p className="font-sans font-light text-xs text-charcoal-soft">
@@ -297,15 +340,14 @@ export default function Generate() {
             </p>
           </div>
 
-          {/* Image preview */}
-          <div className="mb-8 relative overflow-hidden bg-sand/30">
-            <div className="aspect-story max-h-64 overflow-hidden">
-              <img
-                src={result.generation.image_url as string}
-                alt="Generated content"
-                className="w-full h-full object-cover"
-              />
-            </div>
+          {/* Thumbnail preview — no hook overlay yet */}
+          <div className="mb-6">
+            <CinematicPreview
+              imageUrl={result.generation.image_url as string}
+              hook={null}
+              size="thumb"
+              platform={platform}
+            />
           </div>
 
           {/* Hook options */}
@@ -337,7 +379,7 @@ export default function Generate() {
       {step === "preview" && result && selectedHook && (
         <div className="flex-1 flex flex-col px-6 py-8 animate-fade-up opacity-0">
           <div className="mb-6">
-            <p className="font-sans text-xs tracking-[0.2em] uppercase text-gold mb-3">
+            <p className="font-sans text-xs tracking-[0.2em] uppercase text-gold mb-2">
               Your Content
             </p>
             <h3 className="font-serif font-light text-charcoal">
@@ -345,31 +387,15 @@ export default function Generate() {
             </h3>
           </div>
 
-          {/* Image with hook overlay */}
-          <div className="relative mb-6 overflow-hidden bg-charcoal">
-            <div className="aspect-story max-h-80 overflow-hidden relative">
-              <img
-                src={result.generation.image_url as string}
-                alt="Generated content"
-                className="w-full h-full object-cover opacity-90"
-              />
-              {/* Hook overlay */}
-              <div className="absolute inset-0 flex items-end justify-center pb-8 px-6">
-                <div
-                  className="text-center"
-                  style={{
-                    textShadow: "0 2px 12px rgba(0,0,0,0.4)",
-                  }}
-                >
-                  <p
-                    className="font-serif text-cream leading-tight"
-                    style={{ fontSize: "clamp(1.1rem, 4vw, 1.5rem)" }}
-                  >
-                    {selectedHook}
-                  </p>
-                </div>
-              </div>
-            </div>
+          {/* Full cinematic preview with hook overlay + Ken Burns */}
+          <div className="mb-6">
+            <CinematicPreview
+              imageUrl={result.generation.image_url as string}
+              hook={selectedHook}
+              animated={true}
+              size="full"
+              platform={platform}
+            />
           </div>
 
           {/* Caption */}
@@ -387,6 +413,42 @@ export default function Generate() {
 
           {/* Actions */}
           <div className="space-y-3">
+            {/* Video — Pro tier */}
+            {videoUrl ? (
+              <a
+                href={videoUrl}
+                download={`meetha-video-${Date.now()}.mp4`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn-luxury btn-gold w-full text-center block"
+              >
+                Download Video
+              </a>
+            ) : credits?.tier === "pro" ? (
+              <button
+                onClick={handleGenerateVideo}
+                disabled={isGeneratingVideo}
+                className="btn-luxury btn-gold w-full"
+              >
+                {isGeneratingVideo ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <span className="w-3 h-3 border border-cream border-t-transparent rounded-full animate-spin" />
+                    Generating video...
+                  </span>
+                ) : (
+                  "Generate Video (Pro)"
+                )}
+              </button>
+            ) : (
+              <a
+                href={import.meta.env.VITE_STRIPE_PRO_LINK || "#"}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full py-3 font-sans text-xs tracking-widest uppercase text-charcoal-soft hover:text-charcoal border border-sand hover:border-gold/40 transition-all duration-200 text-center block"
+              >
+                Upgrade to Pro for Video
+              </a>
+            )}
             <button onClick={handleDownload} className="btn-luxury w-full">
               Download Image
             </button>

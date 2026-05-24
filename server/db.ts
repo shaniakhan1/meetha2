@@ -26,6 +26,7 @@ export type DbProfile = {
   archetype: string;
   mood: string;
   onboarding_complete: boolean;
+  aesthetic_descriptors: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -134,6 +135,7 @@ export async function upsertProfile(data: {
   archetype: string;
   mood: string;
   onboardingComplete?: boolean;
+  aestheticDescriptors?: string | null;
 }): Promise<DbProfile | null> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const sb = getSupabase() as any;
@@ -152,6 +154,7 @@ export async function upsertProfile(data: {
         archetype: data.archetype,
         mood: data.mood,
         onboarding_complete: data.onboardingComplete ?? true,
+        ...(data.aestheticDescriptors !== undefined ? { aesthetic_descriptors: data.aestheticDescriptors } : {}),
         updated_at: now,
       })
       .eq("user_id", data.userId)
@@ -167,10 +170,24 @@ export async function upsertProfile(data: {
       archetype: data.archetype,
       mood: data.mood,
       onboarding_complete: data.onboardingComplete ?? true,
+      ...(data.aestheticDescriptors !== undefined ? { aesthetic_descriptors: data.aestheticDescriptors } : {}),
     })
     .select()
     .single();
   return (inserted as DbProfile) ?? null;
+}
+
+export async function updateAestheticDescriptors(
+  userId: number,
+  descriptors: string
+): Promise<void> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const sb = getSupabase() as any;
+  const now = new Date().toISOString();
+  await sb
+    .from("profiles")
+    .update({ aesthetic_descriptors: descriptors, updated_at: now })
+    .eq("user_id", userId);
 }
 
 // ─── Credits ──────────────────────────────────────────────────────────────────
