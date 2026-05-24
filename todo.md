@@ -71,5 +71,11 @@
 - [x] Animated cinematic preview — CSS Ken Burns zoom, parallax, film grain
 - [x] Baseline aesthetic upload — 3-5 reference images, GPT-4o Vision descriptor extraction, injected into prompts
 - [x] Fal.ai real video generation for Pro tier (Kling v1.6)
-- [ ] Referral credit mechanic — invite a friend, both get 3 extra generations
-- [ ] Updated tier structure: Free=stills only, Starter=stills+animated, Pro=stills+animated+real video
+- [x] Referral credit mechanic — invite a friend, both get 3 extra generations
+  - [x] DB helpers: getOrCreateReferralCode, createReferral, completeReferral, getReferralsByUser
+  - [x] tRPC: referral.getLink (protected), referral.getReferrer (public)
+  - [x] Dashboard: referral card with copy link + completion count
+  - [x] SignIn: referral banner, store ref code in sessionStorage
+  - [x] Auth: completeReferral called on session exchange (awards 3 credits to both parties)
+  - [x] Magic link flow: POST /api/auth/magic-link accepts referral_code, creates pending referral row
+- [x] Updated tier structure: Free=stills only, Starter=stills+animated, Pro=stills+animated+real video

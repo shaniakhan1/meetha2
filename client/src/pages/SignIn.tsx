@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
+import { trpc } from "@/lib/trpc";
 
 type Step = "email" | "sent";
 
@@ -9,6 +10,23 @@ export default function SignIn() {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Read referral code from URL query param
+  const refCode = new URLSearchParams(window.location.search).get("ref") ?? undefined;
+
+  // Look up referrer name if code present
+  const referrerQuery = trpc.referral.getReferrer.useQuery(
+    { code: refCode! },
+    { enabled: !!refCode }
+  );
+  const referrerName = referrerQuery.data?.name;
+
+  // Store referral code in sessionStorage so AuthCallback can pass it along
+  useEffect(() => {
+    if (refCode) {
+      sessionStorage.setItem("meetha_ref_code", refCode);
+    }
+  }, [refCode]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -23,6 +41,7 @@ export default function SignIn() {
         body: JSON.stringify({
           email: email.trim().toLowerCase(),
           redirectTo: window.location.origin,
+          ...(refCode ? { referralCode: refCode } : {}),
         }),
       });
 
@@ -53,6 +72,18 @@ export default function SignIn() {
         <span className="font-serif text-lg tracking-widest text-charcoal">MEETHA</span>
         <div className="w-10" />
       </div>
+
+      {/* Referral banner */}
+      {refCode && (
+        <div className="mx-6 mb-2 px-4 py-3 border border-gold/40 bg-gold/5 text-center">
+          <p className="font-sans text-xs text-charcoal-soft">
+            {referrerName
+              ? `${referrerName} invited you.`
+              : "You were invited."}{" "}
+            <span className="text-gold">Sign up and you both get 3 free generations.</span>
+          </p>
+        </div>
+      )}
 
       <div className="flex-1 flex flex-col items-center justify-center px-6 pb-16">
         {step === "email" ? (

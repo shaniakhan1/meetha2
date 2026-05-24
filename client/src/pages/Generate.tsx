@@ -402,11 +402,24 @@ export default function Generate() {
           </div>
 
           {/* Full cinematic preview with hook overlay + Ken Burns */}
+          {/* Ken Burns animation is Starter+ only */}
+          {(effectiveCredits?.tier === "free" || (!effectiveCredits?.tier && !previewTier)) && (
+            <div className="mb-2 px-1">
+              <p className="font-sans text-xs text-charcoal-soft/70">
+                Animated preview unlocked on Starter and Pro plans.
+              </p>
+            </div>
+          )}
           <div className="mb-6">
             <CinematicPreview
               imageUrl={result.generation.image_url as string}
               hook={selectedHook}
-              animated={true}
+              animated={
+                effectiveCredits?.tier === "starter" ||
+                effectiveCredits?.tier === "pro" ||
+                previewTier === "starter" ||
+                previewTier === "pro"
+              }
               size="full"
               platform={platform}
             />

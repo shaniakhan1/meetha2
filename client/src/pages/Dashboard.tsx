@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useLocation } from "wouter";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
+import { toast } from "sonner";
 import {
   ARCHETYPE_LABELS,
   MOOD_LABELS,
@@ -13,14 +14,17 @@ export default function Dashboard() {
   const [, navigate] = useLocation();
   const { user, logout } = useAuth();
   const [expandedId, setExpandedId] = useState<number | null>(null);
+  const [referralCopied, setReferralCopied] = useState(false);
 
   const profileQuery = trpc.profile.get.useQuery();
   const creditsQuery = trpc.credits.get.useQuery();
   const generationsQuery = trpc.generations.list.useQuery();
+  const referralQuery = trpc.referral.getLink.useQuery();
 
   const profile = profileQuery.data;
   const credits = creditsQuery.data;
   const generations = generationsQuery.data ?? [];
+  const referral = referralQuery.data;
 
   const archetype = profile?.archetype
     ? ARCHETYPE_LABELS[profile.archetype as keyof typeof ARCHETYPE_LABELS]
@@ -28,6 +32,19 @@ export default function Dashboard() {
   const mood = profile?.mood
     ? MOOD_LABELS[profile.mood as keyof typeof MOOD_LABELS]
     : null;
+
+  const referralUrl = referral?.code
+    ? `${window.location.origin}/sign-in?ref=${referral.code}`
+    : null;
+
+  const handleCopyReferral = () => {
+    if (!referralUrl) return;
+    navigator.clipboard.writeText(referralUrl).then(() => {
+      setReferralCopied(true);
+      toast.success("Referral link copied.");
+      setTimeout(() => setReferralCopied(false), 2000);
+    });
+  };
 
   const handleDownload = async (imageUrl: string, id: number) => {
     try {
@@ -96,7 +113,7 @@ export default function Dashboard() {
                 width: `${Math.min(
                   100,
                   ((credits?.credits_remaining ?? 0) /
-                    (credits?.tier === "pro" ? 50 : credits?.tier === "starter" ? 20 : 5)) *
+                    (credits?.tier === "pro" ? 75 : credits?.tier === "starter" ? 30 : 5)) *
                     100
                 )}%`,
               }}
@@ -118,10 +135,44 @@ export default function Dashboard() {
         <button
           onClick={() => navigate("/generate")}
           disabled={credits?.credits_remaining === 0}
-          className="btn-luxury w-full mb-10 disabled:opacity-40 disabled:cursor-not-allowed"
+          className="btn-luxury w-full mb-6 disabled:opacity-40 disabled:cursor-not-allowed"
         >
           Generate New Content
         </button>
+
+        {/* Referral card */}
+        <div className="mb-10 p-4 border border-sand/60 bg-warm-white/40">
+          <div className="flex items-start justify-between mb-2">
+            <div>
+              <p className="font-sans text-xs tracking-[0.1em] uppercase text-gold mb-1">
+                Invite a Friend
+              </p>
+              <p className="font-serif text-sm text-charcoal leading-snug">
+                Both of you get 3 free generations.
+              </p>
+            </div>
+            {referral && referral.completed > 0 && (
+              <div className="text-right">
+                <p className="font-sans text-xs text-charcoal-soft">
+                  {referral.completed} joined
+                </p>
+              </div>
+            )}
+          </div>
+          <p className="font-sans font-light text-xs text-charcoal-soft mb-4 leading-relaxed">
+            Share your link. When a friend signs up using it, you each receive 3 extra generations — no strings attached.
+          </p>
+          {referralUrl ? (
+            <button
+              onClick={handleCopyReferral}
+              className="w-full py-3 font-sans text-xs tracking-widest uppercase border transition-all duration-200 border-sand hover:border-gold/50 text-charcoal hover:text-charcoal bg-warm-white/60 hover:bg-warm-white"
+            >
+              {referralCopied ? "Link Copied" : "Copy Invite Link"}
+            </button>
+          ) : (
+            <div className="w-full py-3 bg-sand/30 animate-pulse" />
+          )}
+        </div>
 
         {/* History Grid */}
         <div className="mb-4">

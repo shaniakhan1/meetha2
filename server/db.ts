@@ -288,6 +288,136 @@ export async function updateGenerationHook(data: {
     .eq("id", data.generationId);
 }
 
+// ─── Referrals ───────────────────────────────────────────────────────────────
+
+export type DbReferral = {
+  id: number;
+  referrer_user_id: number;
+  referred_email: string;
+  referred_user_id: number | null;
+  completed: boolean;
+  created_at: string;
+  completed_at: string | null;
+};
+
+/** Generate a short unique referral code for a user (8 chars, alphanumeric). */
+function generateReferralCode(): string {
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  let code = "";
+  for (let i = 0; i < 8; i++) {
+    code += chars[Math.floor(Math.random() * chars.length)];
+  }
+  return code;
+}
+
+/** Get or create a referral code for a user. */
+export async function getOrCreateReferralCode(userId: number): Promise<string> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const sb = getSupabase() as any;
+  const { data: user } = await sb.from("users").select("referral_code").eq("id", userId).single();
+  if (user?.referral_code) return user.referral_code as string;
+
+  // Generate a unique code
+  let code = generateReferralCode();
+  let attempts = 0;
+  while (attempts < 10) {
+    const { data: existing } = await sb.from("users").select("id").eq("referral_code", code).single();
+    if (!existing) break;
+    code = generateReferralCode();
+    attempts++;
+  }
+
+  await sb.from("users").update({ referral_code: code }).eq("id", userId);
+  return code;
+}
+
+/** Look up a user by referral code. */
+export async function getUserByReferralCode(code: string): Promise<DbUser | null> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const sb = getSupabase() as any;
+  const { data } = await sb.from("users").select("*").eq("referral_code", code).single();
+  return (data as DbUser) ?? null;
+}
+
+/** Record a referral invite (referrer invites an email). */
+export async function createReferral(data: {
+  referrerUserId: number;
+  referredEmail: string;
+}): Promise<DbReferral | null> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const sb = getSupabase() as any;
+  // Upsert — ignore if already exists
+  const { data: inserted } = await sb
+    .from("referrals")
+    .upsert(
+      { referrer_user_id: data.referrerUserId, referred_email: data.referredEmail.toLowerCase() },
+      { onConflict: "referrer_user_id,referred_email", ignoreDuplicates: true }
+    )
+    .select()
+    .single();
+  return (inserted as DbReferral) ?? null;
+}
+
+/** Complete a referral when referred user signs up. Awards 3 credits to both parties. */
+export async function completeReferral(referredEmail: string, referredUserId: number): Promise<void> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const sb = getSupabase() as any;
+  const now = new Date().toISOString();
+
+  // Find pending referrals for this email
+  const { data: referrals } = await sb
+    .from("referrals")
+    .select("*")
+    .eq("referred_email", referredEmail.toLowerCase())
+    .eq("completed", false);
+
+  if (!referrals || referrals.length === 0) return;
+
+  for (const referral of referrals as DbReferral[]) {
+    // Mark referral as completed
+    await sb
+      .from("referrals")
+      .update({ completed: true, referred_user_id: referredUserId, completed_at: now })
+      .eq("id", referral.id);
+
+    // Award 3 credits to referrer
+    const referrerCredits = await getCredits(referral.referrer_user_id);
+    if (referrerCredits) {
+      await sb
+        .from("credits")
+        .update({
+          credits_remaining: referrerCredits.credits_remaining + 3,
+          updated_at: now,
+        })
+        .eq("user_id", referral.referrer_user_id);
+    }
+  }
+
+  // Award 3 credits to referred user
+  const referredCredits = await getCredits(referredUserId);
+  if (referredCredits) {
+    await sb
+      .from("credits")
+      .update({
+        credits_remaining: referredCredits.credits_remaining + 3,
+        updated_at: now,
+      })
+      .eq("user_id", referredUserId);
+  }
+}
+
+/** Get all referrals made by a user. */
+export async function getReferralsByUser(userId: number): Promise<DbReferral[]> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const sb = getSupabase() as any;
+  const { data } = await sb
+    .from("referrals")
+    .select("*")
+    .eq("referrer_user_id", userId)
+    .order("created_at", { ascending: false });
+  return (data as DbReferral[]) ?? [];
+}
+
 // ─── Postability Feedback ─────────────────────────────────────────────────────
 
 export async function savePostabilityFeedback(data: {

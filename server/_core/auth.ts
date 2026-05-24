@@ -83,7 +83,7 @@ export async function authenticateRequest(req: Request): Promise<DbUser | null> 
  * Triggers a Supabase magic link email.
  */
 export async function handleMagicLink(req: Request, res: Response) {
-  const { email, redirectTo } = req.body as { email?: string; redirectTo?: string };
+  const { email, redirectTo, referralCode } = req.body as { email?: string; redirectTo?: string; referralCode?: string };
   if (!email || typeof email !== "string") {
     return res.status(400).json({ error: "Email is required" });
   }
@@ -101,6 +101,18 @@ export async function handleMagicLink(req: Request, res: Response) {
   if (error) {
     console.error("[Auth] Magic link error:", error.message);
     return res.status(500).json({ error: "Failed to send magic link" });
+  }
+
+  // If a referral code was provided, create a pending referral row
+  if (referralCode) {
+    try {
+      const referrer = await db.getUserByReferralCode(referralCode);
+      if (referrer) {
+        await db.createReferral({ referrerUserId: referrer.id, referredEmail: email.toLowerCase() });
+      }
+    } catch {
+      // Non-fatal: referral creation failure should not block sign-in
+    }
   }
 
   return res.json({ success: true });
@@ -134,6 +146,15 @@ export async function handleSetSession(req: Request, res: Response) {
 
   if (!dbUser) {
     return res.status(500).json({ error: "Failed to create user" });
+  }
+
+  // Complete any pending referrals for this email (awards 3 credits to both parties)
+  if (supabaseUser.email) {
+    try {
+      await db.completeReferral(supabaseUser.email, dbUser.id);
+    } catch {
+      // Non-fatal: referral completion failure should not block sign-in
+    }
   }
 
   // Create our own JWT session cookie

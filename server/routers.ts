@@ -17,6 +17,9 @@ import {
   decrementCredit,
   savePostabilityFeedback,
   updateAestheticDescriptors,
+  getOrCreateReferralCode,
+  getUserByReferralCode,
+  getReferralsByUser,
 } from "./db";
 import {
   ARCHETYPE_DESCRIPTIONS,
@@ -421,7 +424,26 @@ Be specific and visual. No generic phrases.`;
       }),
   }),
 
-  // ─── Feedback ─────────────────────────────────────────────────────────────
+  // ─── Referrals ─────────────────────────────────────────────────────
+
+  referral: router({
+    /** Get the user's referral link and stats. */
+    getLink: protectedProcedure.query(async ({ ctx }) => {
+      const code = await getOrCreateReferralCode(ctx.user.id);
+      const referrals = await getReferralsByUser(ctx.user.id);
+      const completed = referrals.filter((r) => r.completed).length;
+      return { code, completed, total: referrals.length };
+    }),
+
+    /** Get the referrer info from a code (used on sign-in page). */
+    getReferrer: publicProcedure
+      .input(z.object({ code: z.string() }))
+      .query(async ({ input }) => {
+        const user = await getUserByReferralCode(input.code);
+        if (!user) return null;
+        return { name: user.name ?? "a friend" };
+      }),
+  }),
 
   feedback: router({
     savePostability: protectedProcedure
