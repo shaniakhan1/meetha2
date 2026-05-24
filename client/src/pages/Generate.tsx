@@ -115,14 +115,18 @@ export default function Generate() {
   };
 
   const handleDownload = async () => {
-    if (!result?.generation?.image_url) return;
+    if (!result?.generation?.id) return;
     try {
-      const response = await fetch(result.generation.image_url as string);
+      // Use the server-side download endpoint which applies the watermark for free tier
+      const response = await fetch(`/api/download/${result.generation.id}`, {
+        credentials: "include",
+      });
+      if (!response.ok) throw new Error(`Download failed: ${response.status}`);
       const blob = await response.blob();
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `meetha-${Date.now()}.png`;
+      a.download = `meetha-${result.generation.id}.jpg`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);

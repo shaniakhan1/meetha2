@@ -79,3 +79,7 @@
   - [x] Auth: completeReferral called on session exchange (awards 3 credits to both parties)
   - [x] Magic link flow: POST /api/auth/magic-link accepts referral_code, creates pending referral row
 - [x] Updated tier structure: Free=stills only, Starter=stills+animated, Pro=stills+animated+real video
+
+## V3 Features
+
+- [x] Watermark on free-tier downloads — lowercase "meetha" serif, bottom-right, semi-transparent white; removed on Starter+

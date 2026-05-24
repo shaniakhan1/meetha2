@@ -46,14 +46,16 @@ export default function Dashboard() {
     });
   };
 
-  const handleDownload = async (imageUrl: string, id: number) => {
+  const handleDownload = async (_imageUrl: string, id: number) => {
     try {
-      const response = await fetch(imageUrl);
+      // Use server-side endpoint — applies watermark for free tier automatically
+      const response = await fetch(`/api/download/${id}`, { credentials: "include" });
+      if (!response.ok) throw new Error(`Download failed: ${response.status}`);
       const blob = await response.blob();
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `meetha-${id}.png`;
+      a.download = `meetha-${id}.jpg`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);

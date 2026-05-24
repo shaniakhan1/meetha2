@@ -4,6 +4,7 @@ import { createServer } from "http";
 import net from "net";
 import { createExpressMiddleware } from "@trpc/server/adapters/express";
 import { handleMagicLink, handleSetSession, handleLogout, handleMe, handlePreviewAuth } from "./auth";
+import { handleDownload } from "../download";
 import { registerStorageProxy } from "./storageProxy";
 import { appRouter } from "../routers";
 import { createContext } from "./context";
@@ -42,6 +43,7 @@ async function startServer() {
   app.post("/api/auth/logout", handleLogout);
   app.get("/api/auth/me", handleMe);
   app.get("/api/auth/preview", handlePreviewAuth);
+  app.get("/api/download/:generationId", handleDownload);
   // tRPC API
   app.use(
     "/api/trpc",
