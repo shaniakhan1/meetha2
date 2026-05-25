@@ -18,6 +18,27 @@ export type SceneCategory =
 
 export type PostabilityResponse = "yes" | "maybe" | "no";
 
+export type VideoFormat = "tiktok_reels" | "square" | "landscape";
+
+export const VIDEO_FORMAT_LABELS: Record<VideoFormat, string> = {
+  tiktok_reels: "TikTok / Reels",
+  square: "Square",
+  landscape: "Landscape",
+};
+
+export const VIDEO_FORMAT_DESCRIPTIONS: Record<VideoFormat, string> = {
+  tiktok_reels: "9:16 vertical — TikTok, Instagram Reels, YouTube Shorts",
+  square: "1:1 — Instagram feed, Facebook",
+  landscape: "16:9 horizontal — YouTube, Facebook cover",
+};
+
+// Maps video format to Fal/image aspect ratio string
+export const VIDEO_FORMAT_ASPECT: Record<VideoFormat, string> = {
+  tiktok_reels: "portrait_16_9",  // 9:16 vertical
+  square: "square_hd",
+  landscape: "landscape_16_9",
+};
+
 export const ARCHETYPE_LABELS: Record<Archetype, string> = {
   luxury_minimal: "Still Frequency",
   elegant_chaos: "Electric Frequency",

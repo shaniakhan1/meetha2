@@ -8,8 +8,11 @@ import {
   SCENE_LABELS,
   ARCHETYPE_LABELS,
   MOOD_LABELS,
+  VIDEO_FORMAT_LABELS,
+  VIDEO_FORMAT_DESCRIPTIONS,
   type Platform,
   type SceneCategory,
+  type VideoFormat,
 } from "@shared/types";
 import CinematicPreview from "@/components/CinematicPreview";
 import { getPreviewTier } from "./Preview";
@@ -60,6 +63,7 @@ export default function Generate() {
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const [isGeneratingVideo, setIsGeneratingVideo] = useState(false);
   const [outputType, setOutputType] = useState<"still" | "video">("still");
+  const [videoFormat, setVideoFormat] = useState<VideoFormat>("tiktok_reels");
 
   // Voice recording state
   const [isRecording, setIsRecording] = useState(false);
@@ -146,7 +150,7 @@ export default function Generate() {
       idx = (idx + 1) % GENERATING_PHRASES.length;
       setPhraseIndex(idx);
     }, 3000);
-    generateMutation.mutateAsync({ platform, sceneCategory: sceneCategory ?? undefined }).then((data) => {
+    generateMutation.mutateAsync({ platform, sceneCategory: sceneCategory ?? undefined, videoFormat: outputType === "video" ? videoFormat : undefined }).then((data) => {
       clearInterval(interval);
       // If Pro user chose video output, auto-trigger video generation after still is ready
       if (outputType === "video" && (effectiveCredits?.tier === "pro" || previewTier === "pro")) {
@@ -516,28 +520,51 @@ export default function Generate() {
             <div className="flex-1 h-px bg-sand/40" />
           </div>
 
-          {/* Platform */}
+          {/* Format — still image options or video format options depending on outputType */}
           <div className="mb-8">
             <p className="font-sans text-xs tracking-[0.15em] uppercase text-charcoal mb-4">
               Format
             </p>
-            <div className="grid grid-cols-3 gap-2">
-              {platforms.map((p) => (
-                <button
-                  key={p}
-                  onClick={() => setPlatform(p)}
-                  className={`py-3 px-2 text-center border transition-all duration-200 ${
-                    platform === p
-                      ? "border-gold bg-gold/10 text-charcoal"
-                      : "border-sand/60 bg-warm-white/60 text-charcoal hover:border-gold/40"
-                  }`}
-                >
-                  <p className="font-sans text-xs tracking-[0.1em] uppercase">
-                    {PLATFORM_LABELS[p]}
-                  </p>
-                </button>
-              ))}
-            </div>
+            {outputType === "video" ? (
+              <div className="grid grid-cols-1 gap-2">
+                {(Object.keys(VIDEO_FORMAT_LABELS) as VideoFormat[]).map((vf) => (
+                  <button
+                    key={vf}
+                    onClick={() => setVideoFormat(vf)}
+                    className={`py-3 px-4 text-left border transition-all duration-200 ${
+                      videoFormat === vf
+                        ? "border-gold bg-gold/10 text-charcoal"
+                        : "border-sand/60 bg-warm-white/60 text-charcoal hover:border-gold/40"
+                    }`}
+                  >
+                    <p className="font-sans text-xs tracking-[0.1em] uppercase">
+                      {VIDEO_FORMAT_LABELS[vf]}
+                    </p>
+                    <p className="font-sans text-xs text-charcoal-soft mt-0.5">
+                      {VIDEO_FORMAT_DESCRIPTIONS[vf]}
+                    </p>
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <div className="grid grid-cols-3 gap-2">
+                {platforms.map((p) => (
+                  <button
+                    key={p}
+                    onClick={() => setPlatform(p)}
+                    className={`py-3 px-2 text-center border transition-all duration-200 ${
+                      platform === p
+                        ? "border-gold bg-gold/10 text-charcoal"
+                        : "border-sand/60 bg-warm-white/60 text-charcoal hover:border-gold/40"
+                    }`}
+                  >
+                    <p className="font-sans text-xs tracking-[0.1em] uppercase">
+                      {PLATFORM_LABELS[p]}
+                    </p>
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Scene */}

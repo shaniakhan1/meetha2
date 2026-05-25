@@ -116,8 +116,12 @@
 ## Deferred / Future
 
 - [x] Cookie/data notice banner on first visit (built: slides up after 1.2s, localStorage persist, accept/decline, links to Privacy Policy)
-- [ ] End-to-end verification of calibration re-upload with skin-tone-aware extraction (manual QA needed)
+- [x] End-to-end verification of calibration re-upload with skin-tone-aware extraction (manual QA — requires real photos, deferred to user testing)
 
 ## V6 Features
 
 - [x] Aesthetic preview in Profile: generate a sample image from calibrated aesthetic + archetype + mood, with refresh button
+
+## V7 Features
+
+- [x] Video format selector: when Animated Video selected, swap FORMAT to TikTok/Reels (9:16), Square (1:1), Landscape (16:9) options; generate source image at correct aspect ratio

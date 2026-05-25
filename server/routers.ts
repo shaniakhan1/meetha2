@@ -289,6 +289,7 @@ export const appRouter = router({
               "date_night",
             ])
             .optional(),
+          videoFormat: z.enum(["tiktok_reels", "square", "landscape"]).optional(),
         })
       )
       .mutation(async ({ ctx, input }) => {
@@ -303,10 +304,16 @@ export const appRouter = router({
         const archetype = profile?.archetype ?? "luxury_minimal";
         const mood = profile?.mood ?? "soft";
 
-        // Generate image via Fal.ai FLUX 1.1 Pro
+                // Generate image via Fal.ai FLUX 1.1 Pro
         const imagePrompt = buildImagePrompt(archetype, mood, input.sceneCategory, profile?.aesthetic_descriptors ?? null, profile?.niche ?? null, profile?.audience ?? null);
-        const { url: imageUrl, key: imageKey } = await generateImageFal({ prompt: imagePrompt });
-
+        // Map video format to Fal image_size
+        const VIDEO_FORMAT_SIZE: Record<string, "portrait_4_3" | "portrait_16_9" | "square_hd" | "landscape_16_9"> = {
+          tiktok_reels: "portrait_16_9",
+          square: "square_hd",
+          landscape: "landscape_16_9",
+        };
+        const imageSize = input.videoFormat ? VIDEO_FORMAT_SIZE[input.videoFormat] : "portrait_4_3";
+        const { url: imageUrl, key: imageKey } = await generateImageFal({ prompt: imagePrompt, imageSize });
         // Generate copy (pass aesthetic descriptors + niche/audience if available)
         const copyPrompt = buildCopyPrompt(archetype, mood, input.platform, profile?.aesthetic_descriptors ?? null, profile?.niche ?? null, profile?.audience ?? null);
         const copyResponse = await invokeLLMOpenAI({

@@ -9,6 +9,7 @@ import { storagePut } from "../storage";
 
 export type FalImageOptions = {
   prompt: string;
+  imageSize?: "portrait_4_3" | "portrait_16_9" | "square_hd" | "landscape_16_9" | "landscape_4_3";
 };
 
 export type FalImageResponse = {
@@ -27,7 +28,7 @@ export async function generateImageFal(options: FalImageOptions): Promise<FalIma
   const result = await fal.subscribe("fal-ai/flux-pro/v1.1", {
     input: {
       prompt: options.prompt,
-      image_size: "portrait_4_3" as const,
+      image_size: (options.imageSize ?? "portrait_4_3") as "portrait_4_3" | "portrait_16_9" | "square_hd" | "landscape_16_9" | "landscape_4_3",
       num_images: 1,
       safety_tolerance: "2" as const,
       output_format: "jpeg" as const,
