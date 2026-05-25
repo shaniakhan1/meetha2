@@ -27,6 +27,7 @@ export type DbProfile = {
   mood: string;
   onboarding_complete: boolean;
   aesthetic_descriptors: string | null;
+  aesthetic_preview_url: string | null;
   niche: string | null;
   audience: string | null;
   created_at: string;
@@ -220,6 +221,19 @@ export async function updateAestheticDescriptors(
   await sb
     .from("profiles")
     .update({ aesthetic_descriptors: descriptors, updated_at: now })
+    .eq("user_id", userId);
+}
+
+export async function updateAestheticPreviewUrl(
+  userId: number,
+  url: string
+): Promise<void> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const sb = getSupabase() as any;
+  const now = new Date().toISOString();
+  await sb
+    .from("profiles")
+    .update({ aesthetic_preview_url: url, updated_at: now })
     .eq("user_id", userId);
 }
 

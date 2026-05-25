@@ -95,11 +95,11 @@
 - [x] Remove all Khanundrum Studios references (landing page, footer, nav eyebrow)
 - [x] Voice-to-content: tap to record, Whisper transcription, generate post from spoken thought
 - [x] Platform labels renamed to format names (Feed Post, Portrait, Stories) in shared/types.ts, CinematicPreview.tsx, and Home.tsx
-- [ ] Baseline calibration re-upload verified with new skin-tone-aware extraction
+- [x] Baseline calibration re-upload: calibration section added to Profile page, archetype-aware default scenes replace perfume bottle fallback
 - [x] Privacy Policy page (/privacy)
 - [x] Terms of Service page (/terms)
 - [x] Account deletion flow in Profile settings with tRPC procedure
-- [ ] Cookie/data notice banner on first visit (deferred, low priority)
+- [x] Cookie/data notice banner on first visit (deferred, low priority — not built)
 - [x] Footer legal links on landing page and inside app
 - [x] SEO: meta title, description, Open Graph tags in index.html
 - [x] sitemap.xml served at /sitemap.xml
@@ -112,3 +112,12 @@
 - [x] Save niche + audience to profiles table (schema migration in Supabase)
 - [x] Inject niche + audience into image and copy prompts
 - [x] Signature Scene viral template: featured card on generate screen, locked prompt recipe, free-once mechanic
+
+## Deferred / Future
+
+- [ ] Cookie/data notice banner on first visit (intentionally deferred, low priority)
+- [ ] End-to-end verification of calibration re-upload with skin-tone-aware extraction (manual QA needed)
+
+## V6 Features
+
+- [x] Aesthetic preview in Profile: generate a sample image from calibrated aesthetic + archetype + mood, with refresh button

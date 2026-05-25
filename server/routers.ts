@@ -20,6 +20,7 @@ import {
   decrementCredit,
   savePostabilityFeedback,
   updateAestheticDescriptors,
+  updateAestheticPreviewUrl,
   getOrCreateReferralCode,
   getUserByReferralCode,
   getReferralsByUser,
@@ -777,6 +778,22 @@ Respond in this exact JSON format:
   // ─── Aesthetic Upload ───────────────────────────────────────────────────────
 
   aesthetic: router({
+    /** Generate a sample preview image from the user's calibrated aesthetic */
+    preview: protectedProcedure
+      .mutation(async ({ ctx }) => {
+        const profile = await getProfile(ctx.user.id);
+        if (!profile) throw new Error("Profile not found");
+        const archetype = (profile.archetype as string) || "soft_power";
+        const mood = (profile.mood as string) || "grounded";
+        const aestheticDescriptors = profile.aesthetic_descriptors ?? null;
+        const niche = (profile.niche as string | null) ?? null;
+        // Use the default archetype scene as the preview base
+        const previewPrompt = buildImagePrompt(archetype, mood, null, aestheticDescriptors, niche, null);
+        const result = await generateImageFal({ prompt: previewPrompt });
+        // Store preview URL in profile
+        await updateAestheticPreviewUrl(ctx.user.id, result.url);
+        return { url: result.url };
+      }),
     analyzeAndSave: protectedProcedure
       .input(
         z.object({

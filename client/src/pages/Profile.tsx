@@ -27,6 +27,27 @@ export default function Profile() {
   const [isCalibrating, setIsCalibrating] = useState(false);
   const calibrationInputRef = useRef<HTMLInputElement>(null);
 
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [isGeneratingPreview, setIsGeneratingPreview] = useState(false);
+
+  const generatePreview = trpc.aesthetic.preview.useMutation({
+    onSuccess: (data) => {
+      setPreviewUrl(data.url);
+      utils.profile.get.invalidate();
+      toast.success("Your aesthetic preview is ready.");
+    },
+    onError: (err) => toast.error(err.message),
+  });
+
+  const handleGeneratePreview = async () => {
+    setIsGeneratingPreview(true);
+    try {
+      await generatePreview.mutateAsync();
+    } finally {
+      setIsGeneratingPreview(false);
+    }
+  };
+
   const analyzeAesthetic = trpc.aesthetic.analyzeAndSave.useMutation({
     onSuccess: () => {
       utils.profile.get.invalidate();
@@ -69,6 +90,13 @@ export default function Profile() {
 
   const profile = profileQuery.data;
   const credits = creditsQuery.data;
+
+  // Sync preview URL from profile on load
+  useEffect(() => {
+    if (profile?.aesthetic_preview_url && !previewUrl) {
+      setPreviewUrl(profile.aesthetic_preview_url);
+    }
+  }, [profile?.aesthetic_preview_url]);
 
   useEffect(() => {
     if (profile) {
@@ -265,6 +293,64 @@ export default function Profile() {
               </button>
             </div>
           )}
+        </div>
+
+        {/* Aesthetic Preview */}
+        <div>
+          <div className="flex items-center justify-between mb-4">
+            <p className="font-sans text-xs tracking-[0.15em] uppercase text-charcoal-soft">
+              Your Aesthetic Preview
+            </p>
+            {previewUrl && (
+              <button
+                onClick={handleGeneratePreview}
+                disabled={isGeneratingPreview}
+                className="font-sans text-xs tracking-widest uppercase text-gold hover:text-charcoal transition-colors"
+              >
+                Refresh
+              </button>
+            )}
+          </div>
+
+          <div className="border border-sand bg-warm-white/60 overflow-hidden">
+            {previewUrl ? (
+              <div className="relative">
+                <img
+                  src={previewUrl}
+                  alt="Your aesthetic preview"
+                  className="w-full aspect-[3/4] object-cover"
+                />
+                <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-charcoal/60 to-transparent">
+                  <p className="font-serif text-sm text-cream">
+                    {profile?.archetype ? profile.archetype.replace(/_/g, " ") : "Your frequency"}
+                  </p>
+                  <p className="font-sans text-xs text-cream/70 mt-0.5">
+                    {profile?.mood ? profile.mood.replace(/_/g, " ") : ""} energy
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <div className="p-5 space-y-3">
+                <p className="font-sans font-light text-xs text-charcoal-soft leading-relaxed">
+                  See what Meetha generates for your frequency before you create. This preview uses your calibrated aesthetic, archetype, and mood.
+                </p>
+                <button
+                  onClick={handleGeneratePreview}
+                  disabled={isGeneratingPreview}
+                  className="btn-luxury w-full"
+                >
+                  {isGeneratingPreview ? (
+                    <span className="flex items-center justify-center gap-2">
+                      <span className="w-3 h-3 border border-cream border-t-transparent rounded-full animate-spin" />
+                      Generating your preview...
+                    </span>
+                  ) : (
+                    "Generate my aesthetic preview"
+                  )}
+                </button>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Aesthetic Calibration */}
