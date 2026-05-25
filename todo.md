@@ -132,7 +132,20 @@
 - [x] Reference image conditioning: pass user's calibration photo to Fal as subject anchor so generated images look like the actual user
 - [x] Store calibration photo URLs in profiles.reference_image_urls for reuse in generation
 
-## V8 Follow-up (requires Supabase migration)
+## V8 Follow-up (requires Supabase migration — user action required)
 
-- [ ] Run Supabase migration: ALTER TABLE profiles ADD COLUMN IF NOT EXISTS reference_image_urls TEXT[] (JSONB array of storage URLs)
-- [ ] Existing calibrated users must recalibrate to get reference_image_urls populated (show nudge if aesthetic_descriptors exists but reference_image_urls is null)
+- [x] Run Supabase migration: ALTER TABLE profiles ADD COLUMN IF NOT EXISTS reference_image_urls JSONB (delivered to user as SQL to run)
+- [x] Existing calibrated users must recalibrate to get reference_image_urls populated (user must recalibrate in Profile after migration)
+
+## V9 Features
+
+- [x] FLUX Pro 1.1 Ultra upgrade (switch model ID in falImageGeneration.ts)
+- [x] Watermark fix: paid users no watermark by default; free users watermark; paid users get optional "Share with Meetha badge" toggle in Profile
+- [x] Caption/hook copy prompt rewrite: short declarative sentences, observational contrast, no over-explanation, user's actual voice calibration
+- [x] Weighted credit system: 1 credit = still image, 5 credits = video; update credit deduction logic
+- [ ] Credit top-up modal: when credits hit zero, show clean top-up prompt (not hard wall)
+- [x] Simplified one-tap generate: zero-decision default path, Customize toggle for advanced options (scene, format, video vs still)
+- [x] Kling Animate Me mode: Animate Me button on preview converts still to 5-sec Kling clip (Starter+, 5 credits)
+- [ ] Voice calibration questions in onboarding: 3 quick questions about how user talks online (casual/polished, funny/serious, short/storytelling)
+- [x] New Signature Scene: "Quiet Wealth" — private morning, espresso, white peony, linen, free once
+- [x] Revert reference image conditioning (remove flux-pro/v1.1/redux, restore clean faceless FLUX generation)

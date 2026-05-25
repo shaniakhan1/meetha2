@@ -19,6 +19,10 @@ import { getPreviewTier } from "./Preview";
 
 type GenStep = "select" | "recording" | "transcribing" | "generating" | "hooks" | "preview" | "feedback";
 
+// Credit costs — keep in sync with server/routers.ts
+const STILL_COST = 1;
+const VIDEO_COST = 5;
+
 interface GenerationResult {
   generation: {
     id: number;
@@ -64,6 +68,7 @@ export default function Generate() {
   const [isGeneratingVideo, setIsGeneratingVideo] = useState(false);
   const [outputType, setOutputType] = useState<"still" | "video">("still");
   const [videoFormat, setVideoFormat] = useState<VideoFormat>("tiktok_reels");
+  const [showCustomize, setShowCustomize] = useState(false);
 
   // Voice recording state
   const [isRecording, setIsRecording] = useState(false);
@@ -87,8 +92,33 @@ export default function Generate() {
       setIsGeneratingVideo(false);
     },
   });
+
   const feedbackMutation = trpc.feedback.savePostability.useMutation();
   const utils = trpc.useUtils();
+
+  const animateMeMutation = trpc.video.animateMe.useMutation({
+    onSuccess: (data) => {
+      setVideoUrl(data.videoUrl);
+      setIsGeneratingVideo(false);
+      utils.credits.get.invalidate();
+    },
+    onError: (err) => {
+      toast.error(err.message);
+      setIsGeneratingVideo(false);
+    },
+  });
+
+  const handleAnimateMe = () => {
+    if (!result?.generation) return;
+    setIsGeneratingVideo(true);
+    animateMeMutation.mutate({
+      generationId: result.generation.id,
+      imageUrl: result.generation.image_url as string,
+      archetype: result.generation.archetype,
+      mood: result.generation.mood,
+      sceneCategory: sceneCategory ?? undefined,
+    });
+  };
 
   const generateMutation = trpc.generate.content.useMutation({
     onSuccess: (data) => {
@@ -104,6 +134,7 @@ export default function Generate() {
   });
 
   const signatureSceneStatusQuery = trpc.signatureScene.status.useQuery();
+  const signatureSceneTwoStatusQuery = trpc.signatureScene.statusTwo.useQuery();
   const signatureSceneMutation = trpc.signatureScene.generate.useMutation({
     onSuccess: (data) => {
       setResult(data as GenerationResult);
@@ -111,6 +142,20 @@ export default function Generate() {
       utils.credits.get.invalidate();
       utils.generations.list.invalidate();
       signatureSceneStatusQuery.refetch();
+    },
+    onError: (err) => {
+      toast.error(err.message);
+      setStep("select");
+    },
+  });
+
+  const signatureSceneTwoMutation = trpc.signatureScene.generateTwo.useMutation({
+    onSuccess: (data) => {
+      setResult(data as GenerationResult);
+      setStep("hooks");
+      utils.credits.get.invalidate();
+      utils.generations.list.invalidate();
+      signatureSceneTwoStatusQuery.refetch();
     },
     onError: (err) => {
       toast.error(err.message);
@@ -134,11 +179,31 @@ export default function Generate() {
   const platforms = Object.keys(PLATFORM_LABELS) as Platform[];
   const scenes = Object.keys(SCENE_LABELS) as SceneCategory[];
 
+  const handleQuickGenerate = () => {
+    // One-tap generate: uses saved profile defaults, no scene/format selection
+    if (!previewTier) {
+      const credits = creditsQuery.data;
+      if (!credits || credits.credits_remaining < STILL_COST) {
+        toast.error("No credits remaining. Please upgrade to continue.");
+        return;
+      }
+    }
+    setStep("generating");
+    let idx = 0;
+    const interval = setInterval(() => {
+      idx = (idx + 1) % GENERATING_PHRASES.length;
+      setPhraseIndex(idx);
+    }, 3000);
+    generateMutation.mutateAsync({ platform: "reels" }).then(() => {
+      clearInterval(interval);
+    }).catch(() => clearInterval(interval));
+  };
+
   const handleGenerate = () => {
     // In preview mode, skip the credit gate entirely
     if (!previewTier) {
       const credits = creditsQuery.data;
-      if (credits && credits.credits_remaining <= 0) {
+      if (!credits || credits.credits_remaining < STILL_COST) {
         toast.error("No credits remaining. Please upgrade to continue.");
         return;
       }
@@ -422,6 +487,40 @@ export default function Generate() {
             </div>
           )}
 
+          {/* ── Quick Generate — one tap, zero decisions ── */}
+          {effectiveCredits && effectiveCredits.credits_remaining > 0 && (
+            <div className="mb-6">
+              <button
+                onClick={handleQuickGenerate}
+                className="w-full py-5 bg-charcoal hover:bg-charcoal/90 active:scale-[0.98] transition-all duration-150 text-cream font-sans text-sm tracking-[0.15em] uppercase"
+              >
+                Generate My Content
+              </button>
+              <p className="mt-2 text-center font-sans text-xs text-charcoal-soft/60">
+                Uses your saved frequency. {STILL_COST} credit.
+              </p>
+            </div>
+          )}
+
+          {/* Customize toggle */}
+          <div className="mb-6">
+            <button
+              onClick={() => setShowCustomize((v) => !v)}
+              className="w-full flex items-center justify-between py-3 px-4 border border-sand/60 bg-warm-white/40 hover:border-gold/40 transition-all duration-200"
+            >
+              <span className="font-sans text-xs tracking-[0.1em] uppercase text-charcoal-soft">
+                {showCustomize ? "Hide options" : "Customize"}
+              </span>
+              <span className="font-sans text-xs text-charcoal-soft/60">
+                {showCustomize ? "\u2212" : "+"}
+              </span>
+            </button>
+          </div>
+
+          {/* Collapsible customize section */}
+          {showCustomize && (
+          <div className="animate-fade-up opacity-0">
+
           {/* Signature Scene — featured viral template, free once */}
           {!signatureSceneStatusQuery.data?.used && (
             <div className="mb-6 relative overflow-hidden border border-gold/60 bg-gradient-to-br from-warm-white to-gold/5">
@@ -457,6 +556,46 @@ export default function Generate() {
                   className="w-full py-3 border border-gold bg-gold/10 hover:bg-gold/20 transition-all duration-200 font-sans text-xs tracking-[0.15em] uppercase text-charcoal"
                 >
                   Generate my Signature Scene
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Signature Scene 2: Quiet Wealth — free once */}
+          {!signatureSceneTwoStatusQuery.data?.used && (
+            <div className="mb-6 relative overflow-hidden border border-sand/80 bg-gradient-to-br from-warm-white to-sand/10">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-sand/10 rounded-full -translate-y-1/2 translate-x-1/2" />
+              <div className="relative p-5">
+                <div className="flex items-start justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <Sparkles className="w-4 h-4 text-charcoal-soft" />
+                    <p className="font-sans text-xs tracking-[0.15em] uppercase text-charcoal-soft">
+                      Signature Scene
+                    </p>
+                  </div>
+                  <span className="font-sans text-xs text-charcoal-soft/80 border border-sand/60 px-2 py-0.5">
+                    Free
+                  </span>
+                </div>
+                <h3 className="font-serif text-lg text-charcoal mb-2">
+                  Quiet Wealth
+                </h3>
+                <p className="font-sans font-light text-xs text-charcoal-soft leading-relaxed mb-4">
+                  A private morning. No performance. Just the texture of a life that is already full.
+                </p>
+                <button
+                  onClick={() => {
+                    setStep("generating");
+                    let idx = 0;
+                    const interval = setInterval(() => {
+                      idx = (idx + 1) % GENERATING_PHRASES.length;
+                      setPhraseIndex(idx);
+                    }, 3000);
+                    signatureSceneTwoMutation.mutateAsync().finally(() => clearInterval(interval));
+                  }}
+                  className="w-full py-3 border border-sand hover:border-charcoal/30 bg-warm-white/60 hover:bg-warm-white transition-all duration-200 font-sans text-xs tracking-[0.15em] uppercase text-charcoal"
+                >
+                  Generate Quiet Wealth
                 </button>
               </div>
             </div>
@@ -604,7 +743,7 @@ export default function Generate() {
             </div>
           </div>
 
-          {/* Generate CTA */}
+          {/* Generate CTA inside customize panel */}
           {effectiveCredits && effectiveCredits.credits_remaining <= 0 && !previewTier ? (
             <div className="space-y-3">
               <div className="p-4 border border-gold/30 bg-warm-white text-center">
@@ -634,8 +773,41 @@ export default function Generate() {
             </div>
           ) : (
             <button onClick={handleGenerate} className="btn-luxury w-full">
-              Generate My Content
+              Generate with Custom Settings
             </button>
+          )}
+
+          </div>
+          )}
+
+          {/* No credits upsell — shown outside customize panel */}
+          {effectiveCredits && effectiveCredits.credits_remaining <= 0 && !previewTier && (
+            <div className="space-y-3">
+              <div className="p-4 border border-gold/30 bg-warm-white text-center">
+                <p className="font-sans text-xs text-charcoal-soft mb-2">
+                  You have used all your free generations.
+                </p>
+                <p className="font-serif text-sm text-charcoal">Upgrade to keep creating.</p>
+              </div>
+              <div className="space-y-2">
+                <a
+                  href={import.meta.env.VITE_STRIPE_STARTER_LINK || "#"}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn-luxury btn-gold w-full text-center block"
+                >
+                  Starter — $19 / month
+                </a>
+                <a
+                  href={import.meta.env.VITE_STRIPE_PRO_LINK || "#"}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn-luxury btn-luxury-outline w-full text-center block"
+                >
+                  Pro — $39 / month
+                </a>
+              </div>
+            </div>
           )}
         </div>
       )}
@@ -841,7 +1013,7 @@ export default function Generate() {
 
           {/* Actions */}
           <div className="space-y-3">
-            {/* Video — Pro tier */}
+            {/* Video — ready to download */}
             {videoUrl ? (
               <a
                 href={videoUrl}
@@ -852,29 +1024,33 @@ export default function Generate() {
               >
                 Download Video
               </a>
-            ) : (effectiveCredits?.tier === "pro" || previewTier === "pro") ? (
-              <button
-                onClick={handleGenerateVideo}
-                disabled={isGeneratingVideo}
-                className="btn-luxury btn-gold w-full"
-              >
-                {isGeneratingVideo ? (
-                  <span className="flex items-center justify-center gap-2">
-                    <span className="w-3 h-3 border border-cream border-t-transparent rounded-full animate-spin" />
-                    Generating video...
-                  </span>
-                ) : (
-                  "Generate Video (Pro)"
-                )}
+            ) : isGeneratingVideo ? (
+              <button disabled className="btn-luxury btn-gold w-full opacity-80">
+                <span className="flex items-center justify-center gap-2">
+                  <span className="w-3 h-3 border border-cream border-t-transparent rounded-full animate-spin" />
+                  Animating your scene...
+                </span>
               </button>
+            ) : (effectiveCredits?.tier === "starter" || effectiveCredits?.tier === "pro" || previewTier === "starter" || previewTier === "pro") ? (
+              <div>
+                <button
+                  onClick={handleAnimateMe}
+                  className="btn-luxury btn-gold w-full"
+                >
+                  Animate Me
+                </button>
+                <p className="mt-1 text-center font-sans text-xs text-charcoal-soft/60">
+                  Turns your still into a 5-second cinematic clip. {VIDEO_COST} credits.
+                </p>
+              </div>
             ) : (
               <a
-                href={import.meta.env.VITE_STRIPE_PRO_LINK || "#"}
+                href={import.meta.env.VITE_STRIPE_STARTER_LINK || "#"}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-full py-3 font-sans text-xs tracking-widest uppercase text-charcoal-soft hover:text-charcoal border border-sand hover:border-gold/40 transition-all duration-200 text-center block"
               >
-                Upgrade to Pro for Video
+                Upgrade to Starter for Animate Me
               </a>
             )}
             <button onClick={handleDownload} className="btn-luxury w-full">

@@ -86,7 +86,9 @@ export async function handleDownload(req: Request, res: Response) {
     return res.status(502).json({ error: "Failed to fetch image" });
   }
 
-  // Determine if watermark should be applied (free tier only)
+  // Determine if watermark should be applied
+  // Free tier: always watermark
+  // Starter/Pro: watermark only if share_badge_enabled is true (default null = no badge for paid)
   const creditsResult = await getSupabase()
     .from("credits")
     .select("tier")
@@ -94,8 +96,17 @@ export async function handleDownload(req: Request, res: Response) {
     .single();
   const credits = creditsResult.data as { tier: string } | null;
 
+  const profileResult = await getSupabase()
+    .from("profiles")
+    .select("share_badge_enabled")
+    .eq("user_id", user.id)
+    .single();
+  const profile = profileResult.data as { share_badge_enabled: boolean | null } | null;
+
   const tier = credits?.tier ?? "free";
-  const applyWatermark = tier === "free";
+  const shareBadgeEnabled = profile?.share_badge_enabled;
+  // Free tier: always watermark. Paid: watermark only when explicitly opted in (shareBadgeEnabled === true)
+  const applyWatermark = tier === "free" || shareBadgeEnabled === true;
 
   if (!applyWatermark) {
     // Serve original image

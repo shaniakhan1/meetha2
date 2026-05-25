@@ -31,6 +31,7 @@ export type DbProfile = {
   reference_image_urls: string[] | null;
   niche: string | null;
   audience: string | null;
+  share_badge_enabled: boolean | null;
   created_at: string;
   updated_at: string;
 };
@@ -225,6 +226,19 @@ export async function updateAestheticDescriptors(
     .eq("user_id", userId);
 }
 
+export async function updateShareBadge(
+  userId: number,
+  enabled: boolean
+): Promise<void> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const sb = getSupabase() as any;
+  const now = new Date().toISOString();
+  await sb
+    .from("profiles")
+    .update({ share_badge_enabled: enabled, updated_at: now })
+    .eq("user_id", userId);
+}
+
 export async function updateAestheticPreviewUrl(
   userId: number,
   url: string
@@ -277,7 +291,7 @@ export async function ensureCredits(userId: number): Promise<DbCredits> {
   return data as DbCredits;
 }
 
-export async function decrementCredit(userId: number): Promise<void> {
+export async function decrementCredit(userId: number, cost = 1): Promise<void> {
   const credits = await getCredits(userId);
   if (!credits) return;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -285,8 +299,8 @@ export async function decrementCredit(userId: number): Promise<void> {
   await sb
     .from("credits")
     .update({
-      credits_remaining: Math.max(0, credits.credits_remaining - 1),
-      total_used: credits.total_used + 1,
+      credits_remaining: Math.max(0, credits.credits_remaining - cost),
+      total_used: credits.total_used + cost,
       updated_at: new Date().toISOString(),
     })
     .eq("user_id", userId);

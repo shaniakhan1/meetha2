@@ -57,6 +57,14 @@ export default function Profile() {
     onError: (err) => toast.error(err.message),
   });
 
+  const setShareBadgeMutation = trpc.profile.setShareBadge.useMutation({
+    onSuccess: () => {
+      utils.profile.get.invalidate();
+      toast.success("Badge preference saved.");
+    },
+    onError: (err) => toast.error(err.message),
+  });
+
   const upsertProfile = trpc.profile.upsert.useMutation({
     onSuccess: () => {
       utils.profile.get.invalidate();
@@ -162,6 +170,53 @@ export default function Profile() {
                 {credits?.credits_remaining ?? "—"} remaining
               </p>
             </div>
+            {/* Meetha badge toggle — Starter/Pro only */}
+            {credits && credits.tier !== "free" && (
+              <>
+                <div className="w-full h-px bg-sand/60" />
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="font-sans text-xs text-charcoal-soft">Share with Meetha badge</p>
+                    <p className="font-sans text-xs text-charcoal-soft/60 mt-0.5">
+                      Adds a subtle "meetha" mark to your downloads
+                    </p>
+                  </div>
+                  <button
+                    onClick={() =>
+                      setShareBadgeMutation.mutate({ enabled: !(profile?.share_badge_enabled ?? false) })
+                    }
+                    disabled={setShareBadgeMutation.isPending}
+                    className={`relative w-10 h-5 rounded-full transition-all duration-200 ${
+                      profile?.share_badge_enabled
+                        ? "bg-gold"
+                        : "bg-sand"
+                    }`}
+                  >
+                    <span
+                      className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-all duration-200 ${
+                        profile?.share_badge_enabled ? "left-5" : "left-0.5"
+                      }`}
+                    />
+                  </button>
+                </div>
+              </>
+            )}
+            {credits?.tier === "free" && (
+              <>
+                <div className="w-full h-px bg-sand/60" />
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="font-sans text-xs text-charcoal-soft">Meetha badge on downloads</p>
+                    <p className="font-sans text-xs text-charcoal-soft/60 mt-0.5">
+                      Upgrade to remove
+                    </p>
+                  </div>
+                  <span className="font-sans text-xs text-charcoal-soft/60 border border-sand px-2 py-0.5">
+                    Always on
+                  </span>
+                </div>
+              </>
+            )}
           </div>
         </div>
 

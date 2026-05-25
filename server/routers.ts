@@ -21,7 +21,7 @@ import {
   savePostabilityFeedback,
   updateAestheticDescriptors,
   updateAestheticPreviewUrl,
-  updateReferenceImageUrls,
+  updateShareBadge,
   getOrCreateReferralCode,
   getUserByReferralCode,
   getReferralsByUser,
@@ -142,7 +142,7 @@ function buildCopyPrompt(
     ? `\n\nCreator context: ${niche ? `She creates content about ${niche}.` : ""} ${audience ? `She speaks to ${audience}.` : ""} Ground the hooks and caption in this specific world. The copy should feel native to her niche, not generic luxury content.`
     : "";
 
-  return `You are a content voice for women creators who have a specific, calibrated aesthetic frequency. You write copy that sounds like it came from a real woman who has already arrived, not a brand trying to reach her.
+  return `You are writing copy for a woman creator who has a specific, calibrated voice. You write the way she thinks, not the way a brand talks to her.
 
 Creator's frequency: "${archetype.replace(/_/g, " ")}" — ${archetypeDesc}
 Current energy: "${mood}" — ${moodDesc}
@@ -153,33 +153,36 @@ Write exactly 3 hook options for text overlay on a cinematic lifestyle image.
 
 Hook rules:
 - Under 10 words each
+- Short declarative sentences. Observational contrast. No explanation.
 - No em-dashes, no ellipses as pauses, no exclamation marks
 - No Pinterest wellness language ("this is your sign", "you deserve", "romanticize your life", "soft life")
 - No hustle language ("level up", "boss", "grind", "main character", "that girl")
 - No AI constructions ("in a world where", "reminder that", "friendly reminder", "it's giving")
-- No generic motivational quotes
-- Specific and observational, not aspirational-generic
+- No motivational quotes, no affirmations, no calls to action
+- Observational, not aspirational. States a truth. Does not explain it.
 - Sounds like something she would say to herself, not something a brand would say to her
 - Culturally specific and grounded, not racially neutral or whitewashed
 
-Examples of the right frequency:
-"the version of me that has time"
-"soft is not the same as small"
-"i stopped explaining myself and everything changed"
-"this is what slow looks like"
+Examples of the right voice (study the rhythm and structure, not just the words):
+"some people are trying to build beautiful lives inside nervous systems that never get to rest"
+"luxury is not always what you add. sometimes it is what you remove."
+"the people who feel the most luxurious are rarely trying the hardest to appear important"
+"she wears the same thing twice a week. you haven't repeated an outfit in months."
 "calm women move differently"
 "peace changed my face"
-"being grounded looks expensive now"
-"i don't chase. i attract."
 "she already knew"
+"soft is not the same as small"
+"being grounded looks expensive now"
 
 Then write one caption:
-- 1-3 sentences maximum
+- 2-3 short declarative sentences maximum
 - No em-dashes
-- Reads like a real thought she had this morning, not a content strategy
-- Ends with a soft question or a quiet statement, never a hard CTA
+- Observational contrast structure: state what is true, then contrast it with what most people do
+- No explanation, no call to action, no question at the end
+- Ends with a quiet statement, not a question and not a CTA
 - Platform-appropriate (see tone above)
 - Specific and grounded, not vague and inspirational
+- The last sentence should land like a period at the end of a thought, not an invitation
 
 Then write exactly 5 hashtags:
 - No # symbol
@@ -244,6 +247,22 @@ export const appRouter = router({
           audience: input.audience,
         });
       }),
+
+    /**
+     * Toggle the "Shared with Meetha" badge on downloaded images.
+     * Free tier always gets the badge. Starter/Pro can opt in or out.
+     */
+    setShareBadge: protectedProcedure
+      .input(z.object({ enabled: z.boolean() }))
+      .mutation(async ({ ctx, input }) => {
+        // Only Starter/Pro users can turn the badge off
+        const credits = await getCredits(ctx.user.id);
+        if (!credits || credits.tier === "free") {
+          throw new Error("Upgrade to Starter or Pro to control the Meetha badge.");
+        }
+        await updateShareBadge(ctx.user.id, input.enabled);
+        return { success: true };
+      }),
   }),
 
   // ─── Credits ──────────────────────────────────────────────────────────────
@@ -294,9 +313,10 @@ export const appRouter = router({
         })
       )
       .mutation(async ({ ctx, input }) => {
-        // Check credits
+        // Check credits (still image = 1 credit)
+        const STILL_COST = 1;
         const userCredits = await ensureCredits(ctx.user.id);
-        if (!userCredits || userCredits.credits_remaining <= 0) {
+        if (!userCredits || userCredits.credits_remaining < STILL_COST) {
           throw new Error("No credits remaining. Please upgrade to continue.");
         }
 
@@ -305,7 +325,7 @@ export const appRouter = router({
         const archetype = profile?.archetype ?? "luxury_minimal";
         const mood = profile?.mood ?? "soft";
 
-                // Generate image via Fal.ai FLUX 1.1 Pro
+        // Generate image via Fal.ai FLUX 1.1 Pro Ultra
         const imagePrompt = buildImagePrompt(archetype, mood, input.sceneCategory, profile?.aesthetic_descriptors ?? null, profile?.niche ?? null, profile?.audience ?? null);
         // Map video format to Fal image_size
         const VIDEO_FORMAT_SIZE: Record<string, "portrait_4_3" | "portrait_16_9" | "square_hd" | "landscape_16_9"> = {
@@ -314,18 +334,7 @@ export const appRouter = router({
           landscape: "landscape_16_9",
         };
         const imageSize = input.videoFormat ? VIDEO_FORMAT_SIZE[input.videoFormat] : "portrait_4_3";
-        // Resolve reference image for subject-anchored generation
-        let referenceImageUrl: string | undefined;
-        const refUrls = profile?.reference_image_urls;
-        if (refUrls && refUrls.length > 0) {
-          try {
-            const relKey = (refUrls[0] as string).replace(/^\/manus-storage\//, "");
-            referenceImageUrl = await storageGetSignedUrl(relKey);
-          } catch {
-            // Non-fatal: fall back to text-to-image
-          }
-        }
-        const { url: imageUrl, key: imageKey } = await generateImageFal({ prompt: imagePrompt, imageSize, referenceImageUrl });
+        const { url: imageUrl, key: imageKey } = await generateImageFal({ prompt: imagePrompt, imageSize });
         // Generate copy (pass aesthetic descriptors + niche/audience if available)
         const copyPrompt = buildCopyPrompt(archetype, mood, input.platform, profile?.aesthetic_descriptors ?? null, profile?.niche ?? null, profile?.audience ?? null);
         const copyResponse = await invokeLLMOpenAI({
@@ -373,8 +382,8 @@ export const appRouter = router({
           hashtags = ["quietluxury", "editoriallife", "softpower", "luxurylifestyle", "cinematic"];
         }
 
-        // Deduct credit
-        await decrementCredit(ctx.user.id);
+        // Deduct 1 credit for still image
+        await decrementCredit(ctx.user.id, STILL_COST);
 
         // Save generation
         const generation = await createGeneration({
@@ -423,9 +432,10 @@ export const appRouter = router({
         })
       )
       .mutation(async ({ ctx, input }) => {
-        // Check credits
+        // Check credits (voice-to-content = 1 credit, same as still)
+        const VOICE_COST = 1;
         const userCredits = await ensureCredits(ctx.user.id);
-        if (!userCredits || userCredits.credits_remaining <= 0) {
+        if (!userCredits || userCredits.credits_remaining < VOICE_COST) {
           throw new Error("No credits remaining. Please upgrade to continue.");
         }
 
@@ -534,18 +544,7 @@ Return JSON with:
         } else {
           imagePrompt = buildImagePrompt(archetype, mood, effectiveScene, profile?.aesthetic_descriptors ?? null, profile?.niche ?? null, profile?.audience ?? null);
         }
-        // Resolve reference image for subject-anchored generation
-        let voiceReferenceImageUrl: string | undefined;
-        const voiceRefUrls = profile?.reference_image_urls;
-        if (voiceRefUrls && voiceRefUrls.length > 0) {
-          try {
-            const relKey = (voiceRefUrls[0] as string).replace(/^\/manus-storage\//, "");
-            voiceReferenceImageUrl = await storageGetSignedUrl(relKey);
-          } catch {
-            // Non-fatal: fall back to text-to-image
-          }
-        }
-        const { url: imageUrl, key: imageKey } = await generateImageFal({ prompt: imagePrompt, referenceImageUrl: voiceReferenceImageUrl });
+        const { url: imageUrl, key: imageKey } = await generateImageFal({ prompt: imagePrompt });
 
         // 6. Build copy prompt with voice context as additional grounding
         const voiceCopyContext = `\n\nThis creator just said: "${transcript}"\n\nEmotional core extracted: ${emotionalCore}\n\nWrite copy that feels like a distillation of this moment. The hooks and caption should feel like something she would say after this exact thought. Ground the copy in her actual words and feeling, not generic aesthetic language.`;
@@ -597,8 +596,8 @@ Return JSON with:
           hashtags = ["quietluxury", "editoriallife", "softpower", "luxurylifestyle", "cinematic"];
         }
 
-        // 7. Deduct credit and save generation
-        await decrementCredit(ctx.user.id);
+        // 7. Deduct 1 credit for voice-to-content
+        await decrementCredit(ctx.user.id, VOICE_COST);
 
         const generation = await createGeneration({
           userId: ctx.user.id,
@@ -629,7 +628,7 @@ Return JSON with:
 
   signatureScene: router({
     /**
-     * Check if the user has already used their free Signature Scene generation.
+     * Check if the user has already used their free "Yes to All" Signature Scene generation.
      */
     status: protectedProcedure.query(async ({ ctx }) => {
       const sb = getSupabase() as any;
@@ -637,8 +636,153 @@ Return JSON with:
         .from("signature_scene_uses")
         .select("id")
         .eq("user_id", ctx.user.id)
-        .single();
-      return { used: !!data };
+        .eq("scene_key", "yes_to_all")
+        .limit(1);
+      return { used: !!(data && data.length > 0) };
+    }),
+
+    /**
+     * Check if the user has used the second Signature Scene (Quiet Wealth).
+     */
+    statusTwo: protectedProcedure.query(async ({ ctx }) => {
+      const sb = getSupabase() as any;
+      const { data } = await sb
+        .from("signature_scene_uses")
+        .select("id, scene_key")
+        .eq("user_id", ctx.user.id)
+        .eq("scene_key", "quiet_wealth");
+      return { used: !!(data && data.length > 0) };
+    }),
+
+    /**
+     * Generate the second Signature Scene: Quiet Wealth.
+     * Free once per user, no credits deducted.
+     */
+    generateTwo: protectedProcedure.mutation(async ({ ctx }) => {
+      const sb = getSupabase() as any;
+      const { data: existing } = await sb
+        .from("signature_scene_uses")
+        .select("id")
+        .eq("user_id", ctx.user.id)
+        .eq("scene_key", "quiet_wealth");
+
+      if (existing && existing.length > 0) {
+        throw new Error("You have already used your free Quiet Wealth scene.");
+      }
+
+      const profile = await getProfile(ctx.user.id);
+      const archetype = profile?.archetype ?? "luxury_minimal";
+      const mood = profile?.mood ?? "soft";
+
+      const aestheticLayer = profile?.aesthetic_descriptors
+        ? `calibrated to this specific aesthetic: ${profile.aesthetic_descriptors},`
+        : "warm honey deep brown skin tones where hands are visible, layered gold jewelry,";
+      const archetypeStyle = ARCHETYPE_VISUAL[archetype] || ARCHETYPE_VISUAL.soft_power;
+
+      // Quiet Wealth image: a private moment of ease, not performance
+      const quietWealthPrompt = `a woman's hands resting on crisp white linen beside a ceramic espresso cup, a single white peony, a slim leather card holder, morning light through sheer curtains, ${archetypeStyle}, ${MOOD_VISUAL[mood] || MOOD_VISUAL.grounded}, ${aestheticLayer} editorial female-gaze quiet luxury aesthetic, cinematic lighting, cool white and warm cream tones, atmospheric depth, no faces, no full bodies, vertical 9:16 framing, photorealistic, high resolution, the feeling of a woman who does not need to announce anything`;
+
+      const { url: imageUrl, key: imageKey } = await generateImageFal({ prompt: quietWealthPrompt });
+
+      const archetypeVoice = ARCHETYPE_VOICE[archetype] || "";
+      const nicheContext = profile?.niche || profile?.audience
+        ? `\n\nCreator context: ${profile.niche ? `She creates content about ${profile.niche}.` : ""} ${profile.audience ? `She speaks to ${profile.audience}.` : ""}`
+        : "";
+
+      const quietWealthCopyPrompt = `You are writing copy for the Quiet Wealth scene. The image shows a private morning: espresso, white peony, linen, morning light. No performance. No announcement. Just the texture of a life that is already full.
+
+Creator's frequency: "${archetype.replace(/_/g, " ")}" — ${ARCHETYPE_DESCRIPTIONS[archetype as Archetype] || ""}
+Current energy: "${mood}" — ${MOOD_DESCRIPTIONS[mood as Mood] || ""}
+Voice calibration: ${archetypeVoice}${nicheContext}
+
+Write exactly 3 hooks for text overlay on this image.
+
+Hook rules:
+- Under 10 words each
+- No em-dashes, no ellipses as pauses, no exclamation marks
+- No Pinterest wellness language, no hustle language, no AI constructions
+- Sounds like something she would say to herself, not a brand
+- Must feel like a woman who does not need to explain herself
+
+Examples of the right frequency:
+"luxury is what you remove"
+"she wears the same thing twice a week"
+"the people who feel the most luxurious are rarely trying"
+"outfit repeating is confident"
+"some people are building beautiful lives inside nervous systems that never rest"
+
+Then write one caption:
+- 1-3 sentences maximum
+- No em-dashes
+- Reads like a real thought she had this morning
+- Ends with a quiet statement, not a CTA
+
+Then write exactly 5 hashtags (no # symbol, niche-specific, editorial).
+
+Respond in this exact JSON format:
+{"hooks": ["hook one", "hook two", "hook three"], "caption": "The caption.", "hashtags": ["word1", "word2", "word3", "word4", "word5"]}`;
+
+      const copyResponse = await invokeLLMOpenAI({
+        messages: [{ role: "user", content: quietWealthCopyPrompt }],
+        response_format: {
+          type: "json_schema",
+          json_schema: {
+            name: "content_copy",
+            strict: true,
+            schema: {
+              type: "object",
+              properties: {
+                hooks: { type: "array", items: { type: "string" } },
+                caption: { type: "string" },
+                hashtags: { type: "array", items: { type: "string" } },
+              },
+              required: ["hooks", "caption", "hashtags"],
+              additionalProperties: false,
+            },
+          },
+        },
+      });
+
+      let hooks: string[] = [];
+      let caption = "";
+      let hashtags: string[] = [];
+      try {
+        const content = copyResponse.choices?.[0]?.message?.content;
+        const parsed = JSON.parse(typeof content === "string" ? content : JSON.stringify(content));
+        hooks = parsed.hooks?.slice(0, 3) ?? [];
+        caption = parsed.caption ?? "";
+        hashtags = parsed.hashtags?.slice(0, 5) ?? [];
+      } catch {
+        hooks = ["luxury is what you remove", "she wears the same thing twice a week", "the people who feel the most luxurious are rarely trying"];
+        caption = "Some people are building beautiful lives inside nervous systems that never get to rest. Luxury is not always what you add.";
+        hashtags = ["quietluxury", "softlife", "luxurylifestyle", "softpower", "capsulewardrobe"];
+      }
+
+      // Mark as used with scene_key
+      await sb.from("signature_scene_uses").insert({ user_id: ctx.user.id, scene_key: "quiet_wealth" });
+
+      const generation = await createGeneration({
+        userId: ctx.user.id,
+        imageUrl,
+        imageKey,
+        archetype,
+        mood,
+        platform: "reels",
+        sceneCategory: "quiet_luxury",
+        hooks: JSON.stringify(hooks),
+        caption,
+      });
+
+      const updatedCredits = await getCredits(ctx.user.id);
+
+      return {
+        generation,
+        hooks,
+        caption,
+        hashtags,
+        creditsRemaining: updatedCredits?.credits_remaining ?? 0,
+        isSignatureScene: true,
+      };
     }),
 
     /**
@@ -646,15 +790,16 @@ Return JSON with:
      * Returns the same shape as generate.content.
      */
     generate: protectedProcedure.mutation(async ({ ctx }) => {
-      // Check if already used
+      // Check if already used (scope to yes_to_all scene)
       const sb = getSupabase() as any;
       const { data: existing } = await sb
         .from("signature_scene_uses")
         .select("id")
         .eq("user_id", ctx.user.id)
-        .single();
+        .eq("scene_key", "yes_to_all")
+        .limit(1);
 
-      if (existing) {
+      if (existing && existing.length > 0) {
         throw new Error("You have already used your free Signature Scene generation.");
       }
 
@@ -749,7 +894,7 @@ Respond in this exact JSON format:
       }
 
       // Mark as used (no credits deducted)
-      await sb.from("signature_scene_uses").insert({ user_id: ctx.user.id });
+      await sb.from("signature_scene_uses").insert({ user_id: ctx.user.id, scene_key: "yes_to_all" });
 
       // Save generation (platform = reels as default for portrait format)
       const generation = await createGeneration({
@@ -777,9 +922,54 @@ Respond in this exact JSON format:
     }),
   }),
 
-  // ─── Video Generation (Pro tier) ───────────────────────────────────────────
+  // ─── Video Generation ─────────────────────────────────────────────────────
 
   video: router({
+    /**
+     * Animate Me: converts an existing still generation into a 5-second cinematic clip.
+     * Available to Starter and Pro tier users. Costs 5 credits.
+     */
+    animateMe: protectedProcedure
+      .input(
+        z.object({
+          generationId: z.number(),
+          imageUrl: z.string(),
+          archetype: z.string(),
+          mood: z.string(),
+          sceneCategory: z.string().optional(),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        const ANIMATE_COST = 5;
+        const userCredits = await getCredits(ctx.user.id);
+        if (!userCredits || userCredits.tier === "free") {
+          throw new Error("Animate Me is available on Starter and Pro plans.");
+        }
+        if (userCredits.credits_remaining < ANIMATE_COST) {
+          throw new Error(`Not enough credits. Animate Me costs ${ANIMATE_COST} credits.`);
+        }
+
+        // Build a gentle motion prompt
+        const motionPrompt = `Slow cinematic camera drift, gentle parallax, soft light shift, luxury lifestyle aesthetic, no people, no faces, editorial film quality, ${input.archetype.replace(/_/g, " ")} aesthetic, ${input.mood} energy${input.sceneCategory ? ", " + input.sceneCategory.replace(/_/g, " ") : ""}`;
+
+        // Resolve relative storage URL to a full public URL for Fal.ai
+        let resolvedImageUrl = input.imageUrl;
+        if (input.imageUrl.startsWith("/manus-storage/")) {
+          const key = input.imageUrl.replace("/manus-storage/", "");
+          resolvedImageUrl = await storageGetSignedUrl(key);
+        }
+
+        const { url: videoUrl } = await generateVideoFal({
+          imageUrl: resolvedImageUrl,
+          prompt: motionPrompt,
+        });
+
+        // Deduct credits
+        await decrementCredit(ctx.user.id, ANIMATE_COST);
+
+        return { videoUrl };
+      }),
+
     generate: protectedProcedure
       .input(
         z.object({
@@ -791,10 +981,14 @@ Respond in this exact JSON format:
         })
       )
       .mutation(async ({ ctx, input }) => {
-        // Only Pro tier users can generate video
+        // Only Pro tier users can generate video (costs 5 credits)
+        const VIDEO_COST = 5;
         const userCredits = await getCredits(ctx.user.id);
         if (!userCredits || userCredits.tier !== "pro") {
           throw new Error("Video generation is available on the Pro plan only.");
+        }
+        if (userCredits.credits_remaining < VIDEO_COST) {
+          throw new Error("Not enough credits for video generation. You need 5 credits.");
         }
 
         // Build a cinematic motion prompt from archetype + scene
@@ -811,6 +1005,9 @@ Respond in this exact JSON format:
           imageUrl: resolvedImageUrl,
           prompt: motionPrompt,
         });
+
+        // Deduct 5 credits for video generation
+        await decrementCredit(ctx.user.id, VIDEO_COST);
 
         return { videoUrl };
       }),
@@ -864,10 +1061,7 @@ Respond in this exact JSON format:
             // Non-fatal: if upload fails, continue with remaining images
           }
         }
-        // Save reference URLs to profile
-        if (uploadedUrls.length > 0) {
-          await updateReferenceImageUrls(ctx.user.id, uploadedUrls);
-        }
+        // Calibration images uploaded to storage for aesthetic analysis (reference_image_urls not used for generation)
         // Build GPT-4o Vision message with all uploaded images
         const imageContents = input.images.map((dataUrl) => ({
           type: "image_url" as const,
