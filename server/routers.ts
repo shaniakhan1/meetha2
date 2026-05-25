@@ -198,38 +198,42 @@ Voice calibration: ${archetypeVoice}${frequencyContext}${nicheContext}${voiceCon
 
 Write exactly 3 hook options for text overlay on a cinematic lifestyle image.
 
-Hook rules:
-- Under 10 words each
-- Short declarative sentences. Observational contrast. No explanation.
-- No em-dashes, no ellipses as pauses, no exclamation marks
-- No Pinterest wellness language ("this is your sign", "you deserve", "romanticize your life", "soft life")
-- No hustle language ("level up", "boss", "grind", "main character", "that girl")
-- No AI constructions ("in a world where", "reminder that", "friendly reminder", "it's giving")
+Hook rules — read every rule before writing:
+- 1 to 6 words. Never longer.
+- Plain everyday words only. No thesaurus words. No poetic vocabulary.
+- Sounds like a text message or a note to herself, not a quote on a wall
+- No metaphors, no symbolism, no abstract nouns (no "silence", "multitudes", "whispers", "gilded", "fathom", "depth", "luminous", "essence")
+- No em-dashes, no ellipses, no exclamation marks
+- No Pinterest wellness ("this is your sign", "you deserve", "romanticize")
+- No hustle language ("level up", "boss", "main character", "that girl")
+- No AI phrases ("in a world where", "reminder that", "it's giving", "slay")
 - No motivational quotes, no affirmations, no calls to action
-- Observational, not aspirational. States a truth. Does not explain it.
-- Sounds like something she would say to herself, not something a brand would say to her
-- Culturally specific and grounded, not racially neutral or whitewashed
+- States a simple observable fact about her life. Does not explain it.
 
-Examples of the right voice (study the rhythm and structure, not just the words):
-"some people are trying to build beautiful lives inside nervous systems that never get to rest"
-"luxury is not always what you add. sometimes it is what you remove."
-"the people who feel the most luxurious are rarely trying the hardest to appear important"
-"she wears the same thing twice a week. you haven't repeated an outfit in months."
+GOOD examples (copy this exact register and length):
 "calm women move differently"
 "peace changed my face"
 "she already knew"
-"soft is not the same as small"
-"being grounded looks expensive now"
+"outfit repeating is confident"
+"she got quieter"
+"out past my bedtime"
+"seen briefly"
+
+BAD examples (never write like this):
+"Gold whispers louder than gilded noise" — too poetic, fake-deep
+"Her silence contains multitudes they can't fathom" — sounds like AI trying to be literary
+"The light finds depth amid the simplicity" — abstract, no one talks like this
+"Luxury is not always what you add" — too long, sounds like a brand tagline
+
+If you cannot write something a real woman would type into her phone caption box, write nothing. Simple is always better.
 
 Then write one caption:
-- 2-3 short declarative sentences maximum
-- No em-dashes
-- Observational contrast structure: state what is true, then contrast it with what most people do
-- No explanation, no call to action, no question at the end
-- Ends with a quiet statement, not a question and not a CTA
-- Platform-appropriate (see tone above)
-- Specific and grounded, not vague and inspirational
-- The last sentence should land like a period at the end of a thought, not an invitation
+- 1-3 short sentences. Plain words. Conversational.
+- No em-dashes, no exclamation marks, no questions
+- No abstract or poetic language (no "whispers", "gilded", "multitudes", "luminous", "depth", "essence")
+- Sounds like something she would actually type, not something a brand copywriter would write
+- Observational: states something true about her life or a simple contrast between her and everyone else
+- Ends with a quiet statement. Not a question. Not a CTA.
 
 Then write exactly 5 hashtags:
 - No # symbol
