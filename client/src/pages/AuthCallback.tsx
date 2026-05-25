@@ -12,10 +12,29 @@ export default function AuthCallback() {
   useEffect(() => {
     const handleCallback = async () => {
       try {
-        // Supabase puts the token in the URL hash after magic link click
         const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        // Exchange the hash fragment for a session
+        // Google OAuth returns a `code` query param; magic links use URL hash fragments.
+        // Supabase JS SDK handles both automatically via getSession() after the redirect.
+        const urlParams = new URLSearchParams(window.location.search);
+        const hasCode = urlParams.has("code");
+
+        if (hasCode) {
+          // Google OAuth PKCE flow: exchange the code for a session
+          // Supabase expects the full URL (including code and code_verifier) for PKCE
+          const { data, error: exchangeError } = await supabase.auth.exchangeCodeForSession(
+            window.location.href
+          );
+          // Note: exchangeCodeForSession accepts the full URL and extracts the code internally
+          if (exchangeError || !data.session) {
+            setError("Sign-in failed. Please try again.");
+            return;
+          }
+          await exchangeWithServer(data.session.access_token);
+          return;
+        }
+
+        // Magic link flow: session is in the URL hash or already in storage
         const { data, error: sessionError } = await supabase.auth.getSession();
 
         if (sessionError || !data.session) {

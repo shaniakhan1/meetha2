@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
@@ -11,7 +11,7 @@ import {
   type Mood,
 } from "@shared/types";
 
-type Step = "archetype" | "insight" | "mood" | "aesthetic" | "complete";
+type Step = "archetype" | "insight" | "mood" | "niche" | "aesthetic" | "complete";
 
 const ARCHETYPE_TAGLINES: Record<Archetype, string> = {
   luxury_minimal: "Stillness as power.",
@@ -28,13 +28,30 @@ const MOOD_TAGLINES: Record<Mood, string> = {
   untamed: "Wildness with taste.",
 };
 
-const ALL_STEPS: Step[] = ["archetype", "insight", "mood", "aesthetic", "complete"];
+const NICHES = [
+  { value: "lifestyle", label: "Lifestyle", description: "Daily life, home, routines, aesthetics" },
+  { value: "business and brand", label: "Business & Brand", description: "Entrepreneurship, offers, thought leadership" },
+  { value: "travel", label: "Travel", description: "Destinations, experiences, culture" },
+  { value: "wellness", label: "Wellness", description: "Mind, body, rituals, self-care" },
+  { value: "fashion and beauty", label: "Fashion & Beauty", description: "Style, beauty, personal expression" },
+];
+
+const AUDIENCES = [
+  { value: "my community", label: "My Community", description: "People who already follow and love my world" },
+  { value: "potential clients", label: "Potential Clients", description: "People who might hire or buy from me" },
+  { value: "brands and collaborators", label: "Brands & Collaborators", description: "Companies and creators I want to work with" },
+  { value: "everyone", label: "Everyone", description: "Building reach and discovery" },
+];
+
+const ALL_STEPS: Step[] = ["archetype", "insight", "mood", "niche", "aesthetic", "complete"];
 
 export default function Onboarding() {
   const [, navigate] = useLocation();
   const [step, setStep] = useState<Step>("archetype");
   const [selectedArchetype, setSelectedArchetype] = useState<Archetype | null>(null);
   const [selectedMood, setSelectedMood] = useState<Mood | null>(null);
+  const [selectedNiche, setSelectedNiche] = useState<string | null>(null);
+  const [selectedAudience, setSelectedAudience] = useState<string | null>(null);
   const [referenceImages, setReferenceImages] = useState<string[]>([]);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -68,6 +85,10 @@ export default function Onboarding() {
 
   const handleMoodSelect = (mood: Mood) => {
     setSelectedMood(mood);
+    setStep("niche");
+  };
+
+  const handleNicheContinue = () => {
     setStep("aesthetic");
   };
 
@@ -103,6 +124,8 @@ export default function Onboarding() {
       archetype: selectedArchetype,
       mood: selectedMood,
       onboardingComplete: true,
+      niche: selectedNiche,
+      audience: selectedAudience,
     });
   };
 
@@ -136,7 +159,7 @@ export default function Onboarding() {
         <div className="flex-1 flex flex-col px-6 py-8 animate-fade-up opacity-0">
           <div className="mb-10">
             <p className="font-sans text-xs tracking-[0.2em] uppercase text-gold mb-4">
-              Step 1 of 3
+              Step 1 of 4
             </p>
             <h2 className="font-serif font-light text-charcoal mb-3">
               What is your frequency?
@@ -215,7 +238,7 @@ export default function Onboarding() {
         <div className="flex-1 flex flex-col px-6 py-8 animate-fade-up opacity-0">
           <div className="mb-10">
             <p className="font-sans text-xs tracking-[0.2em] uppercase text-gold mb-4">
-              Step 2 of 3
+              Step 2 of 4
             </p>
             <h2 className="font-serif font-light text-charcoal mb-3">
               What is your current energy?
@@ -247,18 +270,109 @@ export default function Onboarding() {
         </div>
       )}
 
+      {/* Step: Niche + Audience */}
+      {step === "niche" && (
+        <div className="flex-1 flex flex-col px-6 py-8 animate-fade-up opacity-0 overflow-y-auto">
+          <div className="mb-8">
+            <p className="font-sans text-xs tracking-[0.2em] uppercase text-gold mb-4">
+              Step 3 of 4
+            </p>
+            <h2 className="font-serif font-light text-charcoal mb-3">
+              Tell Meetha your world.
+            </h2>
+            <p className="font-sans font-light text-sm text-charcoal-soft leading-relaxed">
+              Two quick questions. Your answers make every generation feel native to your actual life, not generic luxury content.
+            </p>
+          </div>
+
+          {/* Niche */}
+          <div className="mb-8">
+            <p className="font-sans text-xs tracking-[0.15em] uppercase text-charcoal-soft mb-3">
+              What do you create content about?
+            </p>
+            <div className="space-y-2">
+              {NICHES.map((n) => (
+                <button
+                  key={n.value}
+                  onClick={() => setSelectedNiche(selectedNiche === n.value ? null : n.value)}
+                  className={`w-full text-left px-4 py-3.5 border transition-all duration-200 flex items-center justify-between group ${
+                    selectedNiche === n.value
+                      ? "border-gold bg-gold/5"
+                      : "border-sand bg-warm-white/60 hover:border-gold/40 hover:bg-warm-white"
+                  }`}
+                >
+                  <div>
+                    <p className="font-sans text-sm text-charcoal">{n.label}</p>
+                    <p className="font-sans text-xs text-charcoal-soft mt-0.5">{n.description}</p>
+                  </div>
+                  <div
+                    className={`w-4 h-4 rounded-full border flex-shrink-0 ml-4 transition-all duration-200 ${
+                      selectedNiche === n.value ? "border-gold bg-gold" : "border-sand"
+                    }`}
+                  />
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Audience */}
+          <div className="mb-8">
+            <p className="font-sans text-xs tracking-[0.15em] uppercase text-charcoal-soft mb-3">
+              Who are you speaking to?
+            </p>
+            <div className="space-y-2">
+              {AUDIENCES.map((a) => (
+                <button
+                  key={a.value}
+                  onClick={() => setSelectedAudience(selectedAudience === a.value ? null : a.value)}
+                  className={`w-full text-left px-4 py-3.5 border transition-all duration-200 flex items-center justify-between group ${
+                    selectedAudience === a.value
+                      ? "border-gold bg-gold/5"
+                      : "border-sand bg-warm-white/60 hover:border-gold/40 hover:bg-warm-white"
+                  }`}
+                >
+                  <div>
+                    <p className="font-sans text-sm text-charcoal">{a.label}</p>
+                    <p className="font-sans text-xs text-charcoal-soft mt-0.5">{a.description}</p>
+                  </div>
+                  <div
+                    className={`w-4 h-4 rounded-full border flex-shrink-0 ml-4 transition-all duration-200 ${
+                      selectedAudience === a.value ? "border-gold bg-gold" : "border-sand"
+                    }`}
+                  />
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="mt-auto space-y-3">
+            <button
+              onClick={handleNicheContinue}
+              className="btn-luxury w-full"
+            >
+              {selectedNiche || selectedAudience ? "Continue" : "Skip for now"}
+            </button>
+            {!selectedNiche && !selectedAudience && (
+              <p className="font-sans text-xs text-charcoal-soft text-center">
+                You can update this anytime from your profile.
+              </p>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Step: Aesthetic Calibration Upload */}
       {step === "aesthetic" && (
         <div className="flex-1 flex flex-col px-6 py-8 animate-fade-up opacity-0">
           <div className="mb-8">
             <p className="font-sans text-xs tracking-[0.2em] uppercase text-gold mb-4">
-              Step 3 of 3 — Optional
+              Step 4 of 4 — Optional
             </p>
             <h2 className="font-serif font-light text-charcoal mb-3">
               Teach Meetha your frequency
             </h2>
             <p className="font-sans font-light text-sm text-charcoal-soft leading-relaxed">
-              Upload 3–5 images that feel like your world. Meetha reads your colors, your light, your warmth, your skin tone — not faces — so every generation is tuned to you specifically.
+              Upload 3-5 images that feel like your world. Meetha reads your colors, your light, your warmth, your skin tone, not faces, so every generation is tuned to you specifically.
             </p>
           </div>
 
@@ -280,7 +394,7 @@ export default function Onboarding() {
                   }
                   className="absolute top-1 right-1 w-5 h-5 bg-charcoal/70 text-cream rounded-full text-xs flex items-center justify-center hover:bg-charcoal transition-colors"
                 >
-                  ×
+                  x
                 </button>
               </div>
             ))}
@@ -339,12 +453,12 @@ export default function Onboarding() {
             </p>
 
             <h2 className="font-serif font-light text-charcoal mb-6">
-              Meetha knows your frequency.
+              Meetha knows your world.
             </h2>
 
             <div className="divider-editorial" />
 
-            <div className="mt-8 mb-10 space-y-4">
+            <div className="mt-8 mb-10 space-y-3">
               <div className="flex items-center justify-between p-4 border border-sand bg-warm-white/60">
                 <p className="font-sans text-xs tracking-[0.1em] uppercase text-charcoal-soft">
                   Frequency
@@ -361,6 +475,16 @@ export default function Onboarding() {
                   {MOOD_LABELS[selectedMood]}
                 </p>
               </div>
+              {selectedNiche && (
+                <div className="flex items-center justify-between p-4 border border-sand bg-warm-white/60">
+                  <p className="font-sans text-xs tracking-[0.1em] uppercase text-charcoal-soft">
+                    World
+                  </p>
+                  <p className="font-serif text-base text-charcoal capitalize">
+                    {selectedNiche}
+                  </p>
+                </div>
+              )}
               {referenceImages.length > 0 && (
                 <div className="flex items-center justify-between p-4 border border-sand bg-warm-white/60">
                   <p className="font-sans text-xs tracking-[0.1em] uppercase text-charcoal-soft">
@@ -379,9 +503,9 @@ export default function Onboarding() {
               className="btn-luxury w-full"
             >
               {upsertProfile.isPending ? (
-                <span className="flex items-center gap-2">
+                <span className="flex items-center justify-center gap-2">
                   <span className="w-3 h-3 border border-cream border-t-transparent rounded-full animate-spin" />
-                  Setting up your space...
+                  Setting your frequency...
                 </span>
               ) : (
                 "Enter Meetha"

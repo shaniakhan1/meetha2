@@ -27,6 +27,8 @@ export type DbProfile = {
   mood: string;
   onboarding_complete: boolean;
   aesthetic_descriptors: string | null;
+  niche: string | null;
+  audience: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -161,6 +163,8 @@ export async function upsertProfile(data: {
   mood: string;
   onboardingComplete?: boolean;
   aestheticDescriptors?: string | null;
+  niche?: string | null;
+  audience?: string | null;
 }): Promise<DbProfile | null> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const sb = getSupabase() as any;
@@ -180,6 +184,8 @@ export async function upsertProfile(data: {
         mood: data.mood,
         onboarding_complete: data.onboardingComplete ?? true,
         ...(data.aestheticDescriptors !== undefined ? { aesthetic_descriptors: data.aestheticDescriptors } : {}),
+        ...(data.niche !== undefined ? { niche: data.niche } : {}),
+        ...(data.audience !== undefined ? { audience: data.audience } : {}),
         updated_at: now,
       })
       .eq("user_id", data.userId)
@@ -196,6 +202,8 @@ export async function upsertProfile(data: {
       mood: data.mood,
       onboarding_complete: data.onboardingComplete ?? true,
       ...(data.aestheticDescriptors !== undefined ? { aesthetic_descriptors: data.aestheticDescriptors } : {}),
+      ...(data.niche !== undefined ? { niche: data.niche } : {}),
+      ...(data.audience !== undefined ? { audience: data.audience } : {}),
     })
     .select()
     .single();

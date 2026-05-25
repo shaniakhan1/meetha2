@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
+import { Sparkles } from "lucide-react";
 import {
   PLATFORM_LABELS,
   SCENE_LABELS,
@@ -90,6 +91,21 @@ export default function Generate() {
       setStep("hooks");
       utils.credits.get.invalidate();
       utils.generations.list.invalidate();
+    },
+    onError: (err) => {
+      toast.error(err.message);
+      setStep("select");
+    },
+  });
+
+  const signatureSceneStatusQuery = trpc.signatureScene.status.useQuery();
+  const signatureSceneMutation = trpc.signatureScene.generate.useMutation({
+    onSuccess: (data) => {
+      setResult(data as GenerationResult);
+      setStep("hooks");
+      utils.credits.get.invalidate();
+      utils.generations.list.invalidate();
+      signatureSceneStatusQuery.refetch();
     },
     onError: (err) => {
       toast.error(err.message);
@@ -365,6 +381,46 @@ export default function Generate() {
                   {ARCHETYPE_LABELS[profile.archetype as keyof typeof ARCHETYPE_LABELS] ?? profile.archetype} &middot;{" "}
                   {MOOD_LABELS[profile.mood as keyof typeof MOOD_LABELS] ?? profile.mood}
                 </p>
+              </div>
+            </div>
+          )}
+
+          {/* Signature Scene — featured viral template, free once */}
+          {!signatureSceneStatusQuery.data?.used && (
+            <div className="mb-6 relative overflow-hidden border border-gold/60 bg-gradient-to-br from-warm-white to-gold/5">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-gold/5 rounded-full -translate-y-1/2 translate-x-1/2" />
+              <div className="relative p-5">
+                <div className="flex items-start justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <Sparkles className="w-4 h-4 text-gold" />
+                    <p className="font-sans text-xs tracking-[0.15em] uppercase text-gold">
+                      Signature Scene
+                    </p>
+                  </div>
+                  <span className="font-sans text-xs text-gold/80 border border-gold/30 px-2 py-0.5">
+                    Free
+                  </span>
+                </div>
+                <h3 className="font-serif text-lg text-charcoal mb-2">
+                  Yes to All
+                </h3>
+                <p className="font-sans font-light text-xs text-charcoal-soft leading-relaxed mb-4">
+                  A curated cinematic moment tuned to your exact frequency. No choices needed. One tap.
+                </p>
+                <button
+                  onClick={() => {
+                    setStep("generating");
+                    let idx = 0;
+                    const interval = setInterval(() => {
+                      idx = (idx + 1) % GENERATING_PHRASES.length;
+                      setPhraseIndex(idx);
+                    }, 3000);
+                    signatureSceneMutation.mutateAsync().finally(() => clearInterval(interval));
+                  }}
+                  className="w-full py-3 border border-gold bg-gold/10 hover:bg-gold/20 transition-all duration-200 font-sans text-xs tracking-[0.15em] uppercase text-charcoal"
+                >
+                  Generate my Signature Scene
+                </button>
               </div>
             </div>
           )}

@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { transcribeAudio } from "./_core/voiceTranscription";
 import { storagePut } from "./storage";
+import { getSupabase } from "./_core/supabase";
 import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
@@ -75,7 +76,9 @@ function buildImagePrompt(
   archetype: string,
   mood: string,
   sceneCategory?: string | null,
-  aestheticDescriptors?: string | null
+  aestheticDescriptors?: string | null,
+  niche?: string | null,
+  audience?: string | null
 ): string {
   const scene = sceneCategory
     ? SCENE_PROMPTS[sceneCategory] || "perfume bottle on warm marble surface, amber light, editorial still life"
@@ -86,7 +89,8 @@ function buildImagePrompt(
     ? `calibrated to this specific aesthetic: ${aestheticDescriptors},`
     : "warm honey skin tones where hands are visible, gold jewelry details,";
 
-  return `${scene}, ${archetypeStyle}, ${moodStyle}, ${aestheticLayer} editorial female-gaze luxury aesthetic, cinematic lighting, subtle film grain, realistic textures, warm amber tones, atmospheric depth, no faces, no full bodies, hands only when naturally holding an object, vertical 9:16 framing, social-media-ready, photorealistic, high resolution`;
+  const nicheLayer = niche ? `visual world of a ${niche} creator,` : "";
+  return `${scene}, ${archetypeStyle}, ${moodStyle}, ${aestheticLayer} ${nicheLayer} editorial female-gaze luxury aesthetic, cinematic lighting, subtle film grain, realistic textures, warm amber tones, atmospheric depth, no faces, no full bodies, hands only when naturally holding an object, vertical 9:16 framing, social-media-ready, photorealistic, high resolution`;
 }
 
 const PLATFORM_TONE: Record<string, string> = {
@@ -107,7 +111,9 @@ function buildCopyPrompt(
   archetype: string,
   mood: string,
   platform: string,
-  aestheticDescriptors?: string | null
+  aestheticDescriptors?: string | null,
+  niche?: string | null,
+  audience?: string | null
 ): string {
   const archetypeDesc = ARCHETYPE_DESCRIPTIONS[archetype as Archetype] || "";
   const moodDesc = MOOD_DESCRIPTIONS[mood as Mood] || "";
@@ -116,13 +122,16 @@ function buildCopyPrompt(
   const frequencyContext = aestheticDescriptors
     ? `\n\nThis creator's personal frequency calibration (extracted from her uploaded reference images): ${aestheticDescriptors}. Let this inform the specificity and cultural grounding of the copy. Her world is specific. Write from inside it.`
     : "";
+  const nicheContext = niche || audience
+    ? `\n\nCreator context: ${niche ? `She creates content about ${niche}.` : ""} ${audience ? `She speaks to ${audience}.` : ""} Ground the hooks and caption in this specific world. The copy should feel native to her niche, not generic luxury content.`
+    : "";
 
   return `You are a content voice for women creators who have a specific, calibrated aesthetic frequency. You write copy that sounds like it came from a real woman who has already arrived, not a brand trying to reach her.
 
 Creator's frequency: "${archetype.replace(/_/g, " ")}" — ${archetypeDesc}
 Current energy: "${mood}" — ${moodDesc}
 Platform: ${platform.toUpperCase()} — ${platformTone}
-Voice calibration: ${archetypeVoice}${frequencyContext}
+Voice calibration: ${archetypeVoice}${frequencyContext}${nicheContext}
 
 Write exactly 3 hook options for text overlay on a cinematic lifestyle image.
 
@@ -205,6 +214,8 @@ export const appRouter = router({
             .optional(),
           mood: z.enum(["soft", "magnetic", "grounded", "untamed"]).optional(),
           onboardingComplete: z.boolean().optional(),
+          niche: z.string().optional().nullable(),
+          audience: z.string().optional().nullable(),
         })
       )
       .mutation(async ({ ctx, input }) => {
@@ -213,6 +224,8 @@ export const appRouter = router({
           archetype: input.archetype ?? "luxury_minimal",
           mood: input.mood ?? "soft",
           onboardingComplete: input.onboardingComplete ?? false,
+          niche: input.niche,
+          audience: input.audience,
         });
       }),
   }),
@@ -276,11 +289,11 @@ export const appRouter = router({
         const mood = profile?.mood ?? "soft";
 
         // Generate image via Fal.ai FLUX 1.1 Pro
-        const imagePrompt = buildImagePrompt(archetype, mood, input.sceneCategory, profile?.aesthetic_descriptors ?? null);
+        const imagePrompt = buildImagePrompt(archetype, mood, input.sceneCategory, profile?.aesthetic_descriptors ?? null, profile?.niche ?? null, profile?.audience ?? null);
         const { url: imageUrl, key: imageKey } = await generateImageFal({ prompt: imagePrompt });
 
-        // Generate copy (pass aesthetic descriptors if available)
-        const copyPrompt = buildCopyPrompt(archetype, mood, input.platform, profile?.aesthetic_descriptors ?? null);
+        // Generate copy (pass aesthetic descriptors + niche/audience if available)
+        const copyPrompt = buildCopyPrompt(archetype, mood, input.platform, profile?.aesthetic_descriptors ?? null, profile?.niche ?? null, profile?.audience ?? null);
         const copyResponse = await invokeLLMOpenAI({
           messages: [{ role: "user", content: copyPrompt }],
           response_format: {
@@ -475,12 +488,12 @@ Return JSON with:
         const voiceImageContext = keyDetails.length > 0
           ? `${profile?.aesthetic_descriptors ? profile.aesthetic_descriptors + ", " : ""}voice-inspired visual context: ${keyDetails.join(", ")}`
           : profile?.aesthetic_descriptors ?? null;
-        const imagePrompt = buildImagePrompt(archetype, mood, effectiveScene, voiceImageContext);
+        const imagePrompt = buildImagePrompt(archetype, mood, effectiveScene, voiceImageContext, profile?.niche ?? null, profile?.audience ?? null);
         const { url: imageUrl, key: imageKey } = await generateImageFal({ prompt: imagePrompt });
 
         // 6. Build copy prompt with voice context as additional grounding
         const voiceCopyContext = `\n\nThis creator just said: "${transcript}"\n\nEmotional core extracted: ${emotionalCore}\n\nWrite copy that feels like a distillation of this moment. The hooks and caption should feel like something she would say after this exact thought. Ground the copy in her actual words and feeling, not generic aesthetic language.`;
-        const baseCopyPrompt = buildCopyPrompt(archetype, mood, input.platform, profile?.aesthetic_descriptors ?? null);
+        const baseCopyPrompt = buildCopyPrompt(archetype, mood, input.platform, profile?.aesthetic_descriptors ?? null, profile?.niche ?? null, profile?.audience ?? null);
         const voiceCopyPrompt = baseCopyPrompt + voiceCopyContext;
 
         const copyResponse = await invokeLLMOpenAI({
@@ -554,6 +567,158 @@ Return JSON with:
           transcript, // Return transcript so UI can show what was captured
         };
       }),
+  }),
+
+  // ─── Signature Scene (viral template, free once) ──────────────────────────
+
+  signatureScene: router({
+    /**
+     * Check if the user has already used their free Signature Scene generation.
+     */
+    status: protectedProcedure.query(async ({ ctx }) => {
+      const sb = getSupabase() as any;
+      const { data } = await sb
+        .from("signature_scene_uses")
+        .select("id")
+        .eq("user_id", ctx.user.id)
+        .single();
+      return { used: !!data };
+    }),
+
+    /**
+     * Generate the Signature Scene. Free once per user, no credits deducted.
+     * Returns the same shape as generate.content.
+     */
+    generate: protectedProcedure.mutation(async ({ ctx }) => {
+      // Check if already used
+      const sb = getSupabase() as any;
+      const { data: existing } = await sb
+        .from("signature_scene_uses")
+        .select("id")
+        .eq("user_id", ctx.user.id)
+        .single();
+
+      if (existing) {
+        throw new Error("You have already used your free Signature Scene generation.");
+      }
+
+      const profile = await getProfile(ctx.user.id);
+      const archetype = profile?.archetype ?? "luxury_minimal";
+      const mood = profile?.mood ?? "soft";
+
+      // Locked Signature Scene image prompt — hand-crafted for maximum impact
+      const aestheticLayer = profile?.aesthetic_descriptors
+        ? `calibrated to this specific aesthetic: ${profile.aesthetic_descriptors},`
+        : "warm honey deep brown skin tones where hands are visible, layered gold jewelry,";
+      const archetypeStyle = ARCHETYPE_VISUAL[archetype] || ARCHETYPE_VISUAL.soft_power;
+
+      const signatureImagePrompt = `a woman's hands resting on a marble surface surrounded by intentional objects: a gold pen, an open leather journal, a champagne coupe catching afternoon light, a passport, a folded silk scarf, ${archetypeStyle}, ${MOOD_VISUAL[mood] || MOOD_VISUAL.grounded}, ${aestheticLayer} editorial female-gaze luxury aesthetic, cinematic lighting, subtle film grain, warm amber tones, atmospheric depth, no faces, no full bodies, vertical 9:16 framing, photorealistic, high resolution, the feeling of a woman who has already decided`;
+
+      const { url: imageUrl, key: imageKey } = await generateImageFal({ prompt: signatureImagePrompt });
+
+      // Locked Signature Scene copy prompt
+      const archetypeVoice = ARCHETYPE_VOICE[archetype] || "";
+      const nicheContext = profile?.niche || profile?.audience
+        ? `\n\nCreator context: ${profile.niche ? `She creates content about ${profile.niche}.` : ""} ${profile.audience ? `She speaks to ${profile.audience}.` : ""}`
+        : "";
+
+      const signatureCopyPrompt = `You are writing copy for the Signature Scene — a specific, curated moment that represents a woman who has said yes to everything aligned with her. The image shows her world: journal, champagne, passport, gold pen, silk. She has already decided. She is not waiting.
+
+Creator's frequency: "${archetype.replace(/_/g, " ")}" — ${ARCHETYPE_DESCRIPTIONS[archetype as Archetype] || ""}
+Current energy: "${mood}" — ${MOOD_DESCRIPTIONS[mood as Mood] || ""}
+Voice calibration: ${archetypeVoice}${nicheContext}
+
+Write exactly 3 hooks for text overlay on this image.
+
+Hook rules:
+- Under 10 words each
+- No em-dashes, no ellipses as pauses, no exclamation marks
+- No Pinterest wellness language, no hustle language, no AI constructions
+- Sounds like something she would say to herself, not a brand
+- Culturally specific and grounded
+- Must feel like a woman who has already arrived, not one who is trying
+
+Examples of the right frequency:
+"yes to all of it"
+"she decided, and then it happened"
+"i stopped asking for permission"
+"everything i said yes to this year"
+"she already knew"
+
+Then write one caption:
+- 1-3 sentences maximum
+- No em-dashes
+- Reads like a real thought she had this morning
+- Ends with a quiet statement, not a CTA
+
+Then write exactly 5 hashtags (no # symbol, niche-specific, editorial).
+
+Respond in this exact JSON format:
+{"hooks": ["hook one", "hook two", "hook three"], "caption": "The caption.", "hashtags": ["word1", "word2", "word3", "word4", "word5"]}`;
+
+      const copyResponse = await invokeLLMOpenAI({
+        messages: [{ role: "user", content: signatureCopyPrompt }],
+        response_format: {
+          type: "json_schema",
+          json_schema: {
+            name: "content_copy",
+            strict: true,
+            schema: {
+              type: "object",
+              properties: {
+                hooks: { type: "array", items: { type: "string" } },
+                caption: { type: "string" },
+                hashtags: { type: "array", items: { type: "string" } },
+              },
+              required: ["hooks", "caption", "hashtags"],
+              additionalProperties: false,
+            },
+          },
+        },
+      });
+
+      let hooks: string[] = [];
+      let caption = "";
+      let hashtags: string[] = [];
+      try {
+        const content = copyResponse.choices?.[0]?.message?.content;
+        const parsed = JSON.parse(typeof content === "string" ? content : JSON.stringify(content));
+        hooks = parsed.hooks?.slice(0, 3) ?? [];
+        caption = parsed.caption ?? "";
+        hashtags = parsed.hashtags?.slice(0, 5) ?? [];
+      } catch {
+        hooks = ["yes to all of it", "she already knew", "i stopped asking for permission"];
+        caption = "The version of me that says yes to everything aligned. She showed up this year.";
+        hashtags = ["quietluxury", "editoriallife", "softpower", "yestoall", "sheknew"];
+      }
+
+      // Mark as used (no credits deducted)
+      await sb.from("signature_scene_uses").insert({ user_id: ctx.user.id });
+
+      // Save generation (platform = reels as default for portrait format)
+      const generation = await createGeneration({
+        userId: ctx.user.id,
+        imageUrl,
+        imageKey,
+        archetype,
+        mood,
+        platform: "reels",
+        sceneCategory: "quiet_luxury",
+        hooks: JSON.stringify(hooks),
+        caption,
+      });
+
+      const updatedCredits = await getCredits(ctx.user.id);
+
+      return {
+        generation,
+        hooks,
+        caption,
+        hashtags,
+        creditsRemaining: updatedCredits?.credits_remaining ?? 0,
+        isSignatureScene: true,
+      };
+    }),
   }),
 
   // ─── Video Generation (Pro tier) ───────────────────────────────────────────

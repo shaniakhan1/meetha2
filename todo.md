@@ -96,16 +96,19 @@
 - [x] Voice-to-content: tap to record, Whisper transcription, generate post from spoken thought
 - [x] Platform labels renamed to format names (Feed Post, Portrait, Stories) in shared/types.ts, CinematicPreview.tsx, and Home.tsx
 - [ ] Baseline calibration re-upload verified with new skin-tone-aware extraction
-- [ ] Privacy Policy page (/privacy)
-- [ ] Terms of Service page (/terms)
-- [ ] Account deletion flow in Profile settings
-- [ ] Cookie/data notice banner on first visit
-- [ ] Footer legal links on landing page and inside app
 - [x] Privacy Policy page (/privacy)
 - [x] Terms of Service page (/terms)
 - [x] Account deletion flow in Profile settings with tRPC procedure
-- [ ] Cookie/data notice banner on first visit (deferred)
+- [ ] Cookie/data notice banner on first visit (deferred, low priority)
 - [x] Footer legal links on landing page and inside app
 - [x] SEO: meta title, description, Open Graph tags in index.html
 - [x] sitemap.xml served at /sitemap.xml
 - [x] robots.txt allowing all crawlers
+
+## V5 Features
+
+- [x] Google OAuth sign-in via Supabase (add to SignIn page alongside magic link)
+- [x] Onboarding: add niche + audience screen (content type + who you speak to)
+- [x] Save niche + audience to profiles table (schema migration in Supabase)
+- [x] Inject niche + audience into image and copy prompts
+- [x] Signature Scene viral template: featured card on generate screen, locked prompt recipe, free-once mechanic
