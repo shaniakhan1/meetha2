@@ -7,6 +7,7 @@ import { handleMagicLink, handleSetSession, handleLogout, handleMe, handlePrevie
 import { handleDownload } from "../download";
 import { handleLoraCheck } from "../loraEmailCron";
 import { handleArchiveGenerations } from "../archiveCron";
+import { handleWelcomeEmail } from "../welcomeEmailCron";
 import { loraUploadMiddleware, handleLoraUpload, handleLoraStatus } from "../loraUpload";
 import { registerStorageProxy } from "./storageProxy";
 import { appRouter } from "../routers";
@@ -51,6 +52,7 @@ async function startServer() {
   app.get("/api/lora/status", handleLoraStatus);
   app.post("/api/scheduled/lora-check", handleLoraCheck);
   app.post("/api/scheduled/archive-generations", handleArchiveGenerations);
+  app.post("/api/scheduled/welcome-email", handleWelcomeEmail);
   // tRPC API
   app.use(
     "/api/trpc",

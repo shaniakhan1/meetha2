@@ -231,4 +231,4 @@
 - [x] Show archived badge on expired rows (with upgrade CTA for free tier)
 - [x] Fix mobile download: use navigator.share with File object on mobile, anchor fallback on desktop
 - [x] Add instant Share sheet after generation (fires before feedback step on mobile)
-- [ ] Add welcome email cron (10 min after signup, Heartbeat)
+- [x] Add welcome email cron (10 min after signup, Heartbeat)

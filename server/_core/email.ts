@@ -229,3 +229,51 @@ export async function sendLoraOnboardingNudgeEmail({
 
   if (error) throw new Error(`Resend error: ${error.message}`);
 }
+
+// ─── Welcome Email ────────────────────────────────────────────────────────────
+
+export async function sendWelcomeEmail({
+  to,
+  name,
+  generateUrl,
+  templatesUrl,
+}: {
+  to: string;
+  name: string | null;
+  generateUrl: string;
+  templatesUrl: string;
+}): Promise<void> {
+  const resend = getResend();
+  const firstName = name?.split(" ")[0] ?? "there";
+
+  const body = `
+    <p style="margin:0 0 8px;font-size:13px;letter-spacing:0.1em;color:#8b7355;text-transform:uppercase;font-family:system-ui,sans-serif;">
+      Welcome to Meetha
+    </p>
+    <h1 style="margin:0 0 24px;font-size:28px;font-weight:400;color:#2c1810;line-height:1.3;">
+      You are the aesthetic, ${firstName}.
+    </h1>
+    <p style="margin:0 0 16px;font-size:15px;color:#5c4a3a;line-height:1.7;font-family:system-ui,sans-serif;">
+      You have 3 free generations waiting. Each one gives you a cinematic image, three editorial hooks, and a caption tuned to your frequency.
+    </p>
+    <p style="margin:0 0 32px;font-size:15px;color:#5c4a3a;line-height:1.7;font-family:system-ui,sans-serif;">
+      No filming. No blank page. Just tap Generate and see what comes through.
+    </p>
+    ${ctaButton(generateUrl, "Create My First Post")}
+    <p style="margin:0 0 8px;font-size:13px;color:#8b7355;line-height:1.6;font-family:system-ui,sans-serif;text-align:center;">
+      Or browse the <a href="${templatesUrl}" style="color:#8b7355;">template library</a> for a starting point.
+    </p>
+  `;
+
+  const text = `Welcome to Meetha, ${firstName}.\n\nYou have 3 free generations waiting. No filming. No blank page.\n\nCreate your first post: ${generateUrl}\n\nOr browse templates: ${templatesUrl}`;
+
+  const { error } = await resend.emails.send({
+    from: `${FROM_NAME} <${FROM_ADDRESS}>`,
+    to,
+    subject: `You are the aesthetic, ${firstName}.`,
+    html: emailWrapper(body),
+    text,
+  });
+
+  if (error) throw new Error(`Resend error: ${error.message}`);
+}
