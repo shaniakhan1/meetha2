@@ -14,6 +14,7 @@ import AuthCallback from "./pages/AuthCallback";
 import Preview from "./pages/Preview";
 import Privacy from "./pages/Privacy";
 import Terms from "./pages/Terms";
+import Templates from "./pages/Templates";
 import { useAuth } from "./_core/hooks/useAuth";
 import CookieBanner from "./components/CookieBanner";
 
@@ -61,6 +62,7 @@ function Router() {
       <Route path="/preview" component={Preview} />
       <Route path="/privacy" component={Privacy} />
       <Route path="/terms" component={Terms} />
+      <Route path="/templates" component={Templates} />
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />
     </Switch>

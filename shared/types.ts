@@ -14,7 +14,8 @@ export type SceneCategory =
   | "travel_day"
   | "quiet_luxury"
   | "founder_energy"
-  | "date_night";
+  | "date_night"
+  | "paparazzi_flash";
 
 export type PostabilityResponse = "yes" | "maybe" | "no";
 
@@ -93,4 +94,5 @@ export const SCENE_LABELS: Record<SceneCategory, string> = {
   quiet_luxury: "Quiet Wealth",
   founder_energy: "The Work",
   date_night: "Evening Energy",
+  paparazzi_flash: "Caught Looking Expensive",
 };

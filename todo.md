@@ -149,3 +149,12 @@
 - [x] Voice calibration questions in onboarding: 3 quick questions about how user talks online (casual/polished, funny/serious, short/storytelling)
 - [x] New Signature Scene: "Quiet Wealth" — private morning, espresso, white peony, linen, free once
 - [x] Revert reference image conditioning (remove flux-pro/v1.1/redux, restore clean faceless FLUX generation)
+
+## V10 — Caught Looking Expensive + Templates
+
+- [x] Voice style section in Profile (editable tone/energy/length, same 3 questions as onboarding)
+- [x] Caught Looking Expensive template: dedicated image prompt (flash, blur, candid, paparazzi locations)
+- [x] Caught Looking Expensive overlay copy: subtle hook list (vanished softly, peace changed my face, etc.)
+- [x] /templates page: one template front and center, Make Mine one-tap button
+- [x] Template preview section on Home.tsx landing page (visible to logged-out visitors)
+- [x] Wire /templates route in App.tsx and add entry point from Dashboard

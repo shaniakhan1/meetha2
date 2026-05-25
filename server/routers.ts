@@ -49,7 +49,23 @@ const SCENE_PROMPTS: Record<string, string> = {
     "a thick leather journal open on a marble surface, gold pen resting across the page, warm morning window light, intentional workspace, no clutter",
   date_night:
     "a champagne coupe close-up, soft candlelight catching the rim, deep jewel-toned velvet in the background, warm amber bokeh, cinematic and unhurried",
+  paparazzi_flash:
+    "harsh direct flash photography, slight motion blur, overexposed highlights, heavy film grain, candid street angle, woman caught mid-movement looking effortlessly stunning, one of these locations: blurry restaurant exit at night, back seat of a taxi with window reflections, hotel elevator mirror, late-night diner booth, airport terminal gate, convenience store exit, laughing with someone off-frame — no face visible, just the energy of someone who looks incredible without trying, editorial female-gaze, 2000s paparazzi aesthetic, anti-AI texture, vertical 9:16 framing",
 };
+
+// Caught Looking Expensive: overlay hook options
+const PAPARAZZI_HOOKS = [
+  "vanished softly",
+  "peace changed my face",
+  "she got quieter",
+  "seen briefly",
+  "out past my bedtime",
+  "summer looked good on her",
+  "she already knew",
+  "calm women move differently",
+  "soft is not the same as small",
+  "being grounded looks expensive now",
+];
 
 const ARCHETYPE_VISUAL: Record<string, string> = {
   luxury_minimal:
@@ -130,8 +146,35 @@ function buildCopyPrompt(
   aestheticDescriptors?: string | null,
   niche?: string | null,
   audience?: string | null,
-  voiceStyle?: string | null
+  voiceStyle?: string | null,
+  sceneCategory?: string | null
 ): string {
+  // Paparazzi Flash template: override hooks with the subtle overlay list
+  if (sceneCategory === "paparazzi_flash") {
+    const hookOptions = PAPARAZZI_HOOKS.slice(0, 6).map((h) => `"${h}"`).join(", ");
+    const voiceCtx = voiceStyle
+      ? `\n\nVoice style (how she writes online): ${voiceStyle}. Calibrate the caption to match this.`
+      : "";
+    return `You are writing copy for a woman creator for a "Caught Looking Expensive" image: harsh flash photography, film grain, candid nightlife, effortlessly stunning.${voiceCtx}
+
+Choose exactly 3 hooks from this list (return them verbatim, do not modify): ${hookOptions}
+
+Then write one caption:
+- 1-2 short declarative sentences
+- No em-dashes, no exclamation marks, no questions
+- Observational. States a truth about effortless presence, being caught looking incredible, or the feeling of disappearing beautifully
+- Sounds like something she would caption this herself
+- Ends quietly
+
+Then write exactly 5 hashtags (no # symbol, mix of niche and reach, no generic tags).
+
+Respond in this exact JSON format:
+{
+  "hooks": ["hook one", "hook two", "hook three"],
+  "caption": "The caption text here.",
+  "hashtags": ["word1", "word2", "word3", "word4", "word5"]
+}`;
+  }
   const archetypeDesc = ARCHETYPE_DESCRIPTIONS[archetype as Archetype] || "";
   const moodDesc = MOOD_DESCRIPTIONS[mood as Mood] || "";
   const platformTone = PLATFORM_TONE[platform] || PLATFORM_TONE.reels;
@@ -313,6 +356,7 @@ export const appRouter = router({
               "quiet_luxury",
               "founder_energy",
               "date_night",
+              "paparazzi_flash",
             ])
             .optional(),
           videoFormat: z.enum(["tiktok_reels", "square", "landscape"]).optional(),
@@ -342,7 +386,7 @@ export const appRouter = router({
         const imageSize = input.videoFormat ? VIDEO_FORMAT_SIZE[input.videoFormat] : "portrait_4_3";
         const { url: imageUrl, key: imageKey } = await generateImageFal({ prompt: imagePrompt, imageSize });
         // Generate copy (pass aesthetic descriptors + niche/audience if available)
-        const copyPrompt = buildCopyPrompt(archetype, mood, input.platform, profile?.aesthetic_descriptors ?? null, profile?.niche ?? null, profile?.audience ?? null, profile?.voice_style ?? null);
+        const copyPrompt = buildCopyPrompt(archetype, mood, input.platform, profile?.aesthetic_descriptors ?? null, profile?.niche ?? null, profile?.audience ?? null, profile?.voice_style ?? null, input.sceneCategory ?? null);
         const copyResponse = await invokeLLMOpenAI({
           messages: [{ role: "user", content: copyPrompt }],
           response_format: {
@@ -433,6 +477,7 @@ export const appRouter = router({
               "quiet_luxury",
               "founder_energy",
               "date_night",
+              "paparazzi_flash",
             ])
             .optional(),
         })
@@ -554,7 +599,7 @@ Return JSON with:
 
         // 6. Build copy prompt with voice context as additional grounding
         const voiceCopyContext = `\n\nThis creator just said: "${transcript}"\n\nEmotional core extracted: ${emotionalCore}\n\nWrite copy that feels like a distillation of this moment. The hooks and caption should feel like something she would say after this exact thought. Ground the copy in her actual words and feeling, not generic aesthetic language.`;
-        const baseCopyPrompt = buildCopyPrompt(archetype, mood, input.platform, profile?.aesthetic_descriptors ?? null, profile?.niche ?? null, profile?.audience ?? null, profile?.voice_style ?? null);
+        const baseCopyPrompt = buildCopyPrompt(archetype, mood, input.platform, profile?.aesthetic_descriptors ?? null, profile?.niche ?? null, profile?.audience ?? null, profile?.voice_style ?? null, input.sceneCategory ?? null);
         const voiceCopyPrompt = baseCopyPrompt + voiceCopyContext;
 
         const copyResponse = await invokeLLMOpenAI({

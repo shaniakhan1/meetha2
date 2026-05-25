@@ -80,6 +80,16 @@ export default function Generate() {
 
   const previewTier = getPreviewTier(); // null when not in preview mode
 
+  // Pre-select template from URL query param (e.g. ?template=paparazzi_flash)
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const template = params.get("template");
+    if (template === "paparazzi_flash") {
+      setSceneCategory("paparazzi_flash");
+      setShowCustomize(true);
+    }
+  }, []);
+
   const profileQuery = trpc.profile.get.useQuery();
   const creditsQuery = trpc.credits.get.useQuery();
   const selectHookMutation = trpc.generations.selectHook.useMutation();

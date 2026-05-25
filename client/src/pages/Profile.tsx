@@ -15,7 +15,13 @@ import {
 export default function Profile() {
   const [, navigate] = useLocation();
   const { user, logout } = useAuth();
-  const [editing, setEditing] = useState<"archetype" | "mood" | null>(null);
+  const [editing, setEditing] = useState<"archetype" | "mood" | "voice" | null>(null);
+  type VoiceTone = "casual" | "polished";
+  type VoiceHumor = "funny" | "serious";
+  type VoiceLength = "short" | "storytelling";
+  const [pendingVoiceTone, setPendingVoiceTone] = useState<VoiceTone | null>(null);
+  const [pendingVoiceHumor, setPendingVoiceHumor] = useState<VoiceHumor | null>(null);
+  const [pendingVoiceLength, setPendingVoiceLength] = useState<VoiceLength | null>(null);
   const [pendingArchetype, setPendingArchetype] = useState<Archetype | null>(null);
   const [pendingMood, setPendingMood] = useState<Mood | null>(null);
 
@@ -110,6 +116,13 @@ export default function Profile() {
     if (profile) {
       setPendingArchetype(profile.archetype as Archetype);
       setPendingMood(profile.mood as Mood);
+      // Parse voice_style back into individual selections
+      if (profile.voice_style) {
+        const parts = profile.voice_style.split(", ");
+        setPendingVoiceTone((parts.find((p) => p === "casual" || p === "polished") as VoiceTone) ?? null);
+        setPendingVoiceHumor((parts.find((p) => p === "funny" || p === "serious") as VoiceHumor) ?? null);
+        setPendingVoiceLength((parts.find((p) => p === "short" || p === "storytelling") as VoiceLength) ?? null);
+      }
     }
   }, [profile]);
 
@@ -124,6 +137,11 @@ export default function Profile() {
   const handleSaveMood = () => {
     if (!pendingMood) return;
     upsertProfile.mutate({ mood: pendingMood });
+  };
+
+  const handleSaveVoice = () => {
+    const voiceStyle = [pendingVoiceTone, pendingVoiceHumor, pendingVoiceLength].filter(Boolean).join(", ");
+    upsertProfile.mutate({ voiceStyle: voiceStyle || null });
   };
 
   return (
@@ -480,6 +498,117 @@ export default function Profile() {
               </button>
             )}
           </div>
+        </div>
+
+        {/* Voice Style */}
+        <div>
+          <div className="flex items-center justify-between mb-4">
+            <p className="font-sans text-xs tracking-[0.15em] uppercase text-charcoal-soft">
+              Caption Voice
+            </p>
+            <button
+              onClick={() => setEditing(editing === "voice" ? null : "voice")}
+              className="font-sans text-xs tracking-widest uppercase text-gold hover:text-charcoal transition-colors"
+            >
+              {editing === "voice" ? "Cancel" : "Edit"}
+            </button>
+          </div>
+
+          {editing !== "voice" ? (
+            <div className="p-5 border border-sand bg-warm-white/60">
+              {profile?.voice_style ? (
+                <>
+                  <p className="font-sans text-xs text-gold mb-1">Calibrated</p>
+                  <p className="font-serif text-sm text-charcoal capitalize">
+                    {profile.voice_style.replace(/,/g, " ·")}
+                  </p>
+                </>
+              ) : (
+                <>
+                  <p className="font-sans text-xs text-charcoal-soft mb-1">Not set</p>
+                  <p className="font-sans font-light text-xs text-charcoal-soft/70 leading-relaxed">
+                    Tell Meetha how you write online and every caption will sound like you.
+                  </p>
+                </>
+              )}
+            </div>
+          ) : (
+            <div className="space-y-5 p-5 border border-sand bg-warm-white/60">
+              {/* Tone */}
+              <div>
+                <p className="font-sans text-xs tracking-[0.12em] uppercase text-charcoal-soft mb-2">Your tone</p>
+                <div className="grid grid-cols-2 gap-2">
+                  {(["casual", "polished"] as VoiceTone[]).map((opt) => (
+                    <button
+                      key={opt}
+                      onClick={() => setPendingVoiceTone(pendingVoiceTone === opt ? null : opt)}
+                      className={`text-left px-3 py-3 border transition-all duration-200 ${
+                        pendingVoiceTone === opt
+                          ? "border-gold bg-gold/5"
+                          : "border-sand bg-warm-white/60 hover:border-gold/40"
+                      }`}
+                    >
+                      <p className="font-sans text-sm text-charcoal capitalize">{opt}</p>
+                      <p className="font-sans text-xs text-charcoal-soft mt-0.5">
+                        {opt === "casual" ? "Like texting a friend" : "Elevated, editorial"}
+                      </p>
+                    </button>
+                  ))}
+                </div>
+              </div>
+              {/* Energy */}
+              <div>
+                <p className="font-sans text-xs tracking-[0.12em] uppercase text-charcoal-soft mb-2">Your energy</p>
+                <div className="grid grid-cols-2 gap-2">
+                  {(["funny", "serious"] as VoiceHumor[]).map((opt) => (
+                    <button
+                      key={opt}
+                      onClick={() => setPendingVoiceHumor(pendingVoiceHumor === opt ? null : opt)}
+                      className={`text-left px-3 py-3 border transition-all duration-200 ${
+                        pendingVoiceHumor === opt
+                          ? "border-gold bg-gold/5"
+                          : "border-sand bg-warm-white/60 hover:border-gold/40"
+                      }`}
+                    >
+                      <p className="font-sans text-sm text-charcoal capitalize">{opt}</p>
+                      <p className="font-sans text-xs text-charcoal-soft mt-0.5">
+                        {opt === "funny" ? "Wit, irony, a raised eyebrow" : "Direct, full presence"}
+                      </p>
+                    </button>
+                  ))}
+                </div>
+              </div>
+              {/* Length */}
+              <div>
+                <p className="font-sans text-xs tracking-[0.12em] uppercase text-charcoal-soft mb-2">Your captions</p>
+                <div className="grid grid-cols-2 gap-2">
+                  {(["short", "storytelling"] as VoiceLength[]).map((opt) => (
+                    <button
+                      key={opt}
+                      onClick={() => setPendingVoiceLength(pendingVoiceLength === opt ? null : opt)}
+                      className={`text-left px-3 py-3 border transition-all duration-200 ${
+                        pendingVoiceLength === opt
+                          ? "border-gold bg-gold/5"
+                          : "border-sand bg-warm-white/60 hover:border-gold/40"
+                      }`}
+                    >
+                      <p className="font-sans text-sm text-charcoal capitalize">{opt}</p>
+                      <p className="font-sans text-xs text-charcoal-soft mt-0.5">
+                        {opt === "short" ? "One or two sentences. Done." : "A little context, a little arc"}
+                      </p>
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <button
+                onClick={handleSaveVoice}
+                disabled={upsertProfile.isPending}
+                className="btn-luxury w-full"
+              >
+                {upsertProfile.isPending ? "Saving..." : "Save voice style"}
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Upgrade */}

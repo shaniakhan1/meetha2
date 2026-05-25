@@ -142,6 +142,22 @@ export default function Dashboard() {
           Generate New Content
         </button>
 
+        {/* Template shortcut */}
+        <button
+          onClick={() => navigate("/templates")}
+          className="w-full mb-6 p-4 border border-charcoal/20 bg-charcoal text-cream text-left hover:bg-charcoal/90 transition-all duration-200 active:scale-[0.98]"
+        >
+          <p className="font-sans text-xs tracking-[0.15em] uppercase text-gold/70 mb-1">
+            Template No. 01
+          </p>
+          <p className="font-serif text-base text-cream">
+            Caught Looking Expensive
+          </p>
+          <p className="font-sans font-light text-xs text-cream/50 mt-1">
+            Flash. Film grain. Effortlessly stunning.
+          </p>
+        </button>
+
         {/* Referral card */}
         <div className="mb-10 p-4 border border-sand/60 bg-warm-white/40">
           <div className="flex items-start justify-between mb-2">

@@ -434,6 +434,69 @@ export default function Home() {
         </div>
       </section>
 
+      {/* ── Caught Looking Expensive Template Preview ── */}
+      <section
+        className="px-6 py-16 text-center relative overflow-hidden"
+        style={{
+          background:
+            "linear-gradient(160deg, #1a1714 0%, #0d0b09 60%, #1a1410 100%)",
+        }}
+      >
+        {/* Grain overlay */}
+        <div
+          className="absolute inset-0 opacity-20 pointer-events-none"
+          style={{
+            backgroundImage:
+              "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.4'/%3E%3C/svg%3E\")",
+            backgroundSize: "128px 128px",
+          }}
+        />
+        {/* Flash burst */}
+        <div
+          className="absolute pointer-events-none"
+          style={{
+            top: "10%",
+            left: "15%",
+            width: "200px",
+            height: "200px",
+            background:
+              "radial-gradient(ellipse, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0.02) 40%, transparent 70%)",
+            filter: "blur(12px)",
+          }}
+        />
+        <div className="relative z-10 max-w-sm mx-auto">
+          <p className="font-sans text-xs tracking-[0.25em] uppercase text-gold/60 mb-5">
+            Template No. 01
+          </p>
+          <h2 className="font-serif text-3xl font-light text-cream leading-tight mb-4">
+            Caught Looking
+            <br />
+            Expensive
+          </h2>
+          <p className="font-sans font-light text-sm text-cream/50 leading-relaxed mb-8">
+            Flash photography. Film grain. Someone caught you mid-moment looking effortlessly stunning.
+            The image looks real. Your friends repost it.
+          </p>
+          {/* Hook chips */}
+          <div className="flex flex-wrap gap-2 justify-center mb-10">
+            {["vanished softly", "peace changed my face", "she got quieter", "seen briefly", "out past my bedtime", "summer looked good on her"].map((hook) => (
+              <span
+                key={hook}
+                className="font-serif text-xs px-3 py-1.5 border border-white/10 text-cream/40"
+              >
+                {hook}
+              </span>
+            ))}
+          </div>
+          <button
+            onClick={() => navigate("/templates")}
+            className="w-full py-4 bg-cream text-charcoal font-sans text-xs tracking-[0.2em] uppercase hover:bg-gold hover:text-charcoal transition-all duration-200 active:scale-[0.97]"
+          >
+            See the template
+          </button>
+        </div>
+      </section>
+
       {/* ── Footer ── */}
       <footer className="py-10 px-6 bg-charcoal border-t border-sand/10 text-center">
         <p className="font-serif text-lg text-cream/60 mb-4">MEETHA</p>
