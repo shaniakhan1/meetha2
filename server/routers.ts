@@ -34,52 +34,56 @@ import {
 
 const SCENE_PROMPTS: Record<string, string> = {
   morning_routine:
-    "hands wrapped around a ceramic coffee cup, soft morning light streaming through sheer curtains, steam rising, warm golden tones",
+    "close-up of hands with warm deep brown skin wrapped around a ceramic cup, steam rising, soft amber morning light through sheer linen curtains, gold ring detail, intimate scale",
   travel_day:
-    "a luxury carry-on suitcase wheel rolling on marble airport floor, soft bokeh, editorial travel aesthetic",
+    "a structured leather carry-on bag on a polished stone airport floor, warm honey light, gold hardware detail, editorial travel stillness, no people",
   quiet_luxury:
-    "silk fabric draped over a velvet chair, afternoon light, architectural shadow, minimal luxury interior",
+    "heavy silk draped over a curved velvet chair, afternoon light casting a long architectural shadow, amber and ivory tones, minimal and considered",
   founder_energy:
-    "a leather notebook open on a marble desk, gold pen, morning light, clean workspace, editorial focus",
+    "a thick leather journal open on a marble surface, gold pen resting across the page, warm morning window light, intentional workspace, no clutter",
   date_night:
-    "champagne flute close-up, soft candlelight, velvet table setting, warm amber tones, cinematic blur",
+    "a champagne coupe close-up, soft candlelight catching the rim, deep jewel-toned velvet in the background, warm amber bokeh, cinematic and unhurried",
 };
 
 const ARCHETYPE_VISUAL: Record<string, string> = {
   luxury_minimal:
-    "ultra-clean composition, extreme negative space, cream and ivory tones, architectural precision, restrained elegance",
+    "extreme negative space, cream and warm ivory tones, one deliberate object, architectural stillness, nothing unnecessary in the frame",
   elegant_chaos:
-    "layered textures, bold contrast, silk and leather, unexpected juxtapositions, editorial tension",
+    "layered textures in tension, silk against leather or stone, bold shadow and warm light simultaneously, editorial contradiction that resolves beautifully",
   soft_power:
-    "warm diffused light, soft focus, intimate framing, emotional warmth, inviting depth",
+    "warm diffused amber light, soft intimate framing, emotional depth without sentimentality, the feeling of being seen",
   dark_feminine:
-    "deep shadows, rich jewel tones, moody atmosphere, mysterious depth, dramatic chiaroscuro lighting",
+    "deep shadows with rich jewel tones, dramatic chiaroscuro, moody and unhurried, mystery without explanation",
   ethereal:
-    "gossamer light, translucent fabrics, soft lens flare, dreamlike softness, pastel luminosity",
+    "gossamer light, translucent fabric catching light, soft lens flare, dreamlike luminosity, the feeling of something sacred",
 };
 
 const MOOD_VISUAL: Record<string, string> = {
-  soft: "gentle bokeh, warm natural light, soft shadows, intimate scale, tender atmosphere",
+  soft: "gentle bokeh, warm amber natural light, soft intimate shadows, close and tender scale",
   magnetic:
-    "strong visual pull, confident framing, rich saturation, commanding composition",
+    "strong visual pull, confident centered framing, rich warm saturation, commanding without aggression",
   grounded:
-    "earthy tones, stable horizon, natural textures, calm and unhurried pacing",
+    "warm earthy tones, stable grounded composition, natural linen and wood textures, unhurried and certain",
   untamed:
-    "dynamic movement, windswept textures, raw natural beauty, unrestrained energy",
+    "dynamic natural movement, windswept organic textures, raw beauty with editorial restraint, energy that refuses containment",
 };
 
 function buildImagePrompt(
   archetype: string,
   mood: string,
-  sceneCategory?: string | null
+  sceneCategory?: string | null,
+  aestheticDescriptors?: string | null
 ): string {
   const scene = sceneCategory
-    ? SCENE_PROMPTS[sceneCategory] || "luxury lifestyle detail, close-up, editorial"
-    : "perfume bottle on marble vanity, soft light, editorial still life";
+    ? SCENE_PROMPTS[sceneCategory] || "perfume bottle on warm marble surface, amber light, editorial still life"
+    : "perfume bottle on warm marble surface, amber light, editorial still life, gold detail";
   const archetypeStyle = ARCHETYPE_VISUAL[archetype] || "";
   const moodStyle = MOOD_VISUAL[mood] || "";
+  const aestheticLayer = aestheticDescriptors
+    ? `calibrated to this specific aesthetic: ${aestheticDescriptors},`
+    : "warm honey skin tones where hands are visible, gold jewelry details,";
 
-  return `${scene}, ${archetypeStyle}, ${moodStyle}, editorial female-gaze luxury aesthetic, cinematic lighting, subtle film grain, soft natural movement, realistic textures, elegant minimal composition, warm tones, atmospheric detail, no faces, no people, no bodies, no hands unless holding an object, vertical 9:16 framing, social-media-ready, high resolution`;
+  return `${scene}, ${archetypeStyle}, ${moodStyle}, ${aestheticLayer} editorial female-gaze luxury aesthetic, cinematic lighting, subtle film grain, realistic textures, warm amber tones, atmospheric depth, no faces, no full bodies, hands only when naturally holding an object, vertical 9:16 framing, social-media-ready, photorealistic, high resolution`;
 }
 
 const PLATFORM_TONE: Record<string, string> = {
@@ -89,11 +93,11 @@ const PLATFORM_TONE: Record<string, string> = {
 };
 
 const ARCHETYPE_VOICE: Record<string, string> = {
-  luxury_minimal: "Voice is restrained, precise, and quietly confident. Never tries too hard. Silence is part of the message.",
-  elegant_chaos: "Voice has tension — beautiful contradictions, unexpected word pairings. Feels alive and slightly unpredictable.",
-  soft_power: "Voice is warm but knowing. Emotionally intelligent. Feels like someone who sees you.",
-  dark_feminine: "Voice is low, deliberate, and unhurried. Mystery without explanation. Never justifies itself.",
-  ethereal: "Voice is dreamy and sensory. Evokes texture, light, and feeling more than logic.",
+  luxury_minimal: "Still frequency. Voice is restrained and precise. One sentence does more than a paragraph. Silence is part of the message. Never explains itself.",
+  elegant_chaos: "Electric frequency. Voice has beautiful tension. Unexpected word pairings. Contradictions that resolve into something true. Feels alive.",
+  soft_power: "Magnetic frequency. Voice is warm but knowing. Emotionally intelligent without being soft. Feels like someone who has already figured it out.",
+  dark_feminine: "Deep frequency. Voice is low, deliberate, unhurried. Mystery without explanation. Never justifies itself. Never performs.",
+  ethereal: "Light frequency. Voice is sensory and translucent. Evokes texture, warmth, and feeling more than logic. Sacred without being religious.",
 };
 
 function buildCopyPrompt(
@@ -106,46 +110,54 @@ function buildCopyPrompt(
   const moodDesc = MOOD_DESCRIPTIONS[mood as Mood] || "";
   const platformTone = PLATFORM_TONE[platform] || PLATFORM_TONE.reels;
   const archetypeVoice = ARCHETYPE_VOICE[archetype] || "";
-  const aestheticContext = aestheticDescriptors
-    ? `\n\nUser's personal aesthetic calibration (from their uploaded reference images): ${aestheticDescriptors}. Let this subtly inform the emotional specificity of the copy.`
+  const frequencyContext = aestheticDescriptors
+    ? `\n\nThis creator's personal frequency calibration (extracted from her uploaded reference images): ${aestheticDescriptors}. Let this inform the specificity and cultural grounding of the copy. Her world is specific. Write from inside it.`
     : "";
 
-  return `You are a social content writer for women creators with strong personal aesthetics. You write copy that feels like it came from a real woman, not a brand or an AI.
+  return `You are a content voice for women creators who have a specific, calibrated aesthetic frequency. You write copy that sounds like it came from a real woman who has already arrived, not a brand trying to reach her.
 
-The creator's aesthetic identity: "${archetype.replace(/_/g, " ")}" — ${archetypeDesc}
-Her current energy: "${mood}" — ${moodDesc}
+Creator's frequency: "${archetype.replace(/_/g, " ")}" — ${archetypeDesc}
+Current energy: "${mood}" — ${moodDesc}
 Platform: ${platform.toUpperCase()} — ${platformTone}
-Voice direction: ${archetypeVoice}${aestheticContext}
+Voice calibration: ${archetypeVoice}${frequencyContext}
 
-Write exactly 3 hook options for text overlay on a cinematic lifestyle image. Rules:
-- Each hook is under 10 words
-- No em-dashes, no ellipses used as pauses, no exclamation marks
-- No Pinterest wellness phrases ("this is your sign", "you deserve", "romanticize your life")
-- No hustle language ("level up", "boss", "grind", "main character")
-- No AI-sounding constructions ("in a world where", "reminder that", "friendly reminder")
+Write exactly 3 hook options for text overlay on a cinematic lifestyle image.
+
+Hook rules:
+- Under 10 words each
+- No em-dashes, no ellipses as pauses, no exclamation marks
+- No Pinterest wellness language ("this is your sign", "you deserve", "romanticize your life", "soft life")
+- No hustle language ("level up", "boss", "grind", "main character", "that girl")
+- No AI constructions ("in a world where", "reminder that", "friendly reminder", "it's giving")
 - No generic motivational quotes
-- Identity-based, not aspirational-generic. Feels like something SHE would say, not something a brand would say to her.
-- Calm, specific, emotionally observational
+- Specific and observational, not aspirational-generic
+- Sounds like something she would say to herself, not something a brand would say to her
+- Culturally specific and grounded, not racially neutral or whitewashed
 
-Good examples of the right tone:
+Examples of the right frequency:
 "the version of me that has time"
 "soft is not the same as small"
 "i stopped explaining myself and everything changed"
 "this is what slow looks like"
-"she moves at her own pace and it shows"
+"calm women move differently"
+"peace changed my face"
+"being grounded looks expensive now"
+"i don't chase. i attract."
+"she already knew"
 
-Then write one caption. Rules:
+Then write one caption:
 - 1-3 sentences maximum
 - No em-dashes
-- Conversational but considered. Feels like a real thought, not a content strategy.
-- Ends with either a soft question or a quiet statement, never a hard CTA like "link in bio" or "shop now"
-- Platform-appropriate tone (see above)
+- Reads like a real thought she had this morning, not a content strategy
+- Ends with a soft question or a quiet statement, never a hard CTA
+- Platform-appropriate (see tone above)
+- Specific and grounded, not vague and inspirational
 
-Then write exactly 5 hashtags. Rules:
+Then write exactly 5 hashtags:
 - No # symbol
 - Mix of niche-specific and broader reach
-- No generic tags like "instagood" or "photooftheday"
-- Should feel like tags a real creator in this aesthetic would use
+- No generic tags (no instagood, photooftheday, lifestyle)
+- Should feel like tags a real creator at this frequency would use
 
 Respond in this exact JSON format:
 {
@@ -261,7 +273,7 @@ export const appRouter = router({
         const mood = profile?.mood ?? "soft";
 
         // Generate image via Fal.ai FLUX 1.1 Pro
-        const imagePrompt = buildImagePrompt(archetype, mood, input.sceneCategory);
+        const imagePrompt = buildImagePrompt(archetype, mood, input.sceneCategory, profile?.aesthetic_descriptors ?? null);
         const { url: imageUrl, key: imageKey } = await generateImageFal({ prompt: imagePrompt });
 
         // Generate copy (pass aesthetic descriptors if available)
@@ -388,18 +400,19 @@ export const appRouter = router({
           image_url: { url: dataUrl, detail: "low" as const },
         }));
 
-        const systemPrompt = `You are an aesthetic calibration system for a luxury content creation app.
-Analyze the uploaded reference images and extract a concise aesthetic profile.
-Focus ONLY on:
-- Skin tone warmth (e.g. "warm honey undertones", "cool porcelain", "deep warm brown")
-- Jewelry and accessory style (e.g. "gold hardware", "minimal silver", "layered gold chains", "no visible jewelry")
-- Texture preferences (e.g. "linen and marble", "velvet and silk", "raw concrete and leather")
-- Environment/setting palette (e.g. "warm cream interiors", "moody dark spaces", "bright minimal white")
-- Overall warmth temperature (e.g. "warm golden tones throughout", "cool neutral palette", "high contrast warm/dark")
+        const systemPrompt = `You are a frequency calibration system for a content creation tool used by women creators.
+Your job is to extract a precise, specific aesthetic profile from the uploaded reference images so that AI-generated content can be tuned to match this creator's exact visual world.
 
-DO NOT describe faces, bodies, or people. Focus on objects, environments, textures, and styling cues.
-Return a single concise paragraph of 3-5 sentences that can be injected into image generation prompts.
-Be specific and visual. No generic phrases.`;
+Analyze the images and extract:
+- Skin tone (be specific and warm: e.g. "deep warm brown skin with golden undertones", "rich dark brown skin", "warm medium brown", "deep ebony"). This is critical for image generation to match the creator's actual appearance.
+- Jewelry and accessory style (e.g. "layered gold chains, gold hoops, warm metal hardware", "minimal silver", "no visible jewelry")
+- Texture and material preferences (e.g. "linen, marble, velvet, raw silk", "concrete and leather", "cashmere and glass")
+- Color palette and warmth temperature (e.g. "warm amber and ivory throughout", "deep jewel tones with warm shadows", "cool neutral with one warm accent")
+- Environment and setting energy (e.g. "warm cream interiors with natural light", "moody dark spaces with candle warmth", "outdoor natural settings with golden hour light")
+
+DO NOT describe faces or full bodies. Focus on skin tone, hands, styling details, objects, environments, textures, and light.
+Return a single dense paragraph of 4-6 sentences that can be injected directly into image generation prompts.
+Be hyper-specific and visual. No generic phrases. This paragraph will be used word-for-word in AI image prompts, so precision matters.`;
 
         const visionResponse = await invokeLLMOpenAI({
           messages: [

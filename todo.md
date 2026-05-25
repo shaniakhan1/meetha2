@@ -84,3 +84,7 @@
 
 - [x] Watermark on free-tier downloads — lowercase "meetha" serif, bottom-right, semi-transparent white; removed on Starter+
 - [x] Resend email integration — wire magic link delivery via Resend transactional email
+- [x] Frequency language rebrand — archetypes renamed to frequency states, moods to energy states, onboarding copy rewritten
+- [x] Image prompt rewrite — skin tone aware, frequency-calibrated, aesthetic descriptors injected, sharper scene prompts
+- [x] Copy prompt rewrite — frequency voice system, RGE-inspired hook examples, anti-generic rules, culturally grounded
+- [x] Aesthetic calibration system prompt rewrite — explicitly extracts skin tone, gold jewelry, warmth, environment for injection into image prompts

@@ -14,18 +14,18 @@ import {
 type Step = "archetype" | "insight" | "mood" | "aesthetic" | "complete";
 
 const ARCHETYPE_TAGLINES: Record<Archetype, string> = {
-  luxury_minimal: "Less is everything.",
-  elegant_chaos: "Beautiful contradiction.",
-  soft_power: "People lean in.",
-  dark_feminine: "Depth without explanation.",
-  ethereal: "Otherworldly softness.",
+  luxury_minimal: "Stillness as power.",
+  elegant_chaos: "High voltage, soft landing.",
+  soft_power: "Warmth with edges.",
+  dark_feminine: "Depth that cannot be measured.",
+  ethereal: "Light moving through silk.",
 };
 
 const MOOD_TAGLINES: Record<Mood, string> = {
-  soft: "Quiet and intimate.",
-  magnetic: "Irresistible presence.",
-  grounded: "Rooted confidence.",
-  untamed: "Wild elegance.",
+  soft: "Slow and intimate.",
+  magnetic: "Clear signal, no static.",
+  grounded: "Already decided.",
+  untamed: "Wildness with taste.",
 };
 
 const ALL_STEPS: Step[] = ["archetype", "insight", "mood", "aesthetic", "complete"];
@@ -139,10 +139,10 @@ export default function Onboarding() {
               Step 1 of 3
             </p>
             <h2 className="font-serif font-light text-charcoal mb-3">
-              What is your aesthetic identity?
+              What is your frequency?
             </h2>
             <p className="font-sans font-light text-sm text-charcoal-soft">
-              Choose the archetype that feels most like you. This shapes everything Meetha creates for you.
+              Choose the frequency that feels most like you. This calibrates everything Meetha creates.
             </p>
           </div>
 
@@ -180,7 +180,7 @@ export default function Onboarding() {
         <div className="flex-1 flex flex-col items-center justify-center px-6 py-8 text-center animate-fade-up opacity-0">
           <div className="max-w-xs mx-auto">
             <p className="font-sans text-xs tracking-[0.2em] uppercase text-gold mb-8">
-              Your Aesthetic Intelligence
+              Your Frequency
             </p>
 
             <div
@@ -218,10 +218,10 @@ export default function Onboarding() {
               Step 2 of 3
             </p>
             <h2 className="font-serif font-light text-charcoal mb-3">
-              What is your creative mood?
+              What is your current energy?
             </h2>
             <p className="font-sans font-light text-sm text-charcoal-soft">
-              Your mood sets the emotional tone of every piece of content Meetha creates.
+              Your energy attunes the emotional tone of everything Meetha generates for you.
             </p>
           </div>
 
@@ -255,10 +255,10 @@ export default function Onboarding() {
               Step 3 of 3 — Optional
             </p>
             <h2 className="font-serif font-light text-charcoal mb-3">
-              Calibrate your aesthetic
+              Teach Meetha your frequency
             </h2>
             <p className="font-sans font-light text-sm text-charcoal-soft leading-relaxed">
-              Upload 3–5 images that feel like your visual world. Meetha reads the textures, tones, and styling — not faces — to make every generation feel like yours.
+              Upload 3–5 images that feel like your world. Meetha reads your colors, your light, your warmth, your skin tone — not faces — so every generation is tuned to you specifically.
             </p>
           </div>
 
@@ -335,11 +335,11 @@ export default function Onboarding() {
         <div className="flex-1 flex flex-col items-center justify-center px-6 py-8 text-center animate-fade-up opacity-0">
           <div className="max-w-xs mx-auto">
             <p className="font-sans text-xs tracking-[0.2em] uppercase text-gold mb-8">
-              Your Identity is Set
+              Your Frequency is Calibrated
             </p>
 
             <h2 className="font-serif font-light text-charcoal mb-6">
-              You are ready.
+              Meetha knows your frequency.
             </h2>
 
             <div className="divider-editorial" />
@@ -347,7 +347,7 @@ export default function Onboarding() {
             <div className="mt-8 mb-10 space-y-4">
               <div className="flex items-center justify-between p-4 border border-sand bg-warm-white/60">
                 <p className="font-sans text-xs tracking-[0.1em] uppercase text-charcoal-soft">
-                  Archetype
+                  Frequency
                 </p>
                 <p className="font-serif text-base text-charcoal">
                   {ARCHETYPE_LABELS[selectedArchetype]}
@@ -355,7 +355,7 @@ export default function Onboarding() {
               </div>
               <div className="flex items-center justify-between p-4 border border-sand bg-warm-white/60">
                 <p className="font-sans text-xs tracking-[0.1em] uppercase text-charcoal-soft">
-                  Mood
+                  Energy
                 </p>
                 <p className="font-serif text-base text-charcoal">
                   {MOOD_LABELS[selectedMood]}
