@@ -1,4 +1,6 @@
 import { z } from "zod";
+import { transcribeAudio } from "./_core/voiceTranscription";
+import { storagePut } from "./storage";
 import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
@@ -348,6 +350,208 @@ export const appRouter = router({
           caption,
           hashtags,
           creditsRemaining: updatedCredits?.credits_remaining ?? 0,
+        };
+      }),
+
+    /**
+     * Voice-to-content: accepts a base64 audio blob, transcribes via Whisper,
+     * extracts the emotional core, then generates copy + image from the transcript.
+     * Returns the same shape as generate.content so the existing hooks/preview flow works.
+     */
+    fromVoice: protectedProcedure
+      .input(
+        z.object({
+          audioBase64: z.string(), // base64-encoded audio (webm/mp4/wav)
+          mimeType: z.string().default("audio/webm"),
+          platform: z.enum(["tiktok", "reels", "stories"]).default("reels"),
+          sceneCategory: z
+            .enum([
+              "morning_routine",
+              "travel_day",
+              "quiet_luxury",
+              "founder_energy",
+              "date_night",
+            ])
+            .optional(),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        // Check credits
+        const userCredits = await ensureCredits(ctx.user.id);
+        if (!userCredits || userCredits.credits_remaining <= 0) {
+          throw new Error("No credits remaining. Please upgrade to continue.");
+        }
+
+        // 1. Upload audio to storage so transcribeAudio can fetch it via URL
+        const audioBuffer = Buffer.from(input.audioBase64, "base64");
+        const ext = input.mimeType.includes("webm") ? "webm" : input.mimeType.includes("mp4") ? "m4a" : "wav";
+        const { url: audioStorageUrl } = await storagePut(
+          `voice/${ctx.user.id}-${Date.now()}.${ext}`,
+          audioBuffer,
+          input.mimeType
+        );
+
+        // Resolve the storage URL to an absolute URL for the transcription service
+        const absoluteAudioUrl = audioStorageUrl.startsWith("/")
+          ? `http://localhost:${process.env.PORT ?? 3000}${audioStorageUrl}`
+          : audioStorageUrl;
+
+        // 2. Transcribe via Whisper
+        const transcriptionResult = await transcribeAudio({
+          audioUrl: absoluteAudioUrl,
+          language: "en",
+          prompt: "Creator talking about their day, a feeling, or a moment they want to share on social media.",
+        });
+
+        if ("error" in transcriptionResult) {
+          throw new Error(`Transcription failed: ${transcriptionResult.error}`);
+        }
+
+        const transcript = transcriptionResult.text.trim();
+
+        // 3. Extract emotional core and scene context from transcript via LLM
+        const extractionResponse = await invokeLLMOpenAI({
+          messages: [
+            {
+              role: "system",
+              content: `You are a frequency extraction system for a content creation tool. A creator just spoke a thought out loud. Extract the emotional core, the scene or setting implied, and any specific details that should inform the visual and copy.
+
+Return JSON with:
+- emotionalCore: the central feeling or truth (1-2 sentences max)
+- sceneContext: what environment or moment is implied (1 sentence, or null if unclear)
+- keyDetails: array of 2-4 specific words or phrases from their speech that capture the vibe
+- suggestedScene: one of [morning_routine, travel_day, quiet_luxury, founder_energy, date_night] or null`,
+            },
+            {
+              role: "user",
+              content: `Transcript: "${transcript}"`,
+            },
+          ],
+          response_format: {
+            type: "json_schema",
+            json_schema: {
+              name: "voice_extraction",
+              strict: true,
+              schema: {
+                type: "object",
+                properties: {
+                  emotionalCore: { type: "string" },
+                  sceneContext: { type: ["string", "null"] as unknown as "string" },
+                  keyDetails: { type: "array", items: { type: "string" } },
+                  suggestedScene: { type: ["string", "null"] as unknown as "string" },
+                },
+                required: ["emotionalCore", "sceneContext", "keyDetails", "suggestedScene"],
+                additionalProperties: false,
+              },
+            },
+          },
+        });
+
+        let emotionalCore = transcript;
+        let suggestedScene: string | null = null;
+        let keyDetails: string[] = [];
+        try {
+          const extracted = JSON.parse(
+            typeof extractionResponse.choices?.[0]?.message?.content === "string"
+              ? extractionResponse.choices[0].message.content
+              : JSON.stringify(extractionResponse.choices?.[0]?.message?.content)
+          );
+          emotionalCore = extracted.emotionalCore ?? transcript;
+          suggestedScene = extracted.suggestedScene ?? null;
+          keyDetails = extracted.keyDetails ?? [];
+        } catch {
+          // fall through with raw transcript
+        }
+
+        // 4. Get profile for archetype + mood
+        const profile = await getProfile(ctx.user.id);
+        const archetype = profile?.archetype ?? "luxury_minimal";
+        const mood = profile?.mood ?? "soft";
+
+        // Use suggested scene from voice if no explicit scene was provided
+        const effectiveScene = input.sceneCategory ?? suggestedScene ?? null;
+
+        // 5. Build image prompt with voice context injected
+        const voiceImageContext = keyDetails.length > 0
+          ? `${profile?.aesthetic_descriptors ? profile.aesthetic_descriptors + ", " : ""}voice-inspired visual context: ${keyDetails.join(", ")}`
+          : profile?.aesthetic_descriptors ?? null;
+        const imagePrompt = buildImagePrompt(archetype, mood, effectiveScene, voiceImageContext);
+        const { url: imageUrl, key: imageKey } = await generateImageFal({ prompt: imagePrompt });
+
+        // 6. Build copy prompt with voice context as additional grounding
+        const voiceCopyContext = `\n\nThis creator just said: "${transcript}"\n\nEmotional core extracted: ${emotionalCore}\n\nWrite copy that feels like a distillation of this moment. The hooks and caption should feel like something she would say after this exact thought. Ground the copy in her actual words and feeling, not generic aesthetic language.`;
+        const baseCopyPrompt = buildCopyPrompt(archetype, mood, input.platform, profile?.aesthetic_descriptors ?? null);
+        const voiceCopyPrompt = baseCopyPrompt + voiceCopyContext;
+
+        const copyResponse = await invokeLLMOpenAI({
+          messages: [{ role: "user", content: voiceCopyPrompt }],
+          response_format: {
+            type: "json_schema",
+            json_schema: {
+              name: "content_copy",
+              strict: true,
+              schema: {
+                type: "object",
+                properties: {
+                  hooks: {
+                    type: "array",
+                    items: { type: "string" },
+                    description: "Exactly 3 editorial hook options",
+                  },
+                  caption: { type: "string", description: "One caption 2-3 sentences" },
+                  hashtags: {
+                    type: "array",
+                    items: { type: "string" },
+                    description: "Exactly 5 hashtags without # symbol",
+                  },
+                },
+                required: ["hooks", "caption", "hashtags"],
+                additionalProperties: false,
+              },
+            },
+          },
+        });
+
+        let hooks: string[] = [];
+        let caption = "";
+        let hashtags: string[] = [];
+
+        try {
+          const content = copyResponse.choices?.[0]?.message?.content;
+          const parsed = JSON.parse(typeof content === "string" ? content : JSON.stringify(content));
+          hooks = parsed.hooks?.slice(0, 3) ?? [];
+          caption = parsed.caption ?? "";
+          hashtags = parsed.hashtags?.slice(0, 5) ?? [];
+        } catch {
+          hooks = ["Calm women move differently.", "Luxury is a state of mind.", "Less. Always less."];
+          caption = "Curated for the woman who has already arrived.";
+          hashtags = ["quietluxury", "editoriallife", "softpower", "luxurylifestyle", "cinematic"];
+        }
+
+        // 7. Deduct credit and save generation
+        await decrementCredit(ctx.user.id);
+
+        const generation = await createGeneration({
+          userId: ctx.user.id,
+          imageUrl,
+          imageKey,
+          archetype,
+          mood,
+          platform: input.platform,
+          sceneCategory: effectiveScene ?? null,
+          hooks: JSON.stringify(hooks),
+          caption,
+        });
+
+        const updatedCredits = await getCredits(ctx.user.id);
+
+        return {
+          generation,
+          hooks,
+          caption,
+          hashtags,
+          creditsRemaining: updatedCredits?.credits_remaining ?? 0,
+          transcript, // Return transcript so UI can show what was captured
         };
       }),
   }),

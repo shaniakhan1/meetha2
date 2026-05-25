@@ -92,8 +92,9 @@
 
 ## V4 Features
 
-- [ ] Remove all Khanundrum Studios references (landing page, footer, nav eyebrow)
-- [ ] Voice-to-content: tap to record, Whisper transcription, generate post from spoken thought
+- [x] Remove all Khanundrum Studios references (landing page, footer, nav eyebrow)
+- [x] Voice-to-content: tap to record, Whisper transcription, generate post from spoken thought
+- [x] Platform labels renamed to format names (Feed Post, Portrait, Stories) in shared/types.ts, CinematicPreview.tsx, and Home.tsx
 - [ ] Baseline calibration re-upload verified with new skin-tone-aware extraction
 - [ ] Privacy Policy page (/privacy)
 - [ ] Terms of Service page (/terms)

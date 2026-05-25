@@ -112,8 +112,6 @@ export default function Home() {
           <p className="font-sans text-xs tracking-[0.2em] uppercase text-gold mb-8 animate-fade-in opacity-0 delay-100">
             Content creation, simplified
           </p>
-          {/* Khanundrum Studios removed — not a real entity */}
-
           {/* Headline */}
           <h1
             className="font-serif font-light text-charcoal mb-6 animate-fade-up opacity-0 delay-200"
@@ -197,8 +195,8 @@ export default function Home() {
             },
             {
               step: "02",
-              title: "Pick a scene and platform",
-              text: "Morning ritual, travel day, quiet wealth, founder energy. Select where it is going: TikTok, Reels, or Stories.",
+              title: "Pick a scene and format",
+              text: "Morning ritual, travel day, quiet wealth, founder energy. Select where it is going: Feed Post, Portrait, or Stories.",
             },
             {
               step: "03",
@@ -234,30 +232,15 @@ export default function Home() {
         <div className="max-w-sm mx-auto">
           {/* Mock generated card */}
           <div className="border border-sand bg-warm-white overflow-hidden">
-            {/* Image placeholder with cinematic feel */}
-            <div
-              className="relative w-full aspect-[9/16] max-h-64 overflow-hidden"
-              style={{
-                background: "linear-gradient(160deg, oklch(28% 0.02 60) 0%, oklch(18% 0.015 50) 60%, oklch(22% 0.025 55) 100%)",
-              }}
-            >
-              {/* Grain overlay */}
-              <div
-                className="absolute inset-0 opacity-20"
-                style={{
-                  backgroundImage: "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E\")",
-                  backgroundSize: "200px 200px",
-                }}
-              />
-              {/* Warm light accent */}
-              <div
-                className="absolute top-0 right-0 w-32 h-32 opacity-20"
-                style={{
-                  background: "radial-gradient(circle, oklch(80% 0.12 70) 0%, transparent 70%)",
-                }}
+            {/* Real example image */}
+            <div className="relative w-full aspect-[9/16] max-h-64 overflow-hidden">
+              <img
+                src="/manus-storage/shania-hero_9923f04f.png"
+                alt="Content example"
+                className="w-full h-full object-cover object-top"
               />
               {/* Hook overlay */}
-              <div className="absolute bottom-0 left-0 right-0 p-5" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.7) 0%, transparent 100%)" }}>
+              <div className="absolute bottom-0 left-0 right-0 p-5" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.75) 0%, transparent 100%)" }}>
                 <p className="font-serif text-lg text-white leading-snug">
                   peace changed my face
                 </p>

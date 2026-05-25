@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
@@ -13,7 +13,7 @@ import {
 import CinematicPreview from "@/components/CinematicPreview";
 import { getPreviewTier } from "./Preview";
 
-type GenStep = "select" | "generating" | "hooks" | "preview" | "feedback";
+type GenStep = "select" | "recording" | "transcribing" | "generating" | "hooks" | "preview" | "feedback";
 
 interface GenerationResult {
   generation: {
@@ -28,6 +28,7 @@ interface GenerationResult {
   caption: string;
   hashtags: string[];
   creditsRemaining: number;
+  transcript?: string;
 }
 
 const GENERATING_PHRASES = [
@@ -36,6 +37,13 @@ const GENERATING_PHRASES = [
   "Finding your visual voice.",
   "Calibrating the mood.",
   "Almost ready.",
+];
+
+const TRANSCRIBING_PHRASES = [
+  "Listening to your frequency.",
+  "Extracting the emotional core.",
+  "Translating your moment.",
+  "Building from your words.",
 ];
 
 export default function Generate() {
@@ -50,6 +58,13 @@ export default function Generate() {
   const [phraseIndex, setPhraseIndex] = useState(0);
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const [isGeneratingVideo, setIsGeneratingVideo] = useState(false);
+
+  // Voice recording state
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordingSeconds, setRecordingSeconds] = useState(0);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+  const recordingTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const previewTier = getPreviewTier(); // null when not in preview mode
 
@@ -70,6 +85,19 @@ export default function Generate() {
   const utils = trpc.useUtils();
 
   const generateMutation = trpc.generate.content.useMutation({
+    onSuccess: (data) => {
+      setResult(data as GenerationResult);
+      setStep("hooks");
+      utils.credits.get.invalidate();
+      utils.generations.list.invalidate();
+    },
+    onError: (err) => {
+      toast.error(err.message);
+      setStep("select");
+    },
+  });
+
+  const fromVoiceMutation = trpc.generate.fromVoice.useMutation({
     onSuccess: (data) => {
       setResult(data as GenerationResult);
       setStep("hooks");
@@ -175,6 +203,122 @@ export default function Generate() {
     });
   };
 
+  // ── Voice recording handlers ──────────────────────────────────────────────
+
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mimeType = MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
+        ? "audio/webm;codecs=opus"
+        : MediaRecorder.isTypeSupported("audio/webm")
+        ? "audio/webm"
+        : "audio/mp4";
+
+      const recorder = new MediaRecorder(stream, { mimeType });
+      audioChunksRef.current = [];
+
+      recorder.ondataavailable = (e) => {
+        if (e.data.size > 0) audioChunksRef.current.push(e.data);
+      };
+
+      recorder.onstop = () => {
+        stream.getTracks().forEach((t) => t.stop());
+      };
+
+      recorder.start(250); // collect chunks every 250ms
+      mediaRecorderRef.current = recorder;
+      setIsRecording(true);
+      setRecordingSeconds(0);
+      setStep("recording");
+
+      // Timer
+      recordingTimerRef.current = setInterval(() => {
+        setRecordingSeconds((s) => {
+          if (s >= 59) {
+            // Auto-stop at 60s
+            stopRecording();
+            return 60;
+          }
+          return s + 1;
+        });
+      }, 1000);
+    } catch {
+      toast.error("Microphone access is required. Please allow it and try again.");
+    }
+  };
+
+  const stopRecording = () => {
+    if (recordingTimerRef.current) {
+      clearInterval(recordingTimerRef.current);
+      recordingTimerRef.current = null;
+    }
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
+      mediaRecorderRef.current.stop();
+    }
+    setIsRecording(false);
+  };
+
+  const handleVoiceStop = () => {
+    stopRecording();
+    // Give MediaRecorder time to flush the last chunk
+    setTimeout(() => {
+      submitVoiceRecording();
+    }, 400);
+  };
+
+  const submitVoiceRecording = () => {
+    const chunks = audioChunksRef.current;
+    if (!chunks.length) {
+      toast.error("No audio captured. Please try again.");
+      setStep("select");
+      return;
+    }
+
+    const mimeType = mediaRecorderRef.current?.mimeType ?? "audio/webm";
+    const blob = new Blob(chunks, { type: mimeType });
+
+    // Check size (16MB limit)
+    if (blob.size > 16 * 1024 * 1024) {
+      toast.error("Recording is too long. Please keep it under 60 seconds.");
+      setStep("select");
+      return;
+    }
+
+    setStep("transcribing");
+    let idx = 0;
+    const interval = setInterval(() => {
+      idx = (idx + 1) % TRANSCRIBING_PHRASES.length;
+      setPhraseIndex(idx);
+    }, 2500);
+
+    // Convert blob to base64
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const base64 = (reader.result as string).split(",")[1];
+      fromVoiceMutation
+        .mutateAsync({
+          audioBase64: base64,
+          mimeType: mimeType.split(";")[0], // strip codec params
+          platform,
+          sceneCategory: sceneCategory ?? undefined,
+        })
+        .finally(() => {
+          clearInterval(interval);
+        });
+    };
+    reader.readAsDataURL(blob);
+  };
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (recordingTimerRef.current) clearInterval(recordingTimerRef.current);
+      if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
+        mediaRecorderRef.current.stop();
+      }
+    };
+  }, []);
+
   const profile = profileQuery.data;
   const credits = creditsQuery.data;
 
@@ -185,6 +329,8 @@ export default function Generate() {
         tier: previewTier,
       }
     : credits;
+
+  const formatTime = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
 
   return (
     <div className="min-h-screen bg-cream flex flex-col">
@@ -223,10 +369,39 @@ export default function Generate() {
             </div>
           )}
 
+          {/* Voice-to-content entry point */}
+          <div className="mb-8 p-5 border border-sand/60 bg-warm-white/40">
+            <p className="font-sans text-xs tracking-[0.15em] uppercase text-charcoal mb-1">
+              Speak your moment
+            </p>
+            <p className="font-sans font-light text-xs text-charcoal-soft mb-4 leading-relaxed">
+              Talk for up to 60 seconds. Meetha listens and builds your content from what you say.
+            </p>
+            <button
+              onClick={startRecording}
+              className="w-full flex items-center justify-center gap-3 py-4 border border-gold/40 bg-gold/5 hover:bg-gold/10 transition-all duration-200 group"
+            >
+              <span className="w-5 h-5 flex items-center justify-center">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-5 h-5 text-gold">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 18.75a6 6 0 0 0 6-6v-1.5m-6 7.5a6 6 0 0 1-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 0 1-3-3V4.5a3 3 0 1 1 6 0v8.25a3 3 0 0 1-3 3Z" />
+                </svg>
+              </span>
+              <span className="font-sans text-xs tracking-[0.15em] uppercase text-charcoal group-hover:text-charcoal">
+                Tap to record
+              </span>
+            </button>
+          </div>
+
+          <div className="flex items-center gap-4 mb-8">
+            <div className="flex-1 h-px bg-sand/40" />
+            <p className="font-sans text-xs text-charcoal-soft/60 tracking-[0.1em] uppercase">or choose manually</p>
+            <div className="flex-1 h-px bg-sand/40" />
+          </div>
+
           {/* Platform */}
           <div className="mb-8">
             <p className="font-sans text-xs tracking-[0.15em] uppercase text-charcoal mb-4">
-              Platform
+              Format
             </p>
             <div className="grid grid-cols-3 gap-2">
               {platforms.map((p) => (
@@ -320,6 +495,71 @@ export default function Generate() {
         </div>
       )}
 
+      {/* ── Step: Recording ── */}
+      {step === "recording" && (
+        <div className="flex-1 flex flex-col items-center justify-center px-6 py-8 text-center">
+          <div className="max-w-xs mx-auto">
+            {/* Pulsing mic indicator */}
+            <div className="relative w-24 h-24 mx-auto mb-10">
+              <div className="absolute inset-0 rounded-full bg-gold/10 animate-ping" style={{ animationDuration: "1.5s" }} />
+              <div className="absolute inset-2 rounded-full bg-gold/20 animate-ping" style={{ animationDuration: "1.5s", animationDelay: "0.3s" }} />
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="w-16 h-16 rounded-full bg-gold/15 border border-gold/40 flex items-center justify-center">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-7 h-7 text-gold">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 18.75a6 6 0 0 0 6-6v-1.5m-6 7.5a6 6 0 0 1-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 0 1-3-3V4.5a3 3 0 1 1 6 0v8.25a3 3 0 0 1-3 3Z" />
+                  </svg>
+                </div>
+              </div>
+            </div>
+
+            <p className="font-sans text-xs tracking-[0.2em] uppercase text-gold mb-2">Recording</p>
+            <p className="font-serif text-3xl text-charcoal mb-4">{formatTime(recordingSeconds)}</p>
+            <p className="font-sans font-light text-xs text-charcoal-soft mb-10 leading-relaxed">
+              Speak naturally. Talk about your day, a feeling, or a moment you want to share.
+            </p>
+
+            <button
+              onClick={handleVoiceStop}
+              className="btn-luxury w-full"
+            >
+              Done — Build My Content
+            </button>
+            <button
+              onClick={() => {
+                stopRecording();
+                setStep("select");
+              }}
+              className="mt-3 w-full py-3 font-sans text-xs tracking-widest uppercase text-charcoal-soft hover:text-charcoal border border-sand hover:border-charcoal/40 transition-all duration-200"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ── Step: Transcribing ── */}
+      {step === "transcribing" && (
+        <div className="flex-1 flex flex-col items-center justify-center px-6 py-8 text-center">
+          <div className="max-w-xs mx-auto">
+            {/* Cinematic loading animation */}
+            <div className="relative w-20 h-20 mx-auto mb-10">
+              <div className="absolute inset-0 border border-gold/20 rounded-full animate-ping" style={{ animationDuration: "2s" }} />
+              <div className="absolute inset-1 border border-gold/40 rounded-full animate-spin" style={{ animationDuration: "4s" }} />
+              <div className="absolute inset-3 border border-gold/60 rounded-full animate-spin" style={{ animationDuration: "6s", animationDirection: "reverse" }} />
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="w-1.5 h-1.5 rounded-full bg-gold" />
+              </div>
+            </div>
+            <h3 className="font-serif font-light text-charcoal mb-3 transition-all duration-700">
+              {TRANSCRIBING_PHRASES[phraseIndex]}
+            </h3>
+            <p className="font-sans font-light text-xs text-charcoal-soft leading-relaxed">
+              Meetha is reading your frequency and building your content. This takes about 20 seconds.
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* ── Step: Generating ── */}
       {step === "generating" && (
         <div className="flex-1 flex flex-col items-center justify-center px-6 py-8 text-center">
@@ -346,6 +586,18 @@ export default function Generate() {
       {/* ── Step: Hooks ── */}
       {step === "hooks" && result && (
         <div className="flex-1 flex flex-col px-6 py-8 animate-fade-up opacity-0">
+          {/* Show transcript if this came from voice */}
+          {result.transcript && (
+            <div className="mb-6 p-4 border border-sand/60 bg-warm-white/60">
+              <p className="font-sans text-xs tracking-[0.1em] uppercase text-charcoal-soft mb-2">
+                What Meetha heard
+              </p>
+              <p className="font-sans font-light text-xs text-charcoal leading-relaxed italic">
+                "{result.transcript}"
+              </p>
+            </div>
+          )}
+
           <div className="mb-6">
             <p className="font-sans text-xs tracking-[0.2em] uppercase text-gold mb-2">
               Choose Your Hook

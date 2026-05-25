@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { PLATFORM_LABELS, type Platform } from "@shared/types";
 
 interface CinematicPreviewProps {
   imageUrl: string;
@@ -16,7 +17,7 @@ interface CinematicPreviewProps {
  * - Gradient scrim so text is always legible
  * - CSS Ken Burns slow zoom animation (Starter+ tier)
  * - Subtle film grain overlay
- * - Platform badge (TikTok / Reels / Stories)
+ * - Format badge (Feed Post / Portrait / Stories)
  */
 export default function CinematicPreview({
   imageUrl,
@@ -86,14 +87,14 @@ export default function CinematicPreview({
         }}
       />
 
-      {/* ── Platform badge ── */}
+      {/* ── Format badge ── */}
       {platform && !isThumb && (
         <div className="absolute top-4 left-4">
           <span
             className="font-sans text-white/70 tracking-[0.15em] uppercase"
             style={{ fontSize: "9px" }}
           >
-            {platform === "tiktok" ? "TikTok" : platform === "reels" ? "Reels" : "Stories"}
+            {PLATFORM_LABELS[platform as Platform] ?? platform}
           </span>
         </div>
       )}

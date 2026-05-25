@@ -54,9 +54,16 @@ export const MOOD_DESCRIPTIONS: Record<Mood, string> = {
 };
 
 export const PLATFORM_LABELS: Record<Platform, string> = {
-  tiktok: "TikTok",
-  reels: "Reels",
+  tiktok: "Feed Post",
+  reels: "Portrait",
   stories: "Stories",
+};
+
+// Human-readable format descriptions shown in UI
+export const PLATFORM_DESCRIPTIONS: Record<Platform, string> = {
+  tiktok: "Square or landscape",
+  reels: "4:5 portrait",
+  stories: "9:16 full screen",
 };
 
 export const SCENE_LABELS: Record<SceneCategory, string> = {
