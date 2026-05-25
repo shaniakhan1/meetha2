@@ -121,7 +121,7 @@ export default function Home() {
             className="font-serif font-light text-charcoal mb-6 animate-fade-up opacity-0 delay-200"
             style={{ lineHeight: 1.05 }}
           >
-            Show up online without the work.
+            For women who are the aesthetic.
           </h1>
 
           {/* Divider */}
@@ -129,7 +129,7 @@ export default function Home() {
 
           {/* Subheadline */}
           <p className="font-sans font-light text-base text-charcoal-soft leading-relaxed mb-10 animate-fade-up opacity-0 delay-300">
-            Meetha generates cinematic images, hooks, and captions tuned to your aesthetic. No filming. No blank page. No hour lost.
+            Cinematic images, hooks, and captions tuned to your frequency. No filming. No blank page.
           </p>
 
           {/* CTA */}
