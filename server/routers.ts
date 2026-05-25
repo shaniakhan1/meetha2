@@ -54,6 +54,10 @@ const SCENE_PROMPTS: Record<string, string> = {
     "harsh direct flash photography, slight motion blur, overexposed highlights, heavy film grain, candid street angle, woman caught mid-movement looking effortlessly stunning, one of these locations: blurry restaurant exit at night, back seat of a taxi with window reflections, hotel elevator mirror, late-night diner booth, airport terminal gate, convenience store exit, laughing with someone off-frame — no face visible, just the energy of someone who looks incredible without trying, editorial female-gaze, 2000s paparazzi aesthetic, anti-AI texture, vertical 9:16 framing",
   digital_diary:
     "analog scrapbook aesthetic, one instant polaroid photo taped with a small piece of washi tape, handwritten note on lined paper beside it, dried flower or pressed petal detail, soft warm window light, linen or cork board surface, film grain texture, intimate and personal, feels like a page from a real woman's private journal, no faces, editorial stillness, warm cream and faded yellow tones, vertical 9:16 framing",
+  bill_please:
+    "cinematic fine dining moment, woman in tailored blazer or elegant dress reaching for the check at a candlelit restaurant table, calm and unbothered expression, slight smile, white tablecloth, crystal glasses, warm candlelight bokeh, other diners blurred in background, the gesture is confident and final, film grain, editorial female-gaze, quiet power aesthetic, 35mm analog warmth, vertical 9:16 framing",
+  silk_robe_room_service:
+    "luxury hotel suite morning, woman in champagne or ivory silk robe standing near tall sheer-curtained windows, soft morning light flooding in, room service tray with coffee and croissant on marble side table, looking out the window or holding coffee cup, serene and unhurried, warm cream and gold tones, shallow depth of field, film grain, quiet luxury editorial lifestyle, 35mm analog warmth, vertical 9:16 framing",
 };
 
 // Digital Diary: overlay hook options
@@ -66,6 +70,33 @@ const DIGITAL_DIARY_HOOKS = [
   "she remembered",
   "this stayed with her",
   "tucked away",
+];
+
+// Bill Please: overlay hook options
+const BILL_PLEASE_HOOKS = [
+  "i stopped arguing",
+  "the bill was cheaper than the lesson",
+  "she paid and left",
+  "quietly covered it",
+  "no discussion needed",
+  "she already knew the total",
+  "check, please",
+  "i leave quietly now",
+  "the table was hers",
+];
+
+// Silk Robe Room Service: overlay hook options
+const SILK_ROBE_HOOKS = [
+  "ordered for one",
+  "room service and silence",
+  "this is the life",
+  "no one else in the frame",
+  "she did not rush",
+  "mornings like this",
+  "room to herself",
+  "no plans today",
+  "quiet morning",
+  "the good kind of alone",
 ];
 
 // Caught Looking Expensive: overlay hook options
@@ -199,6 +230,58 @@ Then write one caption:
 - 1-2 short declarative sentences
 - Plain everyday words. No abstract vocabulary.
 - Sounds like a note she wrote to herself, not a caption for an audience
+- Ends quietly
+
+Then write exactly 5 hashtags (no # symbol, mix of niche and reach, no generic tags).
+
+Respond in this exact JSON format:
+{
+  "hooks": ["hook one", "hook two", "hook three"],
+  "caption": "The caption text here.",
+  "hashtags": ["word1", "word2", "word3", "word4", "word5"]
+}`;
+  }
+
+  // Bill Please template
+  if (sceneCategory === "bill_please") {
+    const hookOptions = BILL_PLEASE_HOOKS.slice(0, 6).map((h) => `"${h}"`).join(", ");
+    const voiceCtx = voiceStyle
+      ? `\n\nVoice style (how she writes online): ${voiceStyle}. Calibrate the caption to match this.`
+      : "";
+    return `You are writing copy for a woman creator for a "Bill, Please" image: she is paying the check at a fine dining restaurant, calm and unbothered, the gesture is confident and final.${voiceCtx}
+
+Choose exactly 3 hooks from this list (return them verbatim, do not modify): ${hookOptions}
+
+Then write one caption:
+- 1-2 short declarative sentences
+- No em-dashes, no exclamation marks, no questions
+- Observational. States a truth about self-sufficiency, quiet power, or the feeling of not needing to argue
+- Ends quietly
+
+Then write exactly 5 hashtags (no # symbol, mix of niche and reach, no generic tags).
+
+Respond in this exact JSON format:
+{
+  "hooks": ["hook one", "hook two", "hook three"],
+  "caption": "The caption text here.",
+  "hashtags": ["word1", "word2", "word3", "word4", "word5"]
+}`;
+  }
+
+  // Silk Robe Room Service template
+  if (sceneCategory === "silk_robe_room_service") {
+    const hookOptions = SILK_ROBE_HOOKS.slice(0, 6).map((h) => `"${h}"`).join(", ");
+    const voiceCtx = voiceStyle
+      ? `\n\nVoice style (how she writes online): ${voiceStyle}. Calibrate the caption to match this.`
+      : "";
+    return `You are writing copy for a woman creator for a "Silk Robe Room Service" image: luxury hotel suite, silk robe, morning light, room service tray, serene and unhurried, ordered for one.${voiceCtx}
+
+Choose exactly 3 hooks from this list (return them verbatim, do not modify): ${hookOptions}
+
+Then write one caption:
+- 1-2 short declarative sentences
+- No em-dashes, no exclamation marks, no questions
+- Observational. States a truth about solitude as luxury, unhurried mornings, or the pleasure of being alone and content
 - Ends quietly
 
 Then write exactly 5 hashtags (no # symbol, mix of niche and reach, no generic tags).
@@ -417,7 +500,7 @@ export const appRouter = router({
           generationId: z.number(),
           platform: z.enum(["tiktok", "reels", "stories"]).default("reels"),
           sceneCategory: z
-            .enum(["morning_routine", "travel_day", "quiet_luxury", "founder_energy", "date_night", "paparazzi_flash", "digital_diary"])
+            .enum(["morning_routine", "travel_day", "quiet_luxury", "founder_energy", "date_night", "paparazzi_flash", "digital_diary", "bill_please", "silk_robe_room_service"])
             .optional(),
         })
       )
@@ -496,6 +579,8 @@ export const appRouter = router({
               "date_night",
               "paparazzi_flash",
               "digital_diary",
+              "bill_please",
+              "silk_robe_room_service",
             ])
             .optional(),
           videoFormat: z.enum(["tiktok_reels", "square", "landscape"]).optional(),
@@ -673,6 +758,8 @@ export const appRouter = router({
               "date_night",
               "paparazzi_flash",
               "digital_diary",
+              "bill_please",
+              "silk_robe_room_service",
             ])
             .optional(),
         })

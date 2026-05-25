@@ -16,7 +16,9 @@ export type SceneCategory =
   | "founder_energy"
   | "date_night"
   | "paparazzi_flash"
-  | "digital_diary";
+  | "digital_diary"
+  | "bill_please"
+  | "silk_robe_room_service";
 
 export type PostabilityResponse = "yes" | "maybe" | "no";
 
@@ -97,4 +99,6 @@ export const SCENE_LABELS: Record<SceneCategory, string> = {
   date_night: "Evening Energy",
   paparazzi_flash: "Caught Looking Expensive",
   digital_diary: "Digital Diary",
+  bill_please: "Bill, Please",
+  silk_robe_room_service: "Silk Robe Room Service",
 };

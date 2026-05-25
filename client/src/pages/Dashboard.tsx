@@ -133,6 +133,26 @@ export default function Dashboard() {
           )}
         </div>
 
+        {/* Train Your Look nudge -- shown when lora_status is null or failed */}
+        {(profile && !profile.lora_status || profile?.lora_status === "failed") && (
+          <div className="mb-6 p-4 border border-gold/30 bg-warm-white/60">
+            <p className="font-sans text-xs tracking-[0.1em] uppercase text-gold mb-1">
+              {profile?.lora_status === "failed" ? "Training Did Not Complete" : "Train Your Look"}
+            </p>
+            <p className="font-serif text-sm text-charcoal leading-snug mb-3">
+              {profile?.lora_status === "failed"
+                ? "Your model did not finish. Upload your photos again to retry."
+                : "Upload 6 photos and Meetha learns your face. Every generation looks like you."}
+            </p>
+            <button
+              onClick={() => navigate("/profile")}
+              className="font-sans text-xs tracking-[0.15em] uppercase text-gold hover:text-charcoal transition-colors"
+            >
+              {profile?.lora_status === "failed" ? "Retry" : "Get started"}
+            </button>
+          </div>
+        )}
+
         {/* LoRA training status banner */}
         {profile?.lora_status === "training" && (
           <div className="mb-6 p-4 border border-gold/30 bg-warm-white/60 flex items-center gap-3">
@@ -176,13 +196,13 @@ export default function Dashboard() {
           className="w-full mb-6 p-4 border border-[#2C1810]/30 bg-[#2C1810] text-cream text-left hover:bg-[#3a2015] transition-all duration-200 active:scale-[0.98]"
         >
           <p className="font-sans text-xs tracking-[0.15em] uppercase text-gold/70 mb-1">
-            Template No. 01
+            4 Templates Available
           </p>
           <p className="font-serif text-base text-cream">
-            Caught Looking Expensive
+            Caught Looking Expensive, Digital Diary, Bill Please, Silk Robe
           </p>
           <p className="font-sans font-light text-xs text-cream/50 mt-1">
-            Flash. Film grain. Effortlessly stunning.
+            Tap to browse all templates
           </p>
         </button>
 

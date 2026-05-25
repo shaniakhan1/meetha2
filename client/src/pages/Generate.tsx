@@ -88,13 +88,10 @@ export default function Generate() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const template = params.get("template");
-    if (template === "paparazzi_flash") {
-      setSceneCategory("paparazzi_flash");
-      setTemplateSlug("paparazzi_flash");
-      setStep("template_preview");
-    } else if (template === "digital_diary") {
-      setSceneCategory("digital_diary");
-      setTemplateSlug("digital_diary");
+    const validSlugs = ["paparazzi_flash", "digital_diary", "bill_please", "silk_robe_room_service"];
+    if (template && validSlugs.includes(template)) {
+      setSceneCategory(template as SceneCategory);
+      setTemplateSlug(template);
       setStep("template_preview");
     }
   }, []);
@@ -541,75 +538,81 @@ export default function Generate() {
       </div>
 
       {/* ── Step: Template Preview ── */}
-      {step === "template_preview" && (
+      {step === "template_preview" && (() => {
+        const TEMPLATE_META: Record<string, {
+          number: string;
+          title: string;
+          subtitle: string;
+          features: string[];
+          sampleImage: string;
+        }> = {
+          paparazzi_flash: {
+            number: "Template No. 01",
+            title: "Caught Looking Expensive",
+            subtitle: "Flash photography. Blurry background. Someone caught you mid-moment looking effortlessly stunning.",
+            features: ["Flash photography aesthetic", "Grain and motion blur", "Candid energy hook"],
+            sampleImage: "/manus-storage/template-paparazzi-flash_24688a24.jpg",
+          },
+          digital_diary: {
+            number: "Template No. 02",
+            title: "Digital Diary",
+            subtitle: "Taped polaroid. Handwritten note. Dried flower. Analog layering that feels like a page from a real woman's private journal.",
+            features: ["Polaroid and analog layering", "Warm film grain", "Private journal hook"],
+            sampleImage: "/manus-storage/template-digital-diary_11ffb1d8.jpg",
+          },
+          bill_please: {
+            number: "Template No. 03",
+            title: "Bill, Please",
+            subtitle: "She reaches for the check. Calm, unbothered, final. The gesture says everything the caption does not.",
+            features: ["Fine dining candlelight aesthetic", "35mm analog warmth", "Quiet power hook"],
+            sampleImage: "/manus-storage/template-bill-please_7eacca04.jpg",
+          },
+          silk_robe_room_service: {
+            number: "Template No. 04",
+            title: "Silk Robe Room Service",
+            subtitle: "Hotel suite. Silk robe. Morning light. Room service tray. The luxury of an unhurried morning that belongs entirely to her.",
+            features: ["Luxury hotel suite morning light", "Warm cream and gold tones", "Solitude as luxury hook"],
+            sampleImage: "/manus-storage/template-silk-robe_705e049a.jpg",
+          },
+        };
+        const meta = TEMPLATE_META[templateSlug ?? ""] ?? TEMPLATE_META.paparazzi_flash;
+        return (
         <div className="flex-1 flex flex-col px-6 py-8 animate-fade-up opacity-0">
           {/* Template identity */}
-          <div className="mb-8">
+          <div className="mb-6">
             <p className="font-sans text-xs tracking-[0.2em] uppercase text-gold mb-3">
-              {templateSlug === "paparazzi_flash" ? "Template No. 01" : "Template No. 02"}
+              {meta.number}
             </p>
             <h2 className="font-serif text-3xl font-light text-charcoal mb-3">
-              {templateSlug === "paparazzi_flash" ? "Caught Looking Expensive" : "Digital Diary"}
+              {meta.title}
             </h2>
             <p className="font-sans font-light text-sm text-charcoal-soft leading-relaxed">
-              {templateSlug === "paparazzi_flash"
-                ? "Flash photography. Blurry background. Someone caught you mid-moment looking effortlessly stunning."
-                : "Taped polaroid. Handwritten note. Dried flower. Analog layering that feels like a page from a real woman's private journal."}
+              {meta.subtitle}
             </p>
           </div>
 
-          {/* Visual preview card */}
+          {/* Sample image */}
           <div
-            className="relative overflow-hidden mb-8 flex items-center justify-center"
-            style={{ minHeight: "40vw", maxHeight: "260px" }}
+            className="relative overflow-hidden mb-6"
+            style={{ height: "220px", borderRadius: "2px" }}
           >
+            <img
+              src={meta.sampleImage}
+              alt={meta.title}
+              className="w-full h-full object-cover"
+              style={{ objectPosition: "center top" }}
+            />
             <div
               className="absolute inset-0"
               style={{
-                background:
-                  templateSlug === "paparazzi_flash"
-                    ? "radial-gradient(ellipse at 30% 40%, rgba(255,255,255,0.08) 0%, transparent 60%), linear-gradient(160deg, #2C1810 0%, #1a0f09 60%, #2C1810 100%)"
-                    : "linear-gradient(160deg, #2C1810 0%, #1a0f09 60%, #2C1810 100%)",
+                background: "linear-gradient(to bottom, transparent 50%, rgba(26,15,9,0.4) 100%)",
               }}
             />
-            {/* Grain overlay */}
-            <div
-              className="absolute inset-0 opacity-25"
-              style={{
-                backgroundImage:
-                  "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.4'/%3E%3C/svg%3E\")",
-                backgroundSize: "128px 128px",
-              }}
-            />
-            {templateSlug === "paparazzi_flash" && (
-              <div
-                className="absolute"
-                style={{
-                  top: "10%",
-                  left: "15%",
-                  width: "140px",
-                  height: "140px",
-                  background: "radial-gradient(ellipse, rgba(255,255,255,0.18) 0%, rgba(255,255,255,0.04) 40%, transparent 70%)",
-                  filter: "blur(8px)",
-                }}
-              />
-            )}
-            <div className="relative z-10 text-center px-6 py-10">
-              <p className="font-serif text-xl text-cream/90 mb-2">
-                {templateSlug === "paparazzi_flash" ? "vanished softly" : "wrote it down"}
-              </p>
-              <p className="font-sans text-xs tracking-[0.2em] uppercase text-cream/40">
-                {templateSlug === "paparazzi_flash" ? "paparazzi flash" : "analog polaroid"}
-              </p>
-            </div>
           </div>
 
           {/* What you get */}
           <div className="mb-8 space-y-2">
-            {(templateSlug === "paparazzi_flash"
-              ? ["Flash photography aesthetic", "Grain and motion blur", "Candid energy hook"]
-              : ["Polaroid and analog layering", "Warm film grain", "Private journal hook"]
-            ).map((item) => (
+            {meta.features.map((item) => (
               <div key={item} className="flex items-center gap-3">
                 <div className="w-1 h-1 rounded-full bg-gold flex-shrink-0" />
                 <p className="font-sans text-xs text-charcoal-soft">{item}</p>
@@ -655,7 +658,8 @@ export default function Generate() {
             </button>
           </div>
         </div>
-      )}
+        );
+      })()}
 
       {/* ── Step: Select ── */}
       {step === "select" && (

@@ -196,10 +196,10 @@
 
 ## V15 -- Post-Launch Engagement
 
-- [ ] LoRA training completion email: Heartbeat cron polls users with lora_status=training every 5 min, sends Resend email when status flips to ready
-- [ ] Dashboard nudge card: show Train Your Look card when user has no lora_status (skipped onboarding LoRA step), links to /profile#lora
-- [ ] Template preview sample images: generate and upload real example images for Caught Looking Expensive and Digital Diary, wire into Generate template_preview step
-- [ ] New template: Bill Please (restaurant table, warm candlelight, woman paying and leaving, hooks: "i stopped arguing", "check, please", "i leave quietly now", "the bill was cheaper than the lesson")
-- [ ] New template: Silk Robe Room Service (hotel suite, silk robe, tray of food, warm morning light, intimate luxury, hooks: "room service and silence", "ordered for one", "this is the life", "no one else in the frame")
-- [ ] Update SceneCategory type in shared/types.ts to include bill_please and silk_robe_room_service
-- [ ] Add image prompt recipes for both new templates in server routers
+- [x] LoRA training completion email: Heartbeat cron polls users with lora_status=training every 5 min, sends Resend email when status flips to ready
+- [x] Dashboard nudge card: show Train Your Look card when user has no lora_status (skipped onboarding LoRA step), links to /profile#lora
+- [x] Template preview sample images: generate and upload real example images for all four templates, wire into Generate template_preview step
+- [x] New template: Bill Please (restaurant table, warm candlelight, woman paying and leaving, hooks: "i stopped arguing", "check, please", "i leave quietly now", "the bill was cheaper than the lesson")
+- [x] New template: Silk Robe Room Service (hotel suite, silk robe, tray of food, warm morning light, intimate luxury, hooks: "room service and silence", "ordered for one", "this is the life", "no one else in the frame")
+- [x] Update SceneCategory type in shared/types.ts to include bill_please and silk_robe_room_service
+- [x] Add image prompt recipes for both new templates in server routers
