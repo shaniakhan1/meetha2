@@ -178,13 +178,13 @@ export default function Templates() {
         {TEMPLATES.map((template, idx) => (
           <div key={template.slug} className={idx > 0 ? "border-t border-sand" : ""}>
             {/* Hero card */}
-            <div className="relative overflow-hidden" style={{ minHeight: "60vh" }}>
+            <div className="relative" style={{ minHeight: "60vh" }}>
               {/* Sample image */}
               <img
                 src={template.sampleImage}
                 alt={template.title.replace("\n", " ")}
                 className="absolute inset-0 w-full h-full object-cover"
-                style={{ objectPosition: "center top" }}
+                style={{ objectPosition: "center top", position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }}
               />
               {/* Dark overlay for text legibility */}
               <div
@@ -219,7 +219,7 @@ export default function Templates() {
               )}
 
               {/* Content */}
-              <div className="relative z-10 flex flex-col items-center justify-end px-6 pb-12 pt-16 text-center min-h-[60vh]">
+              <div className="relative z-10 flex flex-col items-center justify-end px-6 pb-12 pt-16 text-center" style={{ minHeight: "60vh" }}>
                 <p className="font-sans text-xs tracking-[0.25em] uppercase text-gold/80 mb-4">
                   {template.number}
                 </p>

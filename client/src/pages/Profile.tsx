@@ -474,7 +474,8 @@ export default function Profile() {
                 <img
                   src={previewUrl}
                   alt="Your aesthetic preview"
-                  className="w-full aspect-[3/4] object-cover"
+                  className="w-full object-cover"
+                  style={{ maxHeight: "320px", aspectRatio: "3/4", objectFit: "cover" }}
                 />
                 <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-charcoal/60 to-transparent">
                   <p className="font-serif text-sm text-cream">
