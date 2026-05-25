@@ -193,3 +193,13 @@
 - [x] Remove all black backgrounds from app (Templates, Generate, any dark cards) -- replaced with warm dark brown #2C1810 for template preview cards, cream for page backgrounds
 - [x] Simplify Caught Looking Expensive template flow: card tap goes to single preview screen with Generate Now button, no auto-start
 - [x] Remove all em dashes from every file in the codebase (copy, prompts, UI text, comments)
+
+## V15 -- Post-Launch Engagement
+
+- [ ] LoRA training completion email: Heartbeat cron polls users with lora_status=training every 5 min, sends Resend email when status flips to ready
+- [ ] Dashboard nudge card: show Train Your Look card when user has no lora_status (skipped onboarding LoRA step), links to /profile#lora
+- [ ] Template preview sample images: generate and upload real example images for Caught Looking Expensive and Digital Diary, wire into Generate template_preview step
+- [ ] New template: Bill Please (restaurant table, warm candlelight, woman paying and leaving, hooks: "i stopped arguing", "check, please", "i leave quietly now", "the bill was cheaper than the lesson")
+- [ ] New template: Silk Robe Room Service (hotel suite, silk robe, tray of food, warm morning light, intimate luxury, hooks: "room service and silence", "ordered for one", "this is the life", "no one else in the frame")
+- [ ] Update SceneCategory type in shared/types.ts to include bill_please and silk_robe_room_service
+- [ ] Add image prompt recipes for both new templates in server routers

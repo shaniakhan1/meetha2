@@ -13,11 +13,7 @@
  */
 
 import { fal } from "@fal-ai/client";
-import { createRequire } from "module";
-const require = createRequire(import.meta.url);
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const archiver = require("archiver") as (format: string, options?: object) => any;
-import { Readable } from "stream";
+import JSZip from "jszip";
 import { ENV } from "./env";
 
 export type LoraTrainingSubmitResult = {
@@ -30,24 +26,16 @@ export type LoraTrainingCompleteResult = {
   triggerPhrase: string;
 };
 
-/** Build a ZIP buffer from an array of image buffers. */
+/** Build a ZIP buffer from an array of image buffers using JSZip. */
 async function buildZip(
   images: Array<{ buffer: Buffer; filename: string }>
 ): Promise<Buffer> {
-  return new Promise((resolve, reject) => {
-    const archive = archiver("zip", { zlib: { level: 6 } });
-    const chunks: Buffer[] = [];
-
-    archive.on("data", (chunk: Buffer) => chunks.push(chunk));
-    archive.on("end", () => resolve(Buffer.concat(chunks)));
-    archive.on("error", reject);
-
-    for (const img of images) {
-      archive.append(Readable.from(img.buffer), { name: img.filename });
-    }
-
-    archive.finalize();
-  });
+  const zip = new JSZip();
+  for (const img of images) {
+    zip.file(img.filename, img.buffer);
+  }
+  const arrayBuffer = await zip.generateAsync({ type: "arraybuffer", compression: "DEFLATE", compressionOptions: { level: 6 } });
+  return Buffer.from(arrayBuffer);
 }
 
 /**
