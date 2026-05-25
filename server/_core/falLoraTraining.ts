@@ -13,7 +13,10 @@
  */
 
 import { fal } from "@fal-ai/client";
-import archiver from "archiver";
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const archiver = require("archiver") as (format: string, options?: object) => any;
 import { Readable } from "stream";
 import { ENV } from "./env";
 
