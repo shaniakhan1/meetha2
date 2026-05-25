@@ -5,7 +5,7 @@
 import { Resend } from "resend";
 import { ENV } from "./env";
 
-const FROM_ADDRESS = "hello@frequencyplanner.com";
+const FROM_ADDRESS = "hello@meetha.studio";
 const FROM_NAME = "Meetha";
 
 function getResend() {
