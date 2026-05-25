@@ -366,13 +366,13 @@ export default function Onboarding() {
         <div className="flex-1 flex flex-col px-6 py-8 animate-fade-up opacity-0">
           <div className="mb-8">
             <p className="font-sans text-xs tracking-[0.2em] uppercase text-gold mb-4">
-              Step 4 of 4 — Optional
+              Step 4 of 4
             </p>
             <h2 className="font-serif font-light text-charcoal mb-3">
-              Teach Meetha your frequency
+              This is what makes it yours.
             </h2>
             <p className="font-sans font-light text-sm text-charcoal-soft leading-relaxed">
-              Upload 3-5 images that feel like your world. Meetha reads your colors, your light, your warmth, your skin tone, not faces, so every generation is tuned to you specifically.
+              Upload 3-5 images that feel like your world. Meetha reads your colors, your light, your warmth, your skin tone — not faces — so every generation is calibrated to you specifically, not a generic template.
             </p>
           </div>
 
@@ -432,12 +432,12 @@ export default function Onboarding() {
               ) : referenceImages.length > 0 ? (
                 "Calibrate and continue"
               ) : (
-                "Skip for now"
+                "I'll add photos later"
               )}
             </button>
             {referenceImages.length === 0 && (
               <p className="font-sans text-xs text-charcoal-soft text-center">
-                You can add reference images later from your profile.
+                Without photos, Meetha uses a default aesthetic. You can calibrate anytime from your profile.
               </p>
             )}
           </div>

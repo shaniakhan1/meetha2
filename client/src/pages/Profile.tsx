@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useLocation } from "wouter";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
@@ -23,6 +23,19 @@ export default function Profile() {
   const creditsQuery = trpc.credits.get.useQuery();
   const utils = trpc.useUtils();
 
+  const [calibrationImages, setCalibrationImages] = useState<string[]>([]);
+  const [isCalibrating, setIsCalibrating] = useState(false);
+  const calibrationInputRef = useRef<HTMLInputElement>(null);
+
+  const analyzeAesthetic = trpc.aesthetic.analyzeAndSave.useMutation({
+    onSuccess: () => {
+      utils.profile.get.invalidate();
+      toast.success("Aesthetic calibrated. Your next generation will reflect your world.");
+      setCalibrationImages([]);
+    },
+    onError: (err) => toast.error(err.message),
+  });
+
   const upsertProfile = trpc.profile.upsert.useMutation({
     onSuccess: () => {
       utils.profile.get.invalidate();
@@ -31,6 +44,28 @@ export default function Profile() {
     },
     onError: (err) => toast.error(err.message),
   });
+
+  const handleCalibrationUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files ?? []).slice(0, 5 - calibrationImages.length);
+    files.forEach((file) => {
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        const dataUrl = ev.target?.result as string;
+        setCalibrationImages((prev) => [...prev, dataUrl].slice(0, 5));
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const handleCalibrate = async () => {
+    if (calibrationImages.length === 0) return;
+    setIsCalibrating(true);
+    try {
+      await analyzeAesthetic.mutateAsync({ images: calibrationImages });
+    } finally {
+      setIsCalibrating(false);
+    }
+  };
 
   const profile = profileQuery.data;
   const credits = creditsQuery.data;
@@ -230,6 +265,80 @@ export default function Profile() {
               </button>
             </div>
           )}
+        </div>
+
+        {/* Aesthetic Calibration */}
+        <div>
+          <div className="flex items-center justify-between mb-4">
+            <p className="font-sans text-xs tracking-[0.15em] uppercase text-charcoal-soft">
+              Aesthetic Calibration
+            </p>
+            {profile?.aesthetic_descriptors && (
+              <span className="font-sans text-xs text-gold">Calibrated</span>
+            )}
+          </div>
+
+          <div className="p-5 border border-sand bg-warm-white/60 space-y-4">
+            {profile?.aesthetic_descriptors ? (
+              <p className="font-sans font-light text-xs text-charcoal-soft leading-relaxed">
+                Meetha has read your aesthetic. Every generation is calibrated to your specific colors, light, and warmth. Upload new photos below to recalibrate.
+              </p>
+            ) : (
+              <p className="font-sans font-light text-xs text-charcoal-soft leading-relaxed">
+                Upload 3-5 images that feel like your world. Meetha reads your colors, light, warmth, and skin tone to personalize every generation to you specifically.
+              </p>
+            )}
+
+            {/* Upload grid */}
+            <div className="grid grid-cols-4 gap-2">
+              {calibrationImages.map((img, i) => (
+                <div key={i} className="aspect-square relative overflow-hidden border border-sand">
+                  <img src={img} alt={`Ref ${i + 1}`} className="w-full h-full object-cover" />
+                  <button
+                    onClick={() => setCalibrationImages((prev) => prev.filter((_, idx) => idx !== i))}
+                    className="absolute top-0.5 right-0.5 w-4 h-4 bg-charcoal/70 text-cream rounded-full text-xs flex items-center justify-center hover:bg-charcoal transition-colors"
+                  >
+                    x
+                  </button>
+                </div>
+              ))}
+              {calibrationImages.length < 5 && (
+                <button
+                  onClick={() => calibrationInputRef.current?.click()}
+                  className="aspect-square border border-dashed border-sand bg-warm-white/40 hover:bg-warm-white hover:border-gold/50 transition-all duration-200 flex flex-col items-center justify-center gap-1"
+                >
+                  <span className="text-gold text-lg leading-none">+</span>
+                  <span className="font-sans text-xs text-charcoal-soft">Add</span>
+                </button>
+              )}
+            </div>
+
+            <input
+              ref={calibrationInputRef}
+              type="file"
+              accept="image/*"
+              multiple
+              className="hidden"
+              onChange={handleCalibrationUpload}
+            />
+
+            {calibrationImages.length > 0 && (
+              <button
+                onClick={handleCalibrate}
+                disabled={isCalibrating}
+                className="btn-luxury w-full"
+              >
+                {isCalibrating ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <span className="w-3 h-3 border border-cream border-t-transparent rounded-full animate-spin" />
+                    Reading your aesthetic...
+                  </span>
+                ) : (
+                  profile?.aesthetic_descriptors ? "Recalibrate" : "Calibrate my aesthetic"
+                )}
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Upgrade */}

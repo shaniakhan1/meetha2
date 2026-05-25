@@ -72,6 +72,20 @@ const MOOD_VISUAL: Record<string, string> = {
     "dynamic natural movement, windswept organic textures, raw beauty with editorial restraint, energy that refuses containment",
 };
 
+// Archetype-aware default scenes when no scene category is selected
+const ARCHETYPE_DEFAULT_SCENE: Record<string, string> = {
+  luxury_minimal:
+    "a single gold ring resting on a smooth cream linen surface, soft window light casting a long quiet shadow, one deliberate object in an empty frame, nothing unnecessary",
+  elegant_chaos:
+    "a silk slip draped over the arm of a velvet chair, afternoon light cutting across the fabric, warm amber and deep ivory in tension, editorial and alive",
+  soft_power:
+    "close-up of hands with warm deep brown skin holding a ceramic cup, steam rising, soft amber morning light through sheer curtains, gold ring detail, intimate and unhurried",
+  dark_feminine:
+    "a deep jewel-toned velvet surface with a single candle flame, rich shadow and warm amber light, moody and deliberate, nothing explained",
+  ethereal:
+    "sheer linen curtain catching morning light, soft lens flare, translucent fabric moving, warm golden luminosity, the feeling of something sacred and unhurried",
+};
+
 function buildImagePrompt(
   archetype: string,
   mood: string,
@@ -81,8 +95,8 @@ function buildImagePrompt(
   audience?: string | null
 ): string {
   const scene = sceneCategory
-    ? SCENE_PROMPTS[sceneCategory] || "perfume bottle on warm marble surface, amber light, editorial still life"
-    : "perfume bottle on warm marble surface, amber light, editorial still life, gold detail";
+    ? SCENE_PROMPTS[sceneCategory] || (ARCHETYPE_DEFAULT_SCENE[archetype] ?? ARCHETYPE_DEFAULT_SCENE.soft_power)
+    : (ARCHETYPE_DEFAULT_SCENE[archetype] ?? ARCHETYPE_DEFAULT_SCENE.soft_power);
   const archetypeStyle = ARCHETYPE_VISUAL[archetype] || "";
   const moodStyle = MOOD_VISUAL[mood] || "";
   const aestheticLayer = aestheticDescriptors

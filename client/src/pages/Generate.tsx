@@ -400,6 +400,24 @@ export default function Generate() {
             </div>
           )}
 
+          {/* Calibration nudge — shown when no aesthetic descriptors are set */}
+          {profile && !profile.aesthetic_descriptors && (
+            <div className="mb-6 flex items-start gap-3 p-4 border border-sand/80 bg-warm-white/60">
+              <div className="w-1 h-full min-h-[2rem] bg-sand flex-shrink-0" />
+              <div className="flex-1">
+                <p className="font-sans text-xs text-charcoal-soft leading-relaxed">
+                  Your generations are using a default aesthetic. Upload reference photos to personalize every image to your exact world.
+                </p>
+                <button
+                  onClick={() => navigate("/profile")}
+                  className="mt-2 font-sans text-xs tracking-[0.1em] uppercase text-gold hover:text-charcoal transition-colors"
+                >
+                  Calibrate now
+                </button>
+              </div>
+            </div>
+          )}
+
           {/* Signature Scene — featured viral template, free once */}
           {!signatureSceneStatusQuery.data?.used && (
             <div className="mb-6 relative overflow-hidden border border-gold/60 bg-gradient-to-br from-warm-white to-gold/5">
