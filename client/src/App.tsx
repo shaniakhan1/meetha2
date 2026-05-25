@@ -15,6 +15,7 @@ import Preview from "./pages/Preview";
 import Privacy from "./pages/Privacy";
 import Terms from "./pages/Terms";
 import { useAuth } from "./_core/hooks/useAuth";
+import CookieBanner from "./components/CookieBanner";
 
 function ProtectedRoute({ component: Component }: { component: React.ComponentType }) {
   const { isAuthenticated, loading } = useAuth();
@@ -86,6 +87,7 @@ function App() {
             }}
           />
           <Router />
+          <CookieBanner />
         </TooltipProvider>
       </ThemeProvider>
     </ErrorBoundary>

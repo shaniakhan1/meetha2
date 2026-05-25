@@ -99,7 +99,7 @@
 - [x] Privacy Policy page (/privacy)
 - [x] Terms of Service page (/terms)
 - [x] Account deletion flow in Profile settings with tRPC procedure
-- [x] Cookie/data notice banner on first visit (deferred, low priority — not built)
+- [x] Cookie/data notice banner on first visit — built
 - [x] Footer legal links on landing page and inside app
 - [x] SEO: meta title, description, Open Graph tags in index.html
 - [x] sitemap.xml served at /sitemap.xml
@@ -115,7 +115,7 @@
 
 ## Deferred / Future
 
-- [ ] Cookie/data notice banner on first visit (intentionally deferred, low priority)
+- [x] Cookie/data notice banner on first visit (built: slides up after 1.2s, localStorage persist, accept/decline, links to Privacy Policy)
 - [ ] End-to-end verification of calibration re-upload with skin-tone-aware extraction (manual QA needed)
 
 ## V6 Features
