@@ -129,7 +129,8 @@ function buildCopyPrompt(
   platform: string,
   aestheticDescriptors?: string | null,
   niche?: string | null,
-  audience?: string | null
+  audience?: string | null,
+  voiceStyle?: string | null
 ): string {
   const archetypeDesc = ARCHETYPE_DESCRIPTIONS[archetype as Archetype] || "";
   const moodDesc = MOOD_DESCRIPTIONS[mood as Mood] || "";
@@ -141,13 +142,16 @@ function buildCopyPrompt(
   const nicheContext = niche || audience
     ? `\n\nCreator context: ${niche ? `She creates content about ${niche}.` : ""} ${audience ? `She speaks to ${audience}.` : ""} Ground the hooks and caption in this specific world. The copy should feel native to her niche, not generic luxury content.`
     : "";
+  const voiceContext = voiceStyle
+    ? `\n\nVoice style (how she writes online): ${voiceStyle}. Calibrate the tone, length, and energy of the copy to match this exactly.`
+    : "";
 
   return `You are writing copy for a woman creator who has a specific, calibrated voice. You write the way she thinks, not the way a brand talks to her.
 
 Creator's frequency: "${archetype.replace(/_/g, " ")}" — ${archetypeDesc}
 Current energy: "${mood}" — ${moodDesc}
 Platform: ${platform.toUpperCase()} — ${platformTone}
-Voice calibration: ${archetypeVoice}${frequencyContext}${nicheContext}
+Voice calibration: ${archetypeVoice}${frequencyContext}${nicheContext}${voiceContext}
 
 Write exactly 3 hook options for text overlay on a cinematic lifestyle image.
 
@@ -235,6 +239,7 @@ export const appRouter = router({
           onboardingComplete: z.boolean().optional(),
           niche: z.string().optional().nullable(),
           audience: z.string().optional().nullable(),
+          voiceStyle: z.string().optional().nullable(),
         })
       )
       .mutation(async ({ ctx, input }) => {
@@ -245,6 +250,7 @@ export const appRouter = router({
           onboardingComplete: input.onboardingComplete ?? false,
           niche: input.niche,
           audience: input.audience,
+          voiceStyle: input.voiceStyle,
         });
       }),
 
@@ -336,7 +342,7 @@ export const appRouter = router({
         const imageSize = input.videoFormat ? VIDEO_FORMAT_SIZE[input.videoFormat] : "portrait_4_3";
         const { url: imageUrl, key: imageKey } = await generateImageFal({ prompt: imagePrompt, imageSize });
         // Generate copy (pass aesthetic descriptors + niche/audience if available)
-        const copyPrompt = buildCopyPrompt(archetype, mood, input.platform, profile?.aesthetic_descriptors ?? null, profile?.niche ?? null, profile?.audience ?? null);
+        const copyPrompt = buildCopyPrompt(archetype, mood, input.platform, profile?.aesthetic_descriptors ?? null, profile?.niche ?? null, profile?.audience ?? null, profile?.voice_style ?? null);
         const copyResponse = await invokeLLMOpenAI({
           messages: [{ role: "user", content: copyPrompt }],
           response_format: {
@@ -548,7 +554,7 @@ Return JSON with:
 
         // 6. Build copy prompt with voice context as additional grounding
         const voiceCopyContext = `\n\nThis creator just said: "${transcript}"\n\nEmotional core extracted: ${emotionalCore}\n\nWrite copy that feels like a distillation of this moment. The hooks and caption should feel like something she would say after this exact thought. Ground the copy in her actual words and feeling, not generic aesthetic language.`;
-        const baseCopyPrompt = buildCopyPrompt(archetype, mood, input.platform, profile?.aesthetic_descriptors ?? null, profile?.niche ?? null, profile?.audience ?? null);
+        const baseCopyPrompt = buildCopyPrompt(archetype, mood, input.platform, profile?.aesthetic_descriptors ?? null, profile?.niche ?? null, profile?.audience ?? null, profile?.voice_style ?? null);
         const voiceCopyPrompt = baseCopyPrompt + voiceCopyContext;
 
         const copyResponse = await invokeLLMOpenAI({

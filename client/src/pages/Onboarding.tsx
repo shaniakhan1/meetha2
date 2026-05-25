@@ -11,7 +11,7 @@ import {
   type Mood,
 } from "@shared/types";
 
-type Step = "archetype" | "insight" | "mood" | "niche" | "aesthetic" | "complete";
+type Step = "archetype" | "insight" | "mood" | "niche" | "voice" | "aesthetic" | "complete";
 
 const ARCHETYPE_TAGLINES: Record<Archetype, string> = {
   luxury_minimal: "Stillness as power.",
@@ -43,7 +43,26 @@ const AUDIENCES = [
   { value: "everyone", label: "Everyone", description: "Building reach and discovery" },
 ];
 
-const ALL_STEPS: Step[] = ["archetype", "insight", "mood", "niche", "aesthetic", "complete"];
+const ALL_STEPS: Step[] = ["archetype", "insight", "mood", "niche", "voice", "aesthetic", "complete"];
+
+type VoiceTone = "casual" | "polished";
+type VoiceHumor = "funny" | "serious";
+type VoiceLength = "short" | "storytelling";
+
+const VOICE_TONE_OPTIONS: { value: VoiceTone; label: string; description: string }[] = [
+  { value: "casual", label: "Casual", description: "Conversational, like texting a friend" },
+  { value: "polished", label: "Polished", description: "Elevated, intentional, editorial" },
+];
+
+const VOICE_HUMOR_OPTIONS: { value: VoiceHumor; label: string; description: string }[] = [
+  { value: "funny", label: "Funny", description: "Wit, irony, a raised eyebrow" },
+  { value: "serious", label: "Serious", description: "Direct, no jokes, full presence" },
+];
+
+const VOICE_LENGTH_OPTIONS: { value: VoiceLength; label: string; description: string }[] = [
+  { value: "short", label: "Short", description: "One or two sentences. Done." },
+  { value: "storytelling", label: "Storytelling", description: "A little context, a little arc" },
+];
 
 export default function Onboarding() {
   const [, navigate] = useLocation();
@@ -54,6 +73,9 @@ export default function Onboarding() {
   const [selectedAudience, setSelectedAudience] = useState<string | null>(null);
   const [referenceImages, setReferenceImages] = useState<string[]>([]);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [voiceTone, setVoiceTone] = useState<VoiceTone | null>(null);
+  const [voiceHumor, setVoiceHumor] = useState<VoiceHumor | null>(null);
+  const [voiceLength, setVoiceLength] = useState<VoiceLength | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const profileQuery = trpc.profile.get.useQuery();
@@ -89,6 +111,10 @@ export default function Onboarding() {
   };
 
   const handleNicheContinue = () => {
+    setStep("voice");
+  };
+
+  const handleVoiceContinue = () => {
     setStep("aesthetic");
   };
 
@@ -120,12 +146,15 @@ export default function Onboarding() {
 
   const handleComplete = () => {
     if (!selectedArchetype || !selectedMood) return;
+    // Build voice style string from selections
+    const voiceStyle = [voiceTone, voiceHumor, voiceLength].filter(Boolean).join(", ");
     upsertProfile.mutate({
       archetype: selectedArchetype,
       mood: selectedMood,
       onboardingComplete: true,
       niche: selectedNiche,
       audience: selectedAudience,
+      voiceStyle: voiceStyle || undefined,
     });
   };
 
@@ -361,12 +390,112 @@ export default function Onboarding() {
         </div>
       )}
 
+      {/* Step: Voice Calibration */}
+      {step === "voice" && (
+        <div className="flex-1 flex flex-col px-6 py-8 animate-fade-up opacity-0 overflow-y-auto">
+          <div className="mb-8">
+            <p className="font-sans text-xs tracking-[0.2em] uppercase text-gold mb-4">
+              Step 4 of 5
+            </p>
+            <h2 className="font-serif font-light text-charcoal mb-3">
+              How do you sound online?
+            </h2>
+            <p className="font-sans font-light text-sm text-charcoal-soft leading-relaxed">
+              Three quick questions. Meetha will write captions and hooks that sound like you, not like a content template.
+            </p>
+          </div>
+
+          {/* Tone */}
+          <div className="mb-6">
+            <p className="font-sans text-xs tracking-[0.15em] uppercase text-charcoal-soft mb-3">
+              Your tone
+            </p>
+            <div className="grid grid-cols-2 gap-2">
+              {VOICE_TONE_OPTIONS.map((opt) => (
+                <button
+                  key={opt.value}
+                  onClick={() => setVoiceTone(voiceTone === opt.value ? null : opt.value)}
+                  className={`text-left px-4 py-3.5 border transition-all duration-200 ${
+                    voiceTone === opt.value
+                      ? "border-gold bg-gold/5"
+                      : "border-sand bg-warm-white/60 hover:border-gold/40 hover:bg-warm-white"
+                  }`}
+                >
+                  <p className="font-sans text-sm text-charcoal">{opt.label}</p>
+                  <p className="font-sans text-xs text-charcoal-soft mt-0.5 leading-snug">{opt.description}</p>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Humor */}
+          <div className="mb-6">
+            <p className="font-sans text-xs tracking-[0.15em] uppercase text-charcoal-soft mb-3">
+              Your energy
+            </p>
+            <div className="grid grid-cols-2 gap-2">
+              {VOICE_HUMOR_OPTIONS.map((opt) => (
+                <button
+                  key={opt.value}
+                  onClick={() => setVoiceHumor(voiceHumor === opt.value ? null : opt.value)}
+                  className={`text-left px-4 py-3.5 border transition-all duration-200 ${
+                    voiceHumor === opt.value
+                      ? "border-gold bg-gold/5"
+                      : "border-sand bg-warm-white/60 hover:border-gold/40 hover:bg-warm-white"
+                  }`}
+                >
+                  <p className="font-sans text-sm text-charcoal">{opt.label}</p>
+                  <p className="font-sans text-xs text-charcoal-soft mt-0.5 leading-snug">{opt.description}</p>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Length */}
+          <div className="mb-8">
+            <p className="font-sans text-xs tracking-[0.15em] uppercase text-charcoal-soft mb-3">
+              Your captions
+            </p>
+            <div className="grid grid-cols-2 gap-2">
+              {VOICE_LENGTH_OPTIONS.map((opt) => (
+                <button
+                  key={opt.value}
+                  onClick={() => setVoiceLength(voiceLength === opt.value ? null : opt.value)}
+                  className={`text-left px-4 py-3.5 border transition-all duration-200 ${
+                    voiceLength === opt.value
+                      ? "border-gold bg-gold/5"
+                      : "border-sand bg-warm-white/60 hover:border-gold/40 hover:bg-warm-white"
+                  }`}
+                >
+                  <p className="font-sans text-sm text-charcoal">{opt.label}</p>
+                  <p className="font-sans text-xs text-charcoal-soft mt-0.5 leading-snug">{opt.description}</p>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="mt-auto space-y-3">
+            <button
+              onClick={handleVoiceContinue}
+              className="btn-luxury w-full"
+            >
+              {voiceTone || voiceHumor || voiceLength ? "Continue" : "Skip for now"}
+            </button>
+            {!voiceTone && !voiceHumor && !voiceLength && (
+              <p className="font-sans text-xs text-charcoal-soft text-center">
+                You can update your voice style anytime from your profile.
+              </p>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Step: Aesthetic Calibration Upload */}
       {step === "aesthetic" && (
         <div className="flex-1 flex flex-col px-6 py-8 animate-fade-up opacity-0">
           <div className="mb-8">
             <p className="font-sans text-xs tracking-[0.2em] uppercase text-gold mb-4">
-              Step 4 of 4
+              Step 5 of 5
             </p>
             <h2 className="font-serif font-light text-charcoal mb-3">
               This is what makes it yours.

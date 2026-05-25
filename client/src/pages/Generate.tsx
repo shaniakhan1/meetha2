@@ -69,6 +69,7 @@ export default function Generate() {
   const [outputType, setOutputType] = useState<"still" | "video">("still");
   const [videoFormat, setVideoFormat] = useState<VideoFormat>("tiktok_reels");
   const [showCustomize, setShowCustomize] = useState(false);
+  const [showTopUp, setShowTopUp] = useState(false);
 
   // Voice recording state
   const [isRecording, setIsRecording] = useState(false);
@@ -184,7 +185,7 @@ export default function Generate() {
     if (!previewTier) {
       const credits = creditsQuery.data;
       if (!credits || credits.credits_remaining < STILL_COST) {
-        toast.error("No credits remaining. Please upgrade to continue.");
+        setShowTopUp(true);
         return;
       }
     }
@@ -204,7 +205,7 @@ export default function Generate() {
     if (!previewTier) {
       const credits = creditsQuery.data;
       if (!credits || credits.credits_remaining < STILL_COST) {
-        toast.error("No credits remaining. Please upgrade to continue.");
+        setShowTopUp(true);
         return;
       }
     }
@@ -434,6 +435,55 @@ export default function Generate() {
 
   return (
     <div className="min-h-screen bg-cream flex flex-col">
+
+      {/* ── Top-up Modal ── */}
+      {showTopUp && (
+        <div
+          className="fixed inset-0 z-50 flex items-end justify-center"
+          onClick={() => setShowTopUp(false)}
+        >
+          <div className="absolute inset-0 bg-charcoal/40 backdrop-blur-sm" />
+          <div
+            className="relative w-full max-w-md bg-cream border-t border-sand px-6 pt-8 pb-10 animate-fade-up opacity-0"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={() => setShowTopUp(false)}
+              className="absolute top-4 right-5 font-sans text-xs text-charcoal-soft hover:text-charcoal tracking-widest uppercase"
+            >
+              Close
+            </button>
+            <p className="font-sans text-xs tracking-[0.15em] uppercase text-charcoal-soft mb-1">
+              Credits
+            </p>
+            <h2 className="font-serif text-2xl text-charcoal mb-2">
+              You have used all your generations.
+            </h2>
+            <p className="font-sans font-light text-xs text-charcoal-soft leading-relaxed mb-6">
+              Upgrade to keep creating. Starter and Pro unlock more credits every month, animated video, and Animate Me.
+            </p>
+            <div className="space-y-3">
+              <a
+                href={import.meta.env.VITE_STRIPE_STARTER_LINK || "#"}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn-luxury btn-gold w-full text-center block"
+              >
+                Starter &mdash; $19 / month
+              </a>
+              <a
+                href={import.meta.env.VITE_STRIPE_PRO_LINK || "#"}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn-luxury btn-luxury-outline w-full text-center block"
+              >
+                Pro &mdash; $39 / month
+              </a>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex items-center justify-between px-6 py-5 border-b border-sand/40">
         <button
@@ -744,71 +794,17 @@ export default function Generate() {
           </div>
 
           {/* Generate CTA inside customize panel */}
-          {effectiveCredits && effectiveCredits.credits_remaining <= 0 && !previewTier ? (
-            <div className="space-y-3">
-              <div className="p-4 border border-gold/30 bg-warm-white text-center">
-                <p className="font-sans text-xs text-charcoal-soft mb-2">
-                  You have used all your free generations.
-                </p>
-                <p className="font-serif text-sm text-charcoal">Upgrade to keep creating.</p>
-              </div>
-              <div className="space-y-2">
-                <a
-                  href={import.meta.env.VITE_STRIPE_STARTER_LINK || "#"}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="btn-luxury btn-gold w-full text-center block"
-                >
-                  Starter — $19 / month
-                </a>
-                <a
-                  href={import.meta.env.VITE_STRIPE_PRO_LINK || "#"}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="btn-luxury btn-luxury-outline w-full text-center block"
-                >
-                  Pro — $39 / month
-                </a>
-              </div>
-            </div>
-          ) : (
-            <button onClick={handleGenerate} className="btn-luxury w-full">
-              Generate with Custom Settings
-            </button>
-          )}
+          <button
+            onClick={handleGenerate}
+            className="btn-luxury w-full"
+          >
+            Generate with Custom Settings
+          </button>
 
           </div>
           )}
 
-          {/* No credits upsell — shown outside customize panel */}
-          {effectiveCredits && effectiveCredits.credits_remaining <= 0 && !previewTier && (
-            <div className="space-y-3">
-              <div className="p-4 border border-gold/30 bg-warm-white text-center">
-                <p className="font-sans text-xs text-charcoal-soft mb-2">
-                  You have used all your free generations.
-                </p>
-                <p className="font-serif text-sm text-charcoal">Upgrade to keep creating.</p>
-              </div>
-              <div className="space-y-2">
-                <a
-                  href={import.meta.env.VITE_STRIPE_STARTER_LINK || "#"}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="btn-luxury btn-gold w-full text-center block"
-                >
-                  Starter — $19 / month
-                </a>
-                <a
-                  href={import.meta.env.VITE_STRIPE_PRO_LINK || "#"}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="btn-luxury btn-luxury-outline w-full text-center block"
-                >
-                  Pro — $39 / month
-                </a>
-              </div>
-            </div>
-          )}
+
         </div>
       )}
 

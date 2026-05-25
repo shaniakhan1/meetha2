@@ -31,6 +31,7 @@ export type DbProfile = {
   reference_image_urls: string[] | null;
   niche: string | null;
   audience: string | null;
+  voice_style: string | null;
   share_badge_enabled: boolean | null;
   created_at: string;
   updated_at: string;
@@ -168,6 +169,7 @@ export async function upsertProfile(data: {
   aestheticDescriptors?: string | null;
   niche?: string | null;
   audience?: string | null;
+  voiceStyle?: string | null;
 }): Promise<DbProfile | null> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const sb = getSupabase() as any;
@@ -189,6 +191,7 @@ export async function upsertProfile(data: {
         ...(data.aestheticDescriptors !== undefined ? { aesthetic_descriptors: data.aestheticDescriptors } : {}),
         ...(data.niche !== undefined ? { niche: data.niche } : {}),
         ...(data.audience !== undefined ? { audience: data.audience } : {}),
+        ...(data.voiceStyle !== undefined ? { voice_style: data.voiceStyle } : {}),
         updated_at: now,
       })
       .eq("user_id", data.userId)
@@ -207,6 +210,7 @@ export async function upsertProfile(data: {
       ...(data.aestheticDescriptors !== undefined ? { aesthetic_descriptors: data.aestheticDescriptors } : {}),
       ...(data.niche !== undefined ? { niche: data.niche } : {}),
       ...(data.audience !== undefined ? { audience: data.audience } : {}),
+      ...(data.voiceStyle !== undefined ? { voice_style: data.voiceStyle } : {}),
     })
     .select()
     .single();

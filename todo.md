@@ -143,9 +143,9 @@
 - [x] Watermark fix: paid users no watermark by default; free users watermark; paid users get optional "Share with Meetha badge" toggle in Profile
 - [x] Caption/hook copy prompt rewrite: short declarative sentences, observational contrast, no over-explanation, user's actual voice calibration
 - [x] Weighted credit system: 1 credit = still image, 5 credits = video; update credit deduction logic
-- [ ] Credit top-up modal: when credits hit zero, show clean top-up prompt (not hard wall)
+- [x] Credit top-up modal: when credits hit zero, show clean top-up prompt (not hard wall)
 - [x] Simplified one-tap generate: zero-decision default path, Customize toggle for advanced options (scene, format, video vs still)
 - [x] Kling Animate Me mode: Animate Me button on preview converts still to 5-sec Kling clip (Starter+, 5 credits)
-- [ ] Voice calibration questions in onboarding: 3 quick questions about how user talks online (casual/polished, funny/serious, short/storytelling)
+- [x] Voice calibration questions in onboarding: 3 quick questions about how user talks online (casual/polished, funny/serious, short/storytelling)
 - [x] New Signature Scene: "Quiet Wealth" — private morning, espresso, white peony, linen, free once
 - [x] Revert reference image conditioning (remove flux-pro/v1.1/redux, restore clean faceless FLUX generation)
