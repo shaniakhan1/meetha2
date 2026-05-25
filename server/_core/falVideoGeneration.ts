@@ -19,9 +19,11 @@ export async function generateVideoFal(params: {
       prompt: params.prompt,
       duration: "5",
     } as any,
-  }) as unknown as { video?: { url: string }; url?: string };
+  }) as unknown as { data?: { video?: { url: string }; url?: string }; video?: { url: string }; url?: string };
 
   const videoUrl =
+    (result as any)?.data?.video?.url ??
+    (result as any)?.data?.url ??
     (result as any)?.video?.url ??
     (result as any)?.url ??
     "";

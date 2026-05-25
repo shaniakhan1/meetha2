@@ -33,10 +33,11 @@ export async function generateImageFal(options: FalImageOptions): Promise<FalIma
       output_format: "jpeg" as const,
     },
   }) as unknown as {
-    images: Array<{ url: string; content_type: string }>;
+    data: { images: Array<{ url: string; content_type: string }> };
+    requestId: string;
   };
 
-  const imageUrl = result.images?.[0]?.url;
+  const imageUrl = result.data?.images?.[0]?.url;
   if (!imageUrl) {
     throw new Error("Fal.ai returned no image URL");
   }
