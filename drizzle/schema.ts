@@ -59,6 +59,8 @@ export const generations = mysqlTable("generations", {
   selectedHook: text("selectedHook"),
   caption: text("caption").notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
+  archived: boolean("archived").default(false).notNull(),
+  archivedAt: timestamp("archivedAt"),
 });
 
 export type Generation = typeof generations.$inferSelect;

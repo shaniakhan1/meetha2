@@ -6,6 +6,7 @@ import { createExpressMiddleware } from "@trpc/server/adapters/express";
 import { handleMagicLink, handleSetSession, handleLogout, handleMe, handlePreviewAuth } from "./auth";
 import { handleDownload } from "../download";
 import { handleLoraCheck } from "../loraEmailCron";
+import { handleArchiveGenerations } from "../archiveCron";
 import { loraUploadMiddleware, handleLoraUpload, handleLoraStatus } from "../loraUpload";
 import { registerStorageProxy } from "./storageProxy";
 import { appRouter } from "../routers";
@@ -49,6 +50,7 @@ async function startServer() {
   app.post("/api/lora/upload", loraUploadMiddleware, handleLoraUpload);
   app.get("/api/lora/status", handleLoraStatus);
   app.post("/api/scheduled/lora-check", handleLoraCheck);
+  app.post("/api/scheduled/archive-generations", handleArchiveGenerations);
   // tRPC API
   app.use(
     "/api/trpc",

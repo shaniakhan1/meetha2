@@ -64,6 +64,8 @@ export type DbGeneration = {
   caption: string;
   selected_hook: string | null;
   created_at: string;
+  archived: boolean;
+  archivedAt: string | null;
 };
 
 // ─── Users ────────────────────────────────────────────────────────────────────
@@ -349,15 +351,54 @@ export async function createGeneration(data: {
   return inserted as DbGeneration;
 }
 
-export async function getUserGenerations(userId: number): Promise<DbGeneration[]> {
+/** Fetch a paginated page of non-archived generations for a user. */
+export async function getUserGenerations(
+  userId: number,
+  opts: { limit?: number; offset?: number } = {}
+): Promise<DbGeneration[]> {
+  const limit = opts.limit ?? 20;
+  const offset = opts.offset ?? 0;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const sb = getSupabase() as any;
   const { data } = await sb
     .from("generations")
     .select("*")
     .eq("user_id", userId)
-    .order("created_at", { ascending: false });
+    .eq("archived", false)
+    .order("created_at", { ascending: false })
+    .range(offset, offset + limit - 1);
   return (data as DbGeneration[]) ?? [];
+}
+
+/** Count total non-archived generations for a user (for pagination UI). */
+export async function countUserGenerations(userId: number): Promise<number> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const sb = getSupabase() as any;
+  const { count } = await sb
+    .from("generations")
+    .select("id", { count: "exact", head: true })
+    .eq("user_id", userId)
+    .eq("archived", false);
+  return (count as number) ?? 0;
+}
+
+/** Archive generations older than cutoffDays for a specific user. Returns count archived. */
+export async function archiveOldGenerations(
+  userId: number,
+  cutoffDays: number
+): Promise<number> {
+  const cutoffDate = new Date();
+  cutoffDate.setDate(cutoffDate.getDate() - cutoffDays);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const sb = getSupabase() as any;
+  const { data } = await sb
+    .from("generations")
+    .update({ archived: true, archivedAt: new Date().toISOString() })
+    .eq("user_id", userId)
+    .eq("archived", false)
+    .lt("created_at", cutoffDate.toISOString())
+    .select("id");
+  return (data as { id: number }[])?.length ?? 0;
 }
 
 export async function updateGenerationHook(data: {

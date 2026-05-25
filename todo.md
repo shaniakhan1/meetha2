@@ -220,3 +220,15 @@
 - [x] Update Dashboard.tsx template shortcut card from 4 to 7 templates
 - [x] TypeScript: zero errors
 - [x] Vitest: 11 tests passing
+
+## V18 -- Efficiency, Storage, and Mobile Share
+
+- [x] Add archived + archived_at columns to generations table (Supabase migration)
+- [x] Update getUserGenerations to accept limit/offset and filter out archived rows
+- [x] Add getGenerationsPage tRPC procedure (paginated, 20 per page)
+- [x] Build Heartbeat archive cron: free tier archive after 30d, starter after 90d, pro never
+- [x] Update Dashboard history grid to paginate (20 at a time, Load More button)
+- [x] Show archived badge on expired rows (with upgrade CTA for free tier)
+- [x] Fix mobile download: use navigator.share with File object on mobile, anchor fallback on desktop
+- [x] Add instant Share sheet after generation (fires before feedback step on mobile)
+- [ ] Add welcome email cron (10 min after signup, Heartbeat)

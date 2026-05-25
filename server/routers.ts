@@ -14,6 +14,8 @@ import {
   getProfile,
   upsertProfile,
   getUserGenerations,
+  countUserGenerations,
+  archiveOldGenerations,
   createGeneration,
   updateGenerationHook,
   getCredits,
@@ -711,9 +713,22 @@ export const appRouter = router({
   // ─── Generations ──────────────────────────────────────────────────────────
 
   generations: router({
-    list: protectedProcedure.query(async ({ ctx }) => {
-      return (await getUserGenerations(ctx.user.id)) ?? [];
-    }),
+    list: protectedProcedure
+      .input(
+        z.object({
+          limit: z.number().min(1).max(50).default(20),
+          offset: z.number().min(0).default(0),
+        }).optional()
+      )
+      .query(async ({ ctx, input }) => {
+        const limit = input?.limit ?? 20;
+        const offset = input?.offset ?? 0;
+        const [items, total] = await Promise.all([
+          getUserGenerations(ctx.user.id, { limit, offset }),
+          countUserGenerations(ctx.user.id),
+        ]);
+        return { items, total, limit, offset };
+      }),
 
     selectHook: protectedProcedure
       .input(

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
@@ -10,21 +10,61 @@ import {
   SCENE_LABELS,
 } from "@shared/types";
 
+type GenerationItem = {
+  id: number;
+  user_id: number;
+  image_url: string;
+  image_key: string;
+  archetype: string;
+  mood: string;
+  platform: string;
+  scene_category: string | null;
+  hooks: string;
+  caption: string;
+  selected_hook: string | null;
+  created_at: string;
+  archived: boolean;
+  archivedAt: string | null;
+};
+
+const PAGE_SIZE = 20;
+
 export default function Dashboard() {
   const [, navigate] = useLocation();
   const { user, logout } = useAuth();
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [referralCopied, setReferralCopied] = useState(false);
+  const [offset, setOffset] = useState(0);
+  const [allGenerations, setAllGenerations] = useState<GenerationItem[]>([]);
+  const [downloadingId, setDownloadingId] = useState<number | null>(null);
 
   const profileQuery = trpc.profile.get.useQuery();
   const creditsQuery = trpc.credits.get.useQuery();
-  const generationsQuery = trpc.generations.list.useQuery();
+  const generationsQuery = trpc.generations.list.useQuery({ limit: PAGE_SIZE, offset });
   const referralQuery = trpc.referral.getLink.useQuery();
 
   const profile = profileQuery.data;
   const credits = creditsQuery.data;
-  const generations = generationsQuery.data ?? [];
+  const generationsPage = generationsQuery.data;
   const referral = referralQuery.data;
+
+  // Accumulate pages as user loads more
+  useEffect(() => {
+    if (generationsPage?.items) {
+      if (offset === 0) {
+        setAllGenerations(generationsPage.items);
+      } else {
+        setAllGenerations((prev) => {
+          const existingIds = new Set(prev.map((g) => g.id));
+          const newItems = generationsPage.items.filter((g) => !existingIds.has(g.id));
+          return [...prev, ...newItems];
+        });
+      }
+    }
+  }, [generationsPage, offset]);
+
+  const totalGenerations = generationsPage?.total ?? 0;
+  const hasMore = allGenerations.length < totalGenerations;
 
   const archetype = profile?.archetype
     ? ARCHETYPE_LABELS[profile.archetype as keyof typeof ARCHETYPE_LABELS]
@@ -46,12 +86,34 @@ export default function Dashboard() {
     });
   };
 
-  const handleDownload = async (_imageUrl: string, id: number) => {
+  const handleDownload = async (id: number, hook?: string | null) => {
+    if (downloadingId === id) return;
+    setDownloadingId(id);
     try {
-      // Use server-side endpoint — applies watermark for free tier automatically
       const response = await fetch(`/api/download/${id}`, { credentials: "include" });
       if (!response.ok) throw new Error(`Download failed: ${response.status}`);
       const blob = await response.blob();
+
+      // Mobile: use native share sheet (saves to camera roll, opens Instagram, etc.)
+      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+      if (isMobile && navigator.canShare) {
+        const file = new File([blob], `meetha-${id}.jpg`, { type: "image/jpeg" });
+        if (navigator.canShare({ files: [file] })) {
+          try {
+            await navigator.share({
+              files: [file],
+              title: "Meetha",
+              text: hook ?? "Created with Meetha",
+            });
+            return;
+          } catch (shareErr: unknown) {
+            // User cancelled share — not an error
+            if (shareErr instanceof Error && shareErr.name === "AbortError") return;
+          }
+        }
+      }
+
+      // Desktop fallback: anchor download
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
@@ -61,7 +123,9 @@ export default function Dashboard() {
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
     } catch {
-      // silently fail
+      toast.error("Download failed. Please try again.");
+    } finally {
+      setDownloadingId(null);
     }
   };
 
@@ -243,17 +307,17 @@ export default function Dashboard() {
             Your Creations
           </p>
           <p className="font-sans font-light text-xs text-charcoal-soft">
-            {generations.length} {generations.length === 1 ? "generation" : "generations"}
+            {totalGenerations} {totalGenerations === 1 ? "generation" : "generations"}
           </p>
         </div>
 
-        {generationsQuery.isLoading ? (
+        {generationsQuery.isLoading && allGenerations.length === 0 ? (
           <div className="grid grid-cols-2 gap-3">
             {[1, 2, 3, 4].map((i) => (
               <div key={i} className="aspect-story bg-sand/40 animate-pulse" />
             ))}
           </div>
-        ) : generations.length === 0 ? (
+        ) : allGenerations.length === 0 ? (
           <div className="py-16 text-center border border-sand bg-warm-white/40">
             <p className="font-serif text-lg text-charcoal mb-2">Nothing yet.</p>
             <p className="font-sans font-light text-xs text-charcoal-soft">
@@ -261,80 +325,101 @@ export default function Dashboard() {
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-2 gap-3">
-            {generations.map((gen) => {
-              const hooks = (() => {
-                try {
-                  return JSON.parse(gen.hooks) as string[];
-                } catch {
-                  return [];
-                }
-              })();
-              const isExpanded = expandedId === gen.id;
+          <>
+            <div className="grid grid-cols-2 gap-3">
+              {allGenerations.map((gen) => {
+                const hooks = (() => {
+                  try {
+                    return JSON.parse(gen.hooks) as string[];
+                  } catch {
+                    return [];
+                  }
+                })();
+                const isExpanded = expandedId === gen.id;
+                const isDownloading = downloadingId === gen.id;
 
-              return (
-                <div
-                  key={gen.id}
-                  className="relative overflow-hidden bg-[#1a0f09] cursor-pointer group"
-                  onClick={() => setExpandedId(isExpanded ? null : gen.id)}
-                >
-                  <div className="aspect-story">
-                    <img
-                      src={gen.image_url}
-                      alt={gen.selected_hook ?? "Generated content"}
-                      className="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity duration-300"
-                    />
-                    {/* Hook overlay */}
-                    {gen.selected_hook && (
-                      <div className="absolute inset-0 flex items-end justify-center pb-4 px-3">
-                        <p
-                          className="font-serif text-cream text-center leading-tight"
-                          style={{
-                            fontSize: "clamp(0.65rem, 2.5vw, 0.85rem)",
-                            textShadow: "0 1px 8px rgba(0,0,0,0.5)",
-                          }}
-                        >
-                          {gen.selected_hook}
+                return (
+                  <div
+                    key={gen.id}
+                    className="relative overflow-hidden bg-[#1a0f09] cursor-pointer group"
+                    onClick={() => setExpandedId(isExpanded ? null : gen.id)}
+                  >
+                    <div className="aspect-story">
+                      <img
+                        src={gen.image_url}
+                        alt={gen.selected_hook ?? "Generated content"}
+                        className="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity duration-300"
+                        loading="lazy"
+                      />
+                      {/* Hook overlay */}
+                      {gen.selected_hook && (
+                        <div className="absolute inset-0 flex items-end justify-center pb-4 px-3">
+                          <p
+                            className="font-serif text-cream text-center leading-tight"
+                            style={{
+                              fontSize: "clamp(0.65rem, 2.5vw, 0.85rem)",
+                              textShadow: "0 1px 8px rgba(0,0,0,0.5)",
+                            }}
+                          >
+                            {gen.selected_hook}
+                          </p>
+                        </div>
+                      )}
+                      {/* Platform badge */}
+                      <div className="absolute top-2 left-2">
+                        <span className="font-sans text-xs bg-[#1a0f09]/80 text-cream px-1.5 py-0.5 tracking-widest uppercase">
+                          {PLATFORM_LABELS[gen.platform as keyof typeof PLATFORM_LABELS] ?? gen.platform}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Expanded overlay */}
+                    {isExpanded && (
+                      <div
+                        className="absolute inset-0 bg-[#1a0f09]/92 flex flex-col items-center justify-center p-4 animate-fade-in opacity-0"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <p className="font-sans text-xs tracking-widest uppercase text-gold mb-3">
+                          {gen.scene_category
+                            ? SCENE_LABELS[gen.scene_category as keyof typeof SCENE_LABELS]
+                            : ""}
                         </p>
+                        <p className="font-serif text-sm text-cream text-center leading-snug mb-4">
+                          {gen.selected_hook ?? hooks[0]}
+                        </p>
+                        <p className="font-sans font-light text-xs text-cream/70 text-center leading-relaxed mb-4">
+                          {gen.caption}
+                        </p>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDownload(gen.id, gen.selected_hook);
+                          }}
+                          disabled={isDownloading}
+                          className="font-sans text-xs tracking-widest uppercase text-cream border border-cream/40 px-6 py-3 hover:bg-cream/10 transition-colors active:scale-[0.97] disabled:opacity-50 min-h-[44px]"
+                        >
+                          {isDownloading ? "Saving..." : "Save & Share"}
+                        </button>
                       </div>
                     )}
-                    {/* Platform badge */}
-                    <div className="absolute top-2 left-2">
-                      <span className="font-sans text-xs bg-[#1a0f09]/80 text-cream px-1.5 py-0.5 tracking-widest uppercase">
-                        {PLATFORM_LABELS[gen.platform as keyof typeof PLATFORM_LABELS] ?? gen.platform}
-                      </span>
-                    </div>
                   </div>
+                );
+              })}
+            </div>
 
-                  {/* Expanded overlay */}
-                  {isExpanded && (
-                    <div
-                      className="absolute inset-0 bg-[#1a0f09]/92 flex flex-col items-center justify-center p-4 animate-fade-in opacity-0"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <p className="font-sans text-xs tracking-widest uppercase text-gold mb-3">
-                        {gen.scene_category
-                          ? SCENE_LABELS[gen.scene_category as keyof typeof SCENE_LABELS]
-                          : ""}
-                      </p>
-                      <p className="font-serif text-sm text-cream text-center leading-snug mb-4">
-                        {gen.selected_hook ?? hooks[0]}
-                      </p>
-                      <p className="font-sans font-light text-xs text-cream/70 text-center leading-relaxed mb-4">
-                        {gen.caption}
-                      </p>
-                      <button
-                        onClick={() => handleDownload(gen.image_url, gen.id)}
-                        className="font-sans text-xs tracking-widest uppercase text-cream border border-cream/40 px-4 py-2 hover:bg-cream/10 transition-colors"
-                      >
-                        Re-download
-                      </button>
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
+            {/* Load More */}
+            {hasMore && (
+              <div className="mt-6 text-center">
+                <button
+                  onClick={() => setOffset((prev) => prev + PAGE_SIZE)}
+                  disabled={generationsQuery.isFetching}
+                  className="font-sans text-xs tracking-widest uppercase text-charcoal-soft border border-sand px-8 py-3 hover:border-charcoal/40 hover:text-charcoal transition-all duration-200 disabled:opacity-40 min-h-[44px]"
+                >
+                  {generationsQuery.isFetching ? "Loading..." : `Load More (${totalGenerations - allGenerations.length} remaining)`}
+                </button>
+              </div>
+            )}
+          </>
         )}
       </div>
 

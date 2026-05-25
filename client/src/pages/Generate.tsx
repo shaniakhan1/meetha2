@@ -288,12 +288,33 @@ export default function Generate() {
   const handleDownload = async () => {
     if (!result?.generation?.id) return;
     try {
-      // Use the server-side download endpoint which applies the watermark for free tier
       const response = await fetch(`/api/download/${result.generation.id}`, {
         credentials: "include",
       });
       if (!response.ok) throw new Error(`Download failed: ${response.status}`);
       const blob = await response.blob();
+
+      // Mobile: use native share sheet (saves to camera roll, opens Instagram, etc.)
+      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+      if (isMobile && navigator.canShare) {
+        const file = new File([blob], `meetha-${result.generation.id}.jpg`, { type: "image/jpeg" });
+        if (navigator.canShare({ files: [file] })) {
+          try {
+            await navigator.share({
+              files: [file],
+              title: "Meetha",
+              text: selectedHook ?? "Created with Meetha",
+            });
+            // After share, move to feedback
+            setTimeout(() => setStep("feedback"), 800);
+            return;
+          } catch (shareErr: unknown) {
+            if (shareErr instanceof Error && shareErr.name === "AbortError") return;
+          }
+        }
+      }
+
+      // Desktop fallback: anchor download
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
@@ -1358,8 +1379,8 @@ export default function Generate() {
                 </button>
               </div>
             )}
-            <button onClick={handleDownload} className="btn-luxury w-full">
-              Download Image
+            <button onClick={handleDownload} className="btn-luxury w-full min-h-[52px]">
+              {/iPhone|iPad|iPod|Android/i.test(navigator.userAgent) ? "Save & Share" : "Download Image"}
             </button>
             <button
               onClick={handleCopyCaption}
