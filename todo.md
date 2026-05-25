@@ -88,3 +88,4 @@
 - [x] Image prompt rewrite — skin tone aware, frequency-calibrated, aesthetic descriptors injected, sharper scene prompts
 - [x] Copy prompt rewrite — frequency voice system, RGE-inspired hook examples, anti-generic rules, culturally grounded
 - [x] Aesthetic calibration system prompt rewrite — explicitly extracts skin tone, gold jewelry, warmth, environment for injection into image prompts
+- [x] Landing page rewrite — broad pain-point-led copy, frequency language, output example section, not niche-specific

@@ -3,31 +3,46 @@ import { useEffect } from "react";
 import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 
-const ARCHETYPES = [
+const FREQUENCIES = [
   {
-    name: "Luxury Minimal",
-    tagline: "Less is everything.",
-    description: "Clean lines. Intentional silence. The most expensive thing in the room.",
+    name: "Still Frequency",
+    tagline: "Stillness as power.",
+    description: "One object. Extreme negative space. The room goes quiet.",
   },
   {
-    name: "Soft Power",
-    tagline: "People lean in.",
-    description: "Emotional magnetism without loudness. Presence that precedes you.",
+    name: "Magnetic Frequency",
+    tagline: "Warmth with edges.",
+    description: "People lean in without knowing why. Presence that does not announce itself.",
   },
   {
-    name: "Elegant Chaos",
-    tagline: "Beautiful contradiction.",
-    description: "Bold and soft simultaneously. Impossible to ignore.",
+    name: "Electric Frequency",
+    tagline: "High voltage, soft landing.",
+    description: "Contradictions that resolve into something true. Feels alive.",
   },
   {
-    name: "Dark Feminine",
-    tagline: "Depth without explanation.",
-    description: "Mystery, quiet power, and a beauty that does not ask for permission.",
+    name: "Deep Frequency",
+    tagline: "Depth that cannot be measured.",
+    description: "Unhurried, unshaken. Felt before it is seen.",
   },
   {
-    name: "Ethereal",
-    tagline: "Otherworldly softness.",
-    description: "Light through silk. Sacred and untouchable.",
+    name: "Light Frequency",
+    tagline: "Light moving through silk.",
+    description: "Translucent and luminous. The feeling of something sacred.",
+  },
+];
+
+const PAIN_POINTS = [
+  {
+    label: "No filming required",
+    text: "Cinematic images generated from your aesthetic profile. No camera, no ring light, no setup.",
+  },
+  {
+    label: "No blank caption box",
+    text: "Three hooks, a caption, and hashtags. Ready to copy and post. Every time.",
+  },
+  {
+    label: "No prompting",
+    text: "Tell Meetha your frequency once. It handles the creative decisions from there.",
   },
 ];
 
@@ -95,7 +110,7 @@ export default function Home() {
         <div className="relative z-10 max-w-sm mx-auto">
           {/* Eyebrow */}
           <p className="font-sans text-xs tracking-[0.2em] uppercase text-gold mb-8 animate-fade-in opacity-0 delay-100">
-            Khanundrum Studios
+            Content creation, simplified
           </p>
 
           {/* Headline */}
@@ -103,7 +118,7 @@ export default function Home() {
             className="font-serif font-light text-charcoal mb-6 animate-fade-up opacity-0 delay-200"
             style={{ lineHeight: 1.05 }}
           >
-            Cinematic social content without filming.
+            Show up online without the work.
           </h1>
 
           {/* Divider */}
@@ -111,16 +126,16 @@ export default function Home() {
 
           {/* Subheadline */}
           <p className="font-sans font-light text-base text-charcoal-soft leading-relaxed mb-10 animate-fade-up opacity-0 delay-300">
-            Meetha helps creators generate aesthetic luxury lifestyle images, hooks, and captions in seconds.
+            Meetha generates cinematic images, hooks, and captions tuned to your aesthetic. No filming. No blank page. No hour lost.
           </p>
 
           {/* CTA */}
           <div className="flex flex-col items-center gap-4 animate-fade-up opacity-0 delay-400">
             <button onClick={handleCTA} className="btn-luxury w-full max-w-xs">
-              Start Creating
+              Start for free
             </button>
             <p className="font-sans text-xs text-charcoal-soft tracking-wide">
-              Built for creators who are tired of complicated AI tools.
+              5 free generations. No credit card.
             </p>
           </div>
         </div>
@@ -131,36 +146,20 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ── Philosophy ── */}
+      {/* ── Pain Points ── */}
       <section className="py-20 px-6 bg-warm-white">
         <div className="max-w-sm mx-auto text-center">
           <p className="font-sans text-xs tracking-[0.2em] uppercase text-gold mb-6">
-            The Philosophy
+            Built for busy creators
           </p>
           <h2 className="font-serif font-light text-charcoal mb-4">
-            Your aesthetic, amplified.
+            The three things that slow you down. Gone.
           </h2>
           <div className="divider-editorial" />
-          <p className="font-sans font-light text-sm text-charcoal-soft leading-relaxed">
-            Meetha does not replace your creativity. It matches your taste and removes creative exhaustion.
-          </p>
         </div>
 
         <div className="max-w-sm mx-auto mt-14 space-y-10">
-          {[
-            {
-              label: "No Prompts",
-              text: "Select your aesthetic. We handle everything else.",
-            },
-            {
-              label: "Female-Gaze Aesthetics",
-              text: "Warm, cinematic, editorial visuals designed to feel elevated online.",
-            },
-            {
-              label: "Taste Aggregation",
-              text: "Meetha understands your aesthetic identity so you stop overthinking every post.",
-            },
-          ].map((item, i) => (
+          {PAIN_POINTS.map((item, i) => (
             <div key={i} className="flex gap-5 items-start">
               <div className="w-px h-12 bg-gold/40 flex-shrink-0 mt-1" />
               <div>
@@ -176,31 +175,145 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ── Archetypes ── */}
+      {/* ── How It Works ── */}
       <section className="py-20 px-6 bg-cream">
+        <div className="max-w-sm mx-auto text-center mb-12">
+          <p className="font-sans text-xs tracking-[0.2em] uppercase text-gold mb-6">
+            How it works
+          </p>
+          <h2 className="font-serif font-light text-charcoal mb-4">
+            Three steps. Under 60 seconds.
+          </h2>
+          <div className="divider-editorial" />
+        </div>
+
+        <div className="max-w-sm mx-auto space-y-6">
+          {[
+            {
+              step: "01",
+              title: "Calibrate your frequency",
+              text: "Choose the aesthetic energy that feels like you. Upload a few reference images so Meetha learns your world.",
+            },
+            {
+              step: "02",
+              title: "Pick a scene and platform",
+              text: "Morning ritual, travel day, quiet wealth, founder energy. Select where it is going: TikTok, Reels, or Stories.",
+            },
+            {
+              step: "03",
+              title: "Download and post",
+              text: "A cinematic image, three hooks, a caption, and hashtags. Ready in seconds. Tuned to you.",
+            },
+          ].map((item) => (
+            <div key={item.step} className="p-6 border border-sand bg-warm-white/60">
+              <p className="font-sans text-xs tracking-[0.2em] uppercase text-gold mb-3">
+                {item.step}
+              </p>
+              <h3 className="font-serif text-lg text-charcoal mb-2">{item.title}</h3>
+              <p className="font-sans font-light text-xs text-charcoal-soft leading-relaxed">
+                {item.text}
+              </p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* ── Output Example ── */}
+      <section className="py-20 px-6 bg-cream">
+        <div className="max-w-sm mx-auto text-center mb-10">
+          <p className="font-sans text-xs tracking-[0.2em] uppercase text-gold mb-6">
+            What you get
+          </p>
+          <h2 className="font-serif font-light text-charcoal mb-4">
+            Ready to post. Every time.
+          </h2>
+          <div className="divider-editorial" />
+        </div>
+
+        <div className="max-w-sm mx-auto">
+          {/* Mock generated card */}
+          <div className="border border-sand bg-warm-white overflow-hidden">
+            {/* Image placeholder with cinematic feel */}
+            <div
+              className="relative w-full aspect-[9/16] max-h-64 overflow-hidden"
+              style={{
+                background: "linear-gradient(160deg, oklch(28% 0.02 60) 0%, oklch(18% 0.015 50) 60%, oklch(22% 0.025 55) 100%)",
+              }}
+            >
+              {/* Grain overlay */}
+              <div
+                className="absolute inset-0 opacity-20"
+                style={{
+                  backgroundImage: "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E\")",
+                  backgroundSize: "200px 200px",
+                }}
+              />
+              {/* Warm light accent */}
+              <div
+                className="absolute top-0 right-0 w-32 h-32 opacity-20"
+                style={{
+                  background: "radial-gradient(circle, oklch(80% 0.12 70) 0%, transparent 70%)",
+                }}
+              />
+              {/* Hook overlay */}
+              <div className="absolute bottom-0 left-0 right-0 p-5" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.7) 0%, transparent 100%)" }}>
+                <p className="font-serif text-lg text-white leading-snug">
+                  peace changed my face
+                </p>
+                <p className="font-sans text-xs tracking-widest uppercase text-white/50 mt-1">
+                  meetha
+                </p>
+              </div>
+            </div>
+
+            {/* Caption + hashtags */}
+            <div className="p-5 space-y-3">
+              <p className="font-sans text-xs tracking-[0.15em] uppercase text-gold">
+                Caption
+              </p>
+              <p className="font-sans font-light text-sm text-charcoal-soft leading-relaxed">
+                I stopped chasing the version of myself that needed to prove something. This is what that looks like.
+              </p>
+              <p className="font-sans text-xs text-gold/70 leading-relaxed">
+                #intentionalliving #quietluxury #frequencyreset #calmisapower #softlife
+              </p>
+            </div>
+          </div>
+
+          <p className="font-sans text-xs text-charcoal-soft text-center mt-5 tracking-wide">
+            Generated in under 30 seconds. Tuned to your frequency.
+          </p>
+        </div>
+      </section>
+
+      {/* ── Frequencies ── */}
+      <section className="py-20 px-6 bg-warm-white">
         <div className="max-w-sm mx-auto">
           <div className="text-center mb-12">
             <p className="font-sans text-xs tracking-[0.2em] uppercase text-gold mb-6">
-              Your Aesthetic Identity
+              Your frequency
             </p>
             <h2 className="font-serif font-light text-charcoal mb-4">
-              Five archetypes. One is yours.
+              Five frequencies. One is yours.
             </h2>
             <div className="divider-editorial" />
+            <p className="font-sans font-light text-sm text-charcoal-soft leading-relaxed mt-4">
+              Meetha generates content that matches your specific aesthetic energy, not a generic template.
+            </p>
           </div>
 
-          <div className="space-y-6">
-            {ARCHETYPES.map((a, i) => (
+          <div className="space-y-4">
+            {FREQUENCIES.map((f, i) => (
               <div
                 key={i}
-                className="p-6 border border-sand bg-warm-white/60 hover:bg-warm-white transition-colors duration-300 cursor-default"
+                className="p-5 border border-sand bg-cream/60 hover:bg-cream transition-colors duration-300 cursor-default"
               >
-                <p className="font-sans text-xs tracking-[0.15em] uppercase text-gold mb-2">
-                  {a.tagline}
+                <p className="font-sans text-xs tracking-[0.15em] uppercase text-gold mb-1.5">
+                  {f.tagline}
                 </p>
-                <h3 className="font-serif text-xl text-charcoal mb-2">{a.name}</h3>
+                <h3 className="font-serif text-lg text-charcoal mb-1.5">{f.name}</h3>
                 <p className="font-sans font-light text-xs text-charcoal-soft leading-relaxed">
-                  {a.description}
+                  {f.description}
                 </p>
               </div>
             ))}
@@ -208,11 +321,25 @@ export default function Home() {
         </div>
       </section>
 
+      {/* ── Social Proof Pull Quote ── */}
+      <section className="py-20 px-6 bg-cream">
+        <div className="max-w-sm mx-auto text-center">
+          <div className="divider-editorial mb-10" />
+          <blockquote className="font-serif font-light text-2xl text-charcoal leading-snug mb-6">
+            "I used to spend an hour on a single post. Now I spend 60 seconds."
+          </blockquote>
+          <p className="font-sans text-xs tracking-[0.15em] uppercase text-charcoal-soft">
+            Creator, 400K followers
+          </p>
+          <div className="divider-editorial mt-10" />
+        </div>
+      </section>
+
       {/* ── Pricing ── */}
       <section className="py-20 px-6 bg-charcoal">
         <div className="max-w-sm mx-auto text-center">
           <p className="font-sans text-xs tracking-[0.2em] uppercase text-gold mb-6">
-            Simple Pricing
+            Simple pricing
           </p>
           <h2 className="font-serif font-light text-cream mb-4">
             Start free. Scale when ready.
@@ -228,7 +355,12 @@ export default function Home() {
               <p className="font-serif text-4xl text-cream mb-1">$0</p>
               <p className="font-sans text-xs text-sand-dark mb-6">5 generations to start</p>
               <ul className="space-y-2">
-                {["5 free generations", "All 5 archetypes", "Hook + caption generation", "Download ready assets"].map((f) => (
+                {[
+                  "5 free generations",
+                  "All 5 frequencies",
+                  "Hook + caption generation",
+                  "Download ready assets",
+                ].map((f) => (
                   <li key={f} className="font-sans text-xs text-sand-dark flex items-center gap-3">
                     <span className="w-1 h-1 rounded-full bg-gold flex-shrink-0" />
                     {f}
@@ -250,7 +382,13 @@ export default function Home() {
               <p className="font-serif text-4xl text-cream mb-1">$19</p>
               <p className="font-sans text-xs text-sand-dark mb-6">per month</p>
               <ul className="space-y-2">
-                {["30 generations per month", "All 5 archetypes", "Hook + caption generation", "Download ready assets"].map((f) => (
+                {[
+                  "30 generations per month",
+                  "All 5 frequencies",
+                  "Animated cinematic preview",
+                  "Hook + caption generation",
+                  "Download without watermark",
+                ].map((f) => (
                   <li key={f} className="font-sans text-xs text-sand-dark flex items-center gap-3">
                     <span className="w-1 h-1 rounded-full bg-gold flex-shrink-0" />
                     {f}
@@ -267,7 +405,14 @@ export default function Home() {
               <p className="font-serif text-4xl text-cream mb-1">$39</p>
               <p className="font-sans text-xs text-sand-dark mb-6">per month</p>
               <ul className="space-y-2">
-                {["75 generations per month", "All 5 archetypes", "Priority generation", "Hook + caption generation", "Download ready assets"].map((f) => (
+                {[
+                  "75 generations per month",
+                  "All 5 frequencies",
+                  "Real video generation",
+                  "Animated cinematic preview",
+                  "Hook + caption generation",
+                  "Download without watermark",
+                ].map((f) => (
                   <li key={f} className="font-sans text-xs text-sand-dark flex items-center gap-3">
                     <span className="w-1 h-1 rounded-full bg-gold flex-shrink-0" />
                     {f}
@@ -295,7 +440,10 @@ export default function Home() {
             >
               Go Pro — $39 / mo
             </a>
-            <button onClick={handleCTA} className="w-full py-3 font-sans text-xs tracking-widest uppercase text-sand-dark/60 hover:text-sand-dark transition-colors">
+            <button
+              onClick={handleCTA}
+              className="w-full py-3 font-sans text-xs tracking-widest uppercase text-sand-dark/60 hover:text-sand-dark transition-colors"
+            >
               Start free instead
             </button>
           </div>
