@@ -203,3 +203,20 @@
 - [x] New template: Silk Robe Room Service (hotel suite, silk robe, tray of food, warm morning light, intimate luxury, hooks: "room service and silence", "ordered for one", "this is the life", "no one else in the frame")
 - [x] Update SceneCategory type in shared/types.ts to include bill_please and silk_robe_room_service
 - [x] Add image prompt recipes for both new templates in server routers
+
+## V17 -- Rich Grandma Engine Templates
+
+- [x] Add Irish Goodbye Theory template: night exit cinematic, woman walking away from party, motion blur crowd, no-announcement hooks
+- [x] Add Cleopatra Principle template: velvet chaise, direct gaze, no smile, already decided hooks
+- [x] Add Silk Robe Retaliation template: hotel suite, silk robe, morning light, rich grandma energy hooks
+- [x] Add SCENE_PROMPTS for all three new templates in routers.ts
+- [x] Add hook arrays (IRISH_GOODBYE_HOOKS, CLEOPATRA_HOOKS, SILK_ROBE_RETALIATION_HOOKS) in routers.ts
+- [x] Add copy prompt branches for all three in buildCopyPrompt() with banned word lists and good/bad examples
+- [x] Update all three Zod sceneCategory enums in routers.ts (regenerateCopy, generate.content, voice-to-content)
+- [x] Update Generate.tsx URL param handler to accept new slugs
+- [x] Update Generate.tsx TEMPLATE_META preview block with titles, subtitles, feature chips, and sample images
+- [x] Generate sample images for all three new templates using AI
+- [x] Add three new template cards to Templates.tsx with full hook chips, locations, why-it-spreads sections
+- [x] Update Dashboard.tsx template shortcut card from 4 to 7 templates
+- [x] TypeScript: zero errors
+- [x] Vitest: 11 tests passing

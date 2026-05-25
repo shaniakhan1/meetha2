@@ -58,6 +58,12 @@ const SCENE_PROMPTS: Record<string, string> = {
     "cinematic fine dining moment, woman in tailored blazer or elegant dress reaching for the check at a candlelit restaurant table, calm and unbothered expression, slight smile, white tablecloth, crystal glasses, warm candlelight bokeh, other diners blurred in background, the gesture is confident and final, film grain, editorial female-gaze, quiet power aesthetic, 35mm analog warmth, vertical 9:16 framing",
   silk_robe_room_service:
     "luxury hotel suite morning, woman in champagne or ivory silk robe standing near tall sheer-curtained windows, soft morning light flooding in, room service tray with coffee and croissant on marble side table, looking out the window or holding coffee cup, serene and unhurried, warm cream and gold tones, shallow depth of field, film grain, quiet luxury editorial lifestyle, 35mm analog warmth, vertical 9:16 framing",
+  irish_goodbye:
+    "low angle cinematic shot of a woman walking away from a crowded party or restaurant at night, seen from behind, elegant outfit, motion blur on the background crowd, warm amber streetlight or venue glow, she is mid-stride and not looking back, the crowd is blurred and noisy behind her, she is sharp and moving, film grain, 35mm analog street photography, the energy of someone who left without saying goodbye and felt nothing but relief, vertical 9:16 framing",
+  cleopatra_principle:
+    "woman lounging on a deep velvet chaise longue or wide linen sofa, looking directly into the lens with absolute calm certainty, no smile, no performance, just presence, warm afternoon light casting long shadows, jewel-toned or cream fabric, one hand resting on the armrest, the stillness of someone who has already decided everything, film grain, editorial female-gaze, 35mm analog warmth, shallow depth of field, vertical 9:16 framing",
+  silk_robe_retaliation:
+    "luxury hotel suite, woman in ivory or champagne silk robe, standing near floor-to-ceiling windows with morning light flooding in, room service tray visible, coffee cup in hand, looking out the window with complete calm, the energy of someone who chose herself and is not explaining it, warm cream and gold tones, film grain, 35mm analog warmth, quiet luxury editorial, vertical 9:16 framing",
 };
 
 // Digital Diary: overlay hook options
@@ -111,6 +117,48 @@ const PAPARAZZI_HOOKS = [
   "calm women move differently",
   "soft is not the same as small",
   "being grounded looks expensive now",
+];
+
+// Irish Goodbye Theory: overlay hook options
+const IRISH_GOODBYE_HOOKS = [
+  "she left without saying goodbye",
+  "i stopped explaining my exits",
+  "left the way i arrived",
+  "no announcement",
+  "she was already gone",
+  "the door closed quietly",
+  "i do not do long goodbyes",
+  "she slipped out",
+  "mid-conversation, she was done",
+  "the best exit is a quiet one",
+];
+
+// Cleopatra Principle: overlay hook options
+const CLEOPATRA_HOOKS = [
+  "she already decided",
+  "the room adjusted to her",
+  "she did not ask",
+  "presence is a full-time job",
+  "she was not waiting for permission",
+  "calm is a power move",
+  "she just sat there and won",
+  "the stillness is the statement",
+  "she did not need to speak",
+  "the decision was already made",
+];
+
+// Silk Robe Retaliation: overlay hook options
+const SILK_ROBE_RETALIATION_HOOKS = [
+  "my isolation is a luxury maintenance ritual",
+  "she chose herself again",
+  "this is not a phase",
+  "ordered for one",
+  "she stopped explaining her peace",
+  "rich grandma energy, activated",
+  "no one earned access to this morning",
+  "she does not share her quiet",
+  "the robe stays on",
+  "this is what choosing yourself looks like",
 ];
 
 const ARCHETYPE_VISUAL: Record<string, string> = {
@@ -331,6 +379,132 @@ BAD caption examples (never write like this):
 Then write exactly 5 hashtags:
 - No # symbol
 - No generic tags (no instagood, photooftheday, lifestyle, hotellife, morningvibes)
+- Should feel like tags a real creator at this frequency would actually use
+
+Respond in this exact JSON format:
+{
+  "hooks": ["hook one", "hook two", "hook three"],
+  "caption": "The caption text here.",
+  "hashtags": ["word1", "word2", "word3", "word4", "word5"]
+}`;
+  }
+
+  // Irish Goodbye Theory template
+  if (sceneCategory === "irish_goodbye") {
+    const hookOptions = IRISH_GOODBYE_HOOKS.slice(0, 6).map((h) => `"${h}"`).join(", ");
+    const voiceCtx = voiceStyle
+      ? `\n\nVoice style (how she writes online): ${voiceStyle}. Calibrate the caption to match this.`
+      : "";
+    return `You are writing copy for a woman creator. The image is "The Irish Goodbye": she is walking away from a crowded party or restaurant at night, seen from behind, mid-stride, not looking back. The crowd is blurred. She is sharp. She left without saying goodbye and felt nothing but relief.${voiceCtx}
+
+Choose exactly 3 hooks from this list (return them verbatim, do not modify): ${hookOptions}
+
+Then write one caption:
+- 1-2 short sentences. Plain everyday words only.
+- No em-dashes, no exclamation marks, no questions
+- BANNED WORDS: whispers, gilded, multitudes, luminous, essence, depth, profound, transcend, resonate, tapestry, curated, intentional, authentic, narrative, embody, elevate, harness, embrace, unleash, radiate, exude, magic, effortless, ethereal
+- No brand-speak, no affirmations, no motivational quotes
+- Sounds like a real woman typing into her phone, not a copywriter
+- States something true about leaving quietly, not explaining exits, or the relief of being done
+- Ends with a quiet statement, never a question or CTA
+
+GOOD caption examples:
+"i stopped doing long goodbyes. nobody noticed."
+"she was gone before anyone realized she was leaving."
+"the best exit is the one nobody sees coming."
+
+BAD caption examples (never write like this):
+"She transcends the noise with effortless grace." -- abstract, AI-sounding
+"Her essence whispers of quiet departures." -- meaningless
+"Luminous in her exit." -- no one talks like this
+
+Then write exactly 5 hashtags:
+- No # symbol
+- No generic tags (no instagood, photooftheday, lifestyle, nightout, girlsnight)
+- Should feel like tags a real creator at this frequency would actually use
+
+Respond in this exact JSON format:
+{
+  "hooks": ["hook one", "hook two", "hook three"],
+  "caption": "The caption text here.",
+  "hashtags": ["word1", "word2", "word3", "word4", "word5"]
+}`;
+  }
+
+  // Cleopatra Principle template
+  if (sceneCategory === "cleopatra_principle") {
+    const hookOptions = CLEOPATRA_HOOKS.slice(0, 6).map((h) => `"${h}"`).join(", ");
+    const voiceCtx = voiceStyle
+      ? `\n\nVoice style (how she writes online): ${voiceStyle}. Calibrate the caption to match this.`
+      : "";
+    return `You are writing copy for a woman creator. The image is "The Cleopatra Principle": she is lounging on a velvet chaise or wide sofa, looking directly into the lens with absolute calm certainty. No smile. No performance. Just presence. The stillness of someone who has already decided everything.${voiceCtx}
+
+Choose exactly 3 hooks from this list (return them verbatim, do not modify): ${hookOptions}
+
+Then write one caption:
+- 1-2 short sentences. Plain everyday words only.
+- No em-dashes, no exclamation marks, no questions
+- BANNED WORDS: whispers, gilded, multitudes, luminous, essence, depth, profound, transcend, resonate, tapestry, curated, intentional, authentic, narrative, embody, elevate, harness, embrace, unleash, radiate, exude, magic, effortless, queen, goddess, divine
+- No brand-speak, no affirmations, no motivational quotes
+- Sounds like a real woman typing into her phone, not a copywriter
+- States something true about presence, not needing to explain herself, or the power of already having decided
+- Ends with a quiet statement, never a question or CTA
+
+GOOD caption examples:
+"she did not say a word and the room got the message."
+"the decision was already made before she walked in."
+"calm is not passive. she just does not announce it."
+
+BAD caption examples (never write like this):
+"Her divine feminine energy radiates effortlessly." -- brand-speak, no one talks like this
+"She embodies the essence of quiet power." -- abstract, AI-sounding
+"Luminous queen energy." -- meaningless
+
+Then write exactly 5 hashtags:
+- No # symbol
+- No generic tags (no instagood, photooftheday, lifestyle, queenenergy, womenempowerment)
+- Should feel like tags a real creator at this frequency would actually use
+
+Respond in this exact JSON format:
+{
+  "hooks": ["hook one", "hook two", "hook three"],
+  "caption": "The caption text here.",
+  "hashtags": ["word1", "word2", "word3", "word4", "word5"]
+}`;
+  }
+
+  // Silk Robe Retaliation template (Rich Grandma Energy)
+  if (sceneCategory === "silk_robe_retaliation") {
+    const hookOptions = SILK_ROBE_RETALIATION_HOOKS.slice(0, 6).map((h) => `"${h}"`).join(", ");
+    const voiceCtx = voiceStyle
+      ? `\n\nVoice style (how she writes online): ${voiceStyle}. Calibrate the caption to match this.`
+      : "";
+    return `You are writing copy for a woman creator. The image is "Silk Robe Retaliation": luxury hotel suite, silk robe, morning light, room service tray, she is completely alone and completely at peace. This is Rich Grandma Energy. She chose herself and she is not explaining it.${voiceCtx}
+
+Choose exactly 3 hooks from this list (return them verbatim, do not modify): ${hookOptions}
+
+Then write one caption:
+- 1-2 short sentences. Plain everyday words only.
+- No em-dashes, no exclamation marks, no questions
+- BANNED WORDS: whispers, gilded, multitudes, luminous, essence, depth, profound, transcend, resonate, tapestry, curated, intentional, authentic, narrative, embody, elevate, harness, embrace, unleash, radiate, exude, magic, effortless, serene, bliss, tranquil, healing
+- No brand-speak, no affirmations, no motivational quotes
+- Sounds like a real woman typing into her phone, not a wellness brand
+- States something true about choosing yourself, protecting your peace, or the specific pleasure of a morning with no one in it
+- Ends with a quiet statement, never a question or CTA
+
+GOOD caption examples:
+"my isolation is not a phase. it is a maintenance ritual."
+"she stopped sharing her mornings and started looking like this."
+"rich grandma energy is just choosing yourself before anyone asks."
+
+BAD caption examples (never write like this):
+"She radiates serene luxury in her sacred morning ritual." -- brand-speak
+"Blissful tranquility is her essence." -- meaningless, AI-sounding
+"She embraces her healing journey." -- wellness-speak, no one wants this
+
+Then write exactly 5 hashtags:
+- No # symbol
+- No generic tags (no instagood, photooftheday, lifestyle, morningvibes, selfcare)
 - Should feel like tags a real creator at this frequency would actually use
 
 Respond in this exact JSON format:
@@ -563,7 +737,7 @@ export const appRouter = router({
           generationId: z.number(),
           platform: z.enum(["tiktok", "reels", "stories"]).default("reels"),
           sceneCategory: z
-            .enum(["morning_routine", "travel_day", "quiet_luxury", "founder_energy", "date_night", "paparazzi_flash", "digital_diary", "bill_please", "silk_robe_room_service"])
+            .enum(["morning_routine", "travel_day", "quiet_luxury", "founder_energy", "date_night", "paparazzi_flash", "digital_diary", "bill_please", "silk_robe_room_service", "irish_goodbye", "cleopatra_principle", "silk_robe_retaliation"])
             .optional(),
         })
       )
@@ -644,6 +818,9 @@ export const appRouter = router({
               "digital_diary",
               "bill_please",
               "silk_robe_room_service",
+              "irish_goodbye",
+              "cleopatra_principle",
+              "silk_robe_retaliation",
             ])
             .optional(),
           videoFormat: z.enum(["tiktok_reels", "square", "landscape"]).optional(),
@@ -836,6 +1013,9 @@ export const appRouter = router({
               "digital_diary",
               "bill_please",
               "silk_robe_room_service",
+              "irish_goodbye",
+              "cleopatra_principle",
+              "silk_robe_retaliation",
             ])
             .optional(),
         })

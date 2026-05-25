@@ -193,10 +193,10 @@ export default function Dashboard() {
           className="w-full mb-6 p-4 border border-[#2C1810]/30 bg-[#2C1810] text-cream text-left hover:bg-[#3a2015] transition-all duration-200 active:scale-[0.98]"
         >
           <p className="font-sans text-xs tracking-[0.15em] uppercase text-gold/70 mb-1">
-            4 Templates Available
+            7 Templates Available
           </p>
           <p className="font-serif text-base text-cream">
-            Caught Looking Expensive, Digital Diary, Bill Please, Silk Robe
+            Caught Looking Expensive, Digital Diary, Bill Please, Irish Goodbye, Cleopatra Principle + more
           </p>
           <p className="font-sans font-light text-xs text-cream/50 mt-1">
             Tap to browse all templates

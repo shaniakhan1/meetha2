@@ -18,7 +18,10 @@ export type SceneCategory =
   | "paparazzi_flash"
   | "digital_diary"
   | "bill_please"
-  | "silk_robe_room_service";
+  | "silk_robe_room_service"
+  | "irish_goodbye"
+  | "cleopatra_principle"
+  | "silk_robe_retaliation";
 
 export type PostabilityResponse = "yes" | "maybe" | "no";
 
@@ -101,4 +104,7 @@ export const SCENE_LABELS: Record<SceneCategory, string> = {
   digital_diary: "Digital Diary",
   bill_please: "Bill, Please",
   silk_robe_room_service: "Silk Robe Room Service",
+  irish_goodbye: "The Irish Goodbye",
+  cleopatra_principle: "The Cleopatra Principle",
+  silk_robe_retaliation: "Silk Robe Retaliation",
 };

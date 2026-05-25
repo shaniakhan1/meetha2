@@ -89,7 +89,7 @@ export default function Generate() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const template = params.get("template");
-    const validSlugs = ["paparazzi_flash", "digital_diary", "bill_please", "silk_robe_room_service"];
+    const validSlugs = ["paparazzi_flash", "digital_diary", "bill_please", "silk_robe_room_service", "irish_goodbye", "cleopatra_principle", "silk_robe_retaliation"];
     if (template && validSlugs.includes(template)) {
       setSceneCategory(template as SceneCategory);
       setTemplateSlug(template);
@@ -627,6 +627,27 @@ export default function Generate() {
             subtitle: "Hotel suite. Silk robe. Morning light. Room service tray. The luxury of an unhurried morning that belongs entirely to her.",
             features: ["Luxury hotel suite morning light", "Warm cream and gold tones", "Solitude as luxury hook"],
             sampleImage: "/manus-storage/template-silk-robe_705e049a.jpg",
+          },
+          irish_goodbye: {
+            number: "Template No. 05",
+            title: "Irish Goodbye Theory",
+            subtitle: "She is walking away from the party. Seen from behind. Mid-stride. The crowd is blurred. She is not looking back.",
+            features: ["Night exit cinematic energy", "Motion blur crowd", "No-announcement hook"],
+            sampleImage: "https://d2xsxph8kpxj0f.cloudfront.net/310519663380647277/W9hp3oxSnRYx5WHCSun39U/template-irish-goodbye-ktzNEA3LBpMXoScC2CgPoj.webp",
+          },
+          cleopatra_principle: {
+            number: "Template No. 06",
+            title: "Cleopatra Principle",
+            subtitle: "Velvet chaise. Direct eye contact. No smile, no performance. The stillness of someone who has already decided everything.",
+            features: ["Velvet chaise editorial lighting", "Direct gaze presence", "Already decided hook"],
+            sampleImage: "https://d2xsxph8kpxj0f.cloudfront.net/310519663380647277/W9hp3oxSnRYx5WHCSun39U/template-cleopatra-RNkWpwxV5GeWZwStmYqiQx.webp",
+          },
+          silk_robe_retaliation: {
+            number: "Template No. 07",
+            title: "Silk Robe Retaliation",
+            subtitle: "Hotel suite. Silk robe. Morning light. Room service. Completely alone. Completely at peace. She chose herself and she is not explaining it.",
+            features: ["Rich Grandma Energy aesthetic", "Warm morning light", "Chose herself hook"],
+            sampleImage: "https://d2xsxph8kpxj0f.cloudfront.net/310519663380647277/W9hp3oxSnRYx5WHCSun39U/template-silk-robe-retaliation-MJXwGjfHhTjt3ENoPKdG8s.webp",
           },
         };
         const meta = TEMPLATE_META[templateSlug ?? ""] ?? TEMPLATE_META.paparazzi_flash;

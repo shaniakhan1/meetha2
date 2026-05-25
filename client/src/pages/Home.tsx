@@ -33,20 +33,20 @@ const FREQUENCIES = [
 
 const PAIN_POINTS = [
   {
-    label: "No filming required",
-    text: "Cinematic images generated from your aesthetic profile. No camera, no ring light, no setup.",
+    label: "No camera required",
+    text: "Cinematic images generated from your aesthetic profile. No ring light, no tripod, no filming yourself in a parking garage.",
   },
   {
     label: "No blank caption box",
-    text: "Three hooks, a caption, and hashtags. Ready to copy and post. Every time.",
+    text: "Three hooks, a caption, and hashtags. Ready to copy and post. Every time. In your voice.",
   },
   {
-    label: "No prompting",
-    text: "Tell Meetha your frequency once. It handles the creative decisions from there.",
+    label: "No prompting, ever",
+    text: "Tell Meetha your frequency once. It handles every creative decision from there. You just post.",
   },
   {
-    label: "Looks like you",
-    text: "Upload a few selfies. Meetha trains a personal model on your face. Every generation after that is a real-looking photo of you.",
+    label: "It actually looks like you",
+    text: "Upload a few selfies. Meetha trains a personal model on your face. Every generation after that is a real-looking photo of you in a cinematic scene.",
   },
 ];
 
@@ -134,7 +134,7 @@ export default function Home() {
               Start for free
             </button>
             <p className="font-sans text-xs text-charcoal-soft tracking-wide">
-              5 free generations. No credit card.
+              3 free generations. No credit card.
             </p>
           </div>
         </div>
@@ -149,10 +149,10 @@ export default function Home() {
       <section className="py-20 px-6 bg-warm-white">
         <div className="max-w-sm mx-auto text-center">
           <p className="font-sans text-xs tracking-[0.2em] uppercase text-gold mb-6">
-            Built for busy creators
+            Why Meetha exists
           </p>
           <h2 className="font-serif font-light text-charcoal mb-4">
-            The three things that slow you down. Gone.
+            Everything that was in the way. Removed.
           </h2>
           <div className="divider-editorial" />
         </div>
@@ -340,12 +340,13 @@ export default function Home() {
                 Free
               </p>
               <p className="font-serif text-4xl text-cream mb-1">$0</p>
-              <p className="font-sans text-xs text-sand-dark mb-6">5 generations to start</p>
+              <p className="font-sans text-xs text-sand-dark mb-6">3 generations to start</p>
               <ul className="space-y-2">
                 {[
-                  "5 free generations",
+                  "3 free generations",
                   "All 5 frequencies",
                   "Hook + caption generation",
+                  "1 free LoRA generation (your face)",
                   "Download ready assets",
                 ].map((f) => (
                   <li key={f} className="font-sans text-xs text-sand-dark flex items-center gap-3">
