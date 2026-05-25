@@ -21,6 +21,7 @@ import {
   savePostabilityFeedback,
   updateAestheticDescriptors,
   updateAestheticPreviewUrl,
+  updateReferenceImageUrls,
   getOrCreateReferralCode,
   getUserByReferralCode,
   getReferralsByUser,
@@ -313,7 +314,18 @@ export const appRouter = router({
           landscape: "landscape_16_9",
         };
         const imageSize = input.videoFormat ? VIDEO_FORMAT_SIZE[input.videoFormat] : "portrait_4_3";
-        const { url: imageUrl, key: imageKey } = await generateImageFal({ prompt: imagePrompt, imageSize });
+        // Resolve reference image for subject-anchored generation
+        let referenceImageUrl: string | undefined;
+        const refUrls = profile?.reference_image_urls;
+        if (refUrls && refUrls.length > 0) {
+          try {
+            const relKey = (refUrls[0] as string).replace(/^\/manus-storage\//, "");
+            referenceImageUrl = await storageGetSignedUrl(relKey);
+          } catch {
+            // Non-fatal: fall back to text-to-image
+          }
+        }
+        const { url: imageUrl, key: imageKey } = await generateImageFal({ prompt: imagePrompt, imageSize, referenceImageUrl });
         // Generate copy (pass aesthetic descriptors + niche/audience if available)
         const copyPrompt = buildCopyPrompt(archetype, mood, input.platform, profile?.aesthetic_descriptors ?? null, profile?.niche ?? null, profile?.audience ?? null);
         const copyResponse = await invokeLLMOpenAI({
@@ -507,11 +519,33 @@ Return JSON with:
         const effectiveScene = input.sceneCategory ?? suggestedScene ?? null;
 
         // 5. Build image prompt with voice context injected
-        const voiceImageContext = keyDetails.length > 0
-          ? `${profile?.aesthetic_descriptors ? profile.aesthetic_descriptors + ", " : ""}voice-inspired visual context: ${keyDetails.join(", ")}`
-          : profile?.aesthetic_descriptors ?? null;
-        const imagePrompt = buildImagePrompt(archetype, mood, effectiveScene, voiceImageContext, profile?.niche ?? null, profile?.audience ?? null);
-        const { url: imageUrl, key: imageKey } = await generateImageFal({ prompt: imagePrompt });
+        // When voice details are present, build a scene-first prompt that makes the
+        // described environment the primary directive, with archetype as the filter.
+        let imagePrompt: string;
+        if (keyDetails.length > 0) {
+          const archetypeStyle = ARCHETYPE_VISUAL[archetype] || "";
+          const moodStyle = MOOD_VISUAL[mood] || "";
+          const aestheticLayer = profile?.aesthetic_descriptors
+            ? `calibrated to this specific aesthetic: ${profile.aesthetic_descriptors},`
+            : "warm honey skin tones where hands are visible, gold jewelry details,";
+          const nicheLayer = profile?.niche ? `visual world of a ${profile.niche} creator,` : "";
+          // Voice scene is the primary directive — archetype/mood are the filter
+          imagePrompt = `${keyDetails.join(", ")}, ${archetypeStyle}, ${moodStyle}, ${aestheticLayer} ${nicheLayer} editorial female-gaze luxury aesthetic, cinematic lighting, subtle film grain, realistic textures, warm amber tones, atmospheric depth, no faces, no full bodies, hands only when naturally holding an object, vertical 9:16 framing, social-media-ready, photorealistic, high resolution`;
+        } else {
+          imagePrompt = buildImagePrompt(archetype, mood, effectiveScene, profile?.aesthetic_descriptors ?? null, profile?.niche ?? null, profile?.audience ?? null);
+        }
+        // Resolve reference image for subject-anchored generation
+        let voiceReferenceImageUrl: string | undefined;
+        const voiceRefUrls = profile?.reference_image_urls;
+        if (voiceRefUrls && voiceRefUrls.length > 0) {
+          try {
+            const relKey = (voiceRefUrls[0] as string).replace(/^\/manus-storage\//, "");
+            voiceReferenceImageUrl = await storageGetSignedUrl(relKey);
+          } catch {
+            // Non-fatal: fall back to text-to-image
+          }
+        }
+        const { url: imageUrl, key: imageKey } = await generateImageFal({ prompt: imagePrompt, referenceImageUrl: voiceReferenceImageUrl });
 
         // 6. Build copy prompt with voice context as additional grounding
         const voiceCopyContext = `\n\nThis creator just said: "${transcript}"\n\nEmotional core extracted: ${emotionalCore}\n\nWrite copy that feels like a distillation of this moment. The hooks and caption should feel like something she would say after this exact thought. Ground the copy in her actual words and feeling, not generic aesthetic language.`;
@@ -809,6 +843,31 @@ Respond in this exact JSON format:
         })
       )
       .mutation(async ({ ctx, input }) => {
+        // Upload each base64 image to storage so we can use them as reference images later
+        const uploadedUrls: string[] = [];
+        for (const dataUrl of input.images) {
+          try {
+            const base64Match = dataUrl.match(/^data:(image\/[a-z]+);base64,(.+)$/);
+            if (base64Match) {
+              const mimeType = base64Match[1] as string;
+              const base64Data = base64Match[2] as string;
+              const buffer = Buffer.from(base64Data, "base64");
+              const ext = mimeType.split("/")[1] ?? "jpg";
+              const { url } = await storagePut(
+                `calibration/${ctx.user.id}/${Date.now()}.${ext}`,
+                buffer,
+                mimeType
+              );
+              uploadedUrls.push(url);
+            }
+          } catch {
+            // Non-fatal: if upload fails, continue with remaining images
+          }
+        }
+        // Save reference URLs to profile
+        if (uploadedUrls.length > 0) {
+          await updateReferenceImageUrls(ctx.user.id, uploadedUrls);
+        }
         // Build GPT-4o Vision message with all uploaded images
         const imageContents = input.images.map((dataUrl) => ({
           type: "image_url" as const,

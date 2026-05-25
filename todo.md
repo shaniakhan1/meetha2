@@ -125,3 +125,14 @@
 ## V7 Features
 
 - [x] Video format selector: when Animated Video selected, swap FORMAT to TikTok/Reels (9:16), Square (1:1), Landscape (16:9) options; generate source image at correct aspect ratio
+
+## V8 Features
+
+- [x] Voice-to-scene grounding: voice transcript becomes primary visual directive, archetype becomes filter/tone
+- [x] Reference image conditioning: pass user's calibration photo to Fal as subject anchor so generated images look like the actual user
+- [x] Store calibration photo URLs in profiles.reference_image_urls for reuse in generation
+
+## V8 Follow-up (requires Supabase migration)
+
+- [ ] Run Supabase migration: ALTER TABLE profiles ADD COLUMN IF NOT EXISTS reference_image_urls TEXT[] (JSONB array of storage URLs)
+- [ ] Existing calibrated users must recalibrate to get reference_image_urls populated (show nudge if aesthetic_descriptors exists but reference_image_urls is null)
