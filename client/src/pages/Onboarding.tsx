@@ -11,7 +11,7 @@ import {
   type Mood,
 } from "@shared/types";
 
-type Step = "archetype" | "insight" | "mood" | "niche" | "voice" | "aesthetic" | "complete";
+type Step = "archetype" | "insight" | "mood" | "niche" | "voice" | "lora" | "aesthetic" | "complete";
 
 const ARCHETYPE_TAGLINES: Record<Archetype, string> = {
   luxury_minimal: "Stillness as power.",
@@ -43,7 +43,7 @@ const AUDIENCES = [
   { value: "everyone", label: "Everyone", description: "Building reach and discovery" },
 ];
 
-const ALL_STEPS: Step[] = ["archetype", "insight", "mood", "niche", "voice", "aesthetic", "complete"];
+const ALL_STEPS: Step[] = ["archetype", "insight", "mood", "niche", "voice", "lora", "aesthetic", "complete"];
 
 type VoiceTone = "casual" | "polished";
 type VoiceHumor = "funny" | "serious";
@@ -76,7 +76,13 @@ export default function Onboarding() {
   const [voiceTone, setVoiceTone] = useState<VoiceTone | null>(null);
   const [voiceHumor, setVoiceHumor] = useState<VoiceHumor | null>(null);
   const [voiceLength, setVoiceLength] = useState<VoiceLength | null>(null);
+  // LoRA step state
+  const [loraFiles, setLoraFiles] = useState<File[]>([]);
+  const [loraPreviews, setLoraPreviews] = useState<string[]>([]);
+  const [loraConsent, setLoraConsent] = useState(false);
+  const [loraUploading, setLoraUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const loraFileInputRef = useRef<HTMLInputElement>(null);
 
   const profileQuery = trpc.profile.get.useQuery();
   const upsertProfile = trpc.profile.upsert.useMutation({
@@ -115,6 +121,58 @@ export default function Onboarding() {
   };
 
   const handleVoiceContinue = () => {
+    setStep("lora");
+  };
+
+  const handleLoraFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files ?? []).slice(0, 15 - loraFiles.length);
+    const newFiles = [...loraFiles, ...files].slice(0, 15);
+    setLoraFiles(newFiles);
+    // Generate previews
+    files.forEach((file) => {
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        const dataUrl = ev.target?.result as string;
+        setLoraPreviews((prev) => [...prev, dataUrl].slice(0, 15));
+      };
+      reader.readAsDataURL(file);
+    });
+    // Reset input so same files can be re-selected
+    e.target.value = "";
+  };
+
+  const handleLoraRemove = (index: number) => {
+    setLoraFiles((prev) => prev.filter((_, i) => i !== index));
+    setLoraPreviews((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleLoraContinue = async () => {
+    if (loraFiles.length >= 10 && loraConsent) {
+      setLoraUploading(true);
+      try {
+        const formData = new FormData();
+        loraFiles.forEach((file) => formData.append("photos", file));
+        const res = await fetch("/api/lora/upload", {
+          method: "POST",
+          body: formData,
+          credentials: "include",
+        });
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({ error: "Upload failed" }));
+          toast.error(err.error || "Photo upload failed. You can try again from your profile.");
+        } else {
+          toast.success("Photos uploaded. Training starts in the background.");
+        }
+      } catch {
+        toast.error("Upload failed. You can train your look from your profile anytime.");
+      } finally {
+        setLoraUploading(false);
+      }
+    }
+    setStep("aesthetic");
+  };
+
+  const handleLoraSkip = () => {
     setStep("aesthetic");
   };
 
@@ -136,7 +194,7 @@ export default function Onboarding() {
       try {
         await analyzeAesthetic.mutateAsync({ images: referenceImages });
       } catch {
-        // Non-blocking — continue even if analysis fails
+        // Non-blocking -- continue even if analysis fails
       } finally {
         setIsAnalyzing(false);
       }
@@ -188,7 +246,7 @@ export default function Onboarding() {
         <div className="flex-1 flex flex-col px-6 py-8 animate-fade-up opacity-0">
           <div className="mb-10">
             <p className="font-sans text-xs tracking-[0.2em] uppercase text-gold mb-4">
-              Step 1 of 4
+              Step 1 of 6
             </p>
             <h2 className="font-serif font-light text-charcoal mb-3">
               What is your frequency?
@@ -267,7 +325,7 @@ export default function Onboarding() {
         <div className="flex-1 flex flex-col px-6 py-8 animate-fade-up opacity-0">
           <div className="mb-10">
             <p className="font-sans text-xs tracking-[0.2em] uppercase text-gold mb-4">
-              Step 2 of 4
+              Step 2 of 6
             </p>
             <h2 className="font-serif font-light text-charcoal mb-3">
               What is your current energy?
@@ -304,7 +362,7 @@ export default function Onboarding() {
         <div className="flex-1 flex flex-col px-6 py-8 animate-fade-up opacity-0 overflow-y-auto">
           <div className="mb-8">
             <p className="font-sans text-xs tracking-[0.2em] uppercase text-gold mb-4">
-              Step 3 of 4
+              Step 3 of 6
             </p>
             <h2 className="font-serif font-light text-charcoal mb-3">
               Tell Meetha your world.
@@ -374,18 +432,13 @@ export default function Onboarding() {
             </div>
           </div>
 
-          <div className="mt-auto space-y-3">
+          <div className="mt-auto">
             <button
               onClick={handleNicheContinue}
               className="btn-luxury w-full"
             >
               {selectedNiche || selectedAudience ? "Continue" : "Skip for now"}
             </button>
-            {!selectedNiche && !selectedAudience && (
-              <p className="font-sans text-xs text-charcoal-soft text-center">
-                You can update this anytime from your profile.
-              </p>
-            )}
           </div>
         </div>
       )}
@@ -395,18 +448,18 @@ export default function Onboarding() {
         <div className="flex-1 flex flex-col px-6 py-8 animate-fade-up opacity-0 overflow-y-auto">
           <div className="mb-8">
             <p className="font-sans text-xs tracking-[0.2em] uppercase text-gold mb-4">
-              Step 4 of 5
+              Step 4 of 6
             </p>
             <h2 className="font-serif font-light text-charcoal mb-3">
-              How do you sound online?
+              How do you sound?
             </h2>
             <p className="font-sans font-light text-sm text-charcoal-soft leading-relaxed">
-              Three quick questions. Meetha will write captions and hooks that sound like you, not like a content template.
+              Meetha writes your captions in your voice. Tell it your style and it will match your tone every time.
             </p>
           </div>
 
           {/* Tone */}
-          <div className="mb-6">
+          <div className="mb-8">
             <p className="font-sans text-xs tracking-[0.15em] uppercase text-charcoal-soft mb-3">
               Your tone
             </p>
@@ -429,7 +482,7 @@ export default function Onboarding() {
           </div>
 
           {/* Humor */}
-          <div className="mb-6">
+          <div className="mb-8">
             <p className="font-sans text-xs tracking-[0.15em] uppercase text-charcoal-soft mb-3">
               Your energy
             </p>
@@ -490,18 +543,168 @@ export default function Onboarding() {
         </div>
       )}
 
+      {/* Step: LoRA Portrait Upload */}
+      {step === "lora" && (
+        <div className="flex-1 flex flex-col px-6 py-8 animate-fade-up opacity-0 overflow-y-auto">
+          <div className="mb-8">
+            <p className="font-sans text-xs tracking-[0.2em] uppercase text-gold mb-4">
+              Step 5 of 6
+            </p>
+            <h2 className="font-serif font-light text-charcoal mb-3">
+              Make the images look like you.
+            </h2>
+            <p className="font-sans font-light text-sm text-charcoal-soft leading-relaxed mb-4">
+              Without this step, your images will be beautiful but they won't be you. Upload 10 to 15 selfies and Meetha trains a personal model on your face. Every image it generates will actually look like you.
+            </p>
+            <div className="p-4 border border-gold/30 bg-gold/5 mb-2">
+              <p className="font-sans text-xs text-charcoal-soft leading-relaxed">
+                <span className="font-medium text-charcoal">What to upload:</span> Clear, well-lit selfies. Different angles. No heavy filters. No sunglasses. Training takes about 20 minutes in the background.
+              </p>
+            </div>
+          </div>
+
+          {/* Biometric consent checkbox -- must be accepted before photos can be added */}
+          <div className="mb-6 p-4 border border-sand bg-warm-white/60">
+            <label className="flex items-start gap-3 cursor-pointer">
+              <div className="relative mt-0.5 flex-shrink-0">
+                <input
+                  type="checkbox"
+                  checked={loraConsent}
+                  onChange={(e) => setLoraConsent(e.target.checked)}
+                  className="sr-only"
+                />
+                <div
+                  className={`w-4 h-4 border transition-all duration-200 flex items-center justify-center ${
+                    loraConsent ? "border-gold bg-gold" : "border-sand bg-warm-white"
+                  }`}
+                >
+                  {loraConsent && (
+                    <svg className="w-2.5 h-2.5 text-cream" viewBox="0 0 10 10" fill="none">
+                      <path d="M1.5 5L4 7.5L8.5 2.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  )}
+                </div>
+              </div>
+              <p className="font-sans text-xs text-charcoal-soft leading-relaxed">
+                I consent to Meetha processing my facial images to train a personal AI model. My photos are used only for this purpose and are not shared with third parties. I can delete my model data at any time from my profile.
+              </p>
+            </label>
+          </div>
+
+          {/* Photo grid -- only shown after consent */}
+          {loraConsent && (
+          <div className="grid grid-cols-4 gap-2 mb-6">
+            {loraPreviews.map((preview, i) => (
+              <div
+                key={i}
+                className="aspect-square relative overflow-hidden border border-sand"
+              >
+                <img
+                  src={preview}
+                  alt={`Selfie ${i + 1}`}
+                  className="w-full h-full object-cover"
+                />
+                <button
+                  onClick={() => handleLoraRemove(i)}
+                  className="absolute top-1 right-1 w-5 h-5 bg-charcoal/70 text-cream rounded-full text-xs flex items-center justify-center hover:bg-charcoal transition-colors"
+                >
+                  x
+                </button>
+              </div>
+            ))}
+            {loraPreviews.length < 15 && (
+              <button
+                onClick={() => loraFileInputRef.current?.click()}
+                className="aspect-square border border-dashed border-sand bg-warm-white/40 hover:bg-warm-white hover:border-gold/50 transition-all duration-250 flex flex-col items-center justify-center gap-1"
+              >
+                <span className="text-gold text-lg leading-none">+</span>
+                <span className="font-sans text-[10px] text-charcoal-soft text-center leading-tight">Add selfie</span>
+              </button>
+            )}
+          </div>
+          )}
+
+          <input
+            ref={loraFileInputRef}
+            type="file"
+            accept="image/*"
+            multiple
+            className="hidden"
+            onChange={handleLoraFileSelect}
+          />
+
+          {/* Photo count indicator */}
+          {loraConsent && (
+          <div className="flex items-center justify-between mb-6">
+            <p className="font-sans text-xs text-charcoal-soft">
+              {loraPreviews.length} of 15 photos added
+            </p>
+            {loraPreviews.length > 0 && loraPreviews.length < 10 && (
+              <p className="font-sans text-xs text-gold">
+                Need at least 10 to train
+              </p>
+            )}
+            {loraPreviews.length >= 10 && (
+              <p className="font-sans text-xs text-charcoal-soft">
+                Ready to train
+              </p>
+            )}
+          </div>
+          )}
+
+          <div className="mt-auto space-y-3">
+            {loraPreviews.length >= 10 && loraConsent ? (
+              <button
+                onClick={handleLoraContinue}
+                disabled={loraUploading}
+                className="btn-luxury w-full"
+              >
+                {loraUploading ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <span className="w-3 h-3 border border-cream border-t-transparent rounded-full animate-spin" />
+                    Uploading photos...
+                  </span>
+                ) : (
+                  "Train my look and continue"
+                )}
+              </button>
+            ) : loraPreviews.length >= 10 && !loraConsent ? (
+              <button
+                disabled
+                className="btn-luxury w-full opacity-50 cursor-not-allowed"
+              >
+                Check the consent box to continue
+              </button>
+            ) : (
+              <button
+                onClick={handleLoraContinue}
+                className="btn-luxury w-full"
+              >
+                {loraPreviews.length > 0 ? "Add more photos to train" : "Continue without training"}
+              </button>
+            )}
+            <button
+              onClick={handleLoraSkip}
+              className="w-full py-3 font-sans text-xs text-charcoal-soft hover:text-charcoal transition-colors text-center"
+            >
+              Skip for now (images won't look like me)
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Step: Aesthetic Calibration Upload */}
       {step === "aesthetic" && (
         <div className="flex-1 flex flex-col px-6 py-8 animate-fade-up opacity-0">
           <div className="mb-8">
             <p className="font-sans text-xs tracking-[0.2em] uppercase text-gold mb-4">
-              Step 5 of 5
+              Step 6 of 6
             </p>
             <h2 className="font-serif font-light text-charcoal mb-3">
               This is what makes it yours.
             </h2>
             <p className="font-sans font-light text-sm text-charcoal-soft leading-relaxed">
-              Upload 3-5 images that feel like your world. Meetha reads your colors, your light, your warmth, your skin tone — not faces — so every generation is calibrated to you specifically, not a generic template.
+              Upload 3 to 5 images that feel like your world. Meetha reads your colors, your light, your warmth, your skin tone -- not faces -- so every generation is calibrated to you specifically, not a generic template.
             </p>
           </div>
 
@@ -611,6 +814,16 @@ export default function Onboarding() {
                   </p>
                   <p className="font-serif text-base text-charcoal capitalize">
                     {selectedNiche}
+                  </p>
+                </div>
+              )}
+              {loraPreviews.length >= 10 && (
+                <div className="flex items-center justify-between p-4 border border-sand bg-warm-white/60">
+                  <p className="font-sans text-xs tracking-[0.1em] uppercase text-charcoal-soft">
+                    Your Look
+                  </p>
+                  <p className="font-serif text-base text-charcoal">
+                    Training
                   </p>
                 </div>
               )}

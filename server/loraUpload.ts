@@ -3,7 +3,7 @@
  *
  * POST /api/lora/upload
  *   - Accepts up to 20 image files (multipart/form-data, field name: "photos")
- *   - Requires a valid session cookie (reads user from Supabase session)
+ *   - Requires a valid session cookie (same auth as tRPC protectedProcedure)
  *   - Zips the images, uploads to Fal.ai, submits training job
  *   - Returns { requestId, triggerPhrase }
  *
@@ -15,11 +15,11 @@
 
 import { Request, Response } from "express";
 import multer from "multer";
-import { getSupabase } from "./_core/supabase";
 import { getProfile, updateLoraProfile } from "./db";
 import { submitLoraTraining, pollLoraTraining } from "./_core/falLoraTraining";
+import { authenticateRequest } from "./_core/auth";
 
-// Memory storage — we only need the buffer, not disk persistence
+// Memory storage - we only need the buffer, not disk persistence
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 10 * 1024 * 1024, files: 20 }, // 10MB per file, max 20
@@ -29,22 +29,10 @@ const upload = multer({
   },
 });
 
-/** Resolve the authenticated user ID from the session cookie. */
+/** Resolve the authenticated user using the same session cookie as tRPC. */
 async function resolveUserId(req: Request): Promise<number | null> {
   try {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const sb = getSupabase() as any;
-    const token = req.cookies?.["sb-access-token"] || req.cookies?.["meetha-session"];
-    if (!token) return null;
-    const { data } = await sb.auth.getUser(token);
-    if (!data?.user?.id) return null;
-
-    // Look up internal user id by open_id
-    const { data: user } = await sb
-      .from("users")
-      .select("id")
-      .eq("open_id", data.user.id)
-      .single();
+    const user = await authenticateRequest(req);
     return user?.id ?? null;
   } catch {
     return null;
@@ -95,7 +83,7 @@ export async function handleLoraStatus(req: Request, res: Response) {
 
     const { lora_status, lora_training_request_id, lora_trigger_phrase, lora_weights_url } = profile;
 
-    // Already done or failed — return cached state
+    // Already done or failed - return cached state
     if (lora_status === "ready") {
       return res.json({ status: "ready", loraWeightsUrl: lora_weights_url });
     }
@@ -110,7 +98,7 @@ export async function handleLoraStatus(req: Request, res: Response) {
     try {
       const result = await pollLoraTraining(lora_training_request_id, lora_trigger_phrase);
       if (result) {
-        // Training complete — save weights URL
+        // Training complete - save weights URL
         await updateLoraProfile(userId, {
           loraWeightsUrl: result.loraWeightsUrl,
           loraStatus: "ready",

@@ -57,20 +57,20 @@ export default function Templates() {
   };
 
   return (
-    <div className="min-h-screen bg-charcoal text-cream flex flex-col">
+    <div className="min-h-screen bg-cream text-charcoal flex flex-col">
       {/* Header */}
-      <div className="flex items-center justify-between px-6 py-5 border-b border-white/10">
+      <div className="flex items-center justify-between px-6 py-5 border-b border-sand">
         <button
           onClick={() => navigate(user ? "/dashboard" : "/")}
-          className="font-sans text-xs tracking-widest uppercase text-cream/50 hover:text-cream transition-colors"
+          className="font-sans text-xs tracking-widest uppercase text-charcoal-soft hover:text-charcoal transition-colors"
         >
           {user ? "Dashboard" : "Back"}
         </button>
-        <span className="font-serif text-base tracking-widest text-cream/80">Templates</span>
+        <span className="font-serif text-base tracking-widest text-charcoal">Templates</span>
         {!user ? (
           <a
             href={getLoginUrl()}
-            className="font-sans text-xs tracking-widest uppercase text-gold hover:text-cream transition-colors"
+            className="font-sans text-xs tracking-widest uppercase text-gold hover:text-charcoal transition-colors"
           >
             Sign In
           </a>
@@ -88,7 +88,7 @@ export default function Templates() {
             className="absolute inset-0"
             style={{
               background:
-                "radial-gradient(ellipse at 30% 40%, rgba(255,255,255,0.06) 0%, transparent 60%), linear-gradient(160deg, #1a1714 0%, #0d0b09 60%, #1a1410 100%)",
+                "radial-gradient(ellipse at 30% 40%, rgba(255,255,255,0.08) 0%, transparent 60%), linear-gradient(160deg, #2C1810 0%, #1a0f09 60%, #2C1810 100%)",
             }}
           />
           {/* Grain overlay */}
@@ -148,7 +148,7 @@ export default function Templates() {
                     className={`font-serif text-xs px-3 py-1.5 border transition-all duration-200 cursor-default ${
                       hoveredHook === hook
                         ? "border-gold/60 text-gold bg-gold/5"
-                        : "border-white/10 text-cream/50"
+                        : "border-cream/20 text-cream/50"
                     }`}
                   >
                     {hook}
@@ -171,22 +171,22 @@ export default function Templates() {
         </div>
 
         {/* Locations */}
-        <div className="px-6 py-10 border-t border-white/8">
-          <p className="font-sans text-xs tracking-[0.2em] uppercase text-cream/30 mb-5 text-center">
+        <div className="px-6 py-10 border-t border-sand">
+          <p className="font-sans text-xs tracking-[0.2em] uppercase text-charcoal-soft mb-5 text-center">
             Where she was seen
           </p>
           <div className="grid grid-cols-2 gap-2 max-w-xs mx-auto">
             {LOCATIONS.map((loc) => (
-              <div key={loc} className="px-3 py-2 border border-white/8 text-center">
-                <p className="font-sans text-xs text-cream/50">{loc}</p>
+              <div key={loc} className="px-3 py-2 border border-sand text-center">
+                <p className="font-sans text-xs text-charcoal-soft">{loc}</p>
               </div>
             ))}
           </div>
         </div>
 
         {/* Why it works */}
-        <div className="px-6 py-10 border-t border-white/8 max-w-sm mx-auto w-full">
-          <p className="font-sans text-xs tracking-[0.2em] uppercase text-cream/30 mb-6 text-center">
+        <div className="px-6 py-10 border-t border-sand max-w-sm mx-auto w-full">
+          <p className="font-sans text-xs tracking-[0.2em] uppercase text-charcoal-soft mb-6 text-center">
             Why it spreads
           </p>
           <div className="space-y-4">
@@ -198,8 +198,8 @@ export default function Templates() {
               <div key={title} className="flex gap-3">
                 <div className="w-1 h-1 rounded-full bg-gold mt-2 flex-shrink-0" />
                 <div>
-                  <p className="font-sans text-xs text-cream/80 mb-0.5">{title}</p>
-                  <p className="font-sans text-xs text-cream/40 leading-relaxed">{desc}</p>
+                  <p className="font-sans text-xs text-charcoal mb-0.5">{title}</p>
+                  <p className="font-sans text-xs text-charcoal-soft leading-relaxed">{desc}</p>
                 </div>
               </div>
             ))}
@@ -217,7 +217,7 @@ export default function Templates() {
         </div>
 
         {/* ── Template No. 02: Digital Diary ── */}
-        <div className="border-t border-white/15">
+        <div className="border-t border-sand">
           {/* Hero card */}
           <div
             className="relative overflow-hidden"
@@ -228,7 +228,7 @@ export default function Templates() {
               className="absolute inset-0"
               style={{
                 background:
-                  "linear-gradient(160deg, #1c1710 0%, #0f0d09 60%, #1a1510 100%)",
+                  "linear-gradient(160deg, #2C1810 0%, #1a0f09 60%, #2C1810 100%)",
               }}
             />
             {/* Subtle warm grain */}
@@ -277,7 +277,7 @@ export default function Templates() {
                       className={`font-serif text-xs px-3 py-1.5 border transition-all duration-200 cursor-default ${
                         hoveredDiaryHook === hook
                           ? "border-gold/60 text-gold bg-gold/5"
-                          : "border-white/10 text-cream/50"
+                          : "border-cream/20 text-cream/50"
                       }`}
                     >
                       {hook}
@@ -298,8 +298,8 @@ export default function Templates() {
           </div>
 
           {/* Why it works */}
-          <div className="px-6 py-10 border-t border-white/8 max-w-sm mx-auto w-full">
-            <p className="font-sans text-xs tracking-[0.2em] uppercase text-cream/30 mb-6 text-center">
+          <div className="px-6 py-10 border-t border-sand max-w-sm mx-auto w-full">
+            <p className="font-sans text-xs tracking-[0.2em] uppercase text-charcoal-soft mb-6 text-center">
               Why it spreads
             </p>
             <div className="space-y-4">
@@ -311,8 +311,8 @@ export default function Templates() {
                 <div key={title} className="flex gap-3">
                   <div className="w-1 h-1 rounded-full bg-gold mt-2 flex-shrink-0" />
                   <div>
-                    <p className="font-sans text-xs text-cream/80 mb-0.5">{title}</p>
-                    <p className="font-sans text-xs text-cream/40 leading-relaxed">{desc}</p>
+                    <p className="font-sans text-xs text-charcoal mb-0.5">{title}</p>
+                    <p className="font-sans text-xs text-charcoal-soft leading-relaxed">{desc}</p>
                   </div>
                 </div>
               ))}

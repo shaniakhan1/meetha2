@@ -17,7 +17,7 @@ import {
 import CinematicPreview from "@/components/CinematicPreview";
 import { getPreviewTier } from "./Preview";
 
-type GenStep = "select" | "recording" | "transcribing" | "generating" | "hooks" | "preview" | "feedback";
+type GenStep = "select" | "template_preview" | "recording" | "transcribing" | "generating" | "hooks" | "preview" | "feedback";
 
 // Credit costs — keep in sync with server/routers.ts
 const STILL_COST = 1;
@@ -73,6 +73,7 @@ export default function Generate() {
   const [videoFormat, setVideoFormat] = useState<VideoFormat>("tiktok_reels");
   const [showCustomize, setShowCustomize] = useState(false);
   const [showTopUp, setShowTopUp] = useState(false);
+  const [templateSlug, setTemplateSlug] = useState<string | null>(null);
 
   // Voice recording state
   const [isRecording, setIsRecording] = useState(false);
@@ -89,7 +90,12 @@ export default function Generate() {
     const template = params.get("template");
     if (template === "paparazzi_flash") {
       setSceneCategory("paparazzi_flash");
-      setShowCustomize(true);
+      setTemplateSlug("paparazzi_flash");
+      setStep("template_preview");
+    } else if (template === "digital_diary") {
+      setSceneCategory("digital_diary");
+      setTemplateSlug("digital_diary");
+      setStep("template_preview");
     }
   }, []);
 
@@ -503,7 +509,7 @@ export default function Generate() {
                 rel="noopener noreferrer"
                 className="btn-luxury btn-gold w-full text-center block"
               >
-                Starter &mdash; $19 / month
+                Starter - $19 / month
               </a>
               <a
                 href={import.meta.env.VITE_STRIPE_PRO_LINK || "#"}
@@ -511,7 +517,7 @@ export default function Generate() {
                 rel="noopener noreferrer"
                 className="btn-luxury btn-luxury-outline w-full text-center block"
               >
-                Pro &mdash; $39 / month
+                Pro - $39 / month
               </a>
             </div>
           </div>
@@ -533,6 +539,123 @@ export default function Generate() {
           </p>
         </div>
       </div>
+
+      {/* ── Step: Template Preview ── */}
+      {step === "template_preview" && (
+        <div className="flex-1 flex flex-col px-6 py-8 animate-fade-up opacity-0">
+          {/* Template identity */}
+          <div className="mb-8">
+            <p className="font-sans text-xs tracking-[0.2em] uppercase text-gold mb-3">
+              {templateSlug === "paparazzi_flash" ? "Template No. 01" : "Template No. 02"}
+            </p>
+            <h2 className="font-serif text-3xl font-light text-charcoal mb-3">
+              {templateSlug === "paparazzi_flash" ? "Caught Looking Expensive" : "Digital Diary"}
+            </h2>
+            <p className="font-sans font-light text-sm text-charcoal-soft leading-relaxed">
+              {templateSlug === "paparazzi_flash"
+                ? "Flash photography. Blurry background. Someone caught you mid-moment looking effortlessly stunning."
+                : "Taped polaroid. Handwritten note. Dried flower. Analog layering that feels like a page from a real woman's private journal."}
+            </p>
+          </div>
+
+          {/* Visual preview card */}
+          <div
+            className="relative overflow-hidden mb-8 flex items-center justify-center"
+            style={{ minHeight: "40vw", maxHeight: "260px" }}
+          >
+            <div
+              className="absolute inset-0"
+              style={{
+                background:
+                  templateSlug === "paparazzi_flash"
+                    ? "radial-gradient(ellipse at 30% 40%, rgba(255,255,255,0.08) 0%, transparent 60%), linear-gradient(160deg, #2C1810 0%, #1a0f09 60%, #2C1810 100%)"
+                    : "linear-gradient(160deg, #2C1810 0%, #1a0f09 60%, #2C1810 100%)",
+              }}
+            />
+            {/* Grain overlay */}
+            <div
+              className="absolute inset-0 opacity-25"
+              style={{
+                backgroundImage:
+                  "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.4'/%3E%3C/svg%3E\")",
+                backgroundSize: "128px 128px",
+              }}
+            />
+            {templateSlug === "paparazzi_flash" && (
+              <div
+                className="absolute"
+                style={{
+                  top: "10%",
+                  left: "15%",
+                  width: "140px",
+                  height: "140px",
+                  background: "radial-gradient(ellipse, rgba(255,255,255,0.18) 0%, rgba(255,255,255,0.04) 40%, transparent 70%)",
+                  filter: "blur(8px)",
+                }}
+              />
+            )}
+            <div className="relative z-10 text-center px-6 py-10">
+              <p className="font-serif text-xl text-cream/90 mb-2">
+                {templateSlug === "paparazzi_flash" ? "vanished softly" : "wrote it down"}
+              </p>
+              <p className="font-sans text-xs tracking-[0.2em] uppercase text-cream/40">
+                {templateSlug === "paparazzi_flash" ? "paparazzi flash" : "analog polaroid"}
+              </p>
+            </div>
+          </div>
+
+          {/* What you get */}
+          <div className="mb-8 space-y-2">
+            {(templateSlug === "paparazzi_flash"
+              ? ["Flash photography aesthetic", "Grain and motion blur", "Candid energy hook"]
+              : ["Polaroid and analog layering", "Warm film grain", "Private journal hook"]
+            ).map((item) => (
+              <div key={item} className="flex items-center gap-3">
+                <div className="w-1 h-1 rounded-full bg-gold flex-shrink-0" />
+                <p className="font-sans text-xs text-charcoal-soft">{item}</p>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-auto space-y-3">
+            {effectiveCredits && effectiveCredits.credits_remaining > 0 ? (
+              <button
+                onClick={() => {
+                  if (!previewTier) {
+                    const credits = creditsQuery.data;
+                    if (!credits || credits.credits_remaining < STILL_COST) {
+                      setShowTopUp(true);
+                      return;
+                    }
+                  }
+                  setStep("generating");
+                  let idx = 0;
+                  const interval = setInterval(() => {
+                    idx = (idx + 1) % GENERATING_PHRASES.length;
+                    setPhraseIndex(idx);
+                  }, 3000);
+                  generateMutation.mutateAsync({ platform, sceneCategory: sceneCategory ?? undefined }).then(() => {
+                    clearInterval(interval);
+                  }).catch(() => clearInterval(interval));
+                }}
+                className="btn-luxury w-full"
+              >
+                Generate Now
+              </button>
+            ) : (
+              <button onClick={() => setShowTopUp(true)} className="btn-luxury w-full">
+                Get Credits to Generate
+              </button>
+            )}
+            <button
+              onClick={() => setStep("select")}
+              className="w-full py-3 font-sans text-xs tracking-widest uppercase text-charcoal-soft hover:text-charcoal border border-sand hover:border-charcoal/40 transition-all duration-200"
+            >
+              Customize options
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* ── Step: Select ── */}
       {step === "select" && (
@@ -576,7 +699,7 @@ export default function Generate() {
             <div className="mb-6">
               <button
                 onClick={handleQuickGenerate}
-                className="w-full py-5 bg-charcoal hover:bg-charcoal/90 active:scale-[0.98] transition-all duration-150 text-cream font-sans text-sm tracking-[0.15em] uppercase"
+                className="w-full py-5 bg-[#2C1810] hover:bg-[#3a2015] active:scale-[0.98] transition-all duration-150 text-cream font-sans text-sm tracking-[0.15em] uppercase"
               >
                 Generate My Content
               </button>
@@ -1013,7 +1136,7 @@ export default function Generate() {
                       if (customHook.trim()) handleHookSelect(customHook.trim());
                     }}
                     disabled={!customHook.trim()}
-                    className="flex-1 py-2 bg-charcoal text-cream font-sans text-xs tracking-widest uppercase disabled:opacity-40 disabled:cursor-not-allowed hover:bg-charcoal/80 transition-colors"
+                    className="flex-1 py-2 bg-[#2C1810] text-cream font-sans text-xs tracking-widest uppercase disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[#3a2015] transition-colors"
                   >
                     Use this
                   </button>
@@ -1140,7 +1263,7 @@ export default function Generate() {
             )}
             {/* Share nudge — appears after download, auto-dismisses */}
             {showShareNudge && selectedHook && (
-              <div className="w-full p-4 bg-charcoal text-cream animate-fade-up opacity-0 flex items-center justify-between gap-3">
+              <div className="w-full p-4 bg-[#2C1810] text-cream animate-fade-up opacity-0 flex items-center justify-between gap-3">
                 <div className="flex-1 min-w-0">
                   <p className="font-sans text-xs tracking-[0.1em] uppercase text-gold/80 mb-1">Post to your story</p>
                   <p className="font-serif text-sm text-cream truncate">"{selectedHook}"</p>

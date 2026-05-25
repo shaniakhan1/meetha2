@@ -179,9 +179,17 @@
 
 ## V13 — Pre-Launch Polish
 
-- [ ] Server-side hook validation: after LLM response, check each hook against banned word list, retry once if any fail
-- [ ] Retrain confirmation dialog in Profile (two-step confirm before overwriting existing LoRA model)
-- [ ] LoRA benefit copy on landing page ("Trains to look like you" feature callout)
-- [ ] Mobile audit: check all key screens at 390px viewport, fix any layout issues
-- [ ] Pre-launch legal audit: Privacy Policy completeness, Terms of Service, GDPR/CCPA, biometric/face data consent
-- [ ] Scalability audit: document current limits and what breaks first under load
+- [x] Server-side hook validation: after LLM response, check each hook against banned word list, retry once if any fail
+- [x] Retrain confirmation dialog in Profile (two-step confirm before overwriting existing LoRA model)
+- [x] LoRA benefit copy on landing page ("Trains to look like you" feature callout)
+- [x] Mobile audit: check all key screens at 390px viewport, fix any layout issues
+- [x] Pre-launch legal audit: Privacy Policy completeness, Terms of Service, GDPR/CCPA, biometric/face data consent
+- [x] Scalability audit: document current limits and what breaks first under load
+
+## V14 — Onboarding Fix + UX Polish
+
+- [x] Fix LoRA 401 auth error on /api/lora/upload (session cookie not being read by Express middleware)
+- [x] Add LoRA photo upload step to onboarding (Step 4, between voice and aesthetic, with honest framing and biometric consent checkbox)
+- [x] Remove all black backgrounds from app (Templates, Generate, any dark cards) -- replaced with warm dark brown #2C1810 for template preview cards, cream for page backgrounds
+- [x] Simplify Caught Looking Expensive template flow: card tap goes to single preview screen with Generate Now button, no auto-start
+- [x] Remove all em dashes from every file in the codebase (copy, prompts, UI text, comments)

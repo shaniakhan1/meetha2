@@ -327,7 +327,7 @@ export default function Home() {
       </section>
 
       {/* ── Pricing ── */}
-      <section className="py-20 px-6 bg-charcoal">
+      <section className="py-20 px-6" style={{ background: "#2C1810" }}>
         <div className="max-w-sm mx-auto text-center">
           <p className="font-sans text-xs tracking-[0.2em] uppercase text-gold mb-6">
             Simple pricing
@@ -420,7 +420,7 @@ export default function Home() {
               rel="noopener noreferrer"
               className="btn-luxury btn-gold w-full text-center block"
             >
-              Start with Starter — $19 / mo
+              Start with Starter - $19 / mo
             </a>
             <a
               href={import.meta.env.VITE_STRIPE_PRO_LINK}
@@ -429,7 +429,7 @@ export default function Home() {
               className="btn-luxury btn-luxury-outline w-full text-center block"
               style={{ color: "oklch(97% 0.012 80)", borderColor: "oklch(88% 0.025 70 / 0.4)" }}
             >
-              Go Pro — $39 / mo
+              Go Pro - $39 / mo
             </a>
             <button
               onClick={handleCTA}
@@ -446,7 +446,7 @@ export default function Home() {
         className="px-6 py-16 text-center relative overflow-hidden"
         style={{
           background:
-            "linear-gradient(160deg, #1a1714 0%, #0d0b09 60%, #1a1410 100%)",
+            "linear-gradient(160deg, #2C1810 0%, #1a0f09 60%, #2C1810 100%)",
         }}
       >
         {/* Grain overlay */}
@@ -505,7 +505,7 @@ export default function Home() {
       </section>
 
       {/* ── Footer ── */}
-      <footer className="py-10 px-6 bg-charcoal border-t border-sand/10 text-center">
+      <footer className="py-10 px-6 border-t border-sand/10 text-center" style={{ background: "#2C1810" }}>
         <p className="font-serif text-lg text-cream/60 mb-4">MEETHA</p>
         <div className="flex items-center justify-center gap-6 flex-wrap">
           <a href="/privacy" className="font-sans text-xs text-sand-dark/50 tracking-wide hover:text-cream/60 transition-colors">

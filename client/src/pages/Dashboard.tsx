@@ -173,7 +173,7 @@ export default function Dashboard() {
         {/* Template shortcut */}
         <button
           onClick={() => navigate("/templates")}
-          className="w-full mb-6 p-4 border border-charcoal/20 bg-charcoal text-cream text-left hover:bg-charcoal/90 transition-all duration-200 active:scale-[0.98]"
+          className="w-full mb-6 p-4 border border-[#2C1810]/30 bg-[#2C1810] text-cream text-left hover:bg-[#3a2015] transition-all duration-200 active:scale-[0.98]"
         >
           <p className="font-sans text-xs tracking-[0.15em] uppercase text-gold/70 mb-1">
             Template No. 01
@@ -258,7 +258,7 @@ export default function Dashboard() {
               return (
                 <div
                   key={gen.id}
-                  className="relative overflow-hidden bg-charcoal cursor-pointer group"
+                  className="relative overflow-hidden bg-[#1a0f09] cursor-pointer group"
                   onClick={() => setExpandedId(isExpanded ? null : gen.id)}
                 >
                   <div className="aspect-story">
@@ -283,7 +283,7 @@ export default function Dashboard() {
                     )}
                     {/* Platform badge */}
                     <div className="absolute top-2 left-2">
-                      <span className="font-sans text-xs bg-charcoal/70 text-cream px-1.5 py-0.5 tracking-widest uppercase">
+                      <span className="font-sans text-xs bg-[#1a0f09]/80 text-cream px-1.5 py-0.5 tracking-widest uppercase">
                         {PLATFORM_LABELS[gen.platform as keyof typeof PLATFORM_LABELS] ?? gen.platform}
                       </span>
                     </div>
@@ -292,7 +292,7 @@ export default function Dashboard() {
                   {/* Expanded overlay */}
                   {isExpanded && (
                     <div
-                      className="absolute inset-0 bg-charcoal/90 flex flex-col items-center justify-center p-4 animate-fade-in opacity-0"
+                      className="absolute inset-0 bg-[#1a0f09]/92 flex flex-col items-center justify-center p-4 animate-fade-in opacity-0"
                       onClick={(e) => e.stopPropagation()}
                     >
                       <p className="font-sans text-xs tracking-widest uppercase text-gold mb-3">
