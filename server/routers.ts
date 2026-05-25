@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { transcribeAudio } from "./_core/voiceTranscription";
-import { storagePut } from "./storage";
+import { storagePut, storageGetSignedUrl } from "./storage";
 import { getSupabase } from "./_core/supabase";
 import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
@@ -744,8 +744,15 @@ Respond in this exact JSON format:
         // Build a cinematic motion prompt from archetype + scene
         const motionPrompt = `Slow cinematic camera movement, gentle parallax, subtle zoom in, soft light shift, luxury lifestyle aesthetic, no people, no faces, editorial film quality, ${input.archetype.replace(/_/g, " ")} aesthetic, ${input.mood} energy${input.sceneCategory ? ", " + input.sceneCategory.replace(/_/g, " ") : ""}`;
 
+        // Fal.ai needs a full public URL, not a relative /manus-storage/ path
+        let resolvedImageUrl = input.imageUrl;
+        if (input.imageUrl.startsWith("/manus-storage/")) {
+          const key = input.imageUrl.replace("/manus-storage/", "");
+          resolvedImageUrl = await storageGetSignedUrl(key);
+        }
+
         const { url: videoUrl } = await generateVideoFal({
-          imageUrl: input.imageUrl,
+          imageUrl: resolvedImageUrl,
           prompt: motionPrompt,
         });
 

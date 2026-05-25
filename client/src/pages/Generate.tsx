@@ -59,6 +59,7 @@ export default function Generate() {
   const [phraseIndex, setPhraseIndex] = useState(0);
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const [isGeneratingVideo, setIsGeneratingVideo] = useState(false);
+  const [outputType, setOutputType] = useState<"still" | "video">("still");
 
   // Voice recording state
   const [isRecording, setIsRecording] = useState(false);
@@ -145,9 +146,23 @@ export default function Generate() {
       idx = (idx + 1) % GENERATING_PHRASES.length;
       setPhraseIndex(idx);
     }, 3000);
-    generateMutation.mutateAsync({ platform, sceneCategory: sceneCategory ?? undefined }).finally(() => {
+    generateMutation.mutateAsync({ platform, sceneCategory: sceneCategory ?? undefined }).then((data) => {
       clearInterval(interval);
-    });
+      // If Pro user chose video output, auto-trigger video generation after still is ready
+      if (outputType === "video" && (effectiveCredits?.tier === "pro" || previewTier === "pro")) {
+        const gen = (data as GenerationResult).generation;
+        if (gen?.image_url && gen?.id) {
+          setIsGeneratingVideo(true);
+          videoMutation.mutate({
+            generationId: gen.id,
+            imageUrl: gen.image_url as string,
+            archetype: gen.archetype,
+            mood: gen.mood,
+            sceneCategory: sceneCategory ?? undefined,
+          });
+        }
+      }
+    }).catch(() => clearInterval(interval));
   };
 
   const handleHookSelect = (hook: string) => {
@@ -421,6 +436,35 @@ export default function Generate() {
                 >
                   Generate my Signature Scene
                 </button>
+              </div>
+            </div>
+          )}
+
+          {/* Output type selector — Pro only */}
+          {(effectiveCredits?.tier === "pro" || previewTier === "pro") && (
+            <div className="mb-8">
+              <p className="font-sans text-xs tracking-[0.15em] uppercase text-charcoal mb-4">
+                Output
+              </p>
+              <div className="grid grid-cols-2 gap-2">
+                {(["still", "video"] as const).map((type) => (
+                  <button
+                    key={type}
+                    onClick={() => setOutputType(type)}
+                    className={`py-3 px-2 text-center border transition-all duration-200 ${
+                      outputType === type
+                        ? "border-gold bg-gold/10 text-charcoal"
+                        : "border-sand/60 bg-warm-white/60 text-charcoal hover:border-gold/40"
+                    }`}
+                  >
+                    <p className="font-sans text-xs tracking-[0.1em] uppercase">
+                      {type === "still" ? "Still Image" : "Animated Video"}
+                    </p>
+                    <p className="font-sans text-xs text-charcoal-soft mt-0.5">
+                      {type === "still" ? "Download or post" : "15-sec cinematic clip"}
+                    </p>
+                  </button>
+                ))}
               </div>
             </div>
           )}
