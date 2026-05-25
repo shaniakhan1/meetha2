@@ -89,3 +89,22 @@
 - [x] Copy prompt rewrite — frequency voice system, RGE-inspired hook examples, anti-generic rules, culturally grounded
 - [x] Aesthetic calibration system prompt rewrite — explicitly extracts skin tone, gold jewelry, warmth, environment for injection into image prompts
 - [x] Landing page rewrite — broad pain-point-led copy, frequency language, output example section, not niche-specific
+
+## V4 Features
+
+- [ ] Remove all Khanundrum Studios references (landing page, footer, nav eyebrow)
+- [ ] Voice-to-content: tap to record, Whisper transcription, generate post from spoken thought
+- [ ] Baseline calibration re-upload verified with new skin-tone-aware extraction
+- [ ] Privacy Policy page (/privacy)
+- [ ] Terms of Service page (/terms)
+- [ ] Account deletion flow in Profile settings
+- [ ] Cookie/data notice banner on first visit
+- [ ] Footer legal links on landing page and inside app
+- [x] Privacy Policy page (/privacy)
+- [x] Terms of Service page (/terms)
+- [x] Account deletion flow in Profile settings with tRPC procedure
+- [ ] Cookie/data notice banner on first visit (deferred)
+- [x] Footer legal links on landing page and inside app
+- [x] SEO: meta title, description, Open Graph tags in index.html
+- [x] sitemap.xml served at /sitemap.xml
+- [x] robots.txt allowing all crawlers

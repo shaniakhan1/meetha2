@@ -112,6 +112,7 @@ export default function Home() {
           <p className="font-sans text-xs tracking-[0.2em] uppercase text-gold mb-8 animate-fade-in opacity-0 delay-100">
             Content creation, simplified
           </p>
+          {/* Khanundrum Studios removed — not a real entity */}
 
           {/* Headline */}
           <h1
@@ -452,9 +453,22 @@ export default function Home() {
 
       {/* ── Footer ── */}
       <footer className="py-10 px-6 bg-charcoal border-t border-sand/10 text-center">
-        <p className="font-serif text-lg text-cream/60 mb-2">MEETHA</p>
-        <p className="font-sans text-xs text-sand-dark/50 tracking-wide">
-          A Khanundrum Studios product
+        <p className="font-serif text-lg text-cream/60 mb-4">MEETHA</p>
+        <div className="flex items-center justify-center gap-6 flex-wrap">
+          <a href="/privacy" className="font-sans text-xs text-sand-dark/50 tracking-wide hover:text-cream/60 transition-colors">
+            Privacy Policy
+          </a>
+          <span className="text-sand-dark/30 text-xs">&middot;</span>
+          <a href="/terms" className="font-sans text-xs text-sand-dark/50 tracking-wide hover:text-cream/60 transition-colors">
+            Terms of Service
+          </a>
+          <span className="text-sand-dark/30 text-xs">&middot;</span>
+          <a href="mailto:hello@meetha.studio" className="font-sans text-xs text-sand-dark/50 tracking-wide hover:text-cream/60 transition-colors">
+            hello@meetha.studio
+          </a>
+        </div>
+        <p className="font-sans text-xs text-sand-dark/30 tracking-wide mt-4">
+          &copy; {new Date().getFullYear()} Meetha. All rights reserved.
         </p>
       </footer>
     </div>

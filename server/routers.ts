@@ -20,6 +20,7 @@ import {
   getOrCreateReferralCode,
   getUserByReferralCode,
   getReferralsByUser,
+  deleteUserAccount,
 } from "./db";
 import {
   ARCHETYPE_DESCRIPTIONS,
@@ -455,6 +456,14 @@ Be hyper-specific and visual. No generic phrases. This paragraph will be used wo
         const user = await getUserByReferralCode(input.code);
         if (!user) return null;
         return { name: user.name ?? "a friend" };
+      }),
+  }),
+
+  account: router({
+    delete: protectedProcedure
+      .mutation(async ({ ctx }) => {
+        await deleteUserAccount(ctx.user.id, ctx.user.open_id);
+        return { success: true };
       }),
   }),
 

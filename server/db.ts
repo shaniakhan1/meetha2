@@ -117,6 +117,31 @@ export async function getUserByOpenId(openId: string): Promise<DbUser | null> {
   return (data as DbUser) ?? null;
 }
 
+export async function deleteUserAccount(userId: number, openId: string): Promise<void> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const sb = getSupabase() as any;
+
+  // Delete in dependency order so FK constraints are satisfied
+  const steps: Array<{ label: string; result: Promise<{ error: unknown }> }> = [
+    { label: "referrals", result: sb.from("referrals").delete().or(`referrer_user_id.eq.${userId},referred_user_id.eq.${userId}`) },
+    { label: "generations", result: sb.from("generations").delete().eq("user_id", userId) },
+    { label: "credits", result: sb.from("credits").delete().eq("user_id", userId) },
+    { label: "profiles", result: sb.from("profiles").delete().eq("user_id", userId) },
+    { label: "users", result: sb.from("users").delete().eq("id", userId) },
+  ];
+
+  for (const step of steps) {
+    const { error } = await step.result;
+    if (error) throw new Error(`Failed to delete ${step.label}: ${(error as Error).message ?? String(error)}`);
+  }
+
+  // Delete the Supabase auth user — non-fatal if the auth record is already gone
+  const { error: authErr } = await sb.auth.admin.deleteUser(openId);
+  if (authErr && !(authErr as { message?: string }).message?.includes("not found")) {
+    throw new Error(`Failed to delete auth user: ${(authErr as Error).message ?? String(authErr)}`);
+  }
+}
+
 // ─── Profiles ─────────────────────────────────────────────────────────────────
 
 export async function getProfile(userId: number): Promise<DbProfile | null> {

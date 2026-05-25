@@ -275,6 +275,64 @@ export default function Profile() {
             Sign Out
           </button>
         </div>
+
+        {/* Legal links */}
+        <div className="flex items-center justify-center gap-4 pt-2 pb-2">
+          <a href="/privacy" className="font-sans text-xs text-charcoal-soft/50 hover:text-charcoal-soft transition-colors">
+            Privacy Policy
+          </a>
+          <span className="text-charcoal-soft/30 text-xs">&middot;</span>
+          <a href="/terms" className="font-sans text-xs text-charcoal-soft/50 hover:text-charcoal-soft transition-colors">
+            Terms of Service
+          </a>
+        </div>
+
+        {/* Delete account */}
+        <div className="pt-2 pb-8">
+          <DeleteAccountButton onDeleted={() => { logout(); navigate("/"); }} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function DeleteAccountButton({ onDeleted }: { onDeleted: () => void }) {
+  const [confirming, setConfirming] = useState(false);
+  const deleteAccount = trpc.account.delete.useMutation({
+    onSuccess: onDeleted,
+    onError: (err) => toast.error(err.message),
+  });
+
+  if (!confirming) {
+    return (
+      <button
+        onClick={() => setConfirming(true)}
+        className="w-full font-sans text-xs text-charcoal-soft/40 hover:text-red-400 transition-colors py-1"
+      >
+        Delete my account
+      </button>
+    );
+  }
+
+  return (
+    <div className="border border-red-200 bg-red-50/40 p-4 space-y-3">
+      <p className="font-sans text-xs text-charcoal-soft leading-relaxed">
+        This will permanently delete your account, all generated images, and all data. This cannot be undone.
+      </p>
+      <div className="flex gap-2">
+        <button
+          onClick={() => deleteAccount.mutate()}
+          disabled={deleteAccount.isPending}
+          className="flex-1 py-2 font-sans text-xs tracking-widest uppercase text-white bg-red-500 hover:bg-red-600 transition-colors"
+        >
+          {deleteAccount.isPending ? "Deleting..." : "Yes, delete everything"}
+        </button>
+        <button
+          onClick={() => setConfirming(false)}
+          className="flex-1 py-2 font-sans text-xs tracking-widest uppercase text-charcoal-soft border border-sand hover:border-charcoal/40 transition-colors"
+        >
+          Cancel
+        </button>
       </div>
     </div>
   );
