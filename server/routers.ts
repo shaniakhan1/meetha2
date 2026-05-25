@@ -154,6 +154,27 @@ const ARCHETYPE_VOICE: Record<string, string> = {
   ethereal: "Light frequency. Voice is sensory and translucent. Evokes texture, warmth, and feeling more than logic. Sacred without being religious.",
 };
 
+// ─── Hook Validation ────────────────────────────────────────────────────────
+const BANNED_HOOK_WORDS = [
+  "whispers", "gilded", "multitudes", "fathom", "luminous", "essence", "depth",
+  "amid", "profound", "transcend", "resonate", "tapestry", "curated",
+  "intentional", "authentic", "narrative", "embody", "embodies", "embark",
+  "cultivate", "elevate", "elevates", "harness", "embrace", "unleash",
+  "radiate", "radiates", "exude", "exudes", "in a world", "reminder that",
+  "it's giving", "slay", "main character", "that girl", "boss", "level up",
+  "this is your sign", "you deserve", "romanticize",
+];
+
+function isGoodHook(hook: string): boolean {
+  const lower = hook.toLowerCase();
+  if (hook.trim().split(/\s+/).length > 8) return false;
+  return !BANNED_HOOK_WORDS.some((w) => lower.includes(w));
+}
+
+function hooksAreValid(hooks: string[]): boolean {
+  return hooks.length === 3 && hooks.every(isGoodHook);
+}
+
 function buildCopyPrompt(
   archetype: string,
   mood: string,
@@ -446,6 +467,15 @@ export const appRouter = router({
           caption = "She got quieter. Everything else got louder.";
           hashtags = ["quietluxury", "softpower", "editoriallife", "luxurylifestyle", "cinematic"];
         }
+        if (!hooksAreValid(hooks)) {
+          try {
+            const retryPrompt = `${copyPrompt}\n\nCRITICAL: Every hook MUST be 1-6 plain words. No poetic vocabulary. Write like: "she got quieter" or "out past my bedtime". Nothing else.`;
+            const retryRes = await invokeLLMOpenAI({ messages: [{ role: "user", content: retryPrompt }], response_format: { type: "json_schema", json_schema: { name: "content_copy", strict: true, schema: { type: "object", properties: { hooks: { type: "array", items: { type: "string" } }, caption: { type: "string" }, hashtags: { type: "array", items: { type: "string" } } }, required: ["hooks", "caption", "hashtags"], additionalProperties: false } } } });
+            const rc = retryRes.choices?.[0]?.message?.content;
+            const rp = JSON.parse(typeof rc === "string" ? rc : JSON.stringify(rc));
+            if (hooksAreValid(rp.hooks ?? [])) { hooks = rp.hooks.slice(0, 3); caption = rp.caption ?? caption; hashtags = rp.hashtags?.slice(0, 5) ?? hashtags; }
+          } catch { /* keep original */ }
+        }
         return { hooks, caption, hashtags };
       }),
   }),
@@ -556,12 +586,46 @@ export const appRouter = router({
           hooks = parsed.hooks?.slice(0, 3) ?? [];
           caption = parsed.caption ?? "";
           hashtags = parsed.hashtags?.slice(0, 5) ?? [];
-        } catch {
+                } catch {
           hooks = ["Calm women move differently.", "Luxury is a state of mind.", "Less. Always less."];
           caption = "Curated for the woman who has already arrived.";
           hashtags = ["quietluxury", "editoriallife", "softpower", "luxurylifestyle", "cinematic"];
         }
-
+        // Server-side hook validation: if any hook fails quality check, retry once with a stricter prompt
+        if (!hooksAreValid(hooks)) {
+          try {
+            const retryPrompt = `${copyPrompt}\n\nCRITICAL: The previous response contained banned words or was too long. Every hook MUST be 1-6 plain words. No poetic vocabulary. No abstract nouns. Write exactly like: "she got quieter" or "calm women move differently" or "out past my bedtime". Nothing else is acceptable.`;
+            const retryResponse = await invokeLLMOpenAI({
+              messages: [{ role: "user", content: retryPrompt }],
+              response_format: {
+                type: "json_schema",
+                json_schema: {
+                  name: "content_copy",
+                  strict: true,
+                  schema: {
+                    type: "object",
+                    properties: {
+                      hooks: { type: "array", items: { type: "string" }, description: "Exactly 3 hooks, 1-6 plain words each" },
+                      caption: { type: "string", description: "One caption 1-3 sentences" },
+                      hashtags: { type: "array", items: { type: "string" }, description: "Exactly 5 hashtags" },
+                    },
+                    required: ["hooks", "caption", "hashtags"],
+                    additionalProperties: false,
+                  },
+                },
+              },
+            });
+            const retryContent = retryResponse.choices?.[0]?.message?.content;
+            const retryParsed = JSON.parse(typeof retryContent === "string" ? retryContent : JSON.stringify(retryContent));
+            if (hooksAreValid(retryParsed.hooks ?? [])) {
+              hooks = retryParsed.hooks.slice(0, 3);
+              caption = retryParsed.caption ?? caption;
+              hashtags = retryParsed.hashtags?.slice(0, 5) ?? hashtags;
+            }
+          } catch {
+            // Retry failed — keep original hooks, they are still usable
+          }
+        }
         // Deduct 1 credit for still image
         await decrementCredit(ctx.user.id, STILL_COST);
 
@@ -791,12 +855,20 @@ Return JSON with:
           hooks = parsed.hooks?.slice(0, 3) ?? [];
           caption = parsed.caption ?? "";
           hashtags = parsed.hashtags?.slice(0, 5) ?? [];
-        } catch {
+                } catch {
           hooks = ["Calm women move differently.", "Luxury is a state of mind.", "Less. Always less."];
           caption = "Curated for the woman who has already arrived.";
           hashtags = ["quietluxury", "editoriallife", "softpower", "luxurylifestyle", "cinematic"];
         }
-
+        if (!hooksAreValid(hooks)) {
+          try {
+            const retryPrompt = `${voiceCopyPrompt}\n\nCRITICAL: Every hook MUST be 1-6 plain words. No poetic vocabulary. Write like: "she got quieter" or "out past my bedtime". Nothing else.`;
+            const retryRes = await invokeLLMOpenAI({ messages: [{ role: "user", content: retryPrompt }], response_format: { type: "json_schema", json_schema: { name: "content_copy", strict: true, schema: { type: "object", properties: { hooks: { type: "array", items: { type: "string" } }, caption: { type: "string" }, hashtags: { type: "array", items: { type: "string" } } }, required: ["hooks", "caption", "hashtags"], additionalProperties: false } } } });
+            const rc = retryRes.choices?.[0]?.message?.content;
+            const rp = JSON.parse(typeof rc === "string" ? rc : JSON.stringify(rc));
+            if (hooksAreValid(rp.hooks ?? [])) { hooks = rp.hooks.slice(0, 3); caption = rp.caption ?? caption; hashtags = rp.hashtags?.slice(0, 5) ?? hashtags; }
+          } catch { /* keep original */ }
+        }
         // 7. Deduct 1 credit for voice-to-content
         await decrementCredit(ctx.user.id, VOICE_COST);
 

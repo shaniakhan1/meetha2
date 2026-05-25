@@ -176,3 +176,12 @@
 - [x] Build Create My Look section in Profile.tsx (photo upload grid, training progress, retrain option)
 - [x] Add training status banner to Dashboard when lora_status === 'training'
 - [x] TypeScript check, vitest run, save checkpoint
+
+## V13 — Pre-Launch Polish
+
+- [ ] Server-side hook validation: after LLM response, check each hook against banned word list, retry once if any fail
+- [ ] Retrain confirmation dialog in Profile (two-step confirm before overwriting existing LoRA model)
+- [ ] LoRA benefit copy on landing page ("Trains to look like you" feature callout)
+- [ ] Mobile audit: check all key screens at 390px viewport, fix any layout issues
+- [ ] Pre-launch legal audit: Privacy Policy completeness, Terms of Service, GDPR/CCPA, biometric/face data consent
+- [ ] Scalability audit: document current limits and what breaks first under load

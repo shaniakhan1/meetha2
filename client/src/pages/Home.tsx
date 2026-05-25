@@ -44,6 +44,10 @@ const PAIN_POINTS = [
     label: "No prompting",
     text: "Tell Meetha your frequency once. It handles the creative decisions from there.",
   },
+  {
+    label: "Looks like you",
+    text: "Upload a few selfies. Meetha trains a personal model on your face. Every generation after that is a real-looking photo of you.",
+  },
 ];
 
 export default function Home() {
@@ -266,6 +270,9 @@ export default function Home() {
 
           <p className="font-sans text-xs text-charcoal-soft text-center mt-5 tracking-wide">
             Generated in under 30 seconds. Tuned to your frequency.
+          </p>
+          <p className="font-sans text-xs text-charcoal-soft/60 text-center mt-1.5 tracking-wide">
+            Trains to look like you.
           </p>
         </div>
       </section>

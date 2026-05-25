@@ -38,6 +38,7 @@ export default function Profile() {
   const [loraPreviews, setLoraPreviews] = useState<string[]>([]);
   const [isSubmittingLora, setIsSubmittingLora] = useState(false);
   const [loraStatus, setLoraStatus] = useState<"training" | "ready" | "failed" | null>(null);
+  const [showRetrainConfirm, setShowRetrainConfirm] = useState(false);
   const loraInputRef = useRef<HTMLInputElement>(null);
   const loraPollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -605,16 +606,39 @@ export default function Profile() {
                     Your personal look is active. Every image you generate now looks like you.
                   </p>
                 </div>
-                <button
-                  onClick={() => {
-                    setLoraStatus(null);
-                    setLoraPhotos([]);
-                    setLoraPreviews([]);
-                  }}
-                  className="font-sans text-xs tracking-widest uppercase text-charcoal-soft/50 hover:text-charcoal-soft transition-colors"
-                >
-                  Retrain with new photos
-                </button>
+                {showRetrainConfirm ? (
+                  <div className="border border-sand/60 p-3 space-y-3 bg-warm-white/80">
+                    <p className="font-sans text-xs text-charcoal-soft leading-relaxed">
+                      This will replace your current look. You will need to upload new photos and wait about 20 minutes for training.
+                    </p>
+                    <div className="flex gap-4">
+                      <button
+                        onClick={() => {
+                          setShowRetrainConfirm(false);
+                          setLoraStatus(null);
+                          setLoraPhotos([]);
+                          setLoraPreviews([]);
+                        }}
+                        className="font-sans text-xs tracking-widest uppercase text-gold hover:text-charcoal transition-colors"
+                      >
+                        Yes, retrain
+                      </button>
+                      <button
+                        onClick={() => setShowRetrainConfirm(false)}
+                        className="font-sans text-xs tracking-widest uppercase text-charcoal-soft/50 hover:text-charcoal-soft transition-colors"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => setShowRetrainConfirm(true)}
+                    className="font-sans text-xs tracking-widest uppercase text-charcoal-soft/50 hover:text-charcoal-soft transition-colors"
+                  >
+                    Retrain with new photos
+                  </button>
+                )}
               </>
             ) : loraStatus === "training" ? (
               <div className="flex items-center gap-3">
