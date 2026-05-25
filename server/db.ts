@@ -33,6 +33,10 @@ export type DbProfile = {
   audience: string | null;
   voice_style: string | null;
   share_badge_enabled: boolean | null;
+  lora_weights_url: string | null;
+  lora_trigger_phrase: string | null;
+  lora_training_request_id: string | null;
+  lora_status: "training" | "ready" | "failed" | null;
   created_at: string;
   updated_at: string;
 };
@@ -495,6 +499,25 @@ export async function getReferralsByUser(userId: number): Promise<DbReferral[]> 
     .eq("referrer_user_id", userId)
     .order("created_at", { ascending: false });
   return (data as DbReferral[]) ?? [];
+}
+
+// ─── LoRA Portrait ───────────────────────────────────────────────────────────
+
+export async function updateLoraProfile(userId: number, data: {
+  loraWeightsUrl?: string | null;
+  loraTriggerPhrase?: string | null;
+  loraTrainingRequestId?: string | null;
+  loraStatus?: "training" | "ready" | "failed" | null;
+}): Promise<void> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const sb = getSupabase() as any;
+  const now = new Date().toISOString();
+  const patch: Record<string, unknown> = { updated_at: now };
+  if (data.loraWeightsUrl !== undefined) patch.lora_weights_url = data.loraWeightsUrl;
+  if (data.loraTriggerPhrase !== undefined) patch.lora_trigger_phrase = data.loraTriggerPhrase;
+  if (data.loraTrainingRequestId !== undefined) patch.lora_training_request_id = data.loraTrainingRequestId;
+  if (data.loraStatus !== undefined) patch.lora_status = data.loraStatus;
+  await sb.from("profiles").update(patch).eq("user_id", userId);
 }
 
 // ─── Postability Feedback ─────────────────────────────────────────────────────

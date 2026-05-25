@@ -8,6 +8,7 @@ import { systemRouter } from "./_core/systemRouter";
 import { protectedProcedure, publicProcedure, router } from "./_core/trpc";
 import { invokeLLMOpenAI } from "./_core/openaiLLM";
 import { generateImageFal } from "./_core/falImageGeneration";
+import { generateImageWithLora } from "./_core/falLoraTraining";
 import { generateVideoFal } from "./_core/falVideoGeneration";
 import {
   getProfile,
@@ -51,7 +52,21 @@ const SCENE_PROMPTS: Record<string, string> = {
     "a champagne coupe close-up, soft candlelight catching the rim, deep jewel-toned velvet in the background, warm amber bokeh, cinematic and unhurried",
   paparazzi_flash:
     "harsh direct flash photography, slight motion blur, overexposed highlights, heavy film grain, candid street angle, woman caught mid-movement looking effortlessly stunning, one of these locations: blurry restaurant exit at night, back seat of a taxi with window reflections, hotel elevator mirror, late-night diner booth, airport terminal gate, convenience store exit, laughing with someone off-frame — no face visible, just the energy of someone who looks incredible without trying, editorial female-gaze, 2000s paparazzi aesthetic, anti-AI texture, vertical 9:16 framing",
+  digital_diary:
+    "analog scrapbook aesthetic, one instant polaroid photo taped with a small piece of washi tape, handwritten note on lined paper beside it, dried flower or pressed petal detail, soft warm window light, linen or cork board surface, film grain texture, intimate and personal, feels like a page from a real woman's private journal, no faces, editorial stillness, warm cream and faded yellow tones, vertical 9:16 framing",
 };
+
+// Digital Diary: overlay hook options
+const DIGITAL_DIARY_HOOKS = [
+  "wrote it down",
+  "saved this one",
+  "she kept it",
+  "not for everyone",
+  "private collection",
+  "she remembered",
+  "this stayed with her",
+  "tucked away",
+];
 
 // Caught Looking Expensive: overlay hook options
 const PAPARAZZI_HOOKS = [
@@ -149,6 +164,32 @@ function buildCopyPrompt(
   voiceStyle?: string | null,
   sceneCategory?: string | null
 ): string {
+  // Digital Diary template: override hooks with the analog diary list
+  if (sceneCategory === "digital_diary") {
+    const hookOptions = DIGITAL_DIARY_HOOKS.slice(0, 6).map((h) => `"${h}"`).join(", ");
+    const voiceCtx = voiceStyle
+      ? `\n\nVoice style (how she writes online): ${voiceStyle}. Calibrate the caption to match this.`
+      : "";
+    return `You are writing copy for a woman creator for a "Digital Diary" image: analog polaroid, handwritten note, dried flower, intimate and private.${voiceCtx}
+
+Choose exactly 3 hooks from this list (return them verbatim, do not modify): ${hookOptions}
+
+Then write one caption:
+- 1-2 short declarative sentences
+- Plain everyday words. No abstract vocabulary.
+- Sounds like a note she wrote to herself, not a caption for an audience
+- Ends quietly
+
+Then write exactly 5 hashtags (no # symbol, mix of niche and reach, no generic tags).
+
+Respond in this exact JSON format:
+{
+  "hooks": ["hook one", "hook two", "hook three"],
+  "caption": "The caption text here.",
+  "hashtags": ["word1", "word2", "word3", "word4", "word5"]
+}`;
+  }
+
   // Paparazzi Flash template: override hooks with the subtle overlay list
   if (sceneCategory === "paparazzi_flash") {
     const hookOptions = PAPARAZZI_HOOKS.slice(0, 6).map((h) => `"${h}"`).join(", ");
@@ -344,6 +385,69 @@ export const appRouter = router({
         await updateGenerationHook({ generationId: input.generationId, selectedHook: input.selectedHook });
         return { success: true };
       }),
+
+    /**
+     * Regenerate only the copy (hooks, caption, hashtags) for an existing generation.
+     * Does NOT spend a credit — the image already exists.
+     */
+    regenerateCopy: protectedProcedure
+      .input(
+        z.object({
+          generationId: z.number(),
+          platform: z.enum(["tiktok", "reels", "stories"]).default("reels"),
+          sceneCategory: z
+            .enum(["morning_routine", "travel_day", "quiet_luxury", "founder_energy", "date_night", "paparazzi_flash", "digital_diary"])
+            .optional(),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        const profile = await getProfile(ctx.user.id);
+        const archetype = profile?.archetype ?? "luxury_minimal";
+        const mood = profile?.mood ?? "soft";
+        const copyPrompt = buildCopyPrompt(
+          archetype, mood, input.platform,
+          profile?.aesthetic_descriptors ?? null,
+          profile?.niche ?? null,
+          profile?.audience ?? null,
+          profile?.voice_style ?? null,
+          input.sceneCategory ?? null
+        );
+        const copyResponse = await invokeLLMOpenAI({
+          messages: [{ role: "user", content: copyPrompt }],
+          response_format: {
+            type: "json_schema",
+            json_schema: {
+              name: "content_copy",
+              strict: true,
+              schema: {
+                type: "object",
+                properties: {
+                  hooks: { type: "array", items: { type: "string" }, description: "Exactly 3 editorial hook options" },
+                  caption: { type: "string", description: "One caption 2-3 sentences" },
+                  hashtags: { type: "array", items: { type: "string" }, description: "Exactly 5 hashtags without # symbol" },
+                },
+                required: ["hooks", "caption", "hashtags"],
+                additionalProperties: false,
+              },
+            },
+          },
+        });
+        let hooks: string[] = [];
+        let caption = "";
+        let hashtags: string[] = [];
+        try {
+          const content = copyResponse.choices?.[0]?.message?.content;
+          const parsed = JSON.parse(typeof content === "string" ? content : JSON.stringify(content));
+          hooks = parsed.hooks?.slice(0, 3) ?? [];
+          caption = parsed.caption ?? "";
+          hashtags = parsed.hashtags?.slice(0, 5) ?? [];
+        } catch {
+          hooks = ["calm women move differently", "she already knew", "peace changed my face"];
+          caption = "She got quieter. Everything else got louder.";
+          hashtags = ["quietluxury", "softpower", "editoriallife", "luxurylifestyle", "cinematic"];
+        }
+        return { hooks, caption, hashtags };
+      }),
   }),
 
   // ─── Generate ─────────────────────────────────────────────────────────────
@@ -361,6 +465,7 @@ export const appRouter = router({
               "founder_energy",
               "date_night",
               "paparazzi_flash",
+              "digital_diary",
             ])
             .optional(),
           videoFormat: z.enum(["tiktok_reels", "square", "landscape"]).optional(),
@@ -388,7 +493,28 @@ export const appRouter = router({
           landscape: "landscape_16_9",
         };
         const imageSize = input.videoFormat ? VIDEO_FORMAT_SIZE[input.videoFormat] : "portrait_4_3";
-        const { url: imageUrl, key: imageKey } = await generateImageFal({ prompt: imagePrompt, imageSize });
+        // Use LoRA generation if user has a trained model, otherwise fall back to FLUX Ultra
+        let imageUrl: string;
+        let imageKey: string;
+        if (profile?.lora_status === "ready" && profile.lora_weights_url && profile.lora_trigger_phrase) {
+          const loraResult = await generateImageWithLora({
+            prompt: imagePrompt,
+            loraWeightsUrl: profile.lora_weights_url,
+            triggerPhrase: profile.lora_trigger_phrase,
+            imageSize,
+          });
+          // Save the LoRA-generated image to our storage
+          const imageResponse = await fetch(loraResult.url);
+          const imageBuffer = Buffer.from(await imageResponse.arrayBuffer());
+          const { storagePut } = await import("./storage");
+          const saved = await storagePut(`generated/${Date.now()}.jpg`, imageBuffer, "image/jpeg");
+          imageUrl = saved.url;
+          imageKey = saved.key;
+        } else {
+          const falResult = await generateImageFal({ prompt: imagePrompt, imageSize });
+          imageUrl = falResult.url;
+          imageKey = falResult.key;
+        }
         // Generate copy (pass aesthetic descriptors + niche/audience if available)
         const copyPrompt = buildCopyPrompt(archetype, mood, input.platform, profile?.aesthetic_descriptors ?? null, profile?.niche ?? null, profile?.audience ?? null, profile?.voice_style ?? null, input.sceneCategory ?? null);
         const copyResponse = await invokeLLMOpenAI({
@@ -482,6 +608,7 @@ export const appRouter = router({
               "founder_energy",
               "date_night",
               "paparazzi_flash",
+              "digital_diary",
             ])
             .optional(),
         })
@@ -599,7 +726,26 @@ Return JSON with:
         } else {
           imagePrompt = buildImagePrompt(archetype, mood, effectiveScene, profile?.aesthetic_descriptors ?? null, profile?.niche ?? null, profile?.audience ?? null);
         }
-        const { url: imageUrl, key: imageKey } = await generateImageFal({ prompt: imagePrompt });
+        // Use LoRA generation if user has a trained model, otherwise fall back to FLUX Ultra
+        let imageUrl: string;
+        let imageKey: string;
+        if (profile?.lora_status === "ready" && profile.lora_weights_url && profile.lora_trigger_phrase) {
+          const loraResult = await generateImageWithLora({
+            prompt: imagePrompt,
+            loraWeightsUrl: profile.lora_weights_url,
+            triggerPhrase: profile.lora_trigger_phrase,
+          });
+          const imageResponse = await fetch(loraResult.url);
+          const imageBuffer = Buffer.from(await imageResponse.arrayBuffer());
+          const { storagePut: sp } = await import("./storage");
+          const saved = await sp(`generated/${Date.now()}.jpg`, imageBuffer, "image/jpeg");
+          imageUrl = saved.url;
+          imageKey = saved.key;
+        } else {
+          const falResult = await generateImageFal({ prompt: imagePrompt });
+          imageUrl = falResult.url;
+          imageKey = falResult.key;
+        }
 
         // 6. Build copy prompt with voice context as additional grounding
         const voiceCopyContext = `\n\nThis creator just said: "${transcript}"\n\nEmotional core extracted: ${emotionalCore}\n\nWrite copy that feels like a distillation of this moment. The hooks and caption should feel like something she would say after this exact thought. Ground the copy in her actual words and feeling, not generic aesthetic language.`;

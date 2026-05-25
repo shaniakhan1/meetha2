@@ -133,6 +133,34 @@ export default function Dashboard() {
           )}
         </div>
 
+        {/* LoRA training status banner */}
+        {profile?.lora_status === "training" && (
+          <div className="mb-6 p-4 border border-gold/30 bg-warm-white/60 flex items-center gap-3">
+            <span className="w-4 h-4 border border-gold border-t-transparent rounded-full animate-spin flex-shrink-0" />
+            <div>
+              <p className="font-sans text-xs text-charcoal-soft">
+                Your personal look is training. About 20 minutes.
+              </p>
+              <button
+                onClick={() => navigate("/profile")}
+                className="font-sans text-xs text-gold hover:text-charcoal transition-colors mt-0.5"
+              >
+                View progress
+              </button>
+            </div>
+          </div>
+        )}
+        {profile?.lora_status === "ready" && (
+          <div className="mb-6 p-4 border border-gold/30 bg-warm-white/60 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-2 h-2 rounded-full bg-gold flex-shrink-0" />
+              <p className="font-sans text-xs text-charcoal-soft">
+                Your personal look is active. Generations now look like you.
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* Generate CTA */}
         <button
           onClick={() => navigate("/generate")}
@@ -312,6 +340,15 @@ export default function Dashboard() {
             <div className="w-1 h-1 rounded-full bg-sand-dark" />
             <p className="font-sans text-xs tracking-widest uppercase text-charcoal-soft">
               Create
+            </p>
+          </button>
+          <button
+            onClick={() => navigate("/templates")}
+            className="flex flex-col items-center gap-1"
+          >
+            <div className="w-1 h-1 rounded-full bg-sand-dark" />
+            <p className="font-sans text-xs tracking-widest uppercase text-charcoal-soft">
+              Templates
             </p>
           </button>
           <button

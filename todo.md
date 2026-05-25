@@ -158,3 +158,21 @@
 - [x] /templates page: one template front and center, Make Mine one-tap button
 - [x] Template preview section on Home.tsx landing page (visible to logged-out visitors)
 - [x] Wire /templates route in App.tsx and add entry point from Dashboard
+
+## V11 — Hooks UX + Share Nudge + Digital Diary
+
+- [x] Regenerate hooks only button (re-rolls copy without spending a credit or losing the image)
+- [x] Custom hook input (4th option on hooks screen so user can type her own)
+- [x] Post-generation share nudge (after download, one-tap prompt with hook pre-copied)
+- [x] Digital Diary template (taped polaroid, handwritten note, analog layering, own image prompt + copy voice)
+- [x] Templates nav link (easy to find and share from anywhere in the app)
+
+## V12 — Personalized LoRA Portrait Generation
+
+- [x] Add lora_weights_url, lora_trigger_phrase, lora_training_request_id, lora_status to DbProfile type in db.ts
+- [x] Build startLoraTraining procedure: accept photo uploads (multipart), zip server-side, upload to Fal.ai, submit training job, store request_id
+- [x] Build loraStatus procedure: poll fal-ai queue, update profile when training completes, store lora_weights_url
+- [x] Update generate.content and generate.voice to use fal-ai/flux-lora with user's LoRA when lora_status === 'ready'
+- [x] Build Create My Look section in Profile.tsx (photo upload grid, training progress, retrain option)
+- [x] Add training status banner to Dashboard when lora_status === 'training'
+- [x] TypeScript check, vitest run, save checkpoint

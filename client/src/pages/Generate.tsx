@@ -61,6 +61,9 @@ export default function Generate() {
   const [sceneCategory, setSceneCategory] = useState<SceneCategory | null>(null);
   const [result, setResult] = useState<GenerationResult | null>(null);
   const [selectedHook, setSelectedHook] = useState<string | null>(null);
+  const [customHook, setCustomHook] = useState("");
+  const [showCustomHookInput, setShowCustomHookInput] = useState(false);
+  const [showShareNudge, setShowShareNudge] = useState(false);
   const [captionCopied, setCaptionCopied] = useState(false);
   const [feedbackGiven, setFeedbackGiven] = useState(false);
   const [phraseIndex, setPhraseIndex] = useState(0);
@@ -105,6 +108,26 @@ export default function Generate() {
   });
 
   const feedbackMutation = trpc.feedback.savePostability.useMutation();
+
+  const regenerateCopyMutation = trpc.generations.regenerateCopy.useMutation({
+    onSuccess: (data) => {
+      if (result) {
+        setResult({ ...result, hooks: data.hooks, caption: data.caption, hashtags: data.hashtags });
+      }
+    },
+    onError: (err) => {
+      toast.error(err.message);
+    },
+  });
+
+  const handleRegenerateCopy = () => {
+    if (!result?.generation) return;
+    regenerateCopyMutation.mutate({
+      generationId: result.generation.id,
+      platform,
+      sceneCategory: sceneCategory ?? undefined,
+    });
+  };
   const utils = trpc.useUtils();
 
   const animateMeMutation = trpc.video.animateMe.useMutation({
@@ -270,7 +293,8 @@ export default function Generate() {
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
-      setStep("feedback");
+      setShowShareNudge(true);
+      setTimeout(() => setStep("feedback"), 3500);
     } catch {
       toast.error("Download failed. Please try again.");
     }
@@ -944,7 +968,7 @@ export default function Generate() {
           </div>
 
           {/* Hook options */}
-          <div className="space-y-3 flex-1">
+          <div className="space-y-3">
             {result.hooks.map((hook, i) => (
               <button
                 key={i}
@@ -957,14 +981,69 @@ export default function Generate() {
                 <p className="font-serif text-lg text-charcoal leading-snug">{hook}</p>
               </button>
             ))}
+
+            {/* Custom hook option */}
+            {!showCustomHookInput ? (
+              <button
+                onClick={() => setShowCustomHookInput(true)}
+                className="w-full text-left p-5 border border-dashed border-sand/60 bg-transparent hover:border-gold/40 transition-all duration-200"
+              >
+                <p className="font-sans text-xs tracking-[0.1em] uppercase text-charcoal-soft/60 mb-2">
+                  Write your own
+                </p>
+                <p className="font-serif text-base text-charcoal-soft/50">Type your own hook instead</p>
+              </button>
+            ) : (
+              <div className="p-5 border border-gold/40 bg-warm-white/60">
+                <p className="font-sans text-xs tracking-[0.1em] uppercase text-gold mb-3">
+                  Your hook
+                </p>
+                <input
+                  type="text"
+                  value={customHook}
+                  onChange={(e) => setCustomHook(e.target.value)}
+                  placeholder="calm women move differently"
+                  maxLength={60}
+                  autoFocus
+                  className="w-full bg-transparent font-serif text-lg text-charcoal placeholder:text-charcoal/30 outline-none border-b border-sand pb-2 mb-4"
+                />
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => {
+                      if (customHook.trim()) handleHookSelect(customHook.trim());
+                    }}
+                    disabled={!customHook.trim()}
+                    className="flex-1 py-2 bg-charcoal text-cream font-sans text-xs tracking-widest uppercase disabled:opacity-40 disabled:cursor-not-allowed hover:bg-charcoal/80 transition-colors"
+                  >
+                    Use this
+                  </button>
+                  <button
+                    onClick={() => { setShowCustomHookInput(false); setCustomHook(""); }}
+                    className="px-4 py-2 font-sans text-xs tracking-widest uppercase text-charcoal-soft border border-sand hover:border-charcoal/40 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
 
-          <button
-            onClick={handleRegenerate}
-            className="mt-4 w-full py-3 font-sans text-xs tracking-widest uppercase text-charcoal-soft hover:text-charcoal border border-sand hover:border-charcoal/40 transition-all duration-200"
-          >
-            Regenerate
-          </button>
+          {/* Action row: Regenerate hooks (free) + Start over */}
+          <div className="mt-4 flex gap-2">
+            <button
+              onClick={handleRegenerateCopy}
+              disabled={regenerateCopyMutation.isPending}
+              className="flex-1 py-3 font-sans text-xs tracking-widest uppercase text-charcoal-soft hover:text-charcoal border border-sand hover:border-charcoal/40 transition-all duration-200 disabled:opacity-50"
+            >
+              {regenerateCopyMutation.isPending ? "Rewriting..." : "New hooks"}
+            </button>
+            <button
+              onClick={handleRegenerate}
+              className="px-4 py-3 font-sans text-xs tracking-widest uppercase text-charcoal-soft/60 hover:text-charcoal-soft border border-sand/60 hover:border-sand transition-all duration-200"
+            >
+              Start over
+            </button>
+          </div>
         </div>
       )}
 
@@ -1058,6 +1137,24 @@ export default function Generate() {
               >
                 Upgrade to Starter for Animate Me
               </a>
+            )}
+            {/* Share nudge — appears after download, auto-dismisses */}
+            {showShareNudge && selectedHook && (
+              <div className="w-full p-4 bg-charcoal text-cream animate-fade-up opacity-0 flex items-center justify-between gap-3">
+                <div className="flex-1 min-w-0">
+                  <p className="font-sans text-xs tracking-[0.1em] uppercase text-gold/80 mb-1">Post to your story</p>
+                  <p className="font-serif text-sm text-cream truncate">"{selectedHook}"</p>
+                </div>
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText(selectedHook);
+                    toast.success("Hook copied.");
+                  }}
+                  className="shrink-0 px-3 py-2 border border-cream/30 font-sans text-xs tracking-widest uppercase text-cream hover:bg-cream/10 transition-colors"
+                >
+                  Copy hook
+                </button>
+              </div>
             )}
             <button onClick={handleDownload} className="btn-luxury w-full">
               Download Image

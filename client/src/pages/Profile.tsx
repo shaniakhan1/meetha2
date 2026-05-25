@@ -33,6 +33,14 @@ export default function Profile() {
   const [isCalibrating, setIsCalibrating] = useState(false);
   const calibrationInputRef = useRef<HTMLInputElement>(null);
 
+  // LoRA portrait training state
+  const [loraPhotos, setLoraPhotos] = useState<File[]>([]);
+  const [loraPreviews, setLoraPreviews] = useState<string[]>([]);
+  const [isSubmittingLora, setIsSubmittingLora] = useState(false);
+  const [loraStatus, setLoraStatus] = useState<"training" | "ready" | "failed" | null>(null);
+  const loraInputRef = useRef<HTMLInputElement>(null);
+  const loraPollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [isGeneratingPreview, setIsGeneratingPreview] = useState(false);
 
@@ -104,6 +112,80 @@ export default function Profile() {
 
   const profile = profileQuery.data;
   const credits = creditsQuery.data;
+
+  // Sync LoRA status from profile on load
+  useEffect(() => {
+    if (profile?.lora_status) {
+      setLoraStatus(profile.lora_status as "training" | "ready" | "failed" | null);
+    }
+  }, [profile?.lora_status]);
+
+  // Poll for LoRA training completion
+  useEffect(() => {
+    if (loraStatus === "training") {
+      loraPollingRef.current = setInterval(async () => {
+        try {
+          const res = await fetch("/api/lora/status", { credentials: "include" });
+          const data = await res.json();
+          if (data.status === "ready") {
+            setLoraStatus("ready");
+            profileQuery.refetch();
+            toast.success("Your look is ready. Every generation now looks like you.");
+            if (loraPollingRef.current) clearInterval(loraPollingRef.current);
+          } else if (data.status === "failed") {
+            setLoraStatus("failed");
+            toast.error("Training failed. Please try again with clearer photos.");
+            if (loraPollingRef.current) clearInterval(loraPollingRef.current);
+          }
+        } catch (e) {
+          // Log transient network errors but don't surface them — polling will retry
+          console.warn("[LoRA poll]", e);
+        }
+      }, 15000); // poll every 15 seconds
+    }
+    return () => {
+      if (loraPollingRef.current) clearInterval(loraPollingRef.current);
+    };
+  }, [loraStatus]);
+
+  const handleLoraPhotoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files ?? []).slice(0, 20 - loraPhotos.length);
+    setLoraPhotos((prev) => [...prev, ...files].slice(0, 20));
+    files.forEach((file) => {
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        setLoraPreviews((prev) => [...prev, ev.target?.result as string].slice(0, 20));
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const handleSubmitLoraTraining = async () => {
+    if (loraPhotos.length < 5) {
+      toast.error("Please upload at least 5 photos for best results.");
+      return;
+    }
+    setIsSubmittingLora(true);
+    try {
+      const formData = new FormData();
+      loraPhotos.forEach((f) => formData.append("photos", f));
+      const res = await fetch("/api/lora/upload", {
+        method: "POST",
+        body: formData,
+        credentials: "include",
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Upload failed");
+      setLoraStatus("training");
+      setLoraPhotos([]);
+      setLoraPreviews([]);
+      toast.success("Training started. Check back in about 20 minutes.");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Upload failed. Please try again.");
+    } finally {
+      setIsSubmittingLora(false);
+    }
+  };
 
   // Sync preview URL from profile on load
   useEffect(() => {
@@ -496,6 +578,137 @@ export default function Profile() {
                   profile?.aesthetic_descriptors ? "Recalibrate" : "Calibrate my aesthetic"
                 )}
               </button>
+            )}
+          </div>
+        </div>
+
+        {/* Create My Look — LoRA Portrait Training */}
+        <div>
+          <div className="flex items-center justify-between mb-4">
+            <p className="font-sans text-xs tracking-[0.15em] uppercase text-charcoal-soft">
+              Create My Look
+            </p>
+            {loraStatus === "ready" && (
+              <span className="font-sans text-xs text-gold">Active</span>
+            )}
+            {loraStatus === "training" && (
+              <span className="font-sans text-xs text-charcoal-soft animate-pulse">Training...</span>
+            )}
+          </div>
+
+          <div className="p-5 border border-sand bg-warm-white/60 space-y-4">
+            {loraStatus === "ready" ? (
+              <>
+                <div className="flex items-center gap-3">
+                  <div className="w-2 h-2 rounded-full bg-gold" />
+                  <p className="font-sans text-xs text-charcoal-soft">
+                    Your personal look is active. Every image you generate now looks like you.
+                  </p>
+                </div>
+                <button
+                  onClick={() => {
+                    setLoraStatus(null);
+                    setLoraPhotos([]);
+                    setLoraPreviews([]);
+                  }}
+                  className="font-sans text-xs tracking-widest uppercase text-charcoal-soft/50 hover:text-charcoal-soft transition-colors"
+                >
+                  Retrain with new photos
+                </button>
+              </>
+            ) : loraStatus === "training" ? (
+              <div className="flex items-center gap-3">
+                <span className="w-4 h-4 border border-gold border-t-transparent rounded-full animate-spin flex-shrink-0" />
+                <div>
+                  <p className="font-sans text-xs text-charcoal-soft">
+                    Training your personal look. This takes about 20 minutes.
+                  </p>
+                  <p className="font-sans text-xs text-charcoal-soft/60 mt-0.5">
+                    You can close this page. We will update your profile when it is ready.
+                  </p>
+                </div>
+              </div>
+            ) : loraStatus === "failed" ? (
+              <>
+                <p className="font-sans text-xs text-red-400">
+                  Training failed. Try again with clearer, well-lit photos.
+                </p>
+                <button
+                  onClick={() => setLoraStatus(null)}
+                  className="font-sans text-xs tracking-widest uppercase text-gold hover:text-charcoal transition-colors"
+                >
+                  Try again
+                </button>
+              </>
+            ) : (
+              <>
+                <p className="font-sans font-light text-xs text-charcoal-soft leading-relaxed">
+                  Upload 10-15 clear selfies. Meetha trains a personal AI model on your face. Every generation after that looks like a real photo of you, in any scene.
+                </p>
+                <p className="font-sans text-xs text-charcoal-soft/60 leading-relaxed">
+                  Best results: natural light, different angles, no sunglasses. Training takes about 20 minutes.
+                </p>
+
+                {/* Photo grid */}
+                <div className="grid grid-cols-4 gap-2">
+                  {loraPreviews.map((src, i) => (
+                    <div key={i} className="aspect-square relative overflow-hidden border border-sand">
+                      <img src={src} alt={`Photo ${i + 1}`} className="w-full h-full object-cover" />
+                      <button
+                        onClick={() => {
+                          setLoraPhotos((prev) => prev.filter((_, idx) => idx !== i));
+                          setLoraPreviews((prev) => prev.filter((_, idx) => idx !== i));
+                        }}
+                        className="absolute top-0.5 right-0.5 w-4 h-4 bg-charcoal/70 text-cream rounded-full text-xs flex items-center justify-center hover:bg-charcoal transition-colors"
+                      >
+                        x
+                      </button>
+                    </div>
+                  ))}
+                  {loraPreviews.length < 20 && (
+                    <button
+                      onClick={() => loraInputRef.current?.click()}
+                      className="aspect-square border border-dashed border-sand bg-warm-white/40 hover:bg-warm-white hover:border-gold/50 transition-all duration-200 flex flex-col items-center justify-center gap-1"
+                    >
+                      <span className="text-gold text-lg leading-none">+</span>
+                      <span className="font-sans text-xs text-charcoal-soft">Add</span>
+                    </button>
+                  )}
+                </div>
+
+                <input
+                  ref={loraInputRef}
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  className="hidden"
+                  onChange={handleLoraPhotoSelect}
+                />
+
+                {loraPreviews.length > 0 && (
+                  <p className="font-sans text-xs text-charcoal-soft/60">
+                    {loraPreviews.length} photo{loraPreviews.length !== 1 ? "s" : ""} selected
+                    {loraPreviews.length < 5 ? ` — add ${5 - loraPreviews.length} more for best results` : " — ready to train"}
+                  </p>
+                )}
+
+                {loraPreviews.length >= 5 && (
+                  <button
+                    onClick={handleSubmitLoraTraining}
+                    disabled={isSubmittingLora}
+                    className="btn-luxury w-full"
+                  >
+                    {isSubmittingLora ? (
+                      <span className="flex items-center justify-center gap-2">
+                        <span className="w-3 h-3 border border-cream border-t-transparent rounded-full animate-spin" />
+                        Uploading photos...
+                      </span>
+                    ) : (
+                      "Create my look"
+                    )}
+                  </button>
+                )}
+              </>
             )}
           </div>
         </div>

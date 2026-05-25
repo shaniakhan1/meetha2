@@ -3,6 +3,16 @@ import { useLocation } from "wouter";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { getLoginUrl } from "@/const";
 
+const DIGITAL_DIARY_HOOKS = [
+  "wrote it down",
+  "saved this one",
+  "she kept it",
+  "not for everyone",
+  "private collection",
+  "she remembered",
+  "tucked away",
+];
+
 const PAPARAZZI_HOOKS = [
   "vanished softly",
   "peace changed my face",
@@ -28,12 +38,22 @@ export default function Templates() {
   const { user } = useAuth();
   const [hoveredHook, setHoveredHook] = useState<string | null>(null);
 
+  const [hoveredDiaryHook, setHoveredDiaryHook] = useState<string | null>(null);
+
   const handleMakeMine = () => {
     if (!user) {
       window.location.href = getLoginUrl();
       return;
     }
     navigate("/generate?template=paparazzi_flash");
+  };
+
+  const handleMakeDiary = () => {
+    if (!user) {
+      window.location.href = getLoginUrl();
+      return;
+    }
+    navigate("/generate?template=digital_diary");
   };
 
   return (
@@ -194,6 +214,120 @@ export default function Templates() {
           >
             Make Mine
           </button>
+        </div>
+
+        {/* ── Template No. 02: Digital Diary ── */}
+        <div className="border-t border-white/15">
+          {/* Hero card */}
+          <div
+            className="relative overflow-hidden"
+            style={{ minHeight: "55vh" }}
+          >
+            {/* Background: warm analog cream */}
+            <div
+              className="absolute inset-0"
+              style={{
+                background:
+                  "linear-gradient(160deg, #1c1710 0%, #0f0d09 60%, #1a1510 100%)",
+              }}
+            />
+            {/* Subtle warm grain */}
+            <div
+              className="absolute inset-0 opacity-20"
+              style={{
+                backgroundImage:
+                  "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.4'/%3E%3C/svg%3E\")",
+                backgroundSize: "128px 128px",
+              }}
+            />
+            {/* Warm light glow */}
+            <div
+              className="absolute"
+              style={{
+                top: "20%",
+                right: "15%",
+                width: "200px",
+                height: "200px",
+                background:
+                  "radial-gradient(ellipse, rgba(212,175,100,0.08) 0%, transparent 70%)",
+                filter: "blur(20px)",
+              }}
+            />
+            <div className="relative z-10 flex flex-col items-center justify-center px-6 py-16 text-center min-h-[55vh]">
+              <p className="font-sans text-xs tracking-[0.25em] uppercase text-gold/60 mb-6">
+                Template No. 02
+              </p>
+              <h2 className="font-serif text-4xl font-light text-cream leading-tight mb-4">
+                Digital Diary
+              </h2>
+              <p className="font-sans font-light text-sm text-cream/60 leading-relaxed max-w-xs mb-10">
+                Taped polaroid. Handwritten note. Dried flower. Analog layering that feels like a page from a real woman's private journal.
+              </p>
+              {/* Hook chips */}
+              <div className="mb-10 space-y-2 w-full max-w-xs">
+                <p className="font-sans text-xs tracking-[0.15em] uppercase text-cream/30 mb-3">
+                  Caption overlays
+                </p>
+                <div className="flex flex-wrap gap-2 justify-center">
+                  {DIGITAL_DIARY_HOOKS.map((hook) => (
+                    <span
+                      key={hook}
+                      onMouseEnter={() => setHoveredDiaryHook(hook)}
+                      onMouseLeave={() => setHoveredDiaryHook(null)}
+                      className={`font-serif text-xs px-3 py-1.5 border transition-all duration-200 cursor-default ${
+                        hoveredDiaryHook === hook
+                          ? "border-gold/60 text-gold bg-gold/5"
+                          : "border-white/10 text-cream/50"
+                      }`}
+                    >
+                      {hook}
+                    </span>
+                  ))}
+                </div>
+              </div>
+              <button
+                onClick={handleMakeDiary}
+                className="w-full max-w-xs py-4 bg-cream text-charcoal font-sans text-xs tracking-[0.2em] uppercase hover:bg-gold hover:text-charcoal transition-all duration-200 active:scale-[0.97]"
+              >
+                Make Mine
+              </button>
+              <p className="mt-3 font-sans text-xs text-cream/30">
+                {user ? "1 credit" : "Free to try. No credit card."}
+              </p>
+            </div>
+          </div>
+
+          {/* Why it works */}
+          <div className="px-6 py-10 border-t border-white/8 max-w-sm mx-auto w-full">
+            <p className="font-sans text-xs tracking-[0.2em] uppercase text-cream/30 mb-6 text-center">
+              Why it spreads
+            </p>
+            <div className="space-y-4">
+              {[
+                ["Highly saveable", "Pinterest, TikTok, Stories. Analog layering reads as intentional, not AI."],
+                ["Feels private", "The intimacy of a personal journal makes people want to share it."],
+                ["Different aesthetic", "Warm and tactile where Caught Looking Expensive is dark and electric."],
+              ].map(([title, desc]) => (
+                <div key={title} className="flex gap-3">
+                  <div className="w-1 h-1 rounded-full bg-gold mt-2 flex-shrink-0" />
+                  <div>
+                    <p className="font-sans text-xs text-cream/80 mb-0.5">{title}</p>
+                    <p className="font-sans text-xs text-cream/40 leading-relaxed">{desc}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Bottom CTA */}
+          <div className="px-6 pb-16 pt-4 max-w-xs mx-auto w-full">
+            <button
+              onClick={handleMakeDiary}
+              className="w-full py-4 bg-cream text-charcoal font-sans text-xs tracking-[0.2em] uppercase hover:bg-gold hover:text-charcoal transition-all duration-200 active:scale-[0.97]"
+            >
+              Make Mine
+            </button>
+          </div>
         </div>
       </div>
     </div>
