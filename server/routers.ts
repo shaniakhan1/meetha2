@@ -222,17 +222,32 @@ function buildCopyPrompt(
     const voiceCtx = voiceStyle
       ? `\n\nVoice style (how she writes online): ${voiceStyle}. Calibrate the caption to match this.`
       : "";
-    return `You are writing copy for a woman creator for a "Digital Diary" image: analog polaroid, handwritten note, dried flower, intimate and private.${voiceCtx}
+    return `You are writing copy for a woman creator. The image is a "Digital Diary" page: analog polaroid taped with washi tape, handwritten note, dried flower, warm window light. It looks like a page from a real woman's private journal.${voiceCtx}
 
 Choose exactly 3 hooks from this list (return them verbatim, do not modify): ${hookOptions}
 
 Then write one caption:
-- 1-2 short declarative sentences
-- Plain everyday words. No abstract vocabulary.
+- 1-2 short sentences. Plain everyday words only.
+- No em-dashes, no exclamation marks, no questions
+- BANNED WORDS: whispers, gilded, multitudes, luminous, essence, depth, profound, transcend, resonate, tapestry, curated, intentional, authentic, narrative, embody, elevate, harness, embrace, unleash, radiate, exude, magic, effortless, memories, cherish, treasure, precious
 - Sounds like a note she wrote to herself, not a caption for an audience
-- Ends quietly
+- Short and specific. States one small true thing.
+- Ends quietly with a statement, never a question or CTA
 
-Then write exactly 5 hashtags (no # symbol, mix of niche and reach, no generic tags).
+GOOD caption examples:
+"kept this one."
+"some things you just write down."
+"she saved it. that is all."
+
+BAD caption examples (never write like this):
+"Cherishing precious memories captured in time." -- brand-speak
+"These moments are the essence of her journey." -- abstract, AI-sounding
+"Treasured whispers of a beautiful soul." -- meaningless
+
+Then write exactly 5 hashtags:
+- No # symbol
+- No generic tags (no instagood, photooftheday, lifestyle, memories, aesthetic)
+- Should feel like tags a real creator at this frequency would actually use
 
 Respond in this exact JSON format:
 {
@@ -248,17 +263,33 @@ Respond in this exact JSON format:
     const voiceCtx = voiceStyle
       ? `\n\nVoice style (how she writes online): ${voiceStyle}. Calibrate the caption to match this.`
       : "";
-    return `You are writing copy for a woman creator for a "Bill, Please" image: she is paying the check at a fine dining restaurant, calm and unbothered, the gesture is confident and final.${voiceCtx}
+    return `You are writing copy for a woman creator. The image is "Bill, Please": she is at a fine dining restaurant, paying the check, calm and unbothered. The gesture is confident and final. She is not performing. She is just done.${voiceCtx}
 
 Choose exactly 3 hooks from this list (return them verbatim, do not modify): ${hookOptions}
 
 Then write one caption:
-- 1-2 short declarative sentences
+- 1-2 short sentences. Plain everyday words only.
 - No em-dashes, no exclamation marks, no questions
-- Observational. States a truth about self-sufficiency, quiet power, or the feeling of not needing to argue
-- Ends quietly
+- BANNED WORDS: whispers, gilded, multitudes, luminous, essence, depth, profound, transcend, resonate, tapestry, curated, intentional, authentic, narrative, embody, elevate, harness, embrace, unleash, radiate, exude, magic, effortless, empower
+- No brand-speak, no affirmations, no motivational quotes
+- Sounds like a real woman typing into her phone, not a copywriter
+- States something true about not needing to argue, covering it quietly, or the feeling of being done with something
+- Ends with a quiet statement, never a question or CTA
 
-Then write exactly 5 hashtags (no # symbol, mix of niche and reach, no generic tags).
+GOOD caption examples:
+"i stopped arguing about the bill a long time ago."
+"some things are cheaper to just pay for."
+"she covered it and left. that was the whole story."
+
+BAD caption examples (never write like this):
+"Her grace transcends the moment." -- abstract, AI-sounding
+"Effortless elegance at every table." -- brand-speak
+"She radiates quiet power." -- meaningless
+
+Then write exactly 5 hashtags:
+- No # symbol
+- No generic tags (no instagood, photooftheday, lifestyle, finedining, womenempowerment)
+- Should feel like tags a real creator at this frequency would actually use
 
 Respond in this exact JSON format:
 {
@@ -274,17 +305,33 @@ Respond in this exact JSON format:
     const voiceCtx = voiceStyle
       ? `\n\nVoice style (how she writes online): ${voiceStyle}. Calibrate the caption to match this.`
       : "";
-    return `You are writing copy for a woman creator for a "Silk Robe Room Service" image: luxury hotel suite, silk robe, morning light, room service tray, serene and unhurried, ordered for one.${voiceCtx}
+    return `You are writing copy for a woman creator. The image is "Silk Robe Room Service": luxury hotel suite, silk robe, morning light, room service tray, she is alone and completely unbothered. This is not a performance. This is just her morning.${voiceCtx}
 
 Choose exactly 3 hooks from this list (return them verbatim, do not modify): ${hookOptions}
 
 Then write one caption:
-- 1-2 short declarative sentences
+- 1-2 short sentences. Plain everyday words only.
 - No em-dashes, no exclamation marks, no questions
-- Observational. States a truth about solitude as luxury, unhurried mornings, or the pleasure of being alone and content
-- Ends quietly
+- BANNED WORDS: whispers, gilded, multitudes, luminous, essence, depth, profound, transcend, resonate, tapestry, curated, intentional, authentic, narrative, embody, elevate, harness, embrace, unleash, radiate, exude, magic, effortless, serene, bliss, tranquil
+- No brand-speak, no affirmations, no motivational quotes
+- Sounds like a real woman typing into her phone, not a hotel Instagram account
+- States something true about being alone and content, ordering for one, or the pleasure of a morning with no agenda
+- Ends with a quiet statement, never a question or CTA
 
-Then write exactly 5 hashtags (no # symbol, mix of niche and reach, no generic tags).
+GOOD caption examples:
+"ordered for one and it was perfect."
+"no plans today and it shows."
+"she does not rush anymore. it is a whole thing."
+
+BAD caption examples (never write like this):
+"Serenity in every sip." -- brand-speak
+"She radiates tranquil luxury." -- meaningless, AI-sounding
+"Morning bliss is her essence." -- abstract, no one talks like this
+
+Then write exactly 5 hashtags:
+- No # symbol
+- No generic tags (no instagood, photooftheday, lifestyle, hotellife, morningvibes)
+- Should feel like tags a real creator at this frequency would actually use
 
 Respond in this exact JSON format:
 {
@@ -298,20 +345,36 @@ Respond in this exact JSON format:
   if (sceneCategory === "paparazzi_flash") {
     const hookOptions = PAPARAZZI_HOOKS.slice(0, 6).map((h) => `"${h}"`).join(", ");
     const voiceCtx = voiceStyle
-      ? `\n\nVoice style (how she writes online): ${voiceStyle}. Calibrate the caption to match this.`
+      ? `\n\nVoice style (how she writes online): ${voiceStyle}. Calibrate the caption to match this exactly.`
       : "";
-    return `You are writing copy for a woman creator for a "Caught Looking Expensive" image: harsh flash photography, film grain, candid nightlife, effortlessly stunning.${voiceCtx}
+    return `You are writing copy for a woman creator. The image is a "Caught Looking Expensive" flash photo: harsh direct flash, film grain, candid nightlife, she looks effortlessly stunning and does not care that she was caught.${voiceCtx}
 
 Choose exactly 3 hooks from this list (return them verbatim, do not modify): ${hookOptions}
 
 Then write one caption:
-- 1-2 short declarative sentences
+- 1-2 short sentences. Plain everyday words only.
 - No em-dashes, no exclamation marks, no questions
-- Observational. States a truth about effortless presence, being caught looking incredible, or the feeling of disappearing beautifully
-- Sounds like something she would caption this herself
-- Ends quietly
+- No abstract or poetic language. BANNED WORDS: whispers, gilded, multitudes, fathom, luminous, essence, depth, amid, profound, transcend, resonate, tapestry, curated, intentional, authentic, narrative, embody, elevate, harness, embrace, unleash, radiate, exude, effortless beauty, magic, dims, captured
+- No brand-speak, no affirmations, no motivational quotes, no Pinterest wellness
+- Sounds like a real woman typing into her phone caption box, not a copywriter
+- States a simple observable fact about her life. Does not explain it. Does not perform.
+- Ends quietly with a statement, never a question or CTA
 
-Then write exactly 5 hashtags (no # symbol, mix of niche and reach, no generic tags).
+GOOD caption examples (copy this exact register):
+"she got quieter and started looking better. not a coincidence."
+"peace is a full-time job and it shows."
+"i stopped explaining myself and started looking like this."
+
+BAD caption examples (never write like this):
+"Moments captured when the night dims. Effortless beauty is its own magic." -- too poetic, brand-speak, no one talks like this
+"Her presence whispers louder than words." -- abstract, AI-sounding
+"Luminous in the chaos." -- meaningless, sounds like a wall quote
+
+Then write exactly 5 hashtags:
+- No # symbol
+- No generic tags (no instagood, photooftheday, lifestyle, nightvibes, effortlessstyle, candidelegance, flashphotography, filmgrain)
+- Should feel like tags a real creator at this frequency would actually use
+- Mix of niche-specific and broader reach
 
 Respond in this exact JSON format:
 {
@@ -594,6 +657,13 @@ export const appRouter = router({
           throw new Error("No credits remaining. Please upgrade to continue.");
         }
 
+        // LoRA paywall: free tier gets exactly 1 LoRA generation, then must upgrade
+        const profileForGate = await getProfile(ctx.user.id);
+        const wantsLora = profileForGate?.lora_status === "ready" && profileForGate.lora_weights_url;
+        if (wantsLora && userCredits.tier === "free" && userCredits.free_lora_used) {
+          throw new Error("LORA_PAYWALL");
+        }
+
         // Get profile for archetype + mood
         const profile = await getProfile(ctx.user.id);
         const archetype = profile?.archetype ?? "luxury_minimal";
@@ -713,6 +783,12 @@ export const appRouter = router({
         }
         // Deduct 1 credit for still image
         await decrementCredit(ctx.user.id, STILL_COST);
+
+        // Mark free LoRA quota as used after first successful LoRA generation
+        if (wantsLora && userCredits.tier === "free" && !userCredits.free_lora_used) {
+          const sb = getSupabase() as any;
+          await sb.from("credits").update({ free_lora_used: true }).eq("user_id", ctx.user.id);
+        }
 
         // Save generation
         const generation = await createGeneration({
@@ -1421,7 +1497,14 @@ Respond in this exact JSON format:
             // Non-fatal: if upload fails, continue with remaining images
           }
         }
-        // Calibration images uploaded to storage for aesthetic analysis (reference_image_urls not used for generation)
+        // Save uploaded URLs to profile so they can be shown back in the UI
+        if (uploadedUrls.length > 0) {
+          const sb = getSupabase() as any;
+          await sb
+            .from("profiles")
+            .update({ reference_image_urls: uploadedUrls, updated_at: new Date().toISOString() })
+            .eq("user_id", ctx.user.id);
+        }
         // Build GPT-4o Vision message with all uploaded images
         const imageContents = input.images.map((dataUrl) => ({
           type: "image_url" as const,
@@ -1461,7 +1544,7 @@ Be hyper-specific and visual. No generic phrases. This paragraph will be used wo
           await updateAestheticDescriptors(ctx.user.id, descriptors as string);
         }
 
-        return { success: true, descriptors };
+        return { success: true, descriptors, referenceImageUrls: uploadedUrls };
       }),
   }),
 

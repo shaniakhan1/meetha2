@@ -11,27 +11,40 @@ import { authenticateRequest } from "./_core/auth";
 import { getSupabase } from "./_core/supabase";
 import { storageGetSignedUrl } from "./storage";
 
-// SVG watermark: lowercase "meetha" in a serif-style font, white, right-aligned
-function buildWatermarkSvg(width: number): Buffer {
-  const fontSize = Math.max(18, Math.round(width * 0.038)); // ~3.8% of image width
-  const padding = Math.round(fontSize * 0.8);
-  // Approximate text width: ~0.55 * fontSize per character, 6 chars = "meetha"
-  const textWidth = Math.round(fontSize * 0.55 * 6);
-  const svgWidth = textWidth + padding * 2;
-  const svgHeight = fontSize + padding * 2;
+// SVG watermark: large diagonal "meetha" repeated across the image
+// Note: letter-spacing is NOT used because librsvg (used by sharp) renders it as box chars.
+// Instead we space letters via individual tspan x positions.
+function buildWatermarkSvg(width: number, height: number): Buffer {
+  const fontSize = Math.max(52, Math.round(width * 0.09));
+  const cx = Math.round(width / 2);
+  const cy = Math.round(height / 2);
 
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${svgWidth}" height="${svgHeight}">
-    <style>
-      text {
-        font-family: Georgia, 'Times New Roman', serif;
-        font-size: ${fontSize}px;
-        font-weight: 400;
-        letter-spacing: ${Math.round(fontSize * 0.12)}px;
-        fill: white;
-        fill-opacity: 0.55;
-      }
-    </style>
-    <text x="${padding}" y="${fontSize + Math.round(padding * 0.5)}" text-anchor="start">meetha</text>
+  // Build spaced text by placing each letter at an explicit x offset
+  const letters = "MEETHA".split("");
+  const charWidth = Math.round(fontSize * 0.65);
+  const totalWidth = charWidth * letters.length;
+  const startX = cx - Math.round(totalWidth / 2);
+  const tspans = letters.map((ch, i) =>
+    `<tspan x="${startX + i * charWidth}" dy="0">${ch}</tspan>`
+  ).join("");
+
+  const rowOffsets = [-fontSize * 2.2, 0, fontSize * 2.2];
+
+  const textElements = rowOffsets.map((dy) => {
+    const y = cy + dy;
+    return `<text y="${Math.round(y)}"
+      text-anchor="start"
+      dominant-baseline="middle"
+      transform="rotate(-28, ${cx}, ${Math.round(y)})"
+      font-family="serif"
+      font-size="${fontSize}px"
+      font-weight="bold"
+      fill="white"
+      fill-opacity="0.40">${tspans}</text>`;
+  }).join("\n");
+
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}">
+    ${textElements}
   </svg>`;
 
   return Buffer.from(svg);
@@ -124,23 +137,15 @@ export async function handleDownload(req: Request, res: Response) {
     const metadata = await image.metadata();
     const imgWidth = metadata.width ?? 1080;
 
-    const watermarkSvg = buildWatermarkSvg(imgWidth);
-    const watermarkMeta = await sharp(watermarkSvg).metadata();
-    const wmWidth = watermarkMeta.width ?? 120;
-    const wmHeight = watermarkMeta.height ?? 40;
-
-    // Position: bottom-right with a small margin
-    const margin = Math.round(imgWidth * 0.03);
     const imgHeight = metadata.height ?? 1920;
-    const left = imgWidth - wmWidth - margin;
-    const top = imgHeight - wmHeight - margin;
+    const watermarkSvg = buildWatermarkSvg(imgWidth, imgHeight);
 
     const watermarked = await image
       .composite([
         {
           input: watermarkSvg,
-          top: Math.max(0, top),
-          left: Math.max(0, left),
+          top: 0,
+          left: 0,
         },
       ])
       .jpeg({ quality: 92 })

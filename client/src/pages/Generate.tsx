@@ -73,6 +73,7 @@ export default function Generate() {
   const [videoFormat, setVideoFormat] = useState<VideoFormat>("tiktok_reels");
   const [showCustomize, setShowCustomize] = useState(false);
   const [showTopUp, setShowTopUp] = useState(false);
+  const [showLoraPaywall, setShowLoraPaywall] = useState(false);
   const [templateSlug, setTemplateSlug] = useState<string | null>(null);
 
   // Voice recording state
@@ -165,8 +166,13 @@ export default function Generate() {
       utils.generations.list.invalidate();
     },
     onError: (err) => {
-      toast.error(err.message);
-      setStep("select");
+      if (err.message === "LORA_PAYWALL") {
+        setShowLoraPaywall(true);
+        setStep("select");
+      } else {
+        toast.error(err.message);
+        setStep("select");
+      }
     },
   });
 
@@ -498,6 +504,54 @@ export default function Generate() {
             </h2>
             <p className="font-sans font-light text-xs text-charcoal-soft leading-relaxed mb-6">
               Upgrade to keep creating. Starter and Pro unlock more credits every month, animated video, and Animate Me.
+            </p>
+            <div className="space-y-3">
+              <a
+                href={import.meta.env.VITE_STRIPE_STARTER_LINK || "#"}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn-luxury btn-gold w-full text-center block"
+              >
+                Starter - $19 / month
+              </a>
+              <a
+                href={import.meta.env.VITE_STRIPE_PRO_LINK || "#"}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn-luxury btn-luxury-outline w-full text-center block"
+              >
+                Pro - $39 / month
+              </a>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* LoRA paywall modal -- shown when free tier has used their 1 free LoRA generation */}
+      {showLoraPaywall && (
+        <div
+          className="fixed inset-0 z-50 flex items-end justify-center"
+          onClick={() => setShowLoraPaywall(false)}
+        >
+          <div className="absolute inset-0 bg-charcoal/40 backdrop-blur-sm" />
+          <div
+            className="relative w-full max-w-md bg-cream border-t border-sand px-6 pt-8 pb-10 animate-fade-up opacity-0"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={() => setShowLoraPaywall(false)}
+              className="absolute top-4 right-5 font-sans text-xs text-charcoal-soft hover:text-charcoal tracking-widest uppercase"
+            >
+              Close
+            </button>
+            <p className="font-sans text-xs tracking-[0.15em] uppercase text-gold mb-1">
+              Your Look
+            </p>
+            <h2 className="font-serif text-2xl text-charcoal mb-2">
+              Your first look was on us.
+            </h2>
+            <p className="font-sans font-light text-xs text-charcoal-soft leading-relaxed mb-6">
+              You have trained your personal model and seen what Meetha can do with your face. Unlock unlimited generations with your look on Starter or Pro.
             </p>
             <div className="space-y-3">
               <a
@@ -1084,11 +1138,11 @@ export default function Generate() {
             </p>
           </div>
 
-          {/* Thumbnail preview — no hook overlay yet */}
+          {/* Thumbnail preview — shows hook overlay as user hovers/selects */}
           <div className="mb-6">
             <CinematicPreview
               imageUrl={result.generation.image_url as string}
-              hook={null}
+              hook={selectedHook ?? result.hooks[0] ?? null}
               size="thumb"
               platform={platform}
             />

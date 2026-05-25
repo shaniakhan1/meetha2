@@ -180,7 +180,7 @@ export default function Profile() {
       setLoraStatus("training");
       setLoraPhotos([]);
       setLoraPreviews([]);
-      toast.success("Training started. Check back in about 20 minutes.");
+      toast.success("Your look is being learned. We will email you when it is ready.");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Upload failed. Please try again.");
     } finally {
@@ -194,6 +194,9 @@ export default function Profile() {
       setPreviewUrl(profile.aesthetic_preview_url);
     }
   }, [profile?.aesthetic_preview_url]);
+
+  // Show saved calibration thumbnails from the server when no new images are staged
+  const savedCalibrationUrls: string[] = (profile as any)?.reference_image_urls ?? [];
 
   useEffect(() => {
     if (profile) {
@@ -241,13 +244,13 @@ export default function Profile() {
         <div className="w-10" />
       </div>
 
-      <div className="flex-1 px-6 py-8 space-y-8">
+      <div className="flex-1 px-4 py-5 space-y-6">
         {/* Account */}
         <div>
           <p className="font-sans text-xs tracking-[0.15em] uppercase text-charcoal-soft mb-4">
             Account
           </p>
-          <div className="p-5 border border-sand bg-warm-white/60 space-y-3">
+          <div className="p-4 border border-sand bg-warm-white/60 space-y-3">
             <div className="flex items-center justify-between">
               <p className="font-sans text-xs text-charcoal-soft">Name</p>
               <p className="font-sans text-sm text-charcoal">{user?.name ?? "—"}</p>
@@ -336,7 +339,7 @@ export default function Profile() {
           </div>
 
           {editing !== "archetype" ? (
-            <div className="p-5 border border-sand bg-warm-white/60">
+            <div className="p-4 border border-sand bg-warm-white/60">
               <p className="font-sans text-xs text-gold mb-1">
                 {profile?.archetype
                   ? ARCHETYPE_DESCRIPTIONS[profile.archetype as Archetype].split(".")[0] + "."
@@ -402,7 +405,7 @@ export default function Profile() {
           </div>
 
           {editing !== "mood" ? (
-            <div className="p-5 border border-sand bg-warm-white/60">
+            <div className="p-4 border border-sand bg-warm-white/60">
               <p className="font-sans text-xs text-gold mb-1">
                 {profile?.mood
                   ? MOOD_DESCRIPTIONS[profile.mood as Mood].split(".")[0] + "."
@@ -521,7 +524,7 @@ export default function Profile() {
             )}
           </div>
 
-          <div className="p-5 border border-sand bg-warm-white/60 space-y-4">
+          <div className="p-4 border border-sand bg-warm-white/60 space-y-4">
             {profile?.aesthetic_descriptors ? (
               <p className="font-sans font-light text-xs text-charcoal-soft leading-relaxed">
                 Meetha has read your aesthetic. Every generation is calibrated to your specific colors, light, and warmth. Upload new photos below to recalibrate.
@@ -530,6 +533,20 @@ export default function Profile() {
               <p className="font-sans font-light text-xs text-charcoal-soft leading-relaxed">
                 Upload 3-5 images that feel like your world. Meetha reads your colors, light, warmth, and skin tone to personalize every generation to you specifically.
               </p>
+            )}
+
+            {/* Saved thumbnails from previous calibration */}
+            {calibrationImages.length === 0 && savedCalibrationUrls.length > 0 && (
+              <div className="space-y-2">
+                <p className="font-sans text-xs text-gold">Calibration photos on file</p>
+                <div className="grid grid-cols-4 gap-2">
+                  {savedCalibrationUrls.map((url, i) => (
+                    <div key={i} className="aspect-square overflow-hidden border border-sand/60">
+                      <img src={url} alt={`Saved ref ${i + 1}`} className="w-full h-full object-cover" />
+                    </div>
+                  ))}
+                </div>
+              </div>
             )}
 
             {/* Upload grid */}
@@ -598,7 +615,7 @@ export default function Profile() {
             )}
           </div>
 
-          <div className="p-5 border border-sand bg-warm-white/60 space-y-4">
+          <div className="p-4 border border-sand bg-warm-white/60 space-y-4">
             {loraStatus === "ready" ? (
               <>
                 <div className="flex items-center gap-3">
@@ -642,14 +659,17 @@ export default function Profile() {
                 )}
               </>
             ) : loraStatus === "training" ? (
-              <div className="flex items-center gap-3">
-                <span className="w-4 h-4 border border-gold border-t-transparent rounded-full animate-spin flex-shrink-0" />
+              <div className="flex items-start gap-3">
+                <span className="w-4 h-4 border border-gold border-t-transparent rounded-full animate-spin flex-shrink-0 mt-0.5" />
                 <div>
-                  <p className="font-sans text-xs text-charcoal-soft">
-                    Training your personal look. This takes about 20 minutes.
+                  <p className="font-serif text-sm text-charcoal">
+                    Your look is being learned.
                   </p>
-                  <p className="font-sans text-xs text-charcoal-soft/60 mt-0.5">
-                    You can close this page. We will update your profile when it is ready.
+                  <p className="font-sans text-xs text-charcoal-soft mt-1 leading-relaxed">
+                    This happens once. Every generation after this will look like you, in any scene. We will email you when it is ready.
+                  </p>
+                  <p className="font-sans text-xs text-charcoal-soft/50 mt-1">
+                    About 20 minutes. You can close this page.
                   </p>
                 </div>
               </div>
@@ -753,7 +773,7 @@ export default function Profile() {
           </div>
 
           {editing !== "voice" ? (
-            <div className="p-5 border border-sand bg-warm-white/60">
+            <div className="p-4 border border-sand bg-warm-white/60">
               {profile?.voice_style ? (
                 <>
                   <p className="font-sans text-xs text-gold mb-1">Calibrated</p>
@@ -771,7 +791,7 @@ export default function Profile() {
               )}
             </div>
           ) : (
-            <div className="space-y-5 p-5 border border-sand bg-warm-white/60">
+            <div className="space-y-4 p-4 border border-sand bg-warm-white/60">
               {/* Tone */}
               <div>
                 <p className="font-sans text-xs tracking-[0.12em] uppercase text-charcoal-soft mb-2">Your tone</p>

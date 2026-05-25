@@ -69,9 +69,10 @@ export type InsertGeneration = typeof generations.$inferInsert;
 export const credits = mysqlTable("credits", {
   id: int("id").autoincrement().primaryKey(),
   userId: int("userId").notNull().unique(),
-  creditsRemaining: int("creditsRemaining").default(5).notNull(),
+  creditsRemaining: int("creditsRemaining").default(3).notNull(),
   totalUsed: int("totalUsed").default(0).notNull(),
   tier: mysqlEnum("tier", ["free", "starter", "pro"]).default("free").notNull(),
+  freeLoraUsed: boolean("free_lora_used").default(false).notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
 

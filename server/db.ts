@@ -47,6 +47,7 @@ export type DbCredits = {
   credits_remaining: number;
   total_used: number;
   tier: "free" | "starter" | "pro";
+  free_lora_used: boolean;
   updated_at: string;
 };
 
@@ -293,7 +294,7 @@ export async function ensureCredits(userId: number): Promise<DbCredits> {
   const sb = getSupabase() as any;
   const { data } = await sb
     .from("credits")
-    .insert({ user_id: userId, credits_remaining: 5, total_used: 0, tier: "free" })
+    .insert({ user_id: userId, credits_remaining: 3, total_used: 0, tier: "free" })
     .select()
     .single();
   return data as DbCredits;

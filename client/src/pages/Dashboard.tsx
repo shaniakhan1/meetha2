@@ -115,7 +115,7 @@ export default function Dashboard() {
                 width: `${Math.min(
                   100,
                   ((credits?.credits_remaining ?? 0) /
-                    (credits?.tier === "pro" ? 75 : credits?.tier === "starter" ? 30 : 5)) *
+                    (credits?.tier === "pro" ? 75 : credits?.tier === "starter" ? 30 : 3)) *
                     100
                 )}%`,
               }}
@@ -158,15 +158,12 @@ export default function Dashboard() {
           <div className="mb-6 p-4 border border-gold/30 bg-warm-white/60 flex items-center gap-3">
             <span className="w-4 h-4 border border-gold border-t-transparent rounded-full animate-spin flex-shrink-0" />
             <div>
-              <p className="font-sans text-xs text-charcoal-soft">
-                Your personal look is training. About 20 minutes.
+              <p className="font-serif text-sm text-charcoal">
+                Your look is being learned.
               </p>
-              <button
-                onClick={() => navigate("/profile")}
-                className="font-sans text-xs text-gold hover:text-charcoal transition-colors mt-0.5"
-              >
-                View progress
-              </button>
+              <p className="font-sans text-xs text-charcoal-soft/70 mt-0.5">
+                This happens once. About 20 minutes. We will email you.
+              </p>
             </div>
           </div>
         )}

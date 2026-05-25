@@ -112,10 +112,6 @@ export default function Home() {
         />
 
         <div className="relative z-10 max-w-sm mx-auto">
-          {/* Eyebrow */}
-          <p className="font-sans text-xs tracking-[0.2em] uppercase text-gold mb-8 animate-fade-in opacity-0 delay-100">
-            Content creation, simplified
-          </p>
           {/* Headline */}
           <h1
             className="font-serif font-light text-charcoal mb-6 animate-fade-up opacity-0 delay-200"
