@@ -21,6 +21,7 @@ import { authenticateRequest } from "./_core/auth";
 import { invokeLLM } from "./_core/llm";
 import { storagePut } from "./storage";
 import { sendLoraReadyEmail, sendLoraFailedEmail } from "./_core/email";
+import { startPolling } from "./loraPoller";
 
 const BASE_URL =
   process.env.NODE_ENV === "production"
@@ -134,6 +135,9 @@ export async function handleLoraUpload(req: Request, res: Response) {
         console.log(`[LoRA] Physical descriptors saved for user ${userId}: ${descriptors}`);
       }
     }).catch(() => { /* non-fatal */ });
+
+    // Start the self-healing background poller (no cron needed)
+    startPolling(userId, requestId);
 
     return res.json({ requestId, triggerPhrase, status: "training" });
   } catch (err) {

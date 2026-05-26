@@ -9,6 +9,7 @@ import { handleLoraCheck } from "../loraEmailCron";
 import { handleArchiveGenerations } from "../archiveCron";
 import { handleWelcomeEmail } from "../welcomeEmailCron";
 import { loraUploadMiddleware, handleLoraUpload, handleLoraStatus } from "../loraUpload";
+import { recoverStuckJobs } from "../loraPoller";
 import { registerStorageProxy } from "./storageProxy";
 import { appRouter } from "../routers";
 import { createContext } from "./context";
@@ -77,6 +78,10 @@ async function startServer() {
 
   server.listen(port, () => {
     console.log(`Server running on http://localhost:${port}/`);
+    // Resume polling for any LoRA jobs that were in-progress when server last restarted
+    recoverStuckJobs().catch((err) =>
+      console.warn("[LoraPoller] Recovery on startup failed (non-fatal):", err)
+    );
   });
 }
 

@@ -235,9 +235,9 @@
 
 ## V20 -- LoRA Physical Descriptor Fix
 
-- [ ] Add lora_physical_descriptors column to profiles table (Supabase migration + drizzle schema)
-- [ ] Add vision AI analysis during LoRA upload to extract hair color, skin tone, distinctive features from training photos
-- [ ] Inject physical descriptors as text anchor into LoRA generation prompt (both generate.content and voice-to-content)
-- [ ] Increase LoRA scale from 0.85 to 1.0 for stronger identity adherence
-- [ ] Backfill existing users with trained LoRA models via a one-time analysis endpoint
-- [ ] Fix onboarding re-trigger bug for returning mobile users
+- [x] Add lora_physical_descriptors column to profiles table (Supabase migration + drizzle schema)
+- [x] Add vision AI analysis during LoRA upload to extract hair color, skin tone, distinctive features from training photos
+- [x] Inject physical descriptors as text anchor into LoRA generation prompt (both generate.content and voice-to-content)
+- [x] Increase LoRA scale from 0.85 to 1.0 for stronger identity adherence
+- [x] Backfill existing users with trained LoRA models via a one-time analysis endpoint
+- [x] Fix onboarding re-trigger bug for returning mobile users
