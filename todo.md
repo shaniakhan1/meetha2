@@ -396,10 +396,10 @@
 
 ## V38 -- Editorial Redesign
 
-- [ ] Upload new gallery images (meetha-59, meetha-55, meetha-61) to webdev static assets
-- [ ] Remove "satin" from all scene prompts in routers.ts
-- [ ] Reduce free tier from 3 to 1 generation (db default + routers.ts credit check)
-- [ ] Redesign Dashboard hero: compact editorial card, latest render as background, shorter height
-- [ ] Expand landing page gallery to 4+ images in editorial grid
-- [ ] Elevate Home.tsx typography and spacing to magazine/editorial feel
-- [ ] Add LoRA ready celebration moment on Dashboard (first-time ready state)
+- [x] Upload new gallery images (meetha-55 street lights, meetha-61 hands/coffee) to webdev static assets
+- [x] Remove "satin" from all scene prompts in routers.ts
+- [x] Reduce free tier from 3 to 1 generation (db default + routers.ts credit check)
+- [x] Redesign Dashboard hero: compact editorial masthead, latest render as small thumbnail, much shorter
+- [x] Expand landing page gallery to 4+ images in editorial grid (asymmetric layout with new images)
+- [x] Elevate Home.tsx typography and spacing to magazine/editorial feel (larger hero type, portrait gallery, more generous spacing)
+- [x] Add LoRA ready celebration moment on Dashboard (first-time ready state)

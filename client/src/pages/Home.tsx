@@ -264,7 +264,7 @@ export default function Home() {
       </nav>
 
       {/* ── Hero ── */}
-      <section className="relative min-h-screen flex flex-col items-center justify-center px-6 pt-24 pb-16 text-center overflow-hidden">
+      <section className="relative min-h-screen flex flex-col items-center justify-center px-6 pt-28 pb-20 text-center overflow-hidden">
         <div
           className="absolute inset-0 opacity-30"
           style={{
@@ -285,11 +285,13 @@ export default function Home() {
           </p>
 
           <h1
-            className="font-serif font-light text-charcoal mb-6 animate-fade-up opacity-0 delay-200"
-            style={{ lineHeight: 1.05 }}
+            className="font-serif font-light text-charcoal mb-8 animate-fade-up opacity-0 delay-200"
+            style={{ lineHeight: 1.0, fontSize: "clamp(2.8rem, 10vw, 4.5rem)" }}
           >
             Upload your photos.<br />
-            See yourself the way a stylist would.
+            See yourself<br />
+            the way a stylist<br />
+            would.
           </h1>
 
           <div className="divider-editorial animate-fade-in opacity-0 delay-300" />
@@ -314,7 +316,7 @@ export default function Home() {
       </section>
 
       {/* ── What You Learn ── */}
-      <section className="py-20 px-6 bg-warm-white">
+      <section className="py-28 px-6 bg-warm-white">
         <div className="max-w-sm mx-auto text-center">
           <p className="font-sans text-xs tracking-[0.2em] uppercase text-gold mb-6">
             Your styling brief
@@ -328,7 +330,7 @@ export default function Home() {
           </p>
         </div>
 
-        <div className="max-w-sm mx-auto mt-14 space-y-10">
+        <div className="max-w-sm mx-auto mt-16 space-y-12">
           {WHAT_YOU_LEARN.map((item, i) => (
             <div key={i} className="flex gap-5 items-start">
               <div className="w-px h-12 bg-gold/40 flex-shrink-0 mt-1" />
@@ -346,7 +348,7 @@ export default function Home() {
       </section>
 
       {/* ── How It Works ── */}
-      <section className="py-20 px-6 bg-cream">
+      <section className="py-28 px-6 bg-cream">
         <div className="max-w-sm mx-auto text-center mb-12">
           <p className="font-sans text-xs tracking-[0.2em] uppercase text-gold mb-6">
             How it works
@@ -389,27 +391,31 @@ export default function Home() {
       </section>
 
       {/* ── Gallery ── */}
-      <section className="py-20 px-6 bg-cream">
+      <section className="py-28 px-6 bg-cream">
         <div className="max-w-sm mx-auto text-center mb-10">
           <p className="font-sans text-xs tracking-[0.2em] uppercase text-gold mb-6">The work</p>
           <h2 className="font-serif font-light text-charcoal mb-4">Every image, styled to you.</h2>
           <div className="divider-editorial" />
         </div>
-        <div className="max-w-sm mx-auto grid grid-cols-2 gap-2 mb-16">
-          <div className="col-span-2 aspect-[4/3] overflow-hidden">
-            <img src="/manus-storage/hero_sample_f65e4d53.jpg" alt="Meetha result" className="w-full h-full object-cover" />
+        <div className="max-w-sm mx-auto mb-16">
+          {/* Full-width hero image */}
+          <div className="w-full aspect-[3/4] overflow-hidden mb-1">
+            <img src="/manus-storage/hero_sample_f65e4d53.jpg" alt="Meetha result" className="w-full h-full object-cover object-top" />
           </div>
-          <div className="aspect-square overflow-hidden">
-            <img src="/manus-storage/gallery_street_lights_8c7a051f.jpg" alt="Meetha result" className="w-full h-full object-cover" />
-          </div>
-          <div className="aspect-square overflow-hidden">
-            <img src="/manus-storage/gallery_hands_coffee_b7861070.webp" alt="Meetha result" className="w-full h-full object-cover" />
+          {/* Two-column bottom row */}
+          <div className="grid grid-cols-2 gap-1">
+            <div className="aspect-[3/4] overflow-hidden">
+              <img src="/manus-storage/gallery_street_lights_8c7a051f.jpg" alt="Meetha result" className="w-full h-full object-cover object-top" />
+            </div>
+            <div className="aspect-[3/4] overflow-hidden">
+              <img src="/manus-storage/gallery_hands_coffee_b7861070.webp" alt="Meetha result" className="w-full h-full object-cover" />
+            </div>
           </div>
         </div>
       </section>
 
       {/* ── Output Example ── */}
-      <section className="py-20 px-6 bg-cream">
+      <section className="py-28 px-6 bg-cream">
         <div className="max-w-sm mx-auto text-center mb-10">
           <p className="font-sans text-xs tracking-[0.2em] uppercase text-gold mb-6">
             What you get
@@ -465,7 +471,7 @@ export default function Home() {
       </section>
 
       {/* ── The Difference ── */}
-      <section className="py-20 px-6 bg-warm-white">
+      <section className="py-28 px-6 bg-warm-white">
         <div className="max-w-sm mx-auto">
           <div className="text-center mb-12">
             <p className="font-sans text-xs tracking-[0.2em] uppercase text-gold mb-6">
@@ -501,10 +507,10 @@ export default function Home() {
       </section>
 
       {/* ── Social Proof ── */}
-      <section className="py-20 px-6 bg-cream">
+      <section className="py-28 px-6 bg-cream">
         <div className="max-w-sm mx-auto text-center">
-          <div className="divider-editorial mb-10" />
-          <blockquote className="font-serif font-light text-2xl text-charcoal leading-snug mb-6">
+          <div className="divider-editorial mb-12" />
+          <blockquote className="font-serif font-light text-charcoal leading-snug mb-6" style={{ fontSize: "clamp(1.5rem, 6vw, 2rem)" }}>
             "It showed me my colors, my jewelry, my makeup. It gave me ideas to improve my content I never would have thought of."
           </blockquote>
           <p className="font-sans text-xs tracking-[0.15em] uppercase text-charcoal-soft">

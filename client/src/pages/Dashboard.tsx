@@ -223,8 +223,77 @@ export default function Dashboard() {
   const heroGen = allGenerations[0] ?? null;
   const firstName = user?.name?.split(" ")[0] ?? "Your Studio";
 
+  // LoRA ready celebration: fires once when lora_status transitions to "ready"
+  useEffect(() => {
+    if (!user?.id || !profile) return;
+    const storageKey = `meetha_lora_ready_shown_${user.id}`;
+    const alreadyShown = localStorage.getItem(storageKey);
+    const currentStatus = profile.lora_status;
+
+    if (
+      !alreadyShown &&
+      prevLoraStatus.current !== undefined &&
+      prevLoraStatus.current !== "ready" &&
+      currentStatus === "ready"
+    ) {
+      setShowLoraReady(true);
+      localStorage.setItem(storageKey, "1");
+    }
+
+    prevLoraStatus.current = currentStatus;
+  }, [profile?.lora_status, user?.id]);
+
   return (
     <div className="min-h-screen bg-cream flex flex-col">
+
+      {/* LoRA ready celebration overlay */}
+      {showLoraReady && (
+        <div
+          className="fixed inset-0 z-50 flex flex-col items-center justify-center px-8"
+          style={{ background: "linear-gradient(160deg, #2C1810 0%, #1a0f09 100%)" }}
+        >
+          {/* Decorative top rule */}
+          <div className="w-px h-16 bg-gradient-to-b from-transparent to-gold/60 mb-10" />
+
+          <p className="font-sans text-[10px] tracking-[0.3em] uppercase text-gold mb-6 animate-fade-up opacity-0" style={{ animationDelay: "100ms" }}>
+            Your look is ready
+          </p>
+
+          <h2
+            className="font-serif font-light text-cream text-center mb-4 animate-fade-up opacity-0"
+            style={{ lineHeight: 1.05, fontSize: "clamp(2rem, 8vw, 3rem)", animationDelay: "200ms" }}
+          >
+            Your look is ready.<br />Let's create.
+          </h2>
+
+          <div className="w-12 h-px bg-gold/40 mb-6 animate-fade-in opacity-0" style={{ animationDelay: "300ms" }} />
+
+          <p
+            className="font-sans font-light text-sm text-cream/60 text-center leading-relaxed mb-12 max-w-xs animate-fade-up opacity-0"
+            style={{ animationDelay: "350ms" }}
+          >
+            Meetha has learned your face, your coloring, your look. Every image from here is you.
+          </p>
+
+          <button
+            onClick={() => { setShowLoraReady(false); navigate("/generate"); }}
+            className="btn-luxury btn-gold w-full max-w-xs animate-fade-up opacity-0"
+            style={{ animationDelay: "450ms" }}
+          >
+            Start creating
+          </button>
+
+          <button
+            onClick={() => setShowLoraReady(false)}
+            className="font-sans text-xs tracking-widest uppercase text-cream/30 hover:text-cream/60 transition-colors mt-6 min-h-[44px]"
+          >
+            Go to dashboard
+          </button>
+
+          {/* Decorative bottom rule */}
+          <div className="w-px h-16 bg-gradient-to-b from-gold/60 to-transparent mt-10" />
+        </div>
+      )}
 
       {/* HERO - compact editorial masthead */}
       <div
