@@ -108,7 +108,7 @@ export default function Profile() {
       (f) => f.type.startsWith("image/") || /\.(heic|heif|jpg|jpeg|png|webp|gif|bmp)$/i.test(f.name)
     );
     if (valid.length < incoming.length) {
-      toast.error("Some files were skipped — please use photos from your camera roll.");
+      toast.error("Some files were skipped. Please use photos from your camera roll.");
     }
     const newFiles = [...loraPhotos, ...valid].slice(0, 20);
     setLoraPhotos(newFiles);
@@ -206,12 +206,12 @@ export default function Profile() {
           <div className="p-4 border border-sand bg-warm-white/60 space-y-3">
             <div className="flex items-center justify-between">
               <p className="font-sans text-xs text-charcoal-soft">Name</p>
-              <p className="font-sans text-sm text-charcoal">{user?.name ?? "—"}</p>
+              <p className="font-sans text-sm text-charcoal">{user?.name ?? "."}</p>
             </div>
             <div className="w-full h-px bg-sand/60" />
             <div className="flex items-center justify-between">
               <p className="font-sans text-xs text-charcoal-soft">Email</p>
-              <p className="font-sans text-sm text-charcoal">{user?.email ?? "—"}</p>
+              <p className="font-sans text-sm text-charcoal">{user?.email ?? "."}</p>
             </div>
             <div className="w-full h-px bg-sand/60" />
             <div className="flex items-center justify-between">
@@ -221,9 +221,9 @@ export default function Profile() {
             <div className="w-full h-px bg-sand/60" />
             <div className="flex items-center justify-between">
               <p className="font-sans text-xs text-charcoal-soft">Credits</p>
-              <p className="font-sans text-sm text-charcoal">{credits?.credits_remaining ?? "—"} remaining</p>
+              <p className="font-sans text-sm text-charcoal">{credits?.credits_remaining ?? "."} remaining</p>
             </div>
-            {/* Meetha badge toggle — Starter/Pro only */}
+            {/* Meetha badge toggle - Starter/Pro only */}
             {credits && credits.tier !== "free" && (
               <>
                 <div className="w-full h-px bg-sand/60" />
@@ -363,7 +363,7 @@ export default function Profile() {
             {loraStatus === "training" && <span className="font-sans text-xs text-charcoal-soft animate-pulse">Training...</span>}
           </div>
           <p className="font-sans text-xs text-charcoal-soft mb-4 leading-relaxed">
-            Upload 10–20 solo selfies. Meetha trains a personal AI model on your face so every image it creates actually looks like you — in any scene, any outfit.
+            Upload 10–20 solo selfies. Meetha trains a personal AI model on your face so every image it creates actually looks like you, in any scene, any outfit.
           </p>
 
           <div className="p-4 border border-sand bg-warm-white/60 space-y-4">
@@ -376,9 +376,9 @@ export default function Profile() {
                 <p className="font-sans text-xs text-charcoal-soft leading-relaxed">
                   Every image you generate now looks like you. Training a new look will replace the current one.
                 </p>
-{/* Retrain section — free first retrain, $19 for subsequent */}
+{/* Retrain section - free first retrain, $19 for subsequent */}
                 {retrainStatusQuery.data?.hasUnusedPurchase ? (
-                  // Has a paid retrain credit — show the confirm flow
+                  // Has a paid retrain credit - show the confirm flow
                   showRetrainConfirm ? (
                     <div className="border border-sand/60 p-3 space-y-3 bg-warm-white/80">
                       <p className="font-sans text-xs text-charcoal-soft leading-relaxed">
@@ -408,17 +408,17 @@ export default function Profile() {
                     </button>
                   )
                 ) : (
-                  // No unused retrain credit — show $19 paywall
+                  // No unused retrain credit - show $19 paywall
                   <div className="border border-sand/60 p-3 space-y-3 bg-warm-white/80">
                     <p className="font-sans text-xs text-charcoal-soft leading-relaxed">
-                      Your first training is included. Retraining with new photos — for example after a haircut, new style, or seasonal change — is a one-time $19 add-on.
+                      Your first training is included. Retraining with new photos, for example after a haircut, new style, or seasonal change, is a one-time $19 add-on.
                     </p>
                     <button
                       onClick={() => createRetrainCheckout.mutate({ origin: window.location.origin })}
                       disabled={createRetrainCheckout.isPending}
                       className="font-sans text-xs tracking-widest uppercase text-charcoal border border-charcoal/30 px-4 py-2 hover:bg-charcoal/5 transition-colors disabled:opacity-50 min-h-[40px]"
                     >
-                      {createRetrainCheckout.isPending ? "Loading..." : "Retrain — $19"}
+                      {createRetrainCheckout.isPending ? "Loading..." : "Retrain ($19)"}
                     </button>
                   </div>
                 )}
@@ -451,10 +451,10 @@ export default function Profile() {
                 {/* What works best */}
                 <div className="space-y-1.5">
                   {[
-                    "Solo photos only — no group shots",
-                    "Face clearly visible — no sunglasses, hats, or heavy filters",
-                    "Good lighting — natural or well-lit indoor shots",
-                    "Variety — different angles, outfits, and settings",
+                    "Solo photos only. No group shots",
+                    "Face clearly visible. No sunglasses, hats, or heavy filters",
+                    "Good lighting. Natural or well-lit indoor shots",
+                    "Variety. Different angles, outfits, and settings",
                   ].map((tip) => (
                     <div key={tip} className="flex items-start gap-2">
                       <span className="text-gold text-xs mt-0.5 flex-shrink-0">✓</span>
@@ -689,7 +689,7 @@ export default function Profile() {
                 rel="noopener noreferrer"
                 className="btn-luxury btn-gold w-full text-center block"
               >
-                Starter — $19 / month
+                Starter ($19) / month
               </a>
               <a
                 href={import.meta.env.VITE_STRIPE_PRO_LINK || "#"}
@@ -697,7 +697,7 @@ export default function Profile() {
                 rel="noopener noreferrer"
                 className="btn-luxury btn-luxury-outline w-full text-center block"
               >
-                Pro — $39 / month
+                Pro ($39) / month
               </a>
             </div>
           </div>
@@ -743,7 +743,7 @@ function AestheticBriefSection() {
         <p className="font-sans text-sm font-semibold text-charcoal mb-4">Your Styling Brief</p>
         <div className="p-4 border border-sand bg-warm-white/60">
           <p className="font-sans text-xs text-charcoal-soft leading-relaxed">
-            Generate your first image to unlock your personal styling brief — your color palette, metals, fabrics, makeup direction, and lighting guide.
+            Generate your first image to unlock your personal styling brief . your color palette, metals, fabrics, makeup direction, and lighting guide.
           </p>
         </div>
       </div>

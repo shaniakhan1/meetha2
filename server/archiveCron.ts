@@ -11,7 +11,7 @@
  *   - pro tier:     never archive (unlimited history)
  *
  * Idempotent: archived=true rows are skipped on subsequent runs.
- * The S3 objects are NOT deleted here — they are handled by a separate S3 lifecycle
+ * The S3 objects are NOT deleted here - they are handled by a separate S3 lifecycle
  * policy (180 days). This means re-downloads will 404 gracefully after 180 days.
  */
 
@@ -28,7 +28,7 @@ const ARCHIVE_POLICY: Record<string, number | null> = {
 
 export async function handleArchiveGenerations(req: Request, res: Response) {
   try {
-    // Authenticate as cron — reject non-cron callers
+    // Authenticate as cron - reject non-cron callers
     const user = await sdk.authenticateRequest(req);
     if (!user.isCron) {
       return res.status(403).json({ error: "cron-only endpoint" });
@@ -70,7 +70,7 @@ export async function handleArchiveGenerations(req: Request, res: Response) {
         processed++;
       } catch (userErr) {
         console.error("[Archive Cron] Error processing user", row.user_id, userErr);
-        // Continue — do not abort the whole run for one user
+        // Continue - do not abort the whole run for one user
       }
     }
 

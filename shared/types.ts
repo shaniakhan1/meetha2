@@ -34,9 +34,9 @@ export const VIDEO_FORMAT_LABELS: Record<VideoFormat, string> = {
 };
 
 export const VIDEO_FORMAT_DESCRIPTIONS: Record<VideoFormat, string> = {
-  tiktok_reels: "9:16 vertical — TikTok, Instagram Reels, YouTube Shorts",
-  square: "1:1 — Instagram feed, Facebook",
-  landscape: "16:9 horizontal — YouTube, Facebook cover",
+  tiktok_reels: "9:16 vertical - TikTok, Instagram Reels, YouTube Shorts",
+  square: "1:1 - Instagram feed, Facebook",
+  landscape: "16:9 horizontal - YouTube, Facebook cover",
 };
 
 // Maps video format to Fal/image aspect ratio string

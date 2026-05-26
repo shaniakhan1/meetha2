@@ -357,12 +357,12 @@
 
 ## V34 -- Legal Safeguards + Template Rename + Ordered Everything Sample Image
 
-- [ ] Strengthen LoRA biometric consent in Onboarding.tsx: "I own or have the right to use all photos I upload. All subjects depicted are adults and have consented. I am 18 or older."
-- [ ] Strengthen LoRA biometric consent in Profile.tsx (retrain upload): same language as onboarding
-- [ ] Add Terms of Service acceptance checkbox to sign-up/onboarding (not just a link)
-- [ ] Generate distinct sample image for Ordered Everything: hotel bed, white robe, towel on head, silver dome trays, champagne
-- [ ] Rename templates from viral content formats to styling scenarios throughout app (Templates.tsx, Dashboard.tsx, Generate.tsx TEMPLATE_META)
-- [ ] "Meetha styled me" share text: update navigator.share title/text in Dashboard and Generate
+- [x] Strengthen LoRA biometric consent in Onboarding.tsx: "I own or have the right to use all photos I upload. All subjects depicted are adults and have consented. I am 18 or older."
+- [x] Strengthen LoRA biometric consent in Profile.tsx (retrain upload): same language as onboarding
+- [x] Add Terms of Service acceptance checkbox to sign-up/onboarding (not just a link)
+- [x] Ordered Everything template removed entirely (replaced by existing paparazzi_flash / Caught Looking Expensive)
+- [x] Rename templates from viral content formats to styling scenarios throughout app (Templates.tsx, Dashboard.tsx, Generate.tsx TEMPLATE_META)
+- [x] "Meetha styled me" share text: update navigator.share title/text in Dashboard and Generate
 
 ## V34 -- Legal Consent, Template Cleanup, Share Text
 

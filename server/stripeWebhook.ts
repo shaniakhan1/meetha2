@@ -23,7 +23,7 @@ export async function handleStripeRetrainWebhook(req: Request, res: Response) {
     return res.status(400).send(`Webhook Error: ${err.message}`);
   }
 
-  // Test events — return verification response immediately
+  // Test events - return verification response immediately
   if (event.id.startsWith("evt_test_")) {
     console.log("[StripeWebhook] Test event detected, returning verification response");
     return res.json({ verified: true });
@@ -40,7 +40,7 @@ export async function handleStripeRetrainWebhook(req: Request, res: Response) {
 
     try {
       const sb = getSupabase() as any;
-      // Idempotent — upsert on stripeSessionId unique constraint
+      // Idempotent - upsert on stripeSessionId unique constraint
       const { error } = await sb
         .from("retrain_purchases")
         .upsert(

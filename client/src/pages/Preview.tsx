@@ -57,8 +57,8 @@ export default function Preview() {
 
   const tiers: { value: Tier; label: string; description: string }[] = [
     { value: "free", label: "Free", description: "5 credits, stills only, upgrade gate visible" },
-    { value: "starter", label: "Starter — $19", description: "30 credits, animated preview unlocked" },
-    { value: "pro", label: "Pro — $39", description: "75 credits, real video generation unlocked" },
+    { value: "starter", label: "Starter ($19)", description: "30 credits, animated preview unlocked" },
+    { value: "pro", label: "Pro ($39)", description: "75 credits, real video generation unlocked" },
   ];
 
   const destinations: { value: typeof destination; label: string }[] = [

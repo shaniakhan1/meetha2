@@ -12,7 +12,7 @@ import { getSupabase } from "./_core/supabase";
 import { storageGetSignedUrl } from "./storage";
 import { WATERMARK_FONT_BASE64 } from "./watermarkFont";
 
-// Font is embedded at build time as a base64 constant — no disk I/O needed at runtime.
+// Font is embedded at build time as a base64 constant - no disk I/O needed at runtime.
 // This ensures the font is available on Cloud Run where __dirname has no .ttf files.
 function getFontBase64(): string {
   return WATERMARK_FONT_BASE64;
@@ -39,7 +39,7 @@ async function buildWatermarkPng(width: number, height: number): Promise<Buffer>
   // Use SVG text with a system-safe generic font stack.
   // Key fix: set paint-order="stroke" so the stroke is drawn behind the fill,
   // and use a dark stroke to prevent librsvg from rendering a white background rect.
-  // The text element has no background — fill-opacity controls transparency.
+  // The text element has no background - fill-opacity controls transparency.
   const textElements = rowOffsets.map((offset) => {
     const y = cy + offset;
     return [
@@ -109,7 +109,7 @@ export async function handleDownload(req: Request, res: Response) {
   }
 
   // Fetch the image bytes
-  // image_url is stored as a relative /manus-storage/{key} path — resolve to a signed S3 URL
+  // image_url is stored as a relative /manus-storage/{key} path - resolve to a signed S3 URL
   let imageBuffer: Buffer;
   try {
     let fetchUrl = generation.image_url as string;

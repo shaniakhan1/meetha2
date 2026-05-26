@@ -56,11 +56,11 @@ export default function Privacy() {
             <h2 className="font-serif text-lg text-charcoal">4. Third-party services</h2>
             <p>We use the following third-party services to operate Meetha:</p>
             <ul className="list-disc list-inside space-y-1 pl-2">
-              <li><strong>Supabase</strong> — authentication and database hosting.</li>
-              <li><strong>Fal.ai</strong> — AI image and video generation. Your prompts are sent to Fal.ai to produce images. Fal.ai's privacy policy governs their handling of that data.</li>
-              <li><strong>OpenAI</strong> — caption and hook generation. Your aesthetic profile and scene selection are sent to OpenAI to generate copy. OpenAI's privacy policy governs their handling of that data.</li>
-              <li><strong>Resend</strong> — transactional email delivery.</li>
-              <li><strong>Stripe</strong> — payment processing.</li>
+              <li><strong>Supabase</strong>: authentication and database hosting.</li>
+              <li><strong>Fal.ai</strong>: AI image and video generation. Your prompts are sent to Fal.ai to produce images. Fal.ai's privacy policy governs their handling of that data.</li>
+              <li><strong>OpenAI</strong>: caption and hook generation. Your aesthetic profile and scene selection are sent to OpenAI to generate copy. OpenAI's privacy policy governs their handling of that data.</li>
+              <li><strong>Resend</strong>: transactional email delivery.</li>
+              <li><strong>Stripe</strong>: payment processing.</li>
             </ul>
           </section>
 

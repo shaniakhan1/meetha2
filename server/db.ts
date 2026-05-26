@@ -1,8 +1,8 @@
 /**
- * Meetha database helpers — powered by Supabase Postgres.
+ * Meetha database helpers - powered by Supabase Postgres.
  * All queries use the service role client (server-side only).
  * We cast the Supabase client as `any` for query builder calls since we
- * are not using generated Supabase types — all row types are defined below.
+ * are not using generated Supabase types - all row types are defined below.
  */
 import { getSupabase } from "./_core/supabase";
 
@@ -172,7 +172,7 @@ export async function deleteUserAccount(userId: number, openId: string): Promise
     if (error) throw new Error(`Failed to delete ${step.label}: ${(error as Error).message ?? String(error)}`);
   }
 
-  // Delete the Supabase auth user — non-fatal if the auth record is already gone
+  // Delete the Supabase auth user - non-fatal if the auth record is already gone
   const { error: authErr } = await sb.auth.admin.deleteUser(openId);
   if (authErr && !(authErr as { message?: string }).message?.includes("not found")) {
     throw new Error(`Failed to delete auth user: ${(authErr as Error).message ?? String(authErr)}`);
@@ -521,7 +521,7 @@ export async function createReferral(data: {
 }): Promise<DbReferral | null> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const sb = getSupabase() as any;
-  // Upsert — ignore if already exists
+  // Upsert - ignore if already exists
   const { data: inserted } = await sb
     .from("referrals")
     .upsert(

@@ -50,7 +50,7 @@ export default function SignIn() {
         setError("Google sign-in failed. Please try again or use email below.");
         setGoogleLoading(false);
       }
-      // On success, Supabase redirects the browser — no further action needed here
+      // On success, Supabase redirects the browser - no further action needed here
     } catch {
       setError("Google sign-in failed. Please try again.");
       setGoogleLoading(false);

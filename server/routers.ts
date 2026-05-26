@@ -55,7 +55,7 @@ const SCENE_PROMPTS: Record<string, string> = {
   date_night:
     "a champagne coupe close-up, soft candlelight catching the rim, deep jewel-toned velvet in the background, warm amber bokeh, cinematic and unhurried",
   paparazzi_flash:
-    "harsh direct flash photography, slight motion blur, overexposed highlights, heavy film grain, candid street angle, woman caught mid-movement looking effortlessly stunning, one of these locations: blurry restaurant exit at night, back seat of a taxi with window reflections, hotel elevator mirror, late-night diner booth, airport terminal gate, convenience store exit, laughing with someone off-frame — no face visible, just the energy of someone who looks incredible without trying, editorial female-gaze, 2000s paparazzi aesthetic, anti-AI texture, vertical 9:16 framing",
+    "harsh direct flash photography, slight motion blur, overexposed highlights, heavy film grain, candid street angle, woman caught mid-movement looking effortlessly stunning, one of these locations: blurry restaurant exit at night, back seat of a taxi with window reflections, hotel elevator mirror, late-night diner booth, airport terminal gate, convenience store exit, laughing with someone off-frame - no face visible, just the energy of someone who looks incredible without trying, editorial female-gaze, 2000s paparazzi aesthetic, anti-AI texture, vertical 9:16 framing",
   digital_diary:
     "analog scrapbook aesthetic, one instant polaroid photo taped with a small piece of washi tape, handwritten note on lined paper beside it, dried flower or pressed petal detail, soft warm window light, linen or cork board surface, film grain texture, intimate and personal, feels like a page from a real woman's private journal, no faces, editorial stillness, warm cream and faded yellow tones, vertical 9:16 framing",
   bill_please:
@@ -579,14 +579,14 @@ Respond in this exact JSON format:
 
   return `You are writing copy for a woman creator who has a specific, calibrated voice. You write the way she thinks, not the way a brand talks to her.
 
-Creator's frequency: "${archetype.replace(/_/g, " ")}" — ${archetypeDesc}
-Current energy: "${mood}" — ${moodDesc}
-Platform: ${platform.toUpperCase()} — ${platformTone}
+Creator's frequency: "${archetype.replace(/_/g, " ")}" - ${archetypeDesc}
+Current energy: "${mood}" - ${moodDesc}
+Platform: ${platform.toUpperCase()} - ${platformTone}
 Voice calibration: ${archetypeVoice}${frequencyContext}${nicheContext}${voiceContext}
 
 Write exactly 3 hook options for text overlay on a cinematic lifestyle image.
 
-Hook rules — read every rule before writing:
+Hook rules - read every rule before writing:
 - 1 to 6 words. Never longer.
 - Plain everyday words only. No thesaurus words. No poetic vocabulary.
 - Sounds like a text message or a note to herself, not a quote on a wall
@@ -608,10 +608,10 @@ GOOD examples (copy this exact register and length):
 "seen briefly"
 
 BAD examples (never write like this):
-"Gold whispers louder than gilded noise" — too poetic, fake-deep
-"Her silence contains multitudes they can't fathom" — sounds like AI trying to be literary
-"The light finds depth amid the simplicity" — abstract, no one talks like this
-"Luxury is not always what you add" — too long, sounds like a brand tagline
+"Gold whispers louder than gilded noise" - too poetic, fake-deep
+"Her silence contains multitudes they can't fathom" - sounds like AI trying to be literary
+"The light finds depth amid the simplicity" - abstract, no one talks like this
+"Luxury is not always what you add" - too long, sounds like a brand tagline
 
 If you cannot write something a real woman would type into her phone caption box, write nothing. Simple is always better.
 
@@ -796,7 +796,7 @@ export const appRouter = router({
 
     /**
      * Regenerate only the copy (hooks, caption, hashtags) for an existing generation.
-     * Does NOT spend a credit — the image already exists.
+     * Does NOT spend a credit - the image already exists.
      */
     regenerateCopy: protectedProcedure
       .input(
@@ -869,7 +869,7 @@ export const appRouter = router({
     /**
      * Generates a personalised real-world styling brief from the user's archetype,
      * mood, calibration descriptors, and the scene that was just generated.
-     * Does NOT cost a credit — it is intelligence derived from data that already exists.
+     * Does NOT cost a credit - it is intelligence derived from data that already exists.
      */
     aestheticRead: protectedProcedure
       .input(
@@ -996,7 +996,7 @@ Respond in this exact JSON format:
 
     /**
      * Returns how many times each template (sceneCategory) has been used in the last 7 days.
-     * Public procedure — used for social proof counters on the Templates page.
+     * Public procedure - used for social proof counters on the Templates page.
      */
     templateCounts: publicProcedure.query(async () => {
       const supabase = getSupabase();
@@ -1184,7 +1184,7 @@ Respond in this exact JSON format:
               hashtags = retryParsed.hashtags?.slice(0, 5) ?? hashtags;
             }
           } catch {
-            // Retry failed — keep original hooks, they are still usable
+            // Retry failed - keep original hooks, they are still usable
           }
         }
         // Deduct 1 credit for still image
@@ -1357,7 +1357,7 @@ Return JSON with:
             ? `calibrated to this specific aesthetic: ${profile.aesthetic_descriptors},`
             : "warm honey skin tones where hands are visible, gold jewelry details,";
           const nicheLayer = profile?.niche ? `visual world of a ${profile.niche} creator,` : "";
-          // Voice scene is the primary directive — archetype/mood are the filter
+          // Voice scene is the primary directive - archetype/mood are the filter
           const bodyLayerVoice = profile?.body_type ? `${profile.body_type},` : "";
           imagePrompt = `${keyDetails.join(", ")}, ${archetypeStyle}, ${moodStyle}, ${aestheticLayer} ${nicheLayer} ${bodyLayerVoice} editorial female-gaze luxury aesthetic, cinematic lighting, subtle film grain, realistic textures, warm amber tones, atmospheric depth, no faces, no full bodies, hands only when naturally holding an object, vertical 9:16 framing, social-media-ready, photorealistic, high resolution`;
         } else {
@@ -1547,8 +1547,8 @@ Return JSON with:
 
       const quietWealthCopyPrompt = `You are writing copy for the Quiet Wealth scene. The image shows a private morning: espresso, white peony, linen, morning light. No performance. No announcement. Just the texture of a life that is already full.
 
-Creator's frequency: "${archetype.replace(/_/g, " ")}" — ${ARCHETYPE_DESCRIPTIONS[archetype as Archetype] || ""}
-Current energy: "${mood}" — ${MOOD_DESCRIPTIONS[mood as Mood] || ""}
+Creator's frequency: "${archetype.replace(/_/g, " ")}" - ${ARCHETYPE_DESCRIPTIONS[archetype as Archetype] || ""}
+Current energy: "${mood}" - ${MOOD_DESCRIPTIONS[mood as Mood] || ""}
 Voice calibration: ${archetypeVoice}${nicheContext}
 
 Write exactly 3 hooks for text overlay on this image.
@@ -1663,7 +1663,7 @@ Respond in this exact JSON format:
       const archetype = profile?.archetype ?? "luxury_minimal";
       const mood = profile?.mood ?? "soft";
 
-      // Locked Signature Scene image prompt — hand-crafted for maximum impact
+      // Locked Signature Scene image prompt - hand-crafted for maximum impact
       const aestheticLayer = profile?.aesthetic_descriptors
         ? `calibrated to this specific aesthetic: ${profile.aesthetic_descriptors},`
         : "warm honey deep brown skin tones where hands are visible, layered gold jewelry,";
@@ -1679,10 +1679,10 @@ Respond in this exact JSON format:
         ? `\n\nCreator context: ${profile.niche ? `She creates content about ${profile.niche}.` : ""} ${profile.audience ? `She speaks to ${profile.audience}.` : ""}`
         : "";
 
-      const signatureCopyPrompt = `You are writing copy for the Signature Scene — a specific, curated moment that represents a woman who has said yes to everything aligned with her. The image shows her world: journal, champagne, passport, gold pen, silk. She has already decided. She is not waiting.
+      const signatureCopyPrompt = `You are writing copy for the Signature Scene - a specific, curated moment that represents a woman who has said yes to everything aligned with her. The image shows her world: journal, champagne, passport, gold pen, silk. She has already decided. She is not waiting.
 
-Creator's frequency: "${archetype.replace(/_/g, " ")}" — ${ARCHETYPE_DESCRIPTIONS[archetype as Archetype] || ""}
-Current energy: "${mood}" — ${MOOD_DESCRIPTIONS[mood as Mood] || ""}
+Creator's frequency: "${archetype.replace(/_/g, " ")}" - ${ARCHETYPE_DESCRIPTIONS[archetype as Archetype] || ""}
+Current energy: "${mood}" - ${MOOD_DESCRIPTIONS[mood as Mood] || ""}
 Voice calibration: ${archetypeVoice}${nicheContext}
 
 Write exactly 3 hooks for text overlay on this image.

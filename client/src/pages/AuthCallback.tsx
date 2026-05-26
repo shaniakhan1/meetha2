@@ -82,7 +82,7 @@ export default function AuthCallback() {
         return;
       }
 
-      // Redirect to home — the app will route to onboarding or dashboard
+      // Redirect to home - the app will route to onboarding or dashboard
       navigate("/");
     };
 

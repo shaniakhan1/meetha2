@@ -1,5 +1,5 @@
 /**
- * Supabase server-side client (service role — full access, bypasses RLS)
+ * Supabase server-side client (service role - full access, bypasses RLS)
  * Use this for all server-side DB operations.
  */
 import { createClient } from "@supabase/supabase-js";

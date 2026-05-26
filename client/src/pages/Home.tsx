@@ -6,7 +6,7 @@ import { useAuth } from "@/_core/hooks/useAuth";
 const WHAT_YOU_LEARN = [
   {
     label: "Your color palette",
-    text: "The exact warm ivories, deep ambers, and metals that belong in your frame — and the cool tones that fight your skin.",
+    text: "The exact warm ivories, deep ambers, and metals that belong in your frame. The cool tones that fight your skin.",
   },
   {
     label: "Your jewelry direction",
@@ -18,7 +18,7 @@ const WHAT_YOU_LEARN = [
   },
   {
     label: "Your lighting brief",
-    text: "Late afternoon window. Hard directional. How to recreate the exact light in your generated images — at home, with your phone.",
+    text: "Late afternoon window. Hard directional. How to recreate the exact light in your generated images, at home, with your phone.",
   },
   {
     label: "Your fabric frequency",
@@ -104,7 +104,7 @@ export default function Home() {
           <div className="divider-editorial animate-fade-in opacity-0 delay-300" />
 
           <p className="font-sans font-light text-base text-charcoal-soft leading-relaxed mb-10 animate-fade-up opacity-0 delay-300">
-            Meetha learns your aesthetic and tells you what to wear, what jewelry to reach for, and how to light your next shoot. Then it generates cinematic images that look like you — in any scene.
+            Meetha learns your aesthetic and tells you what to wear, what jewelry to reach for, and how to light your next shoot. Then it generates cinematic images that look like you . in any scene.
           </p>
 
           <div className="flex flex-col items-center gap-4 animate-fade-up opacity-0 delay-400">
@@ -133,7 +133,7 @@ export default function Home() {
           </h2>
           <div className="divider-editorial" />
           <p className="font-sans font-light text-sm text-charcoal-soft leading-relaxed mt-4">
-            After every generation, Meetha tells you exactly what it chose and why — so you can recreate it in real life.
+            After every generation, Meetha tells you exactly what it chose and why, so you can recreate it in real life.
           </p>
         </div>
 
@@ -171,7 +171,7 @@ export default function Home() {
             {
               step: "01",
               title: "Upload your photos",
-              text: "Meetha trains a personal AI model on your face. Every image it creates will actually look like you — in any scene, any outfit, any lighting.",
+              text: "Meetha trains a personal AI model on your face. Every image it creates will actually look like you . in any scene, any outfit, any lighting.",
             },
             {
               step: "02",
@@ -233,7 +233,7 @@ export default function Home() {
               </p>
               <div className="space-y-2">
                 {[
-                  ["Palette", "Warm ivory, deep camel, amber gold — no cool tones"],
+                  ["Palette", "Warm ivory, deep camel, amber gold. No cool tones"],
                   ["Metals", "Warm yellow gold only. Stack it."],
                   ["Makeup", "Bold lip, strong brow, minimal eye. The mouth is your focal point."],
                   ["Lighting", "Late afternoon window, light source left or right. Never straight on."],
@@ -265,7 +265,7 @@ export default function Home() {
             </h2>
             <div className="divider-editorial" />
             <p className="font-sans font-light text-sm text-charcoal-soft leading-relaxed mt-4">
-              Tezza sells presets for your real photos. Meetha generates the life itself — and then tells you how to bring it into your real wardrobe, your real shoots, your real self.
+              Meetha generates the life itself. Then it tells you exactly how to bring it into your real wardrobe, your real shoots, your real self.
             </p>
           </div>
 
@@ -347,7 +347,7 @@ export default function Home() {
               <ul className="space-y-2">
                 {[
                   "30 generations per month",
-                  "Full styling brief — saved to your profile",
+                  "Full styling brief, saved to your profile",
                   "Hook + caption generation",
                   "Download without watermark",
                   "Retrain anytime for $19",
@@ -368,7 +368,7 @@ export default function Home() {
               <ul className="space-y-2">
                 {[
                   "75 generations per month",
-                  "Full styling brief — saved to your profile",
+                  "Full styling brief, saved to your profile",
                   "Hook + caption generation",
                   "Download without watermark",
                   "Retrain anytime for $19",
@@ -390,7 +390,7 @@ export default function Home() {
               rel="noopener noreferrer"
               className="btn-luxury btn-gold w-full text-center block"
             >
-              Start with Starter — $19 / mo
+              Start with Starter ($19) / mo
             </a>
             <a
               href={import.meta.env.VITE_STRIPE_PRO_LINK}
@@ -399,7 +399,7 @@ export default function Home() {
               className="btn-luxury btn-luxury-outline w-full text-center block"
               style={{ color: "oklch(97% 0.012 80)", borderColor: "oklch(88% 0.025 70 / 0.4)" }}
             >
-              Go Pro — $39 / mo
+              Go Pro ($39) / mo
             </a>
             <button
               onClick={handleCTA}

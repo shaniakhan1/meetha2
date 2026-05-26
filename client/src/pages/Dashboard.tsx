@@ -184,7 +184,7 @@ export default function Dashboard() {
   return (
     <div className="min-h-screen bg-cream flex flex-col">
 
-      {/* HERO — full-bleed image with name overlay */}
+      {/* HERO - full-bleed image with name overlay */}
       <div className="relative w-full flex-shrink-0" style={{ height: "52vw", maxHeight: "340px", minHeight: "220px" }}>
         {heroGen ? (
           <img
@@ -243,7 +243,7 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Slim status banners — no boxes */}
+      {/* Slim status banners - no boxes */}
       {profile?.lora_status === "training" && (
         <div className="flex items-center gap-3 px-5 py-3 border-b border-gold/20 bg-gold/5">
           <span className="w-3 h-3 border border-gold border-t-transparent rounded-full animate-spin flex-shrink-0" />
@@ -287,7 +287,7 @@ export default function Dashboard() {
           </div>
         )}
 
-        {/* TEMPLATES — horizontal visual scroll */}
+        {/* TEMPLATES - horizontal visual scroll */}
         <div className="mb-10">
           <div className="flex items-center justify-between mb-4">
             <p className="font-serif text-xl text-charcoal">Templates</p>
@@ -330,7 +330,7 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* REFERRAL — minimal */}
+        {/* REFERRAL - minimal */}
         <div className="mb-10 py-5 border-t border-b border-sand/40">
           <p className="font-serif text-xl text-charcoal mb-1">Invite a friend</p>
           <p className="font-sans font-light text-sm text-charcoal-soft mb-4">

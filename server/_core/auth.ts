@@ -1,5 +1,5 @@
 /**
- * Meetha Auth — powered by Supabase Auth.
+ * Meetha Auth - powered by Supabase Auth.
  * Replaces Manus OAuth entirely.
  *
  * Flow:

@@ -1,7 +1,7 @@
 /**
  * Image generation using Fal.ai FLUX 1.1 Pro Ultra
  * Produces cinematic, editorial-quality lifestyle images.
- * Text-to-image only — no face generation, no subject anchoring.
+ * Text-to-image only - no face generation, no subject anchoring.
  */
 import { fal } from "@fal-ai/client";
 import { ENV } from "./env";
@@ -48,7 +48,7 @@ export async function generateImageFal(options: FalImageOptions): Promise<FalIma
   };
   const aspectRatio = SIZE_TO_ASPECT[options.imageSize ?? "portrait_4_3"] ?? "3:4";
 
-  // FLUX Pro 1.1 Ultra — best photorealism available via Fal.ai
+  // FLUX Pro 1.1 Ultra - best photorealism available via Fal.ai
   const result = (await fal.subscribe("fal-ai/flux-pro/v1.1-ultra", {
     input: {
       prompt: options.prompt,

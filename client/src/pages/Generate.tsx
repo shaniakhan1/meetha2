@@ -16,7 +16,7 @@ import { getPreviewTier } from "./Preview";
 
 type GenStep = "select" | "template_preview" | "recording" | "transcribing" | "generating" | "hooks" | "preview";
 
-// Credit costs — keep in sync with server/routers.ts
+// Credit costs - keep in sync with server/routers.ts
 const STILL_COST = 1;
 
 interface GenerationResult {
@@ -272,14 +272,14 @@ export default function Generate() {
               : selectedHook ?? "";
             if (captionText) {
               await copyTextToClipboard(captionText);
-              toast.success("Caption copied — paste it in your post.", { duration: 4000 });
+              toast.success("Caption copied . paste it in your post.", { duration: 4000 });
             }
             // Small delay so toast is visible before share sheet covers the screen
             await new Promise((r) => setTimeout(r, 400));
             await navigator.share({
               files: [file],
               title: "Meetha styled me",
-              // Do NOT pass text with files — Android Chrome tries to JSON-parse it
+              // Do NOT pass text with files - Android Chrome tries to JSON-parse it
             });
             // After share, navigate to dashboard
             setTimeout(() => navigate("/dashboard"), 800);
@@ -591,7 +591,7 @@ export default function Generate() {
         <span className="font-serif text-lg tracking-widest text-charcoal">MEETHA</span>
         <div className="text-right">
           <p className="font-sans text-xs text-gold">
-            {effectiveCredits?.credits_remaining ?? "—"} left
+            {effectiveCredits?.credits_remaining ?? "."} left
           </p>
           {effectiveCredits?.tier === "free" && (
             <p className="font-sans text-[10px] text-charcoal-soft/50 tracking-wide">
@@ -749,7 +749,7 @@ export default function Generate() {
       {/* ── Step: Select ── */}
       {step === "select" && (
         <div className="flex-1 flex flex-col px-6 py-8 animate-fade-up opacity-0">
-          {/* Profile identity — headline, not a box */}
+          {/* Profile identity - headline, not a box */}
           {profile && (
             <div className="mb-8">
               <p className="font-sans text-xs tracking-[0.18em] uppercase text-gold mb-2">Creating as</p>
@@ -764,7 +764,7 @@ export default function Generate() {
 
 
 
-          {/* ── Quick Generate — one tap, zero decisions ── */}
+          {/* ── Quick Generate - one tap, zero decisions ── */}
           {effectiveCredits && effectiveCredits.credits_remaining > 0 && (
             <div className="mb-6">
               <button
@@ -798,7 +798,7 @@ export default function Generate() {
           {showCustomize && (
           <div className="animate-fade-up opacity-0">
 
-          {/* Signature Scene — featured viral template, free once */}
+          {/* Signature Scene - featured viral template, free once */}
           {!signatureSceneStatusQuery.data?.used && (
             <div className="mb-6 relative overflow-hidden border border-gold/60 bg-gradient-to-br from-warm-white to-gold/5">
               <div className="absolute top-0 right-0 w-32 h-32 bg-gold/5 rounded-full -translate-y-1/2 translate-x-1/2" />
@@ -838,7 +838,7 @@ export default function Generate() {
             </div>
           )}
 
-          {/* Signature Scene 2: Quiet Wealth — free once */}
+          {/* Signature Scene 2: Quiet Wealth - free once */}
           {!signatureSceneTwoStatusQuery.data?.used && (
             <div className="mb-6 relative overflow-hidden border border-sand/80 bg-gradient-to-br from-warm-white to-sand/10">
               <div className="absolute top-0 right-0 w-32 h-32 bg-sand/10 rounded-full -translate-y-1/2 translate-x-1/2" />
@@ -907,7 +907,7 @@ export default function Generate() {
             <div className="flex-1 h-px bg-sand/40" />
           </div>
 
-          {/* Format — platform selector */}
+          {/* Format - platform selector */}
           <div className="mb-8">
             <p className="font-sans text-sm font-semibold text-charcoal mb-4">
               Format
@@ -1010,7 +1010,7 @@ export default function Generate() {
               onClick={handleVoiceStop}
               className="btn-luxury w-full"
             >
-              Done — Build My Content
+              Done . Build My Content
             </button>
             <button
               onClick={() => {
@@ -1098,7 +1098,7 @@ export default function Generate() {
             </p>
           </div>
 
-          {/* Thumbnail preview — shows hook overlay as user hovers/selects */}
+          {/* Thumbnail preview - shows hook overlay as user hovers/selects */}
           <div className="mb-6">
             <CinematicPreview
               imageUrl={result.generation.image_url as string}
@@ -1292,7 +1292,7 @@ export default function Generate() {
 
           {/* Actions */}
           <div className="space-y-3">
-            {/* Hook copy strip — always visible on mobile when hook is selected */}
+            {/* Hook copy strip - always visible on mobile when hook is selected */}
             {selectedHook && (
               <div className="w-full p-4 bg-[#2C1810] text-cream flex items-center justify-between gap-3">
                 <div className="flex-1 min-w-0">
@@ -1303,7 +1303,7 @@ export default function Generate() {
                   onClick={async () => {
                     const ok = await copyTextToClipboard(selectedHook);
                     if (ok) {
-                      toast.success("Hook copied — paste it as your caption.");
+                      toast.success("Hook copied. Paste it as your caption.");
                     } else {
                       toast.info(selectedHook, { duration: 8000 });
                     }
@@ -1338,7 +1338,7 @@ export default function Generate() {
               onClick={() => navigate("/dashboard")}
               className="w-full py-3 font-sans text-xs tracking-widest uppercase text-charcoal-soft/60 hover:text-charcoal-soft transition-colors"
             >
-              Done — Back to Dashboard
+              Done. Back to Dashboard
             </button>
           </div>
         </div>

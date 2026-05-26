@@ -1,6 +1,6 @@
 /**
  * Meetha Stripe product and price IDs.
- * All IDs are live-mode values — Stripe sandbox uses the same IDs.
+ * All IDs are live-mode values - Stripe sandbox uses the same IDs.
  */
 
 export const STRIPE_PRODUCTS = {

@@ -80,7 +80,7 @@ export default function Onboarding() {
       (f) => f.type.startsWith("image/") || /\.(heic|heif|jpg|jpeg|png|webp|gif|bmp)$/i.test(f.name)
     );
     if (valid.length < incoming.length) {
-      toast.error("Some files were skipped — please use photos from your camera roll.");
+      toast.error("Some files were skipped. Please use photos from your camera roll.");
     }
     const newFiles = [...loraFiles, ...valid].slice(0, 20);
     setLoraFiles(newFiles);
@@ -114,7 +114,7 @@ export default function Onboarding() {
           const err = await res.json().catch(() => ({ error: "Upload failed" }));
           toast.error(err.error || "Upload failed. You can try again from your profile.");
         } else {
-          toast.success("Photos uploaded! Training starts in the background — about 20 minutes.");
+          toast.success("Photos uploaded! Training starts in the background, about 20 minutes.");
         }
       } catch {
         toast.error("Upload failed. You can train your look from your profile anytime.");
@@ -139,7 +139,7 @@ export default function Onboarding() {
       {/* Header */}
       <div className="flex items-center justify-between px-6 py-5 border-b border-sand/30">
         <span className="font-serif text-xl tracking-[0.15em] text-charcoal">MEETHA</span>
-        {/* Progress dots — only show for the 3 main steps */}
+        {/* Progress dots - only show for the 3 main steps */}
         {step !== "complete" && (
           <div className="flex items-center gap-2">
             {STEPS.map((s, i) => (
@@ -256,7 +256,7 @@ export default function Onboarding() {
               How do you<br />carry yourself?
             </h1>
             <p className="font-sans text-sm text-charcoal-soft leading-relaxed">
-              Meetha uses this to shape the body proportions in your images — so they feel like you, not a generic silhouette.
+              Meetha uses this to shape the body proportions in your images, so they feel like you, not a generic silhouette.
             </p>
           </div>
 
@@ -309,22 +309,22 @@ export default function Onboarding() {
         <div className="flex-1 flex flex-col px-5 py-8 animate-fade-up opacity-0 overflow-y-auto">
           <div className="mb-6">
             <p className="font-sans text-xs tracking-[0.25em] uppercase text-gold mb-3">
-              Step 4 of 4 — Optional
+              Step 4 of 4 (Optional)
             </p>
             <h1 className="font-serif text-4xl font-light text-charcoal leading-tight mb-3">
               Make images<br />look like you.
             </h1>
             <p className="font-sans text-sm text-charcoal-soft leading-relaxed">
-              Upload 10–20 selfies and Meetha trains a personal AI model on your face. Every image it creates will actually look like you — in any scene, any outfit.
+              Upload 10–20 selfies and Meetha trains a personal AI model on your face. Every image it creates will actually look like you . in any scene, any outfit.
             </p>
           </div>
 
-          {/* Skip — prominent at top */}
+          {/* Skip - prominent at top */}
           <button
             onClick={() => setStep("complete")}
             className="w-full py-3.5 mb-5 border-2 border-sand font-sans text-sm text-charcoal-soft hover:border-charcoal/30 hover:text-charcoal transition-all duration-200"
           >
-            Skip for now — I'll do this later from my profile
+            Skip for now. I'll do this later from my profile
           </button>
 
           {/* What works */}
@@ -332,11 +332,11 @@ export default function Onboarding() {
             <p className="font-sans text-xs font-semibold tracking-[0.12em] uppercase mb-3">What works best</p>
             <ul className="space-y-2">
               {[
-                "Solo photos only — no group shots",
-                "Face clearly visible — no sunglasses, hats, or heavy filters",
-                "Good lighting — natural or well-lit indoor shots",
-                "Variety — different angles, outfits, and settings",
-                "Recent photos — taken in the last year or two",
+                "Solo photos only. No group shots",
+                "Face clearly visible. No sunglasses, hats, or heavy filters",
+                "Good lighting. Natural or well-lit indoor shots",
+                "Variety. Different angles, outfits, and settings",
+                "Recent photos. Taken in the last year or two",
               ].map((tip) => (
                 <li key={tip} className="flex items-start gap-2 font-sans text-xs text-cream/80 leading-relaxed">
                   <span className="text-gold mt-0.5 flex-shrink-0">✓</span>
@@ -383,7 +383,7 @@ export default function Onboarding() {
             </label>
           </div>
 
-          {/* Photo grid — only after consent */}
+          {/* Photo grid - only after consent */}
           {loraConsent && (
             <>
               <div className="grid grid-cols-4 gap-2 mb-3">
