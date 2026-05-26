@@ -29,9 +29,19 @@ type GenerationItem = {
 
 const PAGE_SIZE = 20;
 
+const TEMPLATE_CARDS = [
+  { slug: "paparazzi_flash", title: "Caught Looking Expensive", image: "/manus-storage/template-paparazzi-flash_24688a24.jpg" },
+  { slug: "digital_diary", title: "Digital Diary", image: "/manus-storage/template-digital-diary_11ffb1d8.jpg" },
+  { slug: "bill_please", title: "Bill, Please", image: "/manus-storage/template-bill-please_7eacca04.jpg" },
+  { slug: "silk_robe_room_service", title: "Silk Robe Room Service", image: "/manus-storage/template-silk-robe_705e049a.jpg" },
+  { slug: "irish_goodbye", title: "Irish Goodbye Theory", image: "https://d2xsxph8kpxj0f.cloudfront.net/310519663380647277/W9hp3oxSnRYx5WHCSun39U/template-irish-goodbye-ktzNEA3LBpMXoScC2CgPoj.webp" },
+  { slug: "cleopatra_principle", title: "Cleopatra Principle", image: "https://d2xsxph8kpxj0f.cloudfront.net/310519663380647277/W9hp3oxSnRYx5WHCSun39U/template-cleopatra-RNkWpwxV5GeWZwStmYqiQx.webp" },
+  { slug: "silk_robe_retaliation", title: "Silk Robe Retaliation", image: "https://d2xsxph8kpxj0f.cloudfront.net/310519663380647277/W9hp3oxSnRYx5WHCSun39U/template-silk-robe-retaliation-MJXwGjfHhTjt3ENoPKdG8s.webp" },
+];
+
 export default function Dashboard() {
   const [, navigate] = useLocation();
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [referralCopied, setReferralCopied] = useState(false);
   const [offset, setOffset] = useState(0);
@@ -48,7 +58,6 @@ export default function Dashboard() {
   const generationsPage = generationsQuery.data;
   const referral = referralQuery.data;
 
-  // Accumulate pages as user loads more
   useEffect(() => {
     if (generationsPage?.items) {
       if (offset === 0) {
@@ -80,16 +89,13 @@ export default function Dashboard() {
   const handleCopyReferral = async () => {
     if (!referralUrl) return;
     try {
-      // Modern clipboard API (requires secure context + user gesture)
       if (navigator.clipboard && window.isSecureContext) {
         await navigator.clipboard.writeText(referralUrl);
       } else {
-        // Fallback for mobile Safari and older browsers
         const textArea = document.createElement("textarea");
         textArea.value = referralUrl;
         textArea.style.position = "fixed";
         textArea.style.left = "-9999px";
-        textArea.style.top = "-9999px";
         document.body.appendChild(textArea);
         textArea.focus();
         textArea.select();
@@ -100,7 +106,6 @@ export default function Dashboard() {
       toast.success("Referral link copied.");
       setTimeout(() => setReferralCopied(false), 2000);
     } catch {
-      // Last resort: show the URL in a toast so user can copy manually
       toast.info("Copy this link: " + referralUrl, { duration: 8000 });
     }
   };
@@ -112,27 +117,18 @@ export default function Dashboard() {
       const response = await fetch(`/api/download/${id}`, { credentials: "include" });
       if (!response.ok) throw new Error(`Download failed: ${response.status}`);
       const blob = await response.blob();
-
-      // Mobile: use native share sheet (saves to camera roll, opens Instagram, etc.)
       const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
       if (isMobile && navigator.canShare) {
         const file = new File([blob], `meetha-${id}.jpg`, { type: "image/jpeg" });
         if (navigator.canShare({ files: [file] })) {
           try {
-            await navigator.share({
-              files: [file],
-              title: "Meetha",
-              text: hook ?? "Created with Meetha",
-            });
+            await navigator.share({ files: [file], title: "Meetha", text: hook ?? "Created with Meetha" });
             return;
           } catch (shareErr: unknown) {
-            // User cancelled share — not an error
             if (shareErr instanceof Error && shareErr.name === "AbortError") return;
           }
         }
       }
-
-      // Desktop fallback: anchor download
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
@@ -148,186 +144,184 @@ export default function Dashboard() {
     }
   };
 
+  const heroGen = allGenerations[0] ?? null;
+  const firstName = user?.name?.split(" ")[0] ?? "Your Studio";
+
   return (
     <div className="min-h-screen bg-cream flex flex-col">
-      {/* Header */}
-      <div className="flex items-center justify-between px-6 py-5 border-b border-sand/40">
-        <span className="font-serif text-lg tracking-widest text-charcoal">MEETHA</span>
-        <div className="flex items-center gap-4">
+
+      {/* HERO — full-bleed image with name overlay */}
+      <div className="relative w-full flex-shrink-0" style={{ height: "52vw", maxHeight: "340px", minHeight: "220px" }}>
+        {heroGen ? (
+          <img
+            src={heroGen.image_url}
+            alt="Your latest creation"
+            className="absolute inset-0 w-full h-full object-cover"
+            style={{ objectPosition: "center top" }}
+          />
+        ) : (
+          <div
+            className="absolute inset-0"
+            style={{ background: "linear-gradient(135deg, #2C1810 0%, #1a0f09 60%, #3a2015 100%)" }}
+          />
+        )}
+        {/* Gradient overlay */}
+        <div
+          className="absolute inset-0"
+          style={{ background: "linear-gradient(to bottom, rgba(0,0,0,0.18) 0%, rgba(26,15,9,0.75) 100%)" }}
+        />
+        {/* Top bar */}
+        <div className="absolute top-0 left-0 right-0 flex items-center justify-between px-5 pt-5">
+          <span className="font-serif text-base tracking-[0.2em] text-cream/90">MEETHA</span>
           <button
             onClick={() => navigate("/profile")}
-            className="font-sans text-xs tracking-widest uppercase text-charcoal-soft hover:text-charcoal transition-colors"
+            className="font-sans text-xs tracking-widest uppercase text-cream/70 hover:text-cream transition-colors min-h-[44px] flex items-center"
           >
             Profile
           </button>
         </div>
-      </div>
-
-      <div className="flex-1 px-6 py-8">
-        {/* Welcome + Identity */}
-        <div className="mb-8">
-          {user?.name && (
-            <p className="font-sans text-xs tracking-[0.15em] uppercase text-gold mb-2">
-              Welcome back
-            </p>
-          )}
-          <h2 className="font-serif font-light text-charcoal mb-1">
-            {user?.name?.split(" ")[0] ?? "Your Studio"}
-          </h2>
+        {/* Credits pill */}
+        {credits && (
+          <div className="absolute top-14 right-5">
+            <div className="bg-[#1a0f09]/70 backdrop-blur-sm px-3 py-1.5 flex items-center gap-2">
+              <div className="w-14 h-0.5 bg-cream/20 relative overflow-hidden">
+                <div
+                  className="absolute left-0 top-0 h-full bg-gold transition-all duration-700"
+                  style={{
+                    width: `${Math.min(100, ((credits.credits_remaining ?? 0) / (credits.tier === "pro" ? 75 : credits.tier === "starter" ? 30 : 3)) * 100)}%`,
+                  }}
+                />
+              </div>
+              <span className="font-sans text-xs text-cream/80 tabular-nums">{credits.credits_remaining} left</span>
+            </div>
+          </div>
+        )}
+        {/* Name + frequency */}
+        <div className="absolute bottom-0 left-0 right-0 px-5 pb-5">
+          <p className="font-sans text-xs tracking-[0.18em] uppercase text-gold/80 mb-1">Welcome back</p>
+          <h1 className="font-serif text-3xl font-light text-cream leading-tight mb-1">{firstName}</h1>
           {archetype && mood && (
-            <p className="font-sans font-light text-sm text-charcoal-soft">
-              {archetype} &middot; {mood}
-            </p>
+            <p className="font-sans font-light text-xs text-cream/60">{archetype} &middot; {mood}</p>
           )}
         </div>
+      </div>
 
-        {/* Credits bar */}
-        <div className="mb-8 p-4 border border-sand bg-warm-white/60">
-          <div className="flex items-center justify-between mb-3">
-            <p className="font-sans text-xs tracking-[0.1em] uppercase text-charcoal-soft">
-              Credits
-            </p>
-            <p className="font-serif text-sm text-charcoal">
-              {credits?.credits_remaining ?? "—"} remaining
-            </p>
-          </div>
-          <div className="w-full h-0.5 bg-sand">
-            <div
-              className="h-full bg-gold transition-all duration-500"
-              style={{
-                width: `${Math.min(
-                  100,
-                  ((credits?.credits_remaining ?? 0) /
-                    (credits?.tier === "pro" ? 75 : credits?.tier === "starter" ? 30 : 3)) *
-                    100
-                )}%`,
-              }}
-            />
-          </div>
-          {credits?.credits_remaining === 0 && (
+      {/* Slim status banners — no boxes */}
+      {profile?.lora_status === "training" && (
+        <div className="flex items-center gap-3 px-5 py-3 border-b border-gold/20 bg-gold/5">
+          <span className="w-3 h-3 border border-gold border-t-transparent rounded-full animate-spin flex-shrink-0" />
+          <p className="font-sans text-xs text-charcoal-soft">Your look is being learned. About 20 minutes. We will email you.</p>
+        </div>
+      )}
+      {profile && (!profile.lora_status || profile.lora_status === "failed") && (
+        <button
+          onClick={() => navigate("/profile")}
+          className="flex items-center justify-between px-5 py-3 border-b border-gold/20 bg-gold/5 w-full text-left hover:bg-gold/10 transition-colors min-h-[44px]"
+        >
+          <p className="font-sans text-xs text-charcoal-soft">
+            {profile.lora_status === "failed"
+              ? "Training did not complete. Tap to retry."
+              : "Make images look like you. Add your photos."}
+          </p>
+          <span className="font-sans text-xs text-gold ml-3 flex-shrink-0">Set up</span>
+        </button>
+      )}
+
+      <div className="flex-1 px-5 pt-6 pb-28">
+
+        {/* PRIMARY CTA */}
+        <button
+          onClick={() => navigate("/generate")}
+          disabled={credits?.credits_remaining === 0}
+          className="btn-luxury w-full mb-8 disabled:opacity-40 disabled:cursor-not-allowed"
+        >
+          Generate New Content
+        </button>
+        {credits?.credits_remaining === 0 && (
+          <div className="text-center -mt-6 mb-8">
             <a
               href={import.meta.env.VITE_STRIPE_STARTER_LINK || "#"}
               target="_blank"
               rel="noopener noreferrer"
-              className="block mt-3 font-sans text-xs text-gold hover:text-charcoal transition-colors tracking-wide"
+              className="font-sans text-xs text-gold hover:text-charcoal transition-colors tracking-wide"
             >
-              Upgrade for more generations
+              Get more generations
             </a>
-          )}
-        </div>
+          </div>
+        )}
 
-        {/* Train Your Look nudge -- shown when lora_status is null or failed */}
-        {(profile && !profile.lora_status || profile?.lora_status === "failed") && (
-          <div className="mb-6 p-4 border border-gold/30 bg-warm-white/60">
-            <p className="font-sans text-xs tracking-[0.1em] uppercase text-gold mb-1">
-              {profile?.lora_status === "failed" ? "Training Did Not Complete" : "Train Your Look"}
-            </p>
-            <p className="font-serif text-sm text-charcoal leading-snug mb-3">
-              {profile?.lora_status === "failed"
-                ? "Your model did not finish. Upload your photos again to retry."
-                : "Upload 6 photos and Meetha learns your face. Every generation looks like you."}
-            </p>
+        {/* TEMPLATES — horizontal visual scroll */}
+        <div className="mb-10">
+          <div className="flex items-center justify-between mb-4">
+            <p className="font-serif text-xl text-charcoal">Templates</p>
             <button
-              onClick={() => navigate("/profile")}
-              className="font-sans text-xs tracking-[0.15em] uppercase text-gold hover:text-charcoal transition-colors"
+              onClick={() => navigate("/templates")}
+              className="font-sans text-xs tracking-widest uppercase text-gold hover:text-charcoal transition-colors min-h-[44px] flex items-center"
             >
-              {profile?.lora_status === "failed" ? "Retry" : "Get started"}
+              See all
             </button>
           </div>
-        )}
-
-        {/* LoRA training status banner */}
-        {profile?.lora_status === "training" && (
-          <div className="mb-6 p-4 border border-gold/30 bg-warm-white/60 flex items-center gap-3">
-            <span className="w-4 h-4 border border-gold border-t-transparent rounded-full animate-spin flex-shrink-0" />
-            <div>
-              <p className="font-serif text-sm text-charcoal">
-                Your look is being learned.
-              </p>
-              <p className="font-sans text-xs text-charcoal-soft/70 mt-0.5">
-                This happens once. About 20 minutes. We will email you.
-              </p>
-            </div>
-          </div>
-        )}
-        {profile?.lora_status === "ready" && (
-          <div className="mb-6 p-4 border border-gold/30 bg-warm-white/60 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-2 h-2 rounded-full bg-gold flex-shrink-0" />
-              <p className="font-sans text-xs text-charcoal-soft">
-                Your personal look is active. Generations now look like you.
-              </p>
-            </div>
-          </div>
-        )}
-
-        {/* Generate CTA */}
-        <button
-          onClick={() => navigate("/generate")}
-          disabled={credits?.credits_remaining === 0}
-          className="btn-luxury w-full mb-6 disabled:opacity-40 disabled:cursor-not-allowed"
-        >
-          Generate New Content
-        </button>
-
-        {/* Template shortcut */}
-        <button
-          onClick={() => navigate("/templates")}
-          className="w-full mb-6 p-4 border border-[#2C1810]/30 bg-[#2C1810] text-cream text-left hover:bg-[#3a2015] transition-all duration-200 active:scale-[0.98]"
-        >
-          <p className="font-sans text-xs tracking-[0.15em] uppercase text-gold/70 mb-1">
-            7 Templates Available
-          </p>
-          <p className="font-serif text-base text-cream">
-            Caught Looking Expensive, Digital Diary, Bill Please, Irish Goodbye, Cleopatra Principle + more
-          </p>
-          <p className="font-sans font-light text-xs text-cream/50 mt-1">
-            Tap to browse all templates
-          </p>
-        </button>
-
-        {/* Referral card */}
-        <div className="mb-10 p-4 border border-sand/60 bg-warm-white/40">
-          <div className="flex items-start justify-between mb-2">
-            <div>
-              <p className="font-sans text-xs tracking-[0.1em] uppercase text-gold mb-1">
-                Invite a Friend
-              </p>
-              <p className="font-serif text-sm text-charcoal leading-snug">
-                Both of you get 3 free generations.
-              </p>
-            </div>
-            {referral && referral.completed > 0 && (
-              <div className="text-right">
-                <p className="font-sans text-xs text-charcoal-soft">
-                  {referral.completed} joined
+          <div
+            className="flex gap-3 overflow-x-auto -mx-5 px-5 pb-2"
+            style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+          >
+            {TEMPLATE_CARDS.map((t) => (
+              <button
+                key={t.slug}
+                onClick={() => navigate(`/generate?template=${t.slug}`)}
+                className="flex-shrink-0 relative overflow-hidden active:scale-[0.97] transition-transform duration-150"
+                style={{ width: "130px", height: "174px", borderRadius: "2px" }}
+              >
+                <img
+                  src={t.image}
+                  alt={t.title}
+                  className="absolute inset-0 w-full h-full object-cover"
+                  style={{ objectPosition: "center top" }}
+                />
+                <div
+                  className="absolute inset-0"
+                  style={{ background: "linear-gradient(to bottom, transparent 45%, rgba(26,15,9,0.88) 100%)" }}
+                />
+                <p
+                  className="absolute bottom-0 left-0 right-0 px-2 pb-2.5 font-serif text-cream leading-tight"
+                  style={{ fontSize: "0.68rem" }}
+                >
+                  {t.title}
                 </p>
-              </div>
-            )}
+              </button>
+            ))}
           </div>
-          <p className="font-sans font-light text-xs text-charcoal-soft mb-4 leading-relaxed">
-            Share your link. When a friend signs up using it, you each receive 3 extra generations — no strings attached.
+        </div>
+
+        {/* REFERRAL — minimal */}
+        <div className="mb-10 py-5 border-t border-b border-sand/40">
+          <p className="font-serif text-xl text-charcoal mb-1">Invite a friend</p>
+          <p className="font-sans font-light text-sm text-charcoal-soft mb-4">
+            Both of you get 3 free generations.
           </p>
           {referralUrl ? (
             <button
               onClick={handleCopyReferral}
-              className="w-full py-3 font-sans text-xs tracking-widest uppercase border transition-all duration-200 border-sand hover:border-gold/50 text-charcoal hover:text-charcoal bg-warm-white/60 hover:bg-warm-white"
+              className="font-sans text-xs tracking-widest uppercase text-gold hover:text-charcoal transition-colors min-h-[44px] flex items-center"
             >
-              {referralCopied ? "Link Copied" : "Copy Invite Link"}
+              {referralCopied ? "Link copied" : "Copy invite link"}
             </button>
           ) : (
-            <div className="w-full py-3 bg-sand/30 animate-pulse" />
+            <div className="w-24 h-3 bg-sand/40 animate-pulse" />
+          )}
+          {referral && referral.completed > 0 && (
+            <p className="font-sans text-xs text-charcoal-soft/60 mt-2">
+              {referral.completed} {referral.completed === 1 ? "friend" : "friends"} joined
+            </p>
           )}
         </div>
 
-        {/* History Grid */}
-        <div className="mb-4">
-          <p className="font-sans text-xs tracking-[0.15em] uppercase text-charcoal mb-1">
-            Your Creations
-          </p>
-          <p className="font-sans font-light text-xs text-charcoal-soft">
-            {totalGenerations} {totalGenerations === 1 ? "generation" : "generations"}
-          </p>
+        {/* HISTORY GRID */}
+        <div className="mb-5 flex items-baseline justify-between">
+          <p className="font-serif text-xl text-charcoal">Your Creations</p>
+          {totalGenerations > 0 && (
+            <p className="font-sans text-xs text-charcoal-soft/60">{totalGenerations}</p>
+          )}
         </div>
 
         {generationsQuery.isLoading && allGenerations.length === 0 ? (
@@ -337,30 +331,30 @@ export default function Dashboard() {
             ))}
           </div>
         ) : allGenerations.length === 0 ? (
-          <div className="py-16 text-center border border-sand bg-warm-white/40">
-            <p className="font-serif text-lg text-charcoal mb-2">Nothing yet.</p>
-            <p className="font-sans font-light text-xs text-charcoal-soft">
+          <div className="py-16 text-center">
+            <p className="font-serif text-2xl text-charcoal mb-2">Nothing yet.</p>
+            <p className="font-sans font-light text-sm text-charcoal-soft mb-6">
               Your first generation will appear here.
             </p>
+            <button onClick={() => navigate("/generate")} className="btn-luxury px-8">
+              Create your first
+            </button>
           </div>
         ) : (
           <>
             <div className="grid grid-cols-2 gap-3">
               {allGenerations.map((gen) => {
                 const hooks = (() => {
-                  try {
-                    return JSON.parse(gen.hooks) as string[];
-                  } catch {
-                    return [];
-                  }
+                  try { return JSON.parse(gen.hooks) as string[]; }
+                  catch { return []; }
                 })();
                 const isExpanded = expandedId === gen.id;
                 const isDownloading = downloadingId === gen.id;
-
                 return (
                   <div
                     key={gen.id}
                     className="relative overflow-hidden bg-[#1a0f09] cursor-pointer group"
+                    style={{ borderRadius: "2px" }}
                     onClick={() => setExpandedId(isExpanded ? null : gen.id)}
                   >
                     <div className="aspect-story">
@@ -370,38 +364,31 @@ export default function Dashboard() {
                         className="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity duration-300"
                         loading="lazy"
                       />
-                      {/* Hook overlay */}
-                      {gen.selected_hook && (
-                        <div className="absolute inset-0 flex items-end justify-center pb-4 px-3">
+                      {gen.selected_hook && !isExpanded && (
+                        <div className="absolute inset-0 flex items-end justify-center pb-4 px-3"
+                          style={{ background: "linear-gradient(to bottom, transparent 50%, rgba(26,15,9,0.7) 100%)" }}
+                        >
                           <p
                             className="font-serif text-cream text-center leading-tight"
-                            style={{
-                              fontSize: "clamp(0.65rem, 2.5vw, 0.85rem)",
-                              textShadow: "0 1px 8px rgba(0,0,0,0.5)",
-                            }}
+                            style={{ fontSize: "clamp(0.65rem, 2.5vw, 0.85rem)", textShadow: "0 1px 8px rgba(0,0,0,0.5)" }}
                           >
                             {gen.selected_hook}
                           </p>
                         </div>
                       )}
-                      {/* Platform badge */}
                       <div className="absolute top-2 left-2">
                         <span className="font-sans text-xs bg-[#1a0f09]/80 text-cream px-1.5 py-0.5 tracking-widest uppercase">
                           {PLATFORM_LABELS[gen.platform as keyof typeof PLATFORM_LABELS] ?? gen.platform}
                         </span>
                       </div>
                     </div>
-
-                    {/* Expanded overlay */}
                     {isExpanded && (
                       <div
                         className="absolute inset-0 bg-[#1a0f09]/92 flex flex-col items-center justify-center p-4 animate-fade-in opacity-0"
                         onClick={(e) => e.stopPropagation()}
                       >
                         <p className="font-sans text-xs tracking-widest uppercase text-gold mb-3">
-                          {gen.scene_category
-                            ? SCENE_LABELS[gen.scene_category as keyof typeof SCENE_LABELS]
-                            : ""}
+                          {gen.scene_category ? SCENE_LABELS[gen.scene_category as keyof typeof SCENE_LABELS] : ""}
                         </p>
                         <p className="font-serif text-sm text-cream text-center leading-snug mb-4">
                           {gen.selected_hook ?? hooks[0]}
@@ -410,10 +397,7 @@ export default function Dashboard() {
                           {gen.caption}
                         </p>
                         <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDownload(gen.id, gen.selected_hook);
-                          }}
+                          onClick={(e) => { e.stopPropagation(); handleDownload(gen.id, gen.selected_hook); }}
                           disabled={isDownloading}
                           className="font-sans text-xs tracking-widest uppercase text-cream border border-cream/40 px-6 py-3 hover:bg-cream/10 transition-colors active:scale-[0.97] disabled:opacity-50 min-h-[44px]"
                         >
@@ -425,8 +409,6 @@ export default function Dashboard() {
                 );
               })}
             </div>
-
-            {/* Load More */}
             {hasMore && (
               <div className="mt-6 text-center">
                 <button
@@ -434,7 +416,7 @@ export default function Dashboard() {
                   disabled={generationsQuery.isFetching}
                   className="font-sans text-xs tracking-widest uppercase text-charcoal-soft border border-sand px-8 py-3 hover:border-charcoal/40 hover:text-charcoal transition-all duration-200 disabled:opacity-40 min-h-[44px]"
                 >
-                  {generationsQuery.isFetching ? "Loading..." : `Load More (${totalGenerations - allGenerations.length} remaining)`}
+                  {generationsQuery.isFetching ? "Loading..." : `Load more (${totalGenerations - allGenerations.length} remaining)`}
                 </button>
               </div>
             )}
@@ -443,43 +425,23 @@ export default function Dashboard() {
       </div>
 
       {/* Bottom nav */}
-      <div className="sticky bottom-0 border-t border-sand/40 bg-cream/95 backdrop-blur-sm pb-safe">
+      <div className="fixed bottom-0 left-0 right-0 border-t border-sand/40 bg-cream/95 backdrop-blur-sm pb-safe z-10">
         <div className="flex items-center justify-around px-6 py-4">
-          <button
-            onClick={() => navigate("/dashboard")}
-            className="flex flex-col items-center gap-1"
-          >
+          <button onClick={() => navigate("/dashboard")} className="flex flex-col items-center gap-1 min-h-[44px] justify-center">
             <div className="w-1 h-1 rounded-full bg-charcoal" />
-            <p className="font-sans text-xs tracking-widest uppercase text-charcoal">
-              Home
-            </p>
+            <p className="font-sans text-xs tracking-widest uppercase text-charcoal">Home</p>
           </button>
-          <button
-            onClick={() => navigate("/generate")}
-            className="flex flex-col items-center gap-1"
-          >
+          <button onClick={() => navigate("/generate")} className="flex flex-col items-center gap-1 min-h-[44px] justify-center">
             <div className="w-1 h-1 rounded-full bg-sand-dark" />
-            <p className="font-sans text-xs tracking-widest uppercase text-charcoal-soft">
-              Create
-            </p>
+            <p className="font-sans text-xs tracking-widest uppercase text-charcoal-soft">Create</p>
           </button>
-          <button
-            onClick={() => navigate("/templates")}
-            className="flex flex-col items-center gap-1"
-          >
+          <button onClick={() => navigate("/templates")} className="flex flex-col items-center gap-1 min-h-[44px] justify-center">
             <div className="w-1 h-1 rounded-full bg-sand-dark" />
-            <p className="font-sans text-xs tracking-widest uppercase text-charcoal-soft">
-              Templates
-            </p>
+            <p className="font-sans text-xs tracking-widest uppercase text-charcoal-soft">Templates</p>
           </button>
-          <button
-            onClick={() => navigate("/profile")}
-            className="flex flex-col items-center gap-1"
-          >
+          <button onClick={() => navigate("/profile")} className="flex flex-col items-center gap-1 min-h-[44px] justify-center">
             <div className="w-1 h-1 rounded-full bg-sand-dark" />
-            <p className="font-sans text-xs tracking-widest uppercase text-charcoal-soft">
-              Profile
-            </p>
+            <p className="font-sans text-xs tracking-widest uppercase text-charcoal-soft">Profile</p>
           </button>
         </div>
       </div>

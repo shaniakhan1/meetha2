@@ -284,3 +284,16 @@
 - [x] Fix LoRA upload "string did not match expected pattern" error (HEIC support + client-side validation)
 - [x] Global: section headers upgraded from text-xs uppercase to text-sm font-semibold in Profile
 - [x] Global: CTAs remain btn-luxury (charcoal bg + cream text)
+
+## V28 -- Visual App Redesign (Premium, Image-Led)
+
+- [ ] Dashboard: full-bleed last generated image as hero (top 45% of screen), name + frequency overlaid in large serif
+- [ ] Dashboard: credits as small pill overlay on hero, not a bordered box
+- [ ] Dashboard: LoRA training status as slim banner, not a bordered card
+- [ ] Dashboard: "Generate New Content" button stays full-width dark, moves below hero
+- [ ] Dashboard: templates as horizontal visual scroll cards (image thumbnails), not a text list box
+- [ ] Dashboard: history grid stays but moves further down, no section label box
+- [ ] Generate screen: frequency/archetype displayed as large serif headline, not a thin bordered label box
+- [ ] Generate screen: scene cards become visual image tiles, not text-only options
+- [ ] Generate screen: remove all thin-bordered "form field" boxes -- replace with open layout
+- [ ] Global: reduce border-heavy box layout throughout -- use whitespace and typography hierarchy instead

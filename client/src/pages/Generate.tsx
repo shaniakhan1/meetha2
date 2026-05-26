@@ -801,19 +801,16 @@ export default function Generate() {
       {/* ── Step: Select ── */}
       {step === "select" && (
         <div className="flex-1 flex flex-col px-6 py-8 animate-fade-up opacity-0">
-          {/* Profile context */}
+          {/* Profile identity — headline, not a box */}
           {profile && (
-            <div className="flex items-center gap-3 mb-8 p-4 bg-warm-white border border-sand">
-              <div className="w-1 h-8 bg-gold flex-shrink-0" />
-              <div>
-                <p className="font-sans text-xs tracking-[0.1em] uppercase text-charcoal-soft">
-                  Creating as
-                </p>
-                <p className="font-serif text-sm text-charcoal">
-                  {ARCHETYPE_LABELS[profile.archetype as keyof typeof ARCHETYPE_LABELS] ?? profile.archetype} &middot;{" "}
-                  {MOOD_LABELS[profile.mood as keyof typeof MOOD_LABELS] ?? profile.mood}
-                </p>
-              </div>
+            <div className="mb-8">
+              <p className="font-sans text-xs tracking-[0.18em] uppercase text-gold mb-2">Creating as</p>
+              <h2 className="font-serif text-2xl text-charcoal leading-tight">
+                {ARCHETYPE_LABELS[profile.archetype as keyof typeof ARCHETYPE_LABELS] ?? profile.archetype}
+              </h2>
+              <p className="font-sans font-light text-sm text-charcoal-soft mt-1">
+                {MOOD_LABELS[profile.mood as keyof typeof MOOD_LABELS] ?? profile.mood}
+              </p>
             </div>
           )}
 
