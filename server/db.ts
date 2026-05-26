@@ -77,7 +77,7 @@ export async function upsertUser(data: {
   email?: string | null;
   loginMethod?: string | null;
   role?: "user" | "admin";
-}): Promise<DbUser | null> {
+}): Promise<{ user: DbUser | null; isNew: boolean }> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const sb = getSupabase() as any;
   const now = new Date().toISOString();
@@ -102,7 +102,7 @@ export async function upsertUser(data: {
       .eq("open_id", data.openId)
       .select()
       .single();
-    return (updated as DbUser) ?? null;
+    return { user: (updated as DbUser) ?? null, isNew: false };
   }
 
   const { data: inserted } = await sb
@@ -117,7 +117,7 @@ export async function upsertUser(data: {
     })
     .select()
     .single();
-  return (inserted as DbUser) ?? null;
+  return { user: (inserted as DbUser) ?? null, isNew: true };
 }
 
 export async function getUserByOpenId(openId: string): Promise<DbUser | null> {
@@ -127,6 +127,17 @@ export async function getUserByOpenId(openId: string): Promise<DbUser | null> {
     .from("users")
     .select("*")
     .eq("open_id", openId)
+    .single();
+  return (data as DbUser) ?? null;
+}
+
+export async function getUserById(userId: number): Promise<DbUser | null> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const sb = getSupabase() as any;
+  const { data } = await sb
+    .from("users")
+    .select("*")
+    .eq("id", userId)
     .single();
   return (data as DbUser) ?? null;
 }

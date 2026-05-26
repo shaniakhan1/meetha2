@@ -149,7 +149,7 @@ export async function handleSetSession(req: Request, res: Response) {
   }
 
   // Upsert user in our DB using Supabase auth UUID as open_id
-  const dbUser = await db.upsertUser({
+  const { user: dbUser, isNew } = await db.upsertUser({
     openId: supabaseUser.id,
     email: supabaseUser.email ?? null,
     name: supabaseUser.user_metadata?.full_name ?? supabaseUser.email?.split("@")[0] ?? null,
@@ -167,6 +167,14 @@ export async function handleSetSession(req: Request, res: Response) {
     } catch {
       // Non-fatal: referral completion failure should not block sign-in
     }
+  }
+
+  // Send welcome email for brand-new signups (non-blocking)
+  if (isNew && dbUser.email) {
+    const { sendWelcomeEmail } = await import("./email");
+    const baseUrl = ENV.isProduction ? "https://meetha.studio" : "http://localhost:3000";
+    sendWelcomeEmail({ to: dbUser.email, name: dbUser.name ?? null, generateUrl: `${baseUrl}/generate`, templatesUrl: `${baseUrl}/templates` })
+      .catch((err: unknown) => console.warn("[Auth] Welcome email failed (non-fatal):", err instanceof Error ? err.message : String(err)));
   }
 
   // Create our own JWT session cookie
@@ -211,7 +219,7 @@ export async function handlePreviewAuth(req: Request, res: Response) {
   const ownerOpenId = ENV.ownerOpenId || "preview-owner";
 
   // Upsert owner user
-  const dbUser = await db.upsertUser({
+  const { user: dbUser } = await db.upsertUser({
     openId: ownerOpenId,
     email: "preview@meetha.app",
     name: "Preview Owner",

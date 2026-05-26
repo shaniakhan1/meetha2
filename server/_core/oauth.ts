@@ -28,12 +28,20 @@ export function registerOAuthRoutes(app: Express) {
         return;
       }
 
-      await db.upsertUser({
+      const { user: oauthUser, isNew: isNewOauthUser } = await db.upsertUser({
         openId: userInfo.openId,
         name: userInfo.name || null,
         email: userInfo.email ?? null,
         loginMethod: userInfo.loginMethod ?? userInfo.platform ?? null,
       });
+      // Send welcome email for brand-new signups (non-blocking)
+      if (isNewOauthUser && oauthUser?.email) {
+        import("./email").then(({ sendWelcomeEmail }) => {
+          const baseUrl = process.env.NODE_ENV === "production" ? "https://meetha.studio" : "http://localhost:3000";
+          sendWelcomeEmail({ to: oauthUser.email!, name: oauthUser.name ?? null, generateUrl: `${baseUrl}/generate`, templatesUrl: `${baseUrl}/templates` })
+            .catch((err: unknown) => console.warn("[Auth] Welcome email failed (non-fatal):", err instanceof Error ? err.message : String(err)));
+        }).catch(() => { /* non-fatal */ });
+      }
 
       const sessionToken = await sdk.createSessionToken(userInfo.openId, {
         name: userInfo.name || "",

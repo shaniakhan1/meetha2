@@ -15,11 +15,17 @@
 
 import { Request, Response } from "express";
 import multer from "multer";
-import { getProfile, updateLoraProfile } from "./db";
+import { getProfile, updateLoraProfile, getUserById } from "./db";
 import { submitLoraTraining, pollLoraTraining } from "./_core/falLoraTraining";
 import { authenticateRequest } from "./_core/auth";
 import { invokeLLM } from "./_core/llm";
 import { storagePut } from "./storage";
+import { sendLoraReadyEmail, sendLoraFailedEmail } from "./_core/email";
+
+const BASE_URL =
+  process.env.NODE_ENV === "production"
+    ? "https://meetha.studio"
+    : "http://localhost:3000";
 
 /**
  * Analyze the first training photo with vision AI to extract physical descriptors.
@@ -166,12 +172,36 @@ export async function handleLoraStatus(req: Request, res: Response) {
           loraWeightsUrl: result.loraWeightsUrl,
           loraStatus: "ready",
         });
+        // Fire ready email immediately (non-blocking)
+        getUserById(userId).then(async (user) => {
+          if (user?.email) {
+            await sendLoraReadyEmail({
+              to: user.email,
+              name: user.name ?? null,
+              generateUrl: `${BASE_URL}/generate`,
+            }).catch((err) =>
+              console.warn("[LoRA] Ready email failed (non-fatal):", err instanceof Error ? err.message : String(err))
+            );
+          }
+        }).catch(() => { /* non-fatal */ });
         return res.json({ status: "ready", loraWeightsUrl: result.loraWeightsUrl });
       }
       // Still in progress
       return res.json({ status: "training" });
     } catch {
       await updateLoraProfile(userId, { loraStatus: "failed" });
+      // Fire failed email immediately (non-blocking)
+      getUserById(userId).then(async (user) => {
+        if (user?.email) {
+          await sendLoraFailedEmail({
+            to: user.email,
+            name: user.name ?? null,
+            retryUrl: `${BASE_URL}/profile`,
+          }).catch((err) =>
+            console.warn("[LoRA] Failed email send error (non-fatal):", err instanceof Error ? err.message : String(err))
+          );
+        }
+      }).catch(() => { /* non-fatal */ });
       return res.json({ status: "failed" });
     }
   } catch (err) {
