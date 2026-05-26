@@ -36,6 +36,7 @@ const FEATURES = {
   ],
   starter: [
     "10 generations per month",
+    "Your Visual Transformation Card (after 2nd generation)",
     "Personal styling brief, saved to your profile",
     "Hook and caption generation",
     "Download without watermark",
@@ -43,6 +44,7 @@ const FEATURES = {
   ],
   pro: [
     "25 generations per month",
+    "Your Visual Transformation Card (after 1st generation)",
     "Personal styling brief, saved to your profile",
     "Hook and caption generation",
     "Download without watermark",
@@ -370,23 +372,23 @@ export default function Home() {
       </section>
 
       {/* ── Transformation Card Sign-up Hook ── */}
-      <section className="py-16 px-6 bg-cream">
+      <section className="py-16 px-6 bg-charcoal">
         <div className="max-w-sm mx-auto">
           <div className="text-center mb-8">
             <p className="font-sans text-xs tracking-[0.2em] uppercase text-gold mb-4">
-              Included with every paid plan
+              You get this when you sign up
             </p>
-            <h2 className="font-serif font-light text-charcoal mb-3" style={{ lineHeight: 1.1 }}>
-              You get a card that shows<br />your exact transformation.
+            <h2 className="font-serif font-light text-cream mb-3" style={{ lineHeight: 1.1 }}>
+              Your personal<br />Transformation Card.
             </h2>
             <div className="divider-editorial" />
-            <p className="font-sans font-light text-sm text-charcoal-soft leading-relaxed mt-4">
-              When you sign up, Meetha creates a personalized card just for you. It shows your photo next to your AI-generated look — plus everything you need to recreate it in real life.
+            <p className="font-sans font-light text-sm text-cream/70 leading-relaxed mt-4">
+              It's simple: upload your photos, generate your first AI look, and Meetha makes you a card. Your real photo on the left. Your elevated look on the right. Plus your exact color palette, style direction, and makeup brief — so you can recreate it in real life.
             </p>
           </div>
 
           {/* Card preview mockup */}
-          <div className="border border-gold/30 bg-warm-white overflow-hidden mb-6">
+          <div className="border border-gold/30 bg-warm-white overflow-hidden mb-6" style={{boxShadow: '0 8px 40px rgba(0,0,0,0.4)'}}>
             {/* Mini before/after */}
             <div className="grid grid-cols-2 gap-0.5 bg-charcoal">
               <div className="relative">
@@ -441,7 +443,7 @@ export default function Home() {
                 <span className="w-7 h-7 rounded-full border border-gold/40 flex items-center justify-center font-sans text-xs text-gold flex-shrink-0">
                   {step.num}
                 </span>
-                <p className="font-sans text-sm text-charcoal-soft">{step.text}</p>
+                <p className="font-sans text-sm text-cream/80">{step.text}</p>
               </div>
             ))}
           </div>
@@ -449,8 +451,8 @@ export default function Home() {
           <button onClick={handleCTA} className="btn-luxury btn-gold w-full">
             Get my Transformation Card
           </button>
-          <p className="font-sans text-xs text-charcoal-soft/50 text-center mt-3">
-            Starter plan — unlocks after your 2nd generation &nbsp;·&nbsp; Pro plan — after your 1st
+          <p className="font-sans text-xs text-cream/40 text-center mt-3">
+            Free plan: 1 generation to try &nbsp;·&nbsp; Paid plan: get your card after your 2nd generation
           </p>
         </div>
       </section>
