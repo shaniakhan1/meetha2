@@ -725,9 +725,14 @@ function TransformationCardSection() {
   const cardUrl = profile?.transformation_card_url;
   const firstGeneration = generationsQuery.data?.items?.[0];
 
+  const cardRef = useRef<HTMLDivElement>(null);
   const generateCard = trpc.profile.generateTransformationCard.useMutation({
     onSuccess: () => {
-      utils.profile.get.invalidate();
+      utils.profile.get.invalidate().then(() => {
+        setTimeout(() => {
+          cardRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+        }, 400);
+      });
       toast.success("Your Transformation Card is ready!");
     },
     onError: (err) => toast.error(err.message),
@@ -752,7 +757,7 @@ function TransformationCardSection() {
   const hasEnoughGens = threshold !== null && genCount >= threshold;
 
   return (
-    <div>
+    <div ref={cardRef}>
       <p className="font-sans text-sm font-semibold text-charcoal mb-4">Your Visual Transformation Card</p>
 
       {tier === "free" ? (

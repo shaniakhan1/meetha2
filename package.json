@@ -5,7 +5,7 @@
   "license": "MIT",
   "scripts": {
     "dev": "NODE_ENV=development tsx watch server/_core/index.ts",
-    "build": "vite build && esbuild server/_core/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist && node -e \"const fs=require('fs');const path=require('path');const src=path.join('server','fonts');const dst=path.join('dist','fonts');if(fs.existsSync(src)){fs.mkdirSync(dst,{recursive:true});fs.readdirSync(src).forEach(f=>fs.copyFileSync(path.join(src,f),path.join(dst,f)));console.log('Fonts copied to dist/fonts/');}\"",
+    "build": "vite build && esbuild server/_core/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist && mkdir -p dist/fonts && cp server/fonts/* dist/fonts/ && echo 'Fonts copied to dist/fonts/'",
     "start": "NODE_ENV=production node dist/index.js",
     "check": "tsc --noEmit",
     "format": "prettier --write .",
