@@ -16,6 +16,9 @@ import { getUserById, updateLoraProfile } from "./db";
 import { sendLoraReadyEmail, sendLoraFailedEmail } from "./_core/email";
 
 // ─── Config ──────────────────────────────────────────────────────────────────
+// Configure Fal.ai credentials once at module load time
+fal.config({ credentials: ENV.falApiKey });
+
 const POLL_INTERVAL_MS = 60_000; // 60 seconds
 const MAX_POLL_DURATION_MS = 2 * 60 * 60 * 1000; // 2 hours max
 const FAL_MODEL = "fal-ai/flux-lora-fast-training";

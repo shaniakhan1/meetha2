@@ -688,11 +688,18 @@ export default function Profile() {
             ) : (
               <>
                 <p className="font-sans font-light text-xs text-charcoal-soft leading-relaxed">
-                  Upload 10-15 clear selfies. Meetha trains a personal AI model on your face. Every generation after that looks like a real photo of you, in any scene.
+                  Upload 10-15 selfies and Meetha trains a personal AI model on your face. Every generation after that looks like a real photo of you, in any scene.
                 </p>
-                <p className="font-sans text-xs text-charcoal-soft/60 leading-relaxed">
-                  Best results: natural light, different angles, no sunglasses. Training takes about 20 minutes.
-                </p>
+                <div className="p-3 border border-gold/30 bg-gold/5 space-y-1.5">
+                  <p className="font-sans text-xs font-medium text-charcoal">What works best:</p>
+                  <ul className="font-sans text-xs text-charcoal-soft leading-relaxed space-y-1">
+                    <li>Solo photos only. No group shots.</li>
+                    <li>Face clearly visible. No sunglasses, hats, or heavy filters.</li>
+                    <li>Good lighting. Natural light or well-lit indoor shots.</li>
+                    <li>A variety of angles and settings for variety.</li>
+                  </ul>
+                  <p className="font-sans text-xs text-charcoal-soft/60 pt-0.5">Training takes about 20 minutes.</p>
+                </div>
 
                 {/* Photo grid */}
                 <div className="grid grid-cols-4 gap-2">

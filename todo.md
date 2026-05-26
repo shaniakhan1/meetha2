@@ -248,3 +248,10 @@
 - [x] Copy watermark-font.ttf to server/ directory for bundling
 - [x] TypeScript: zero errors
 - [x] Vitest: 11 tests passing
+
+## V26 -- LoRA Poller Fix + Photo Upload Guidance
+
+- [x] Fix loraPoller.ts: add fal.config({ credentials }) at module load -- was causing Unauthorized errors on every poll
+- [x] Add lora_physical_descriptors column to Supabase profiles table (SQL migration run by user)
+- [x] Improve photo upload guidance: add clear do/don't list (solo photos only, no groups, clear face, good lighting, no heavy filters, no sunglasses, variety of angles)
+- [x] Run physical descriptor backfill for owner account (user 10)

@@ -573,10 +573,16 @@ export default function Onboarding() {
             <p className="font-sans font-light text-sm text-charcoal-soft leading-relaxed mb-4">
               Without this step, your images will be beautiful but they won't be you. Upload 10 to 15 selfies and Meetha trains a personal model on your face. Every image it generates will actually look like you.
             </p>
-            <div className="p-4 border border-gold/30 bg-gold/5 mb-2">
-              <p className="font-sans text-xs text-charcoal-soft leading-relaxed">
-                <span className="font-medium text-charcoal">What to upload:</span> Clear, well-lit selfies. Different angles. No heavy filters. No sunglasses. Training takes about 20 minutes in the background.
-              </p>
+            <div className="p-4 border border-gold/30 bg-gold/5 mb-2 space-y-2">
+              <p className="font-sans text-xs font-medium text-charcoal">What works best:</p>
+              <ul className="font-sans text-xs text-charcoal-soft leading-relaxed space-y-1">
+                <li>Solo photos only. No group shots.</li>
+                <li>Your face clearly visible. No sunglasses, hats, or heavy filters.</li>
+                <li>Good lighting. Natural light or well-lit indoor shots.</li>
+                <li>A variety of angles: front-facing, slight side, looking away.</li>
+                <li>Different outfits and settings for variety.</li>
+              </ul>
+              <p className="font-sans text-xs text-charcoal-soft/70 leading-relaxed pt-1">Training takes about 20 minutes in the background.</p>
             </div>
           </div>
 
