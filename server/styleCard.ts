@@ -13,11 +13,23 @@
  */
 import path from "path";
 import fs from "fs";
+import { fileURLToPath } from "url";
 import type { Request, Response } from "express";
 import sharp from "sharp";
 import { authenticateRequest } from "./_core/auth";
 import { getSupabase } from "./_core/supabase";
 import { storageGetSignedUrl } from "./storage";
+
+// ESM-safe __dirname: works in both tsx (dev) and esbuild ESM (production)
+// In ESM builds __dirname is undefined, so we derive it from import.meta.url
+const _thisDir = (() => {
+  try {
+    return path.dirname(fileURLToPath(import.meta.url));
+  } catch {
+    // CJS fallback
+    return typeof __dirname !== "undefined" ? __dirname : process.cwd();
+  }
+})();
 
 interface StylingBrief {
   color_palette?: string;
@@ -36,13 +48,13 @@ let _fontBoldB64: string | null = null;
 function getFontBase64(variant: "Regular" | "Bold"): string {
   if (variant === "Regular") {
     if (!_fontRegularB64) {
-      const p = path.join(__dirname, "fonts", "LiberationSans-Regular.ttf");
+      const p = path.join(_thisDir, "fonts", "LiberationSans-Regular.ttf");
       _fontRegularB64 = fs.readFileSync(p).toString("base64");
     }
     return _fontRegularB64;
   } else {
     if (!_fontBoldB64) {
-      const p = path.join(__dirname, "fonts", "LiberationSans-Bold.ttf");
+      const p = path.join(_thisDir, "fonts", "LiberationSans-Bold.ttf");
       _fontBoldB64 = fs.readFileSync(p).toString("base64");
     }
     return _fontBoldB64;
@@ -213,7 +225,7 @@ export async function handleStyleCard(req: Request, res: Response) {
     res.setHeader("Content-Type", "image/jpeg");
     res.setHeader(
       "Content-Disposition",
-      `attachment; filename="meetha-style-card-${generationId}.jpg"`
+      `inline; filename="meetha-style-card-${generationId}.jpg"`
     );
     return res.send(card);
   } catch (err) {
