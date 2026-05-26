@@ -6,18 +6,39 @@
  * - Starter / Pro: serves the original image unmodified
  */
 import type { Request, Response } from "express";
+import fs from "fs";
+import path from "path";
 import sharp from "sharp";
 import { authenticateRequest } from "./_core/auth";
 import { getSupabase } from "./_core/supabase";
 import { storageGetSignedUrl } from "./storage";
 
-// SVG watermark: diagonal "meetha" text repeated across the image.
-// librsvg (used by Sharp) does NOT support tspan x/dy or letter-spacing — they render as boxes.
-// We use plain <text> elements only, one per row, with text-anchor="middle" and a rotate transform.
+// Load the bundled font once at startup and encode as base64.
+// Cloud Run has no system fonts, so we must embed the font in the SVG.
+let _fontBase64: string | null = null;
+function getFontBase64(): string {
+  if (_fontBase64) return _fontBase64;
+  try {
+    const fontPath = path.join(__dirname, "watermark-font.ttf");
+    _fontBase64 = fs.readFileSync(fontPath).toString("base64");
+  } catch {
+    _fontBase64 = ""; // fallback: no font embed, may render as boxes on minimal containers
+  }
+  return _fontBase64;
+}
+
+// SVG watermark: diagonal "MEETHA" text repeated across the image.
+// Font is embedded as base64 so it works on Cloud Run with no system fonts installed.
 function buildWatermarkSvg(width: number, height: number): Buffer {
   const fontSize = Math.max(48, Math.round(width * 0.085));
   const cx = Math.round(width / 2);
   const cy = Math.round(height / 2);
+
+  const fontBase64 = getFontBase64();
+  const fontFaceBlock = fontBase64
+    ? `<defs><style>@font-face { font-family: 'WM'; src: url('data:font/truetype;base64,${fontBase64}'); font-weight: bold; }</style></defs>`
+    : "";
+  const fontFamily = fontBase64 ? "'WM', serif" : "serif";
 
   // Five rows of "MEETHA" spread across the full image height
   const rowOffsets = [
@@ -36,7 +57,7 @@ function buildWatermarkSvg(width: number, height: number): Buffer {
       `  y="${y}"`,
       `  text-anchor="middle"`,
       `  dominant-baseline="middle"`,
-      `  font-family="Georgia, serif"`,
+      `  font-family=${fontFamily}`,
       `  font-size="${fontSize}"`,
       `  font-weight="bold"`,
       `  fill="white"`,
@@ -49,6 +70,7 @@ function buildWatermarkSvg(width: number, height: number): Buffer {
 
   const svg = [
     `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}">`,
+    fontFaceBlock,
     textElements,
     `</svg>`,
   ].join("\n");

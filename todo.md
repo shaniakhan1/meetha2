@@ -241,3 +241,10 @@
 - [x] Increase LoRA scale from 0.85 to 1.0 for stronger identity adherence
 - [x] Backfill existing users with trained LoRA models via a one-time analysis endpoint
 - [x] Fix onboarding re-trigger bug for returning mobile users
+
+## V25 -- Watermark Font Fix (Cloud Run)
+
+- [x] Embed LiberationSerif-Bold font as base64 in SVG watermark so it renders on Cloud Run (no system fonts)
+- [x] Copy watermark-font.ttf to server/ directory for bundling
+- [x] TypeScript: zero errors
+- [x] Vitest: 11 tests passing
