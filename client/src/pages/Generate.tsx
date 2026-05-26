@@ -300,16 +300,28 @@ export default function Generate() {
         const file = new File([blob], `meetha-${result.generation.id}.jpg`, { type: "image/jpeg" });
         if (navigator.canShare({ files: [file] })) {
           try {
+            // Auto-copy caption + hashtags to clipboard BEFORE share sheet opens
+            // Instagram/TikTok strip the `text` field from file shares, so clipboard is the only way
+            const captionText = result.caption
+              ? `${result.caption}\n\n${result.hashtags?.map((h) => `#${h}`).join(" ") ?? ""}`
+              : selectedHook ?? "";
+            if (captionText) {
+              await copyTextToClipboard(captionText);
+              toast.success("Caption copied — paste it in your post.", { duration: 4000 });
+            }
+            // Small delay so toast is visible before share sheet covers the screen
+            await new Promise((r) => setTimeout(r, 400));
             await navigator.share({
               files: [file],
               title: "Meetha",
-              text: selectedHook ?? "Created with Meetha",
+              // Do NOT pass text with files — Android Chrome tries to JSON-parse it
             });
             // After share, move to feedback
             setTimeout(() => setStep("feedback"), 800);
             return;
           } catch (shareErr: unknown) {
             if (shareErr instanceof Error && shareErr.name === "AbortError") return;
+            // If share fails for any reason, fall through to anchor download
           }
         }
       }
@@ -330,12 +342,41 @@ export default function Generate() {
     }
   };
 
-  const handleCopyCaption = () => {
+  const copyTextToClipboard = async (text: string): Promise<boolean> => {
+    // Modern Clipboard API (requires secure context + user gesture)
+    if (navigator.clipboard && window.isSecureContext) {
+      try {
+        await navigator.clipboard.writeText(text);
+        return true;
+      } catch {
+        // fall through to execCommand
+      }
+    }
+    // Legacy fallback for mobile Safari / older Android Chrome
+    try {
+      const ta = document.createElement("textarea");
+      ta.value = text;
+      ta.style.cssText = "position:fixed;top:-9999px;left:-9999px;opacity:0";
+      document.body.appendChild(ta);
+      ta.focus();
+      ta.select();
+      const ok = document.execCommand("copy");
+      document.body.removeChild(ta);
+      return ok;
+    } catch {
+      return false;
+    }
+  };
+
+  const handleCopyCaption = async () => {
     const text = `${result?.caption}\n\n${result?.hashtags?.map((h) => `#${h}`).join(" ")}`;
-    navigator.clipboard.writeText(text).then(() => {
+    const ok = await copyTextToClipboard(text);
+    if (ok) {
       setCaptionCopied(true);
       setTimeout(() => setCaptionCopied(false), 2000);
-    });
+    } else {
+      toast.error("Could not copy. Please copy the caption manually.");
+    }
   };
 
   const handleFeedback = (response: "yes" | "maybe" | "no") => {
@@ -1370,22 +1411,10 @@ export default function Generate() {
                 </div>
                 <button
                   onClick={async () => {
-                    try {
-                      if (navigator.clipboard && window.isSecureContext) {
-                        await navigator.clipboard.writeText(selectedHook);
-                      } else {
-                        const ta = document.createElement("textarea");
-                        ta.value = selectedHook;
-                        ta.style.position = "fixed";
-                        ta.style.left = "-9999px";
-                        document.body.appendChild(ta);
-                        ta.focus();
-                        ta.select();
-                        document.execCommand("copy");
-                        document.body.removeChild(ta);
-                      }
+                    const ok = await copyTextToClipboard(selectedHook);
+                    if (ok) {
                       toast.success("Hook copied — paste it as your caption.");
-                    } catch {
+                    } else {
                       toast.info(selectedHook, { duration: 8000 });
                     }
                   }}
