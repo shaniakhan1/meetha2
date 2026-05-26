@@ -3,14 +3,16 @@
  *
  * Generates a shareable branded style card JPEG:
  * - The generation image fills the full card
- * - A subtle semi-transparent "MEETHA" SVG text overlay at the bottom-right (no box, no PNG)
+ * - A subtle "MEETHA" watermark overlay at the bottom-right
  * - Optional styling brief rows rendered below the image (passed as query params)
  * - Returned as image/jpeg for direct sharing / saving
  *
- * Font approach: uses LiberationSans which is guaranteed available on the server
- * (/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf).
- * This eliminates the tofu-box artifact caused by missing fonts in librsvg.
+ * Font approach: fonts are embedded as base64 data URIs in SVG @font-face rules.
+ * This guarantees text renders correctly on any server regardless of installed fonts.
+ * Font files live in server/fonts/ and are bundled with the deployment.
  */
+import path from "path";
+import fs from "fs";
 import type { Request, Response } from "express";
 import sharp from "sharp";
 import { authenticateRequest } from "./_core/auth";
@@ -24,6 +26,36 @@ interface StylingBrief {
   makeup?: string;
   lighting?: string;
   hair?: string;
+}
+
+// Load fonts once at module level and embed as base64 in SVG @font-face
+// This ensures text renders on production servers that may not have these fonts installed
+let _fontRegularB64: string | null = null;
+let _fontBoldB64: string | null = null;
+
+function getFontBase64(variant: "Regular" | "Bold"): string {
+  if (variant === "Regular") {
+    if (!_fontRegularB64) {
+      const p = path.join(__dirname, "fonts", "LiberationSans-Regular.ttf");
+      _fontRegularB64 = fs.readFileSync(p).toString("base64");
+    }
+    return _fontRegularB64;
+  } else {
+    if (!_fontBoldB64) {
+      const p = path.join(__dirname, "fonts", "LiberationSans-Bold.ttf");
+      _fontBoldB64 = fs.readFileSync(p).toString("base64");
+    }
+    return _fontBoldB64;
+  }
+}
+
+function fontFaceBlock(): string {
+  const regular = getFontBase64("Regular");
+  const bold = getFontBase64("Bold");
+  return `<defs><style>
+    @font-face { font-family: 'MeethaFont'; font-weight: normal; src: url('data:font/truetype;base64,${regular}'); }
+    @font-face { font-family: 'MeethaFont'; font-weight: bold; src: url('data:font/truetype;base64,${bold}'); }
+  </style></defs>`;
 }
 
 export async function handleStyleCard(req: Request, res: Response) {
@@ -82,16 +114,16 @@ export async function handleStyleCard(req: Request, res: Response) {
     const imgWidth = meta.width ?? 1080;
     const imgHeight = meta.height ?? 1350;
 
-    // --- Watermark: SVG text overlay (no PNG, no box) ---
-    // Uses LiberationSans which is always available on the server
+    // --- Watermark: embedded-font SVG text overlay ---
     const wmFontSize = Math.round(imgWidth * 0.028);
     const wmPad = Math.round(imgWidth * 0.04);
     const wmLetterSpacing = Math.round(imgWidth * 0.006);
     const wmSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="${imgWidth}" height="${imgHeight}">
+      ${fontFaceBlock()}
       <text
         x="${imgWidth - wmPad}"
         y="${imgHeight - wmPad}"
-        font-family="LiberationSans"
+        font-family="MeethaFont"
         font-size="${wmFontSize}"
         fill="white"
         opacity="0.30"
@@ -137,13 +169,14 @@ export async function handleStyleCard(req: Request, res: Response) {
               : "";
           return `
             ${line}
-            <text x="${padX}" y="${midY + labelFontSize * 0.35}" font-family="LiberationSans" font-size="${labelFontSize}" fill="#C8A96E" opacity="0.9" letter-spacing="2">${escSvg(r.label)}</text>
-            <text x="${padX + labelW}" y="${midY + fontSize * 0.35}" font-family="LiberationSans" font-size="${fontSize}" fill="#F5F0E8" opacity="0.95">${escSvg(truncate(r.value, 52))}</text>
+            <text x="${padX}" y="${midY + labelFontSize * 0.35}" font-family="MeethaFont" font-weight="bold" font-size="${labelFontSize}" fill="#C8A96E" opacity="0.9" letter-spacing="2">${escSvg(r.label)}</text>
+            <text x="${padX + labelW}" y="${midY + fontSize * 0.35}" font-family="MeethaFont" font-size="${fontSize}" fill="#F5F0E8" opacity="0.95">${escSvg(truncate(r.value, 52))}</text>
           `;
         })
         .join("");
 
       const panelSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="${imgWidth}" height="${briefPanelH}">
+        ${fontFaceBlock()}
         <rect width="${imgWidth}" height="${briefPanelH}" fill="#1A0F09"/>
         <line x1="${padX}" y1="0" x2="${imgWidth - padX}" y2="0" stroke="#C8A96E" stroke-width="0.8" opacity="0.4"/>
         ${rowsSvg}

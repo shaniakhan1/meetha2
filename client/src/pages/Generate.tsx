@@ -250,9 +250,8 @@ export default function Generate() {
     setStep("preview");
   };
 
-  const handleSaveStyleCard = () => {
+  const handleSaveStyleCard = async () => {
     if (!result?.generation?.id) return;
-    // Build URL with styling brief as query params
     const params = new URLSearchParams();
     if (aestheticRead) {
       if (aestheticRead.color_palette) params.set("color_palette", aestheticRead.color_palette);
@@ -263,17 +262,66 @@ export default function Generate() {
       if (aestheticRead.hair) params.set("hair", aestheticRead.hair);
     }
     const qs = params.toString() ? `?${params.toString()}` : "";
-    // Open style card in new tab - iOS: long-press image to Save to Photos
-    window.open(`/api/style-card/${result.generation.id}${qs}`, "_blank");
-    toast.success("Style card opened. Long-press the image to save.", { duration: 4000 });
+    try {
+      const response = await fetch(`/api/style-card/${result.generation.id}${qs}`, { credentials: "include" });
+      if (!response.ok) throw new Error(`Style card failed: ${response.status}`);
+      const blob = await response.blob();
+      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+      if (isMobile && navigator.canShare) {
+        const file = new File([blob], `meetha-style-card-${result.generation.id}.jpg`, { type: "image/jpeg" });
+        if (navigator.canShare({ files: [file] })) {
+          try {
+            await navigator.share({ files: [file], title: "Meetha styled me", text: selectedHook ?? "Meetha styled me" });
+            return;
+          } catch (shareErr: unknown) {
+            if (shareErr instanceof Error && shareErr.name === "AbortError") return;
+          }
+        }
+      }
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `meetha-style-card-${result.generation.id}.jpg`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch {
+      toast.error("Could not generate style card. Please try again.");
+    }
   };
 
-  const handleDownload = () => {
-    if (!result?.generation?.image_url) return;
-    // Open image in new tab - iOS Safari: long-press to Save to Photos
-    window.open(result.generation.image_url, "_blank");
-    toast.success("Image opened. Long-press to save to your Photos.", { duration: 4000 });
-    setTimeout(() => navigate("/dashboard"), 1500);
+  const handleDownload = async () => {
+    if (!result?.generation?.id) return;
+    try {
+      const response = await fetch(`/api/download/${result.generation.id}`, { credentials: "include" });
+      if (!response.ok) throw new Error(`Download failed: ${response.status}`);
+      const blob = await response.blob();
+      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+      if (isMobile && navigator.canShare) {
+        const file = new File([blob], `meetha-${result.generation.id}.jpg`, { type: "image/jpeg" });
+        if (navigator.canShare({ files: [file] })) {
+          try {
+            await navigator.share({ files: [file], title: "Meetha styled me", text: selectedHook ?? "Meetha styled me" });
+            navigate("/dashboard");
+            return;
+          } catch (shareErr: unknown) {
+            if (shareErr instanceof Error && shareErr.name === "AbortError") return;
+          }
+        }
+      }
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `meetha-${result.generation.id}.jpg`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      navigate("/dashboard");
+    } catch {
+      toast.error("Download failed. Please try again.");
+    }
   };
 
   const copyTextToClipboard = async (text: string): Promise<boolean> => {

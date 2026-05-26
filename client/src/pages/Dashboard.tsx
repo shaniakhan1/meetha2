@@ -147,16 +147,77 @@ export default function Dashboard() {
     }
   };
 
-  const handleDownload = (id: number, imageUrl: string) => {
-    // Open image in new tab - iOS Safari: long-press to Save to Photos
-    window.open(imageUrl, "_blank");
-    toast.success("Image opened. Long-press to save to your Photos.", { duration: 4000 });
+  const handleDownload = async (id: number, hook?: string | null) => {
+    if (downloadingId === id) return;
+    setDownloadingId(id);
+    try {
+      const response = await fetch(`/api/download/${id}`, { credentials: "include" });
+      if (!response.ok) throw new Error(`Download failed: ${response.status}`);
+      const blob = await response.blob();
+      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+      if (isMobile && navigator.canShare) {
+        const file = new File([blob], `meetha-${id}.jpg`, { type: "image/jpeg" });
+        if (navigator.canShare({ files: [file] })) {
+          try {
+            await navigator.share({ files: [file], title: "Meetha styled me", text: hook ?? "Meetha styled me" });
+            return;
+          } catch (shareErr: unknown) {
+            if (shareErr instanceof Error && shareErr.name === "AbortError") return;
+          }
+        }
+      }
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `meetha-${id}.jpg`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch {
+      toast.error("Download failed. Please try again.");
+    } finally {
+      setDownloadingId(null);
+    }
   };
 
-  const handleShareStyleCard = (id: number) => {
-    // Open style card in new tab - iOS Safari: long-press to Save to Photos
-    window.open(`/api/style-card/${id}`, "_blank");
-    toast.success("Style card opened. Long-press the image to save.", { duration: 4000 });
+  const handleShareStyleCard = async (id: number, hook?: string | null) => {
+    if (sharingCardId === id) return;
+    setSharingCardId(id);
+    try {
+      const response = await fetch(`/api/style-card/${id}`, { credentials: "include" });
+      if (!response.ok) throw new Error(`Style card failed: ${response.status}`);
+      const blob = await response.blob();
+      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+      if (isMobile && navigator.canShare) {
+        const file = new File([blob], `meetha-style-card-${id}.jpg`, { type: "image/jpeg" });
+        if (navigator.canShare({ files: [file] })) {
+          try {
+            await navigator.share({
+              files: [file],
+              title: "Meetha styled me",
+              text: hook ?? "Meetha styled me",
+            });
+            return;
+          } catch (shareErr: unknown) {
+            if (shareErr instanceof Error && shareErr.name === "AbortError") return;
+          }
+        }
+      }
+      // Desktop fallback: download the card
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `meetha-style-card-${id}.jpg`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch {
+      toast.error("Could not generate style card. Please try again.");
+    } finally {
+      setSharingCardId(null);
+    }
   };
 
   const heroGen = allGenerations[0] ?? null;
@@ -511,16 +572,18 @@ export default function Dashboard() {
                           {gen.caption}
                         </p>
                         <button
-                          onClick={(e) => { e.stopPropagation(); handleDownload(gen.id, gen.image_url); }}
-                          className="font-sans text-xs tracking-widest uppercase text-cream border border-cream/40 px-6 py-3 hover:bg-cream/10 transition-colors active:scale-[0.97] min-h-[44px] w-full"
+                          onClick={(e) => { e.stopPropagation(); handleDownload(gen.id, gen.selected_hook); }}
+                          disabled={isDownloading}
+                          className="font-sans text-xs tracking-widest uppercase text-cream border border-cream/40 px-6 py-3 hover:bg-cream/10 transition-colors active:scale-[0.97] disabled:opacity-50 min-h-[44px] w-full"
                         >
-                          Save Image
+                          {isDownloading ? "Saving..." : "Save & Share"}
                         </button>
                         <button
-                          onClick={(e) => { e.stopPropagation(); handleShareStyleCard(gen.id); }}
-                          className="font-sans text-[10px] tracking-widest uppercase text-gold/70 hover:text-gold transition-colors mt-1 min-h-[36px] w-full"
+                          onClick={(e) => { e.stopPropagation(); handleShareStyleCard(gen.id, gen.selected_hook); }}
+                          disabled={sharingCardId === gen.id}
+                          className="font-sans text-[10px] tracking-widest uppercase text-gold/70 hover:text-gold transition-colors mt-1 min-h-[36px] disabled:opacity-40 w-full"
                         >
-                          Save Style Card
+                          {sharingCardId === gen.id ? "Creating card..." : "Share Style Card"}
                         </button>
                         <button
                           onClick={(e) => { e.stopPropagation(); setConfirmDeleteId(gen.id); }}
