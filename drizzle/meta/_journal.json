@@ -50,6 +50,13 @@
       "when": 1779774618650,
       "tag": "0006_little_kingpin",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "5",
+      "when": 1779834789308,
+      "tag": "0007_early_squadron_sinister",
+      "breakpoints": true
     }
   ]
 }

@@ -133,6 +133,8 @@ export default function Generate() {
       setStep("hooks");
       utils.credits.get.invalidate();
       utils.generations.list.invalidate();
+      // Invalidate profile so auto-triggered transformation card appears on Profile page
+      utils.profile.get.invalidate();
     },
     onError: (err) => {
       if (err.message === "LORA_PAYWALL") {
@@ -153,6 +155,7 @@ export default function Generate() {
       setStep("hooks");
       utils.credits.get.invalidate();
       utils.generations.list.invalidate();
+      utils.profile.get.invalidate();
       signatureSceneStatusQuery.refetch();
     },
     onError: (err) => {
@@ -167,6 +170,7 @@ export default function Generate() {
       setStep("hooks");
       utils.credits.get.invalidate();
       utils.generations.list.invalidate();
+      utils.profile.get.invalidate();
       signatureSceneTwoStatusQuery.refetch();
     },
     onError: (err) => {
@@ -181,6 +185,7 @@ export default function Generate() {
       setStep("hooks");
       utils.credits.get.invalidate();
       utils.generations.list.invalidate();
+      utils.profile.get.invalidate();
     },
     onError: (err) => {
       toast.error(err.message);

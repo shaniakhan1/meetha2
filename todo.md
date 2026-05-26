@@ -446,3 +446,14 @@
 - [x] Save & Share: Web Share API already on mobile; transformation card download also uses share sheet on iOS
 - [x] Styling card result screen: add "Save Card" / "Share Card" button
 - [x] Free tier CTA copy: changed to "Get Styled on Meetha" with dark luxury card design
+
+## V42 -- Three Bug Fixes (Canvas Fonts + Transformation Card State)
+
+- [x] DB migration: transformation_card_url column confirmed present in profiles table
+- [x] Style card: rewritten to use @napi-rs/canvas with bundled LiberationSans fonts -- eliminates tofu boxes on Cloud Run (no system font dependency)
+- [x] Watermark: rewritten to use @napi-rs/canvas with bundled LiberationSans fonts -- eliminates solid box on downloaded images
+- [x] Build script: cp server/fonts/* dist/fonts/ copies fonts to production bundle
+- [x] Transformation card frontend fix: mutation onSuccess now calls utils.profile.get.setData() to immediately update cache with returned URL -- card appears instantly without waiting for refetch
+- [x] Generate.tsx: all four generation mutations (content, signatureScene, signatureSceneTwo, fromVoice) now invalidate utils.profile.get on success -- ensures auto-triggered transformation card appears on Profile page
+- [x] TypeScript: zero errors
+- [x] Vitest: 13 tests passing

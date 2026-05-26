@@ -2,37 +2,55 @@
  * GET /api/download/:generationId
  *
  * Serves the generated image for download.
- * - Free tier: composites a subtle "MEETHA" text watermark (SVG, no PNG dependency)
+ * - Free tier: composites a subtle "MEETHA" text watermark via @napi-rs/canvas
  * - Starter / Pro: serves the original image unmodified (or with badge if opted in)
+ *
+ * Font approach: uses @napi-rs/canvas with GlobalFonts.registerFromPath().
+ * This bypasses librsvg/SVG font issues and renders correctly on any server.
  */
+import path from "path";
+import { fileURLToPath } from "url";
 import type { Request, Response } from "express";
 import sharp from "sharp";
+import { createCanvas, GlobalFonts } from "@napi-rs/canvas";
 import { authenticateRequest } from "./_core/auth";
 import { getSupabase } from "./_core/supabase";
 import { storageGetSignedUrl } from "./storage";
 
+// ESM-safe __dirname
+const _thisDir = (() => {
+  try {
+    return path.dirname(fileURLToPath(import.meta.url));
+  } catch {
+    return typeof __dirname !== "undefined" ? __dirname : process.cwd();
+  }
+})();
+
+let _fontsRegistered = false;
+function ensureFonts() {
+  if (_fontsRegistered) return;
+  const fontsDir = path.join(_thisDir, "fonts");
+  GlobalFonts.registerFromPath(path.join(fontsDir, "LiberationSans-Regular.ttf"), "MeethaFont");
+  GlobalFonts.registerFromPath(path.join(fontsDir, "LiberationSans-Bold.ttf"), "MeethaFont");
+  _fontsRegistered = true;
+}
+
 /**
- * Build a subtle SVG text watermark overlay.
- * Pure SVG — no PNG, no font file, no external fetch.
- * Renders as semi-transparent "MEETHA" text bottom-center.
+ * Build a canvas-rendered watermark overlay.
+ * Returns a PNG buffer (transparent background) with "MEETHA" bottom-right.
  */
-function buildSvgWatermark(imgWidth: number, imgHeight: number): Buffer {
-  const fontSize = Math.round(imgWidth * 0.055);
-  const letterSpacing = Math.round(imgWidth * 0.012);
-  const padBottom = Math.round(imgHeight * 0.04);
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${imgWidth}" height="${imgHeight}">
-    <text
-      x="${imgWidth / 2}"
-      y="${imgHeight - padBottom}"
-      font-family="Arial, Helvetica, sans-serif"
-      font-size="${fontSize}"
-      font-weight="bold"
-      fill="white"
-      opacity="0.35"
-      text-anchor="middle"
-      letter-spacing="${letterSpacing}">MEETHA</text>
-  </svg>`;
-  return Buffer.from(svg);
+function buildCanvasWatermark(imgWidth: number, imgHeight: number): Buffer {
+  ensureFonts();
+  const canvas = createCanvas(imgWidth, imgHeight);
+  const ctx = canvas.getContext("2d");
+  ctx.clearRect(0, 0, imgWidth, imgHeight);
+  const fontSize = Math.round(imgWidth * 0.038);
+  const pad = Math.round(imgWidth * 0.04);
+  ctx.font = `bold ${fontSize}px MeethaFont`;
+  ctx.fillStyle = "rgba(255, 255, 255, 0.35)";
+  ctx.textAlign = "right";
+  ctx.fillText("MEETHA", imgWidth - pad, imgHeight - pad);
+  return canvas.toBuffer("image/png") as Buffer;
 }
 
 export async function handleDownload(req: Request, res: Response) {
@@ -112,17 +130,17 @@ export async function handleDownload(req: Request, res: Response) {
     return res.send(imageBuffer);
   }
 
-  // Composite SVG text watermark onto image
+  // Composite canvas watermark onto image
   try {
     const image = sharp(imageBuffer);
     const metadata = await image.metadata();
     const imgWidth = metadata.width ?? 1080;
     const imgHeight = metadata.height ?? 1920;
 
-    const wmSvg = buildSvgWatermark(imgWidth, imgHeight);
+    const wmBuffer = buildCanvasWatermark(imgWidth, imgHeight);
 
     const watermarked = await image
-      .composite([{ input: wmSvg, top: 0, left: 0 }])
+      .composite([{ input: wmBuffer, top: 0, left: 0 }])
       .jpeg({ quality: 92 })
       .toBuffer();
 

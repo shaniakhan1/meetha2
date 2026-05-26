@@ -1,0 +1,1 @@
+ALTER TABLE `profiles` ADD `transformation_card_url` text;

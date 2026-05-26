@@ -727,11 +727,19 @@ function TransformationCardSection() {
 
   const cardRef = useRef<HTMLDivElement>(null);
   const generateCard = trpc.profile.generateTransformationCard.useMutation({
-    onSuccess: () => {
+    onSuccess: (data) => {
+      // Immediately update the cache with the returned URL so the card
+      // appears without waiting for a full refetch (fixes stale-cache bug)
+      if (data?.url) {
+        utils.profile.get.setData(undefined, (prev) =>
+          prev ? { ...prev, transformation_card_url: data.url } : prev
+        );
+      }
+      // Also invalidate to sync any other profile fields
       utils.profile.get.invalidate().then(() => {
         setTimeout(() => {
           cardRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-        }, 400);
+        }, 300);
       });
       toast.success("Your Transformation Card is ready!");
     },

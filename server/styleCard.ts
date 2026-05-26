@@ -3,33 +3,41 @@
  *
  * Generates a shareable branded style card JPEG:
  * - The generation image fills the full card
- * - A subtle "MEETHA" watermark overlay at the bottom-right
+ * - A subtle "MEETHA" watermark rendered via @napi-rs/canvas (no SVG font issues)
  * - Optional styling brief rows rendered below the image (passed as query params)
  * - Returned as image/jpeg for direct sharing / saving
  *
- * Font approach: fonts are embedded as base64 data URIs in SVG @font-face rules.
- * This guarantees text renders correctly on any server regardless of installed fonts.
+ * Font approach: uses @napi-rs/canvas with GlobalFonts.registerFromPath().
+ * This bypasses librsvg entirely and renders text correctly on any server.
  * Font files live in server/fonts/ and are bundled with the deployment.
  */
 import path from "path";
-import fs from "fs";
 import { fileURLToPath } from "url";
 import type { Request, Response } from "express";
 import sharp from "sharp";
+import { createCanvas, GlobalFonts } from "@napi-rs/canvas";
 import { authenticateRequest } from "./_core/auth";
 import { getSupabase } from "./_core/supabase";
 import { storageGetSignedUrl } from "./storage";
 
 // ESM-safe __dirname: works in both tsx (dev) and esbuild ESM (production)
-// In ESM builds __dirname is undefined, so we derive it from import.meta.url
 const _thisDir = (() => {
   try {
     return path.dirname(fileURLToPath(import.meta.url));
   } catch {
-    // CJS fallback
     return typeof __dirname !== "undefined" ? __dirname : process.cwd();
   }
 })();
+
+// Register fonts once at module load time
+let _fontsRegistered = false;
+function ensureFonts() {
+  if (_fontsRegistered) return;
+  const fontsDir = path.join(_thisDir, "fonts");
+  GlobalFonts.registerFromPath(path.join(fontsDir, "LiberationSans-Regular.ttf"), "MeethaFont");
+  GlobalFonts.registerFromPath(path.join(fontsDir, "LiberationSans-Bold.ttf"), "MeethaFont");
+  _fontsRegistered = true;
+}
 
 interface StylingBrief {
   color_palette?: string;
@@ -40,34 +48,109 @@ interface StylingBrief {
   hair?: string;
 }
 
-// Load fonts once at module level and embed as base64 in SVG @font-face
-// This ensures text renders on production servers that may not have these fonts installed
-let _fontRegularB64: string | null = null;
-let _fontBoldB64: string | null = null;
+/**
+ * Render the brief panel using @napi-rs/canvas.
+ * Returns a PNG buffer of the panel.
+ */
+function renderBriefPanel(
+  rows: { label: string; value: string }[],
+  imgWidth: number
+): Buffer {
+  ensureFonts();
 
-function getFontBase64(variant: "Regular" | "Bold"): string {
-  if (variant === "Regular") {
-    if (!_fontRegularB64) {
-      const p = path.join(_thisDir, "fonts", "LiberationSans-Regular.ttf");
-      _fontRegularB64 = fs.readFileSync(p).toString("base64");
+  const rowH = Math.round(imgWidth * 0.085);
+  const padX = Math.round(imgWidth * 0.06);
+  const labelW = Math.round(imgWidth * 0.28);
+  const fontSize = Math.round(imgWidth * 0.028);
+  const labelFontSize = Math.round(imgWidth * 0.022);
+  const topPad = Math.round(imgWidth * 0.05);
+  const panelH = rows.length * rowH + topPad * 2;
+
+  const canvas = createCanvas(imgWidth, panelH);
+  const ctx = canvas.getContext("2d");
+
+  // Background
+  ctx.fillStyle = "#1A0F09";
+  ctx.fillRect(0, 0, imgWidth, panelH);
+
+  // Top border line
+  ctx.strokeStyle = "rgba(200, 169, 110, 0.5)";
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(padX, 1);
+  ctx.lineTo(imgWidth - padX, 1);
+  ctx.stroke();
+
+  rows.forEach((row, i) => {
+    const y = topPad + i * rowH;
+    const midY = y + rowH / 2;
+
+    // Divider line between rows
+    if (i > 0) {
+      ctx.strokeStyle = "rgba(200, 169, 110, 0.25)";
+      ctx.lineWidth = 0.5;
+      ctx.beginPath();
+      ctx.moveTo(padX, y);
+      ctx.lineTo(imgWidth - padX, y);
+      ctx.stroke();
     }
-    return _fontRegularB64;
-  } else {
-    if (!_fontBoldB64) {
-      const p = path.join(_thisDir, "fonts", "LiberationSans-Bold.ttf");
-      _fontBoldB64 = fs.readFileSync(p).toString("base64");
-    }
-    return _fontBoldB64;
-  }
+
+    // Label (gold, bold, letter-spaced)
+    ctx.fillStyle = "rgba(200, 169, 110, 0.9)";
+    ctx.font = `bold ${labelFontSize}px MeethaFont`;
+    ctx.fillText(row.label, padX, midY + labelFontSize * 0.38);
+
+    // Value (cream white)
+    ctx.fillStyle = "rgba(245, 240, 232, 0.95)";
+    ctx.font = `${fontSize}px MeethaFont`;
+    const maxValueW = imgWidth - padX - labelW - padX;
+    const truncated = truncateToWidth(ctx, row.value, maxValueW);
+    ctx.fillText(truncated, padX + labelW, midY + fontSize * 0.38);
+  });
+
+  // Bottom border line
+  ctx.strokeStyle = "rgba(200, 169, 110, 0.2)";
+  ctx.lineWidth = 0.5;
+  ctx.beginPath();
+  ctx.moveTo(padX, panelH - 1);
+  ctx.lineTo(imgWidth - padX, panelH - 1);
+  ctx.stroke();
+
+  return canvas.toBuffer("image/png") as Buffer;
 }
 
-function fontFaceBlock(): string {
-  const regular = getFontBase64("Regular");
-  const bold = getFontBase64("Bold");
-  return `<defs><style>
-    @font-face { font-family: 'MeethaFont'; font-weight: normal; src: url('data:font/truetype;base64,${regular}'); }
-    @font-face { font-family: 'MeethaFont'; font-weight: bold; src: url('data:font/truetype;base64,${bold}'); }
-  </style></defs>`;
+/**
+ * Render the MEETHA watermark using @napi-rs/canvas.
+ * Returns a PNG buffer the same size as the image (transparent background).
+ */
+function renderWatermark(imgWidth: number, imgHeight: number): Buffer {
+  ensureFonts();
+
+  const canvas = createCanvas(imgWidth, imgHeight);
+  const ctx = canvas.getContext("2d");
+
+  // Transparent background
+  ctx.clearRect(0, 0, imgWidth, imgHeight);
+
+  const fontSize = Math.round(imgWidth * 0.028);
+  const pad = Math.round(imgWidth * 0.04);
+
+  ctx.font = `${fontSize}px MeethaFont`;
+  ctx.fillStyle = "rgba(255, 255, 255, 0.30)";
+  ctx.textAlign = "right";
+  ctx.fillText("MEETHA", imgWidth - pad, imgHeight - pad);
+
+  return canvas.toBuffer("image/png") as Buffer;
+}
+
+/** Truncate text to fit within maxWidth pixels */
+function truncateToWidth(ctx: ReturnType<ReturnType<typeof createCanvas>["getContext"]>, text: string, maxWidth: number): string {
+  if (ctx.measureText(text).width <= maxWidth) return text;
+  let truncated = text;
+  while (truncated.length > 0 && ctx.measureText(truncated + "...").width > maxWidth) {
+    truncated = truncated.slice(0, -1);
+  }
+  return truncated + "...";
 }
 
 export async function handleStyleCard(req: Request, res: Response) {
@@ -126,26 +209,12 @@ export async function handleStyleCard(req: Request, res: Response) {
     const imgWidth = meta.width ?? 1080;
     const imgHeight = meta.height ?? 1350;
 
-    // --- Watermark: embedded-font SVG text overlay ---
-    const wmFontSize = Math.round(imgWidth * 0.028);
-    const wmPad = Math.round(imgWidth * 0.04);
-    const wmLetterSpacing = Math.round(imgWidth * 0.006);
-    const wmSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="${imgWidth}" height="${imgHeight}">
-      ${fontFaceBlock()}
-      <text
-        x="${imgWidth - wmPad}"
-        y="${imgHeight - wmPad}"
-        font-family="MeethaFont"
-        font-size="${wmFontSize}"
-        fill="white"
-        opacity="0.30"
-        text-anchor="end"
-        letter-spacing="${wmLetterSpacing}">MEETHA</text>
-    </svg>`;
+    // --- Watermark: canvas-rendered PNG overlay ---
+    const wmBuffer = renderWatermark(imgWidth, imgHeight);
 
     // Composite watermark onto photo
     const photoWithWatermark = await sharp(imageBuffer)
-      .composite([{ input: Buffer.from(wmSvg), top: 0, left: 0 }])
+      .composite([{ input: wmBuffer, top: 0, left: 0 }])
       .png()
       .toBuffer();
 
@@ -163,42 +232,11 @@ export async function handleStyleCard(req: Request, res: Response) {
         { label: "HAIR", value: brief.hair ?? "" },
       ].filter((r) => r.value.trim());
 
-      const rowH = Math.round(imgWidth * 0.075);
-      const padX = Math.round(imgWidth * 0.06);
-      const labelW = Math.round(imgWidth * 0.26);
-      const fontSize = Math.round(imgWidth * 0.026);
-      const labelFontSize = Math.round(imgWidth * 0.021);
-      const topPad = Math.round(imgWidth * 0.04);
-      briefPanelH = rows.length * rowH + topPad * 2;
-
-      const rowsSvg = rows
-        .map((r, i) => {
-          const y = topPad + i * rowH;
-          const midY = y + rowH / 2;
-          const line =
-            i > 0
-              ? `<line x1="${padX}" y1="${y}" x2="${imgWidth - padX}" y2="${y}" stroke="#C8A96E" stroke-width="0.5" opacity="0.3"/>`
-              : "";
-          return `
-            ${line}
-            <text x="${padX}" y="${midY + labelFontSize * 0.35}" font-family="MeethaFont" font-weight="bold" font-size="${labelFontSize}" fill="#C8A96E" opacity="0.9" letter-spacing="2">${escSvg(r.label)}</text>
-            <text x="${padX + labelW}" y="${midY + fontSize * 0.35}" font-family="MeethaFont" font-size="${fontSize}" fill="#F5F0E8" opacity="0.95">${escSvg(truncate(r.value, 52))}</text>
-          `;
-        })
-        .join("");
-
-      const panelSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="${imgWidth}" height="${briefPanelH}">
-        ${fontFaceBlock()}
-        <rect width="${imgWidth}" height="${briefPanelH}" fill="#1A0F09"/>
-        <line x1="${padX}" y1="0" x2="${imgWidth - padX}" y2="0" stroke="#C8A96E" stroke-width="0.8" opacity="0.4"/>
-        ${rowsSvg}
-        <line x1="${padX}" y1="${briefPanelH - 1}" x2="${imgWidth - padX}" y2="${briefPanelH - 1}" stroke="#C8A96E" stroke-width="0.5" opacity="0.2"/>
-      </svg>`;
-
-      briefPanelBuffer = await sharp(Buffer.from(panelSvg))
-        .resize(imgWidth, briefPanelH, { fit: "fill" })
-        .png()
-        .toBuffer();
+      if (rows.length > 0) {
+        briefPanelBuffer = renderBriefPanel(rows, imgWidth);
+        const panelMeta = await sharp(briefPanelBuffer).metadata();
+        briefPanelH = panelMeta.height ?? 0;
+      }
     }
 
     // --- Assemble final card ---
@@ -225,23 +263,11 @@ export async function handleStyleCard(req: Request, res: Response) {
     res.setHeader("Content-Type", "image/jpeg");
     res.setHeader(
       "Content-Disposition",
-      `inline; filename="meetha-style-card-${generationId}.jpg"`
+      `attachment; filename="meetha-style-card-${generationId}.jpg"`
     );
     return res.send(card);
   } catch (err) {
     console.error("[StyleCard] Compositing error:", err);
     return res.status(500).json({ error: "Failed to generate style card" });
   }
-}
-
-function escSvg(s: string): string {
-  return s
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
-}
-
-function truncate(s: string, maxLen: number): string {
-  return s.length > maxLen ? s.slice(0, maxLen - 1) + "..." : s;
 }
