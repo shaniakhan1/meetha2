@@ -82,6 +82,20 @@ export const credits = mysqlTable("credits", {
 export type Credits = typeof credits.$inferSelect;
 export type InsertCredits = typeof credits.$inferInsert;
 
+// ─── Retrain Purchases ──────────────────────────────────────────────────────
+
+export const retrainPurchases = mysqlTable("retrain_purchases", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  stripeSessionId: varchar("stripeSessionId", { length: 255 }).notNull().unique(),
+  paidAt: timestamp("paidAt").defaultNow().notNull(),
+  usedAt: timestamp("usedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type RetrainPurchase = typeof retrainPurchases.$inferSelect;
+export type InsertRetrainPurchase = typeof retrainPurchases.$inferInsert;
+
 // ─── Postability Feedback ─────────────────────────────────────────────────────
 
 export const postabilityFeedback = mysqlTable("postability_feedback", {

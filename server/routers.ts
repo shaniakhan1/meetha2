@@ -744,6 +744,37 @@ export const appRouter = router({
       }),
 
     /**
+     * Create a Stripe Checkout Session for the $19 retrain add-on.
+     * Returns the Stripe-hosted checkout URL.
+     */
+    createRetrainCheckout: protectedProcedure
+      .input(z.object({ origin: z.string() }))
+      .mutation(async ({ ctx, input }) => {
+        const { createRetrainCheckoutSession } = await import("./stripeWebhook");
+        const url = await createRetrainCheckoutSession({
+          userId: ctx.user.id,
+          userEmail: ctx.user.email,
+          userName: ctx.user.name,
+          origin: input.origin,
+        });
+        return { url };
+      }),
+
+    /**
+     * Check if the current user has an unused retrain purchase.
+     */
+    retrainStatus: protectedProcedure.query(async ({ ctx }) => {
+      const { hasUnusedRetrainPurchase } = await import("./stripeWebhook");
+      const credits = await getCredits(ctx.user.id);
+      const hasUnused = await hasUnusedRetrainPurchase(ctx.user.id);
+      return {
+        freeLoraUsed: credits?.free_lora_used ?? false,
+        hasUnusedPurchase: hasUnused,
+        canRetrain: !(credits?.free_lora_used ?? false) || hasUnused,
+      };
+    }),
+
+    /**
      * Toggle the "Shared with Meetha" badge on downloaded images.
      * Free tier always gets the badge. Starter/Pro can opt in or out.
      */

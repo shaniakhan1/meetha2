@@ -8,6 +8,7 @@ import { handleDownload } from "../download";
 import { handleLoraCheck } from "../loraEmailCron";
 import { handleArchiveGenerations } from "../archiveCron";
 import { handleWelcomeEmail } from "../welcomeEmailCron";
+import { handleStripeRetrainWebhook } from "../stripeWebhook";
 import { loraUploadMiddleware, handleLoraUpload, handleLoraStatus } from "../loraUpload";
 import { recoverStuckJobs } from "../loraPoller";
 import { registerStorageProxy } from "./storageProxy";
@@ -37,6 +38,9 @@ async function findAvailablePort(startPort: number = 3000): Promise<number> {
 async function startServer() {
   const app = express();
   const server = createServer(app);
+  // Stripe webhook MUST use raw body BEFORE express.json()
+  app.post("/api/stripe/webhook", express.raw({ type: "application/json" }), handleStripeRetrainWebhook);
+
   // Configure body parser with larger size limit for file uploads
   app.use(express.json({ limit: "50mb" }));
   app.use(express.urlencoded({ limit: "50mb", extended: true }));

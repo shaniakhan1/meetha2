@@ -38,6 +38,15 @@ export default function Profile() {
   const loraInputRef = useRef<HTMLInputElement>(null);
   const loraPollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
+  const retrainStatusQuery = trpc.profile.retrainStatus.useQuery();
+  const createRetrainCheckout = trpc.profile.createRetrainCheckout.useMutation({
+    onSuccess: ({ url }) => {
+      window.open(url, "_blank");
+      toast.success("Redirecting to checkout...");
+    },
+    onError: (err) => toast.error(err.message),
+  });
+
   const setShareBadgeMutation = trpc.profile.setShareBadge.useMutation({
     onSuccess: () => {
       utils.profile.get.invalidate();
@@ -362,33 +371,51 @@ export default function Profile() {
                 <p className="font-sans text-xs text-charcoal-soft leading-relaxed">
                   Every image you generate now looks like you. Training a new look will replace the current one.
                 </p>
-                {showRetrainConfirm ? (
+{/* Retrain section — free first retrain, $19 for subsequent */}
+                {retrainStatusQuery.data?.hasUnusedPurchase ? (
+                  // Has a paid retrain credit — show the confirm flow
+                  showRetrainConfirm ? (
+                    <div className="border border-sand/60 p-3 space-y-3 bg-warm-white/80">
+                      <p className="font-sans text-xs text-charcoal-soft leading-relaxed">
+                        This will replace your current look. Upload new photos and wait about 20 minutes for training.
+                      </p>
+                      <div className="flex gap-4">
+                        <button
+                          onClick={() => { setShowRetrainConfirm(false); setLoraStatus(null); setLoraPhotos([]); setLoraPreviews([]); }}
+                          className="font-sans text-xs tracking-widest uppercase text-gold hover:text-charcoal transition-colors"
+                        >
+                          Yes, retrain
+                        </button>
+                        <button
+                          onClick={() => setShowRetrainConfirm(false)}
+                          className="font-sans text-xs tracking-widest uppercase text-charcoal-soft/50 hover:text-charcoal-soft transition-colors"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => setShowRetrainConfirm(true)}
+                      className="font-sans text-xs tracking-widest uppercase text-charcoal-soft/50 hover:text-charcoal-soft transition-colors"
+                    >
+                      Retrain with new photos
+                    </button>
+                  )
+                ) : (
+                  // No unused retrain credit — show $19 paywall
                   <div className="border border-sand/60 p-3 space-y-3 bg-warm-white/80">
                     <p className="font-sans text-xs text-charcoal-soft leading-relaxed">
-                      This will replace your current look. Upload new photos and wait about 20 minutes for training.
+                      Your first training is included. Retraining with new photos — for example after a haircut, new style, or seasonal change — is a one-time $19 add-on.
                     </p>
-                    <div className="flex gap-4">
-                      <button
-                        onClick={() => { setShowRetrainConfirm(false); setLoraStatus(null); setLoraPhotos([]); setLoraPreviews([]); }}
-                        className="font-sans text-xs tracking-widest uppercase text-gold hover:text-charcoal transition-colors"
-                      >
-                        Yes, retrain
-                      </button>
-                      <button
-                        onClick={() => setShowRetrainConfirm(false)}
-                        className="font-sans text-xs tracking-widest uppercase text-charcoal-soft/50 hover:text-charcoal-soft transition-colors"
-                      >
-                        Cancel
-                      </button>
-                    </div>
+                    <button
+                      onClick={() => createRetrainCheckout.mutate({ origin: window.location.origin })}
+                      disabled={createRetrainCheckout.isPending}
+                      className="font-sans text-xs tracking-widest uppercase text-charcoal border border-charcoal/30 px-4 py-2 hover:bg-charcoal/5 transition-colors disabled:opacity-50 min-h-[40px]"
+                    >
+                      {createRetrainCheckout.isPending ? "Loading..." : "Retrain — $19"}
+                    </button>
                   </div>
-                ) : (
-                  <button
-                    onClick={() => setShowRetrainConfirm(true)}
-                    className="font-sans text-xs tracking-widest uppercase text-charcoal-soft/50 hover:text-charcoal-soft transition-colors"
-                  >
-                    Retrain with new photos
-                  </button>
                 )}
               </>
             ) : loraStatus === "training" ? (

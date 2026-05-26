@@ -324,14 +324,17 @@
 
 - [x] Fix Ordered Everything prompt: hotel bed (Four Seasons), white robe, white towel on head, multiple room service trays with silver domes, champagne bottle and flutes, morning light through sheer curtains
 - [x] Differentiate Silk Robe Retaliation from Silk Robe Room Service: Retaliation = silhouette at window, golden hour, seen from behind; Room Service = close-up still life of the tray, no person
-- [ ] Set up Stripe integration (webdev_add_feature)
-- [ ] Create $19 retrain product and price in Stripe
-- [ ] Add retrain_purchases table to Supabase: user_id, stripe_session_id, paid_at, used_at
-- [ ] Block second retrain in Profile.tsx: show $19 paywall if free_lora_used is true and no unused retrain purchase
-- [ ] Build /api/stripe/retrain-checkout endpoint: creates Stripe checkout session for $19 retrain
-- [ ] Build /api/stripe/retrain-webhook endpoint: marks retrain purchase as paid in DB
-- [ ] After successful retrain payment, allow one new LoRA upload and reset lora_status
-- [ ] Add rate limiting: free tier max 3 total generations (already enforced), starter max 30/month, pro max 75/month
-- [ ] Add "retrain purchases" count to admin view so abuse is visible
+- [x] Set up Stripe integration (webdev_add_feature)
+- [x] Create $19 retrain product and price in Stripe (price_1TbDWGPMV5P3vLteBwKvgZKl)
+- [x] Add retrain_purchases table to MySQL via drizzle schema + migration
+- [x] Block second retrain in Profile.tsx: show $19 paywall if free_lora_used is true and no unused retrain purchase
+- [x] Build createRetrainCheckout tRPC mutation: creates Stripe checkout session for $19 retrain, returns URL
+- [x] Build /api/stripe/webhook endpoint: records retrain purchase in retrain_purchases table on checkout.session.completed
+- [x] retrainStatus tRPC query: returns freeLoraUsed + hasUnusedPurchase + canRetrain
+- [x] Profile.tsx retrain paywall: if freeLoraUsed and no unused purchase, show $19 Stripe button; if unused purchase exists, show normal retrain confirm flow
+- [x] retrain_purchases table created (drizzle schema + migration applied)
+- [x] Stripe npm package installed (v22.1.1)
+- [ ] Add rate limiting: free tier max 3 total generations (already enforced), starter max 30/month, pro max 75/month (deferred)
+- [ ] Add "retrain purchases" count to admin view so abuse is visible (deferred)
 - [x] Fix onboarding example image: too large and cut off on home screen — fixed to 320px height, object-center
 - [x] Add delete button to Your Creations grid: tap to expand shows Remove button, AlertDialog confirm, soft-archives row in DB
