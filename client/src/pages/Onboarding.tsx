@@ -315,7 +315,7 @@ export default function Onboarding() {
               Make images<br />look like you.
             </h1>
             <p className="font-sans text-sm text-charcoal-soft leading-relaxed">
-              Upload 10–20 selfies and Meetha trains a personal AI model on your face. Every image it creates will actually look like you . in any scene, any outfit.
+              Upload 10–20 selfies and Meetha trains a personal AI model on your face. Every image it creates will actually look like you, in any scene, any outfit.
             </p>
           </div>
 

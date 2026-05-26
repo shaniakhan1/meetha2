@@ -272,7 +272,7 @@ export default function Generate() {
               : selectedHook ?? "";
             if (captionText) {
               await copyTextToClipboard(captionText);
-              toast.success("Caption copied . paste it in your post.", { duration: 4000 });
+              toast.success("Caption copied. Paste it in your post.", { duration: 4000 });
             }
             // Small delay so toast is visible before share sheet covers the screen
             await new Promise((r) => setTimeout(r, 400));
@@ -1010,7 +1010,7 @@ export default function Generate() {
               onClick={handleVoiceStop}
               className="btn-luxury w-full"
             >
-              Done . Build My Content
+              Done. Build My Content
             </button>
             <button
               onClick={() => {

@@ -206,12 +206,12 @@ export default function Profile() {
           <div className="p-4 border border-sand bg-warm-white/60 space-y-3">
             <div className="flex items-center justify-between">
               <p className="font-sans text-xs text-charcoal-soft">Name</p>
-              <p className="font-sans text-sm text-charcoal">{user?.name ?? "."}</p>
+              <p className="font-sans text-sm text-charcoal">{user?.name ?? "-"}</p>
             </div>
             <div className="w-full h-px bg-sand/60" />
             <div className="flex items-center justify-between">
               <p className="font-sans text-xs text-charcoal-soft">Email</p>
-              <p className="font-sans text-sm text-charcoal">{user?.email ?? "."}</p>
+              <p className="font-sans text-sm text-charcoal">{user?.email ?? "-"}</p>
             </div>
             <div className="w-full h-px bg-sand/60" />
             <div className="flex items-center justify-between">
@@ -221,7 +221,7 @@ export default function Profile() {
             <div className="w-full h-px bg-sand/60" />
             <div className="flex items-center justify-between">
               <p className="font-sans text-xs text-charcoal-soft">Credits</p>
-              <p className="font-sans text-sm text-charcoal">{credits?.credits_remaining ?? "."} remaining</p>
+              <p className="font-sans text-sm text-charcoal">{credits?.credits_remaining ?? "-"} remaining</p>
             </div>
             {/* Meetha badge toggle - Starter/Pro only */}
             {credits && credits.tier !== "free" && (
@@ -743,7 +743,7 @@ function AestheticBriefSection() {
         <p className="font-sans text-sm font-semibold text-charcoal mb-4">Your Styling Brief</p>
         <div className="p-4 border border-sand bg-warm-white/60">
           <p className="font-sans text-xs text-charcoal-soft leading-relaxed">
-            Generate your first image to unlock your personal styling brief . your color palette, metals, fabrics, makeup direction, and lighting guide.
+            Generate your first image to unlock your personal styling brief: your color palette, metals, fabrics, makeup direction, and lighting guide.
           </p>
         </div>
       </div>

@@ -104,7 +104,7 @@ export default function Home() {
           <div className="divider-editorial animate-fade-in opacity-0 delay-300" />
 
           <p className="font-sans font-light text-base text-charcoal-soft leading-relaxed mb-10 animate-fade-up opacity-0 delay-300">
-            Meetha learns your aesthetic and tells you what to wear, what jewelry to reach for, and how to light your next shoot. Then it generates cinematic images that look like you . in any scene.
+            Meetha learns your aesthetic and tells you what to wear, what jewelry to reach for, and how to light your next shoot. Then it generates cinematic images that look like you, in any scene.
           </p>
 
           <div className="flex flex-col items-center gap-4 animate-fade-up opacity-0 delay-400">
@@ -171,7 +171,7 @@ export default function Home() {
             {
               step: "01",
               title: "Upload your photos",
-              text: "Meetha trains a personal AI model on your face. Every image it creates will actually look like you . in any scene, any outfit, any lighting.",
+              text: "Meetha trains a personal AI model on your face. Every image it creates will actually look like you, in any scene, any outfit, any lighting.",
             },
             {
               step: "02",
@@ -213,7 +213,7 @@ export default function Home() {
           <div className="border border-sand bg-warm-white overflow-hidden">
             <div className="relative w-full overflow-hidden" style={{ height: "320px" }}>
               <img
-                src="/manus-storage/shania-hero_9923f04f.png"
+                src="/manus-storage/hero_sample_f65e4d53.jpg"
                 alt="Content example"
                 className="w-full h-full object-cover object-center"
               />
