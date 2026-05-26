@@ -133,6 +133,7 @@ export async function generateImageWithLora(options: {
   loraWeightsUrl: string;
   triggerPhrase: string;
   imageSize?: "portrait_4_3" | "portrait_16_9" | "square_hd" | "landscape_16_9" | "landscape_4_3";
+  physicalDescriptors?: string | null;
 }): Promise<{ url: string }> {
   if (!ENV.falApiKey) throw new Error("FAL_API_KEY is not configured");
 
@@ -154,8 +155,13 @@ export async function generateImageWithLora(options: {
     | "landscape_16_9"
     | "landscape_4_3";
 
-  // Inject trigger phrase into prompt
-  const promptWithTrigger = `${options.triggerPhrase}, ${options.prompt}`;
+  // Inject trigger phrase AND physical descriptors as a text anchor.
+  // Physical descriptors (e.g. "white/silver hair, warm medium-brown skin") override
+  // FLUX's base model priors so the generated image matches the user's actual appearance.
+  const physicalAnchor = options.physicalDescriptors
+    ? `, ${options.physicalDescriptors},`
+    : "";
+  const promptWithTrigger = `${options.triggerPhrase}${physicalAnchor} ${options.prompt}`;
 
   const result = (await fal.subscribe("fal-ai/flux-lora", {
     input: {
@@ -164,7 +170,7 @@ export async function generateImageWithLora(options: {
       loras: [
         {
           path: options.loraWeightsUrl,
-          scale: 0.85, // Strong identity but not overpowering
+          scale: 1.0, // Full identity adherence -- physical descriptors handle the balance
         },
       ],
       num_inference_steps: 28,

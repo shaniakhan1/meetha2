@@ -902,6 +902,7 @@ export const appRouter = router({
               loraWeightsUrl: profile.lora_weights_url,
               triggerPhrase: profile.lora_trigger_phrase,
               imageSize,
+              physicalDescriptors: profile.lora_physical_descriptors ?? null,
             });
             // Save the LoRA-generated image to our storage
             const imageResponse = await fetch(loraResult.url);
@@ -1190,6 +1191,7 @@ Return JSON with:
               prompt: imagePrompt,
               loraWeightsUrl: profile.lora_weights_url,
               triggerPhrase: profile.lora_trigger_phrase,
+              physicalDescriptors: profile.lora_physical_descriptors ?? null,
             });
             const imageResponse = await fetch(loraResult.url);
             if (!imageResponse.ok) throw new Error(`LoRA image fetch failed: ${imageResponse.status}`);

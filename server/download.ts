@@ -11,41 +11,47 @@ import { authenticateRequest } from "./_core/auth";
 import { getSupabase } from "./_core/supabase";
 import { storageGetSignedUrl } from "./storage";
 
-// SVG watermark: large diagonal "meetha" repeated across the image
-// Note: letter-spacing is NOT used because librsvg (used by sharp) renders it as box chars.
-// Instead we space letters via individual tspan x positions.
+// SVG watermark: diagonal "meetha" text repeated across the image.
+// librsvg (used by Sharp) does NOT support tspan x/dy or letter-spacing — they render as boxes.
+// We use plain <text> elements only, one per row, with text-anchor="middle" and a rotate transform.
 function buildWatermarkSvg(width: number, height: number): Buffer {
-  const fontSize = Math.max(52, Math.round(width * 0.09));
+  const fontSize = Math.max(48, Math.round(width * 0.085));
   const cx = Math.round(width / 2);
   const cy = Math.round(height / 2);
 
-  // Build spaced text by placing each letter at an explicit x offset
-  const letters = "MEETHA".split("");
-  const charWidth = Math.round(fontSize * 0.65);
-  const totalWidth = charWidth * letters.length;
-  const startX = cx - Math.round(totalWidth / 2);
-  const tspans = letters.map((ch, i) =>
-    `<tspan x="${startX + i * charWidth}" dy="0">${ch}</tspan>`
-  ).join("");
+  // Five rows of "MEETHA" spread across the full image height
+  const rowOffsets = [
+    -Math.round(height * 0.35),
+    -Math.round(height * 0.17),
+    0,
+    Math.round(height * 0.17),
+    Math.round(height * 0.35),
+  ];
 
-  const rowOffsets = [-fontSize * 2.2, 0, fontSize * 2.2];
-
-  const textElements = rowOffsets.map((dy) => {
-    const y = cy + dy;
-    return `<text y="${Math.round(y)}"
-      text-anchor="start"
-      dominant-baseline="middle"
-      transform="rotate(-28, ${cx}, ${Math.round(y)})"
-      font-family="serif"
-      font-size="${fontSize}px"
-      font-weight="bold"
-      fill="white"
-      fill-opacity="0.40">${tspans}</text>`;
+  const textElements = rowOffsets.map((offset) => {
+    const y = cy + offset;
+    return [
+      `<text`,
+      `  x="${cx}"`,
+      `  y="${y}"`,
+      `  text-anchor="middle"`,
+      `  dominant-baseline="middle"`,
+      `  font-family="Georgia, serif"`,
+      `  font-size="${fontSize}"`,
+      `  font-weight="bold"`,
+      `  fill="white"`,
+      `  fill-opacity="0.38"`,
+      `  transform="rotate(-28 ${cx} ${y})">`,
+      `MEETHA`,
+      `</text>`,
+    ].join(" ");
   }).join("\n");
 
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}">
-    ${textElements}
-  </svg>`;
+  const svg = [
+    `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}">`,
+    textElements,
+    `</svg>`,
+  ].join("\n");
 
   return Buffer.from(svg);
 }

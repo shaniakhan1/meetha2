@@ -232,3 +232,12 @@
 - [x] Fix mobile download: use navigator.share with File object on mobile, anchor fallback on desktop
 - [x] Add instant Share sheet after generation (fires before feedback step on mobile)
 - [x] Add welcome email cron (10 min after signup, Heartbeat)
+
+## V20 -- LoRA Physical Descriptor Fix
+
+- [ ] Add lora_physical_descriptors column to profiles table (Supabase migration + drizzle schema)
+- [ ] Add vision AI analysis during LoRA upload to extract hair color, skin tone, distinctive features from training photos
+- [ ] Inject physical descriptors as text anchor into LoRA generation prompt (both generate.content and voice-to-content)
+- [ ] Increase LoRA scale from 0.85 to 1.0 for stronger identity adherence
+- [ ] Backfill existing users with trained LoRA models via a one-time analysis endpoint
+- [ ] Fix onboarding re-trigger bug for returning mobile users

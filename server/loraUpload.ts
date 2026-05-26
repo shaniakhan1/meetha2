@@ -18,6 +18,53 @@ import multer from "multer";
 import { getProfile, updateLoraProfile } from "./db";
 import { submitLoraTraining, pollLoraTraining } from "./_core/falLoraTraining";
 import { authenticateRequest } from "./_core/auth";
+import { invokeLLM } from "./_core/llm";
+import { storagePut } from "./storage";
+
+/**
+ * Analyze the first training photo with vision AI to extract physical descriptors.
+ * Returns a compact string like "white/silver hair, warm medium-brown skin, dark brows, hazel eyes"
+ * that will be injected into every LoRA generation prompt as a text anchor.
+ */
+async function extractPhysicalDescriptors(photoBuffer: Buffer, mimeType: string): Promise<string | null> {
+  try {
+    // Upload the photo to storage so we have a stable URL for the vision call
+    const { url } = await storagePut(`lora-analysis/${Date.now()}.jpg`, photoBuffer, mimeType);
+    // Build an absolute URL -- storage returns /manus-storage/... which needs a base
+    const absoluteUrl = url.startsWith("http") ? url : `https://meetha.studio${url}`;
+
+    const result = await invokeLLM({
+      messages: [
+        {
+          role: "system",
+          content: "You are a precise visual analyst. Describe only the physical appearance of the person in the photo. Be specific and factual. Output a single compact comma-separated string of descriptors. Include: hair color and texture, skin tone, eye color if visible, any distinctive features (freckles, strong brows, etc). Do NOT include clothing, background, or subjective adjectives. Example output: white/silver hair, warm medium-brown skin, dark brows, hazel eyes",
+        },
+        {
+          role: "user",
+          content: [
+            {
+              type: "image_url",
+              image_url: { url: absoluteUrl, detail: "low" },
+            },
+            {
+              type: "text",
+              text: "Describe this person's physical appearance as a compact comma-separated list for use as image generation prompt descriptors. Focus on hair color, skin tone, eye color, and any distinctive features.",
+            },
+          ],
+        },
+      ],
+      maxTokens: 120,
+    });
+
+    const raw = result.choices?.[0]?.message?.content;
+    if (typeof raw !== "string" || !raw.trim()) return null;
+    // Trim to 200 chars max to keep prompts lean
+    return raw.trim().slice(0, 200);
+  } catch (err) {
+    console.warn("[LoRA] Physical descriptor extraction failed (non-fatal):", err instanceof Error ? err.message : String(err));
+    return null;
+  }
+}
 
 // Memory storage - we only need the buffer, not disk persistence
 const upload = multer({
@@ -58,13 +105,29 @@ export async function handleLoraUpload(req: Request, res: Response) {
 
     const { requestId, triggerPhrase } = await submitLoraTraining(images, userId);
 
-    // Save training state to profile
+    // Analyze the first photo with vision AI to extract physical descriptors
+    // This runs in parallel with saving the training state (non-blocking)
+    const firstFile = files[0];
+    const physicalDescriptorsPromise = extractPhysicalDescriptors(
+      firstFile.buffer,
+      firstFile.mimetype
+    );
+
+    // Save training state to profile immediately (don't wait for vision analysis)
     await updateLoraProfile(userId, {
       loraTrainingRequestId: requestId,
       loraTriggerPhrase: triggerPhrase,
       loraStatus: "training",
       loraWeightsUrl: null,
     });
+
+    // Save physical descriptors once vision analysis completes (fire and forget)
+    physicalDescriptorsPromise.then(async (descriptors) => {
+      if (descriptors) {
+        await updateLoraProfile(userId, { loraPhysicalDescriptors: descriptors });
+        console.log(`[LoRA] Physical descriptors saved for user ${userId}: ${descriptors}`);
+      }
+    }).catch(() => { /* non-fatal */ });
 
     return res.json({ requestId, triggerPhrase, status: "training" });
   } catch (err) {

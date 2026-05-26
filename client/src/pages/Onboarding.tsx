@@ -84,7 +84,10 @@ export default function Onboarding() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const loraFileInputRef = useRef<HTMLInputElement>(null);
 
-  const profileQuery = trpc.profile.get.useQuery();
+  const profileQuery = trpc.profile.get.useQuery(undefined, {
+    retry: 3,
+    retryDelay: 500,
+  });
   const upsertProfile = trpc.profile.upsert.useMutation({
     onSuccess: () => {
       navigate("/dashboard");
@@ -95,12 +98,26 @@ export default function Onboarding() {
   });
   const analyzeAesthetic = trpc.aesthetic.analyzeAndSave.useMutation();
 
-  // Redirect if already onboarded
+  // Redirect if already onboarded — wait for the query to finish before deciding
   useEffect(() => {
+    if (profileQuery.isLoading || profileQuery.isFetching) return;
     if (profileQuery.data?.onboarding_complete) {
       navigate("/dashboard");
     }
-  }, [profileQuery.data, navigate]);
+  }, [profileQuery.isLoading, profileQuery.isFetching, profileQuery.data, navigate]);
+
+  // Show a minimal loading screen while we check onboarding status
+  // This prevents the onboarding UI from flashing for already-onboarded users
+  if (profileQuery.isLoading || profileQuery.isFetching) {
+    return (
+      <div className="min-h-screen bg-[#1a0f09] flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <p className="font-serif text-2xl font-light text-cream">Meetha</p>
+          <div className="w-px h-8 bg-gold/40 animate-pulse" />
+        </div>
+      </div>
+    );
+  }
 
   const handleArchetypeSelect = (archetype: Archetype) => {
     setSelectedArchetype(archetype);

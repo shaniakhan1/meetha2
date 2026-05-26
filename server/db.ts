@@ -37,6 +37,7 @@ export type DbProfile = {
   lora_trigger_phrase: string | null;
   lora_training_request_id: string | null;
   lora_status: "training" | "ready" | "failed" | null;
+  lora_physical_descriptors: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -550,6 +551,7 @@ export async function updateLoraProfile(userId: number, data: {
   loraTriggerPhrase?: string | null;
   loraTrainingRequestId?: string | null;
   loraStatus?: "training" | "ready" | "failed" | null;
+  loraPhysicalDescriptors?: string | null;
 }): Promise<void> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const sb = getSupabase() as any;
@@ -559,6 +561,7 @@ export async function updateLoraProfile(userId: number, data: {
   if (data.loraTriggerPhrase !== undefined) patch.lora_trigger_phrase = data.loraTriggerPhrase;
   if (data.loraTrainingRequestId !== undefined) patch.lora_training_request_id = data.loraTrainingRequestId;
   if (data.loraStatus !== undefined) patch.lora_status = data.loraStatus;
+  if (data.loraPhysicalDescriptors !== undefined) patch.lora_physical_descriptors = data.loraPhysicalDescriptors;
   await sb.from("profiles").update(patch).eq("user_id", userId);
 }
 

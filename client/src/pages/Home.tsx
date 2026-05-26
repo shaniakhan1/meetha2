@@ -55,17 +55,25 @@ export default function Home() {
   const [, navigate] = useLocation();
   const profileQuery = trpc.profile.get.useQuery(undefined, {
     enabled: isAuthenticated,
+    // Retry aggressively on mobile networks
+    retry: 3,
+    retryDelay: 500,
   });
 
   useEffect(() => {
-    if (isAuthenticated && !loading && profileQuery.data !== undefined) {
-      if (profileQuery.data?.onboarding_complete) {
-        navigate("/dashboard");
-      } else {
-        navigate("/onboarding");
-      }
+    // Wait until auth is resolved AND profile query has finished loading
+    if (loading) return;
+    if (!isAuthenticated) return;
+    // Still fetching — do not redirect yet
+    if (profileQuery.isLoading || profileQuery.isFetching) return;
+    // Profile loaded: route based on onboarding status
+    if (profileQuery.data?.onboarding_complete) {
+      navigate("/dashboard");
+    } else if (profileQuery.data !== undefined) {
+      // Only send to onboarding if we actually got a profile back (not a network error)
+      navigate("/onboarding");
     }
-  }, [isAuthenticated, loading, profileQuery.data, navigate]);
+  }, [isAuthenticated, loading, profileQuery.isLoading, profileQuery.isFetching, profileQuery.data, navigate]);
 
   const handleCTA = () => {
     if (isAuthenticated) {
