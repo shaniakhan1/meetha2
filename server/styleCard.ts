@@ -2,8 +2,9 @@
  * GET /api/style-card/:generationId
  *
  * Generates a shareable branded style card JPEG:
- * - The generation image fills the top portion
- * - A dark footer panel with the Meetha wordmark burned in as a PNG (no font dependency)
+ * - The generation image fills the full card
+ * - A subtle semi-transparent "MEETHA" text overlay at the bottom (no dark box)
+ * - Optional styling brief rows rendered below the image (passed as query params)
  * - Returned as image/jpeg for direct sharing / saving
  *
  * Font-free approach: all text is replaced with image compositing to avoid
@@ -28,6 +29,15 @@ async function getBrandBuffer(): Promise<Buffer> {
   return _brandBuffer;
 }
 
+interface StylingBrief {
+  color_palette?: string;
+  metals?: string;
+  fabrics?: string;
+  makeup?: string;
+  lighting?: string;
+  hair?: string;
+}
+
 export async function handleStyleCard(req: Request, res: Response) {
   const { generationId } = req.params;
 
@@ -39,6 +49,17 @@ export async function handleStyleCard(req: Request, res: Response) {
   if (!user) {
     return res.status(401).json({ error: "Unauthorized" });
   }
+
+  // Parse optional styling brief from query params
+  const brief: StylingBrief = {
+    color_palette: req.query.color_palette as string | undefined,
+    metals: req.query.metals as string | undefined,
+    fabrics: req.query.fabrics as string | undefined,
+    makeup: req.query.makeup as string | undefined,
+    lighting: req.query.lighting as string | undefined,
+    hair: req.query.hair as string | undefined,
+  };
+  const hasBrief = Object.values(brief).some((v) => v && v.trim());
 
   // Fetch generation
   const genResult = await getSupabase()
@@ -73,32 +94,68 @@ export async function handleStyleCard(req: Request, res: Response) {
     const imgWidth = meta.width ?? 1080;
     const imgHeight = meta.height ?? 1350;
 
-    // Footer: dark panel below the image
-    const footerH = Math.max(160, Math.round(imgHeight * 0.18));
-    const cardH = imgHeight + footerH;
+    // Build brief panel if styling data was provided
+    let briefPanelBuffer: Buffer | null = null;
+    let briefPanelH = 0;
 
-    // Build a solid dark footer rectangle (no SVG text -- font-free)
-    const footerBg = await sharp({
-      create: {
-        width: imgWidth,
-        height: footerH,
-        channels: 3,
-        background: { r: 26, g: 15, b: 9 },
-      },
-    })
-      .png()
-      .toBuffer();
+    if (hasBrief) {
+      const rows: { label: string; value: string }[] = [
+        { label: "COLOR PALETTE", value: brief.color_palette ?? "" },
+        { label: "METALS", value: brief.metals ?? "" },
+        { label: "FABRICS", value: brief.fabrics ?? "" },
+        { label: "MAKEUP", value: brief.makeup ?? "" },
+        { label: "LIGHTING", value: brief.lighting ?? "" },
+        { label: "HAIR", value: brief.hair ?? "" },
+      ].filter((r) => r.value.trim());
 
-    // Resize the Meetha wordmark to fit the footer
+      // Row height scales with image width
+      const rowH = Math.round(imgWidth * 0.075);
+      const padX = Math.round(imgWidth * 0.06);
+      const fontSize = Math.round(imgWidth * 0.026);
+      const labelFontSize = Math.round(imgWidth * 0.022);
+      briefPanelH = rows.length * rowH + Math.round(imgWidth * 0.08); // rows + top/bottom padding
+
+      // Build SVG panel (font-safe: uses system sans-serif which Cloud Run has via Noto)
+      const rowsSvg = rows
+        .map((r, i) => {
+          const y = Math.round(imgWidth * 0.04) + i * rowH;
+          const midY = y + Math.round(rowH / 2);
+          // Separator line between rows
+          const line =
+            i > 0
+              ? `<line x1="${padX}" y1="${y}" x2="${imgWidth - padX}" y2="${y}" stroke="#C8A96E" stroke-width="0.5" opacity="0.3"/>`
+              : "";
+          return `
+          ${line}
+          <text x="${padX}" y="${midY - fontSize * 0.3}" font-family="Georgia,serif" font-size="${labelFontSize}" fill="#C8A96E" opacity="0.85" letter-spacing="2">${escSvg(r.label)}</text>
+          <text x="${padX + Math.round(imgWidth * 0.28)}" y="${midY + fontSize * 0.5}" font-family="Georgia,serif" font-size="${fontSize}" fill="#F5F0E8" opacity="0.95">${escSvg(truncate(r.value, 52))}</text>
+        `;
+        })
+        .join("");
+
+      const panelSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="${imgWidth}" height="${briefPanelH}">
+        <rect width="${imgWidth}" height="${briefPanelH}" fill="#1A0F09"/>
+        <line x1="${padX}" y1="0" x2="${imgWidth - padX}" y2="0" stroke="#C8A96E" stroke-width="0.8" opacity="0.4"/>
+        ${rowsSvg}
+        <line x1="${padX}" y1="${briefPanelH - 1}" x2="${imgWidth - padX}" y2="${briefPanelH - 1}" stroke="#C8A96E" stroke-width="0.5" opacity="0.2"/>
+      </svg>`;
+
+      briefPanelBuffer = await sharp(Buffer.from(panelSvg), { density: 144 })
+        .resize(imgWidth, briefPanelH, { fit: "fill" })
+        .png()
+        .toBuffer();
+    }
+
+    // Transparent MEETHA watermark overlay on the image (bottom-right corner)
     const brandRaw = await getBrandBuffer();
     const brandMeta = await sharp(brandRaw).metadata();
     const brandAspect = (brandMeta.width ?? 800) / (brandMeta.height ?? 449);
 
-    // Target: wordmark width = 35% of image width, centered vertically in footer
-    const brandW = Math.max(160, Math.round(imgWidth * 0.35));
+    // Small watermark: 22% of image width, bottom-right with padding
+    const brandW = Math.max(100, Math.round(imgWidth * 0.22));
     const brandH = Math.round(brandW / brandAspect);
+    const brandPad = Math.round(imgWidth * 0.04);
 
-    // Make the wordmark white on transparent with 85% opacity
     const brandResized = await sharp(brandRaw)
       .resize(brandW, brandH, { fit: "fill" })
       .ensureAlpha()
@@ -106,8 +163,14 @@ export async function handleStyleCard(req: Request, res: Response) {
       .toBuffer({ resolveWithObject: true });
 
     const { data: brandData, info: brandInfo } = brandResized;
-    for (let i = 3; i < brandData.length; i += 4) {
-      brandData[i] = Math.round(brandData[i] * 0.85);
+    // Make watermark white at 45% opacity (subtle, not blocking)
+    for (let i = 0; i < brandData.length; i += 4) {
+      // Set RGB to white
+      brandData[i] = 245;
+      brandData[i + 1] = 240;
+      brandData[i + 2] = 232;
+      // Reduce alpha to 45%
+      brandData[i + 3] = Math.round(brandData[i + 3] * 0.45);
     }
     const brandPng = await sharp(brandData, {
       raw: { width: brandInfo.width, height: brandInfo.height, channels: 4 },
@@ -115,45 +178,34 @@ export async function handleStyleCard(req: Request, res: Response) {
       .png()
       .toBuffer();
 
-    // Center the wordmark in the footer
-    const brandLeft = Math.round((imgWidth - brandW) / 2);
-    const brandTop = Math.round((footerH - brandH) / 2);
+    // Position: bottom-right of the photo area
+    const brandLeft = imgWidth - brandW - brandPad;
+    const brandTop = imgHeight - brandH - brandPad;
 
-    // Thin gold separator line (SVG rect, no text -- safe)
-    const lineH = 1;
-    const linePad = Math.round(imgWidth * 0.07);
-    const lineSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="${imgWidth}" height="${footerH}">
-  <rect x="${linePad}" y="${Math.round(footerH * 0.08)}" width="${imgWidth - linePad * 2}" height="1" fill="#8B6914" opacity="0.5"/>
-  <rect x="${linePad}" y="${footerH - Math.round(footerH * 0.08)}" width="${imgWidth - linePad * 2}" height="1" fill="#8B6914" opacity="0.3"/>
-</svg>`;
-
-    const linePng = await sharp(Buffer.from(lineSvg), { density: 144 })
-      .resize(imgWidth, footerH, { fit: "fill" })
+    // Composite the photo with the watermark overlay
+    const photoWithWatermark = await sharp(imageBuffer)
+      .composite([{ input: brandPng, top: brandTop, left: brandLeft }])
       .png()
       .toBuffer();
 
-    // Composite footer: bg + lines + brand wordmark
-    const footerComposited = await sharp(footerBg)
-      .composite([
-        { input: linePng, top: 0, left: 0 },
-        { input: brandPng, top: brandTop, left: brandLeft },
-      ])
-      .png()
-      .toBuffer();
+    // Build final card
+    const totalH = imgHeight + briefPanelH;
+    const composites: sharp.OverlayOptions[] = [
+      { input: photoWithWatermark, top: 0, left: 0 },
+    ];
+    if (briefPanelBuffer) {
+      composites.push({ input: briefPanelBuffer, top: imgHeight, left: 0 });
+    }
 
-    // Composite full card: image + footer
     const card = await sharp({
       create: {
         width: imgWidth,
-        height: cardH,
+        height: totalH,
         channels: 3,
         background: { r: 26, g: 15, b: 9 },
       },
     })
-      .composite([
-        { input: imageBuffer, top: 0, left: 0 },
-        { input: footerComposited, top: imgHeight, left: 0 },
-      ])
+      .composite(composites)
       .jpeg({ quality: 90 })
       .toBuffer();
 
@@ -167,4 +219,16 @@ export async function handleStyleCard(req: Request, res: Response) {
     console.error("[StyleCard] Compositing error:", err);
     return res.status(500).json({ error: "Failed to generate style card" });
   }
+}
+
+function escSvg(s: string): string {
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+function truncate(s: string, maxLen: number): string {
+  return s.length > maxLen ? s.slice(0, maxLen - 1) + "…" : s;
 }

@@ -735,8 +735,13 @@ function TransformationCardSection() {
 
   const handleGenerate = () => {
     if (!firstGeneration) return;
+    // Convert relative /manus-storage/ URL to absolute so z.string().url() validation passes
+    const rawUrl = firstGeneration.image_url as string;
+    const afterImageUrl = rawUrl.startsWith("http")
+      ? rawUrl
+      : `${window.location.origin}${rawUrl.startsWith("/") ? rawUrl : "/" + rawUrl}`;
     generateCard.mutate({
-      afterImageUrl: firstGeneration.image_url,
+      afterImageUrl,
       beforeImageUrl: null,
     });
   };
@@ -752,38 +757,41 @@ function TransformationCardSection() {
 
       {tier === "free" ? (
         // Free tier: locked state with clear upgrade message
-        <div className="border border-gold/30 bg-warm-white/60 p-5 space-y-4">
-          <div className="space-y-2">
-            <p className="font-serif text-base text-charcoal leading-snug">
-              See yourself transformed.
+        <div className="border border-gold/40 bg-[#1A0F09] p-5 space-y-4">
+          <div className="space-y-3">
+            <p className="font-serif text-lg text-cream leading-snug">
+              Get Styled on Meetha.
             </p>
-            <p className="font-sans font-light text-sm text-charcoal-soft leading-relaxed">
-              When you upgrade, we create a personalized card showing your before photo next to your AI-generated look — plus your exact color palette, style direction, makeup energy, and jewelry guide.
+            <p className="font-sans font-light text-sm text-cream/80 leading-relaxed">
+              Upgrade and we'll create your personal <strong className="text-gold font-normal">Visual Transformation Card</strong> — a shareable image showing your before photo next to your AI-styled look, plus your exact color palette, style direction, makeup energy, and jewelry guide.
             </p>
-            <p className="font-sans font-light text-xs text-charcoal-soft/70 leading-relaxed">
+            <p className="font-sans font-light text-xs text-cream/50 leading-relaxed">
               Think of it as your personal style bible. One card. Everything you need to shop, shoot, and show up.
             </p>
           </div>
-          <div className="border border-sand/60 p-3 bg-cream/40 space-y-1">
-            <p className="font-sans text-xs font-semibold text-charcoal">What’s inside your card:</p>
+          <div className="border border-gold/20 p-3 bg-black/20 space-y-1.5">
+            <p className="font-sans text-xs font-semibold text-gold tracking-widest uppercase mb-2">What's inside your card:</p>
             {[
-              "Before & After photos side by side",
-              "Your personal color palette (4 exact hex swatches)",
+              "Your before photo + AI-styled after — side by side",
+              "Your personal color palette (4 exact shades)",
               "Style direction: fabrics, silhouettes, textures",
-              "Makeup energy: techniques and signature look",
+              "Makeup energy: techniques and your signature look",
               "Jewelry direction: metals, weight, piece types",
               "Your energy: 4 words that define your presence",
             ].map((item) => (
               <div key={item} className="flex items-start gap-2">
-                <span className="text-gold text-xs mt-0.5 flex-shrink-0">✓</span>
-                <p className="font-sans text-xs text-charcoal-soft">{item}</p>
+                <span className="text-gold text-xs mt-0.5 flex-shrink-0">✦</span>
+                <p className="font-sans text-xs text-cream/70">{item}</p>
               </div>
             ))}
           </div>
-          <div className="space-y-2">
-            <p className="font-sans text-xs text-gold tracking-widest uppercase">Starter plan — unlocks after your 2nd generation</p>
-            <p className="font-sans text-xs text-gold tracking-widest uppercase">Pro plan — unlocks after your 1st generation</p>
+          <div className="space-y-1.5 pt-1">
+            <p className="font-sans text-xs text-gold/80 tracking-widest uppercase">✦ Starter — unlocks after your 2nd generation</p>
+            <p className="font-sans text-xs text-gold/80 tracking-widest uppercase">✦ Pro — unlocks after your very first generation</p>
           </div>
+          <a href="/pricing" className="btn-luxury w-full text-center block">
+            Get Styled on Meetha
+          </a>
         </div>
       ) : cardUrl ? (
         // Card is ready
@@ -793,17 +801,33 @@ function TransformationCardSection() {
             alt="Your Visual Transformation Card"
             className="w-full border border-sand/40"
           />
-          <a
-            href={cardUrl}
-            download="meetha-transformation-card.jpg"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="btn-luxury w-full text-center block"
+          <button
+            onClick={async () => {
+              if (!cardUrl) return;
+              try {
+                const res = await fetch(cardUrl);
+                const blob = await res.blob();
+                const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+                if (isMobile && navigator.canShare) {
+                  const file = new File([blob], "meetha-transformation-card.jpg", { type: "image/jpeg" });
+                  if (navigator.canShare({ files: [file] })) {
+                    try { await navigator.share({ files: [file], title: "My Visual Transformation Card" }); return; }
+                    catch (e: unknown) { if (e instanceof Error && e.name === "AbortError") return; }
+                  }
+                }
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement("a");
+                a.href = url; a.download = "meetha-transformation-card.jpg";
+                document.body.appendChild(a); a.click();
+                document.body.removeChild(a); URL.revokeObjectURL(url);
+              } catch { toast.error("Could not save card. Please try again."); }
+            }}
+            className="btn-luxury w-full"
           >
-            Download Card
-          </a>
+            {/iPhone|iPad|iPod|Android/i.test(navigator.userAgent) ? "Save & Share Card" : "Download Card"}
+          </button>
           <p className="font-sans text-xs text-charcoal-soft/50 text-center leading-relaxed">
-            Share this card anywhere. It’s yours.
+            Share this card anywhere. It's yours.
           </p>
         </div>
       ) : !hasEnoughGens ? (

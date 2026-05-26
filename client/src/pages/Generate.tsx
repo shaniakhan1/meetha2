@@ -250,6 +250,52 @@ export default function Generate() {
     setStep("preview");
   };
 
+  const handleSaveStyleCard = async () => {
+    if (!result?.generation?.id) return;
+    try {
+      // Build URL with styling brief as query params
+      const params = new URLSearchParams();
+      if (aestheticRead) {
+        if (aestheticRead.color_palette) params.set("color_palette", aestheticRead.color_palette);
+        if (aestheticRead.metals) params.set("metals", aestheticRead.metals);
+        if (aestheticRead.fabrics) params.set("fabrics", aestheticRead.fabrics);
+        if (aestheticRead.makeup) params.set("makeup", aestheticRead.makeup);
+        if (aestheticRead.lighting) params.set("lighting", aestheticRead.lighting);
+        if (aestheticRead.hair) params.set("hair", aestheticRead.hair);
+      }
+      const qs = params.toString() ? `?${params.toString()}` : "";
+      const response = await fetch(`/api/style-card/${result.generation.id}${qs}`, {
+        credentials: "include",
+      });
+      if (!response.ok) throw new Error(`Style card failed: ${response.status}`);
+      const blob = await response.blob();
+
+      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+      if (isMobile && navigator.canShare) {
+        const file = new File([blob], `meetha-style-card-${result.generation.id}.jpg`, { type: "image/jpeg" });
+        if (navigator.canShare({ files: [file] })) {
+          try {
+            await navigator.share({ files: [file], title: "My Meetha Style Card" });
+            return;
+          } catch (shareErr: unknown) {
+            if (shareErr instanceof Error && shareErr.name === "AbortError") return;
+          }
+        }
+      }
+      // Desktop / fallback
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `meetha-style-card-${result.generation.id}.jpg`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch {
+      toast.error("Could not save style card. Please try again.");
+    }
+  };
+
   const handleDownload = async () => {
     if (!result?.generation?.id) return;
     try {
@@ -1340,6 +1386,14 @@ export default function Generate() {
             <button onClick={handleDownload} className="btn-luxury w-full min-h-[52px]">
               {/iPhone|iPad|iPod|Android/i.test(navigator.userAgent) ? "Save & Share" : "Download Image"}
             </button>
+            {aestheticRead && (
+              <button
+                onClick={handleSaveStyleCard}
+                className="btn-luxury btn-luxury-outline w-full"
+              >
+                {/iPhone|iPad|iPod|Android/i.test(navigator.userAgent) ? "Save Style Card" : "Download Style Card"}
+              </button>
+            )}
             <button
               onClick={handleCopyCaption}
               className="btn-luxury btn-luxury-outline w-full"

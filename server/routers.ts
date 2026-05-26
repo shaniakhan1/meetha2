@@ -761,8 +761,9 @@ export const appRouter = router({
      */
     generateTransformationCard: protectedProcedure
       .input(z.object({
-        afterImageUrl: z.string().url(),
-        beforeImageUrl: z.string().url().optional().nullable(),
+        // Accept both absolute URLs (https://...) and relative paths (/manus-storage/...)
+        afterImageUrl: z.string().min(1),
+        beforeImageUrl: z.string().min(1).optional().nullable(),
       }))
       .mutation(async ({ ctx, input }) => {
         const [profile, credits] = await Promise.all([

@@ -437,3 +437,12 @@
 - [x] Landing page: rewrite hero + pricing messaging so the card is a crystal-clear sign-up hook (10-year-old readable)
 - [x] TypeScript: zero errors
 - [x] Vitest: all tests passing
+
+## V22 -- Style Card + Share Fixes
+
+- [x] Style card watermark: remove dark brown box, replace with subtle transparent text overlay
+- [x] Style card: include full styling brief (Color Palette, Metals, Fabrics, Makeup, Lighting, Hair) on the card image
+- [x] Transformation Card: fix "Invalid URL" error by converting relative /manus-storage/ URLs to absolute https:// URLs before passing to compositor
+- [x] Save & Share: Web Share API already on mobile; transformation card download also uses share sheet on iOS
+- [x] Styling card result screen: add "Save Card" / "Share Card" button
+- [x] Free tier CTA copy: changed to "Get Styled on Meetha" with dark luxury card design
