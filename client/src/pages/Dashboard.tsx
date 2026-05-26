@@ -22,17 +22,17 @@ import {
 
 type GenerationItem = {
   id: number;
-  user_id: number;
-  image_url: string;
-  image_key: string;
+  userId: number;
+  imageUrl: string;
+  imageKey: string;
   archetype: string;
   mood: string;
   platform: string;
-  scene_category: string | null;
+  sceneCategory: string | null;
   hooks: string;
   caption: string;
-  selected_hook: string | null;
-  created_at: string;
+  selectedHook: string | null;
+  createdAt: string;
   archived: boolean;
   archivedAt: string | null;
 };
@@ -330,11 +330,11 @@ export default function Dashboard() {
                   <div
                     className="absolute left-0 top-0 h-full bg-gold transition-all duration-700"
                     style={{
-                      width: `${Math.min(100, ((credits.credits_remaining ?? 0) / (credits.tier === "pro" ? 25 : credits.tier === "starter" ? 10 : 1)) * 100)}%`,
+                      width: `${Math.min(100, ((credits.creditsRemaining ?? 0) / (credits.tier === "pro" ? 25 : credits.tier === "starter" ? 10 : 1)) * 100)}%`,
                     }}
                   />
                 </div>
-                <span className="font-sans text-[10px] text-cream/50 tabular-nums">{credits.credits_remaining} left</span>
+                <span className="font-sans text-[10px] text-cream/50 tabular-nums">{credits.creditsRemaining} left</span>
               </div>
             )}
           </div>
@@ -347,7 +347,7 @@ export default function Dashboard() {
               style={{ width: "72px", height: "96px" }}
             >
               <img
-                src={heroGen.image_url}
+                src={heroGen.imageUrl}
                 alt="Your latest creation"
                 className="w-full h-full object-cover"
                 style={{ objectPosition: "center top" }}
@@ -399,12 +399,12 @@ export default function Dashboard() {
         {/* PRIMARY CTA */}
         <button
           onClick={() => navigate("/generate")}
-          disabled={credits?.credits_remaining === 0}
+          disabled={credits?.creditsRemaining === 0}
           className="btn-luxury w-full mb-8 disabled:opacity-40 disabled:cursor-not-allowed"
         >
           Generate New Content
         </button>
-        {credits?.credits_remaining === 0 && (
+        {credits?.creditsRemaining === 0 && (
           <div className="text-center -mt-6 mb-8 space-y-1">
             <a
               href={import.meta.env.VITE_STRIPE_STARTER_LINK || "#"}
@@ -534,12 +534,12 @@ export default function Dashboard() {
                   >
                     <div className="aspect-story">
                       <img
-                        src={gen.image_url}
-                        alt={gen.selected_hook ?? "Generated content"}
+                        src={gen.imageUrl}
+                        alt={gen.selectedHook ?? "Generated content"}
                         className="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity duration-300"
                         loading="lazy"
                       />
-                      {gen.selected_hook && !isExpanded && (
+                      {gen.selectedHook && !isExpanded && (
                         <div className="absolute inset-0 flex items-end justify-center pb-4 px-3"
                           style={{ background: "linear-gradient(to bottom, transparent 50%, rgba(26,15,9,0.7) 100%)" }}
                         >
@@ -547,7 +547,7 @@ export default function Dashboard() {
                             className="font-serif text-cream text-center leading-tight"
                             style={{ fontSize: "clamp(0.65rem, 2.5vw, 0.85rem)", textShadow: "0 1px 8px rgba(0,0,0,0.5)" }}
                           >
-                            {gen.selected_hook}
+                            {gen.selectedHook}
                           </p>
                         </div>
                       )}
@@ -563,23 +563,23 @@ export default function Dashboard() {
                         onClick={(e) => e.stopPropagation()}
                       >
                         <p className="font-sans text-xs tracking-widest uppercase text-gold mb-3">
-                          {gen.scene_category ? SCENE_LABELS[gen.scene_category as keyof typeof SCENE_LABELS] : ""}
+                          {gen.sceneCategory ? SCENE_LABELS[gen.sceneCategory as keyof typeof SCENE_LABELS] : ""}
                         </p>
                         <p className="font-serif text-sm text-cream text-center leading-snug mb-4">
-                          {gen.selected_hook ?? hooks[0]}
+                          {gen.selectedHook ?? hooks[0]}
                         </p>
                         <p className="font-sans font-light text-xs text-cream/70 text-center leading-relaxed mb-4">
                           {gen.caption}
                         </p>
                         <button
-                          onClick={(e) => { e.stopPropagation(); handleDownload(gen.id, gen.selected_hook); }}
+                          onClick={(e) => { e.stopPropagation(); handleDownload(gen.id, gen.selectedHook); }}
                           disabled={isDownloading}
                           className="font-sans text-xs tracking-widest uppercase text-cream border border-cream/40 px-6 py-3 hover:bg-cream/10 transition-colors active:scale-[0.97] disabled:opacity-50 min-h-[44px] w-full"
                         >
                           {isDownloading ? "Saving..." : "Save & Share"}
                         </button>
                         <button
-                          onClick={(e) => { e.stopPropagation(); handleShareStyleCard(gen.id, gen.selected_hook); }}
+                          onClick={(e) => { e.stopPropagation(); handleShareStyleCard(gen.id, gen.selectedHook); }}
                           disabled={sharingCardId === gen.id}
                           className="font-sans text-[10px] tracking-widest uppercase text-gold/70 hover:text-gold transition-colors mt-1 min-h-[36px] disabled:opacity-40 w-full"
                         >

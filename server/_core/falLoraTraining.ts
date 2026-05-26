@@ -161,7 +161,9 @@ export async function generateImageWithLora(options: {
   const physicalAnchor = options.physicalDescriptors
     ? `, ${options.physicalDescriptors},`
     : "";
-  const promptWithTrigger = `${options.triggerPhrase}${physicalAnchor} ${options.prompt}`;
+  // Always reinforce jewelry, styling, and lighting so every LoRA output looks editorial and styled.
+  const stylingReinforcement = " layered gold jewelry, delicate necklace, statement earrings or rings visible, polished skin, editorial makeup, intentional styling, cinematic directional lighting, warm golden hour or soft studio light, photorealistic,";
+  const promptWithTrigger = `${options.triggerPhrase}${physicalAnchor}${stylingReinforcement} ${options.prompt}`;
 
   const result = (await fal.subscribe("fal-ai/flux-lora", {
     input: {

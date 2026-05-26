@@ -22,7 +22,7 @@ const STILL_COST = 1;
 interface GenerationResult {
   generation: {
     id: number;
-    image_url: string;
+    imageUrl: string;
     caption: string;
     archetype: string;
     mood: string;
@@ -195,7 +195,7 @@ export default function Generate() {
     // One-tap generate: uses saved profile defaults, no scene/format selection
     if (!previewTier) {
       const credits = creditsQuery.data;
-      if (!credits || credits.credits_remaining < STILL_COST) {
+      if (!credits || credits.creditsRemaining < STILL_COST) {
         setShowTopUp(true);
         return;
       }
@@ -215,7 +215,7 @@ export default function Generate() {
     // In preview mode, skip the credit gate entirely
     if (!previewTier) {
       const credits = creditsQuery.data;
-      if (!credits || credits.credits_remaining < STILL_COST) {
+      if (!credits || credits.creditsRemaining < STILL_COST) {
         setShowTopUp(true);
         return;
       }
@@ -474,7 +474,7 @@ export default function Generate() {
   // In preview mode, synthesize a credits object matching the selected tier
   const effectiveCredits = previewTier
     ? {
-        credits_remaining: previewTier === "free" ? 3 : previewTier === "starter" ? 28 : 73,
+        creditsRemaining: previewTier === "free" ? 3 : previewTier === "starter" ? 28 : 73,
         tier: previewTier,
       }
     : credits;
@@ -607,7 +607,7 @@ export default function Generate() {
         <span className="font-serif text-lg tracking-widest text-charcoal">MEETHA</span>
         <div className="text-right">
           <p className="font-sans text-xs text-gold">
-            {effectiveCredits?.credits_remaining ?? "."} left
+            {effectiveCredits?.creditsRemaining ?? "."} left
           </p>
           {effectiveCredits?.tier === "free" && (
             <p className="font-sans text-[10px] text-charcoal-soft/50 tracking-wide">
@@ -722,12 +722,12 @@ export default function Generate() {
           </div>
 
           <div className="mt-auto space-y-3">
-            {effectiveCredits && effectiveCredits.credits_remaining > 0 ? (
+            {effectiveCredits && effectiveCredits.creditsRemaining > 0 ? (
               <button
                 onClick={() => {
                   if (!previewTier) {
                     const credits = creditsQuery.data;
-                    if (!credits || credits.credits_remaining < STILL_COST) {
+                    if (!credits || credits.creditsRemaining < STILL_COST) {
                       setShowTopUp(true);
                       return;
                     }
@@ -781,7 +781,7 @@ export default function Generate() {
 
 
           {/* ── Quick Generate - one tap, zero decisions ── */}
-          {effectiveCredits && effectiveCredits.credits_remaining > 0 && (
+          {effectiveCredits && effectiveCredits.creditsRemaining > 0 && (
             <div className="mb-6">
               <button
                 onClick={handleQuickGenerate}
@@ -1117,7 +1117,7 @@ export default function Generate() {
           {/* Thumbnail preview - shows hook overlay as user hovers/selects */}
           <div className="mb-6">
             <CinematicPreview
-              imageUrl={result.generation.image_url as string}
+              imageUrl={result.generation.imageUrl as string}
               hook={selectedHook ?? result.hooks[0] ?? null}
               size="thumb"
               platform={platform}
@@ -1227,7 +1227,7 @@ export default function Generate() {
           )}
           <div className="mb-6">
             <CinematicPreview
-              imageUrl={result.generation.image_url as string}
+              imageUrl={result.generation.imageUrl as string}
               hook={selectedHook}
               animated={
                 effectiveCredits?.tier === "starter" ||

@@ -2,79 +2,75 @@
  * GET /api/download/:generationId
  *
  * Serves the generated image for download.
- * - Free tier: composites a subtle "meetha" watermark (bottom-right, white, semi-transparent)
+ * - Free tier: composites the Meetha logo as a bottom-center watermark
  * - Starter / Pro: serves the original image unmodified
  */
+import path from "path";
 import type { Request, Response } from "express";
 import sharp from "sharp";
 import { authenticateRequest } from "./_core/auth";
 import { getSupabase } from "./_core/supabase";
 import { storageGetSignedUrl } from "./storage";
-import { WATERMARK_FONT_BASE64 } from "./watermarkFont";
 
-// Font is embedded at build time as a base64 constant - no disk I/O needed at runtime.
-// This ensures the font is available on Cloud Run where __dirname has no .ttf files.
-function getFontBase64(): string {
-  return WATERMARK_FONT_BASE64;
+// Watermark logo: the Meetha wordmark PNG stored in S3/storage.
+// We fetch it once and cache it in memory for the process lifetime.
+let _watermarkBuffer: Buffer | null = null;
+
+async function getWatermarkBuffer(): Promise<Buffer> {
+  if (_watermarkBuffer) return _watermarkBuffer;
+  // Fetch the pre-uploaded transparent Meetha wordmark PNG from our CDN
+  const url =
+    "https://d2xsxph8kpxj0f.cloudfront.net/310519663380647277/W9hp3oxSnRYx5WHCSun39U/meetha-watermark-3X9t8k979xcd7uGLhS3sPN.png";
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`Watermark fetch failed: ${res.status}`);
+  const buf = Buffer.from(await res.arrayBuffer());
+  _watermarkBuffer = buf;
+  return buf;
 }
 
-// SVG watermark: diagonal "MEETHA" text repeated across the image.
-// Uses SVG path-based letters to avoid librsvg font rendering artifacts (white boxes).
-// The letters are drawn as simple geometric shapes so no font embedding is needed.
-async function buildWatermarkPng(width: number, height: number): Promise<Buffer> {
-  const fontSize = Math.max(36, Math.round(width * 0.07));
-  const cx = Math.round(width / 2);
-  const cy = Math.round(height / 2);
-  const letterSpacing = Math.round(fontSize * 0.12);
+/**
+ * Build a watermark overlay:
+ * - Fetches the Meetha wordmark PNG
+ * - Resizes it to ~40% of the image width
+ * - Places it bottom-center with 5% margin
+ * - Applies 55% opacity
+ */
+async function buildWatermarkOverlay(
+  imgWidth: number,
+  imgHeight: number
+): Promise<{ input: Buffer; top: number; left: number }> {
+  const rawWm = await getWatermarkBuffer();
 
-  // Five rows of "MEETHA" spread across the full image height
-  const rowOffsets = [
-    -Math.round(height * 0.35),
-    -Math.round(height * 0.17),
-    0,
-    Math.round(height * 0.17),
-    Math.round(height * 0.35),
-  ];
+  // Target width: 40% of image width, minimum 200px
+  const targetW = Math.max(200, Math.round(imgWidth * 0.4));
+  const wmMeta = await sharp(rawWm).metadata();
+  const wmAspect = (wmMeta.width ?? 800) / (wmMeta.height ?? 449);
+  const targetH = Math.round(targetW / wmAspect);
 
-  // Use SVG text with a system-safe generic font stack.
-  // Key fix: set paint-order="stroke" so the stroke is drawn behind the fill,
-  // and use a dark stroke to prevent librsvg from rendering a white background rect.
-  // The text element has no background - fill-opacity controls transparency.
-  const textElements = rowOffsets.map((offset) => {
-    const y = cy + offset;
-    return [
-      `<text`,
-      `  x="${cx}"`,
-      `  y="${y}"`,
-      `  text-anchor="middle"`,
-      `  dominant-baseline="middle"`,
-      `  font-family="Arial, Helvetica, sans-serif"`,
-      `  font-size="${fontSize}"`,
-      `  font-weight="bold"`,
-      `  letter-spacing="${letterSpacing}"`,
-      `  fill="white"`,
-      `  fill-opacity="0.35"`,
-      `  stroke="none"`,
-      `  transform="rotate(-28 ${cx} ${y})">`,
-      `MEETHA`,
-      `</text>`,
-    ].join(" ");
-  }).join("\n");
+  // Resize + apply opacity via composite with a transparent base
+  const resized = await sharp(rawWm)
+    .resize(targetW, targetH, { fit: "fill" })
+    .ensureAlpha()
+    .raw()
+    .toBuffer({ resolveWithObject: true });
 
-  const svg = [
-    `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}">`,
-    `<rect width="${width}" height="${height}" fill="transparent"/>`,
-    textElements,
-    `</svg>`,
-  ].join("\n");
-
-  // Pre-rasterize SVG to PNG at the exact image dimensions.
-  // This forces librsvg to render the text to pixels before compositing,
-  // which eliminates the white-box artifact that appears when compositing SVG directly.
-  return await sharp(Buffer.from(svg), { density: 144 })
-    .resize(width, height, { fit: "fill" })
+  // Reduce opacity to 55% by scaling the alpha channel
+  const { data, info } = resized;
+  for (let i = 3; i < data.length; i += 4) {
+    data[i] = Math.round(data[i] * 0.55);
+  }
+  const wmBuffer = await sharp(data, {
+    raw: { width: info.width, height: info.height, channels: 4 },
+  })
     .png()
     .toBuffer();
+
+  // Position: bottom-center, 5% margin from bottom
+  const marginBottom = Math.round(imgHeight * 0.05);
+  const top = imgHeight - targetH - marginBottom;
+  const left = Math.round((imgWidth - targetW) / 2);
+
+  return { input: wmBuffer, top: Math.max(0, top), left: Math.max(0, left) };
 }
 
 export async function handleDownload(req: Request, res: Response) {
@@ -93,10 +89,10 @@ export async function handleDownload(req: Request, res: Response) {
   // Fetch the generation record
   const genResult = await getSupabase()
     .from("generations")
-    .select("id, user_id, image_url")
+    .select("id, userId, imageUrl")
     .eq("id", Number(generationId))
     .single();
-  const generation = genResult.data as { id: number; user_id: number; image_url: string } | null;
+  const generation = genResult.data as { id: number; userId: number; imageUrl: string } | null;
   const error = genResult.error;
 
   if (error || !generation) {
@@ -104,15 +100,14 @@ export async function handleDownload(req: Request, res: Response) {
   }
 
   // Only the owner can download
-  if (generation.user_id !== user.id) {
+  if (generation.userId !== user.id) {
     return res.status(403).json({ error: "Forbidden" });
   }
 
   // Fetch the image bytes
-  // image_url is stored as a relative /manus-storage/{key} path - resolve to a signed S3 URL
   let imageBuffer: Buffer;
   try {
-    let fetchUrl = generation.image_url as string;
+    let fetchUrl = generation.imageUrl as string;
     if (fetchUrl.startsWith("/manus-storage/")) {
       const key = fetchUrl.replace("/manus-storage/", "");
       fetchUrl = await storageGetSignedUrl(key);
@@ -127,29 +122,26 @@ export async function handleDownload(req: Request, res: Response) {
   }
 
   // Determine if watermark should be applied
-  // Free tier: always watermark
-  // Starter/Pro: watermark only if share_badge_enabled is true (default null = no badge for paid)
   const creditsResult = await getSupabase()
     .from("credits")
     .select("tier")
-    .eq("user_id", user.id)
+    .eq("userId", user.id)
     .single();
   const credits = creditsResult.data as { tier: string } | null;
 
   const profileResult = await getSupabase()
     .from("profiles")
     .select("share_badge_enabled")
-    .eq("user_id", user.id)
+    .eq("userId", user.id)
     .single();
   const profile = profileResult.data as { share_badge_enabled: boolean | null } | null;
 
   const tier = credits?.tier ?? "free";
   const shareBadgeEnabled = profile?.share_badge_enabled;
-  // Free tier: always watermark. Paid: watermark only when explicitly opted in (shareBadgeEnabled === true)
+  // Free tier: always watermark. Paid: watermark only when explicitly opted in
   const applyWatermark = tier === "free" || shareBadgeEnabled === true;
 
   if (!applyWatermark) {
-    // Serve original image
     res.setHeader("Content-Type", "image/jpeg");
     res.setHeader(
       "Content-Disposition",
@@ -163,18 +155,12 @@ export async function handleDownload(req: Request, res: Response) {
     const image = sharp(imageBuffer);
     const metadata = await image.metadata();
     const imgWidth = metadata.width ?? 1080;
-
     const imgHeight = metadata.height ?? 1920;
-    const watermarkPng = await buildWatermarkPng(imgWidth, imgHeight);
+
+    const wmOverlay = await buildWatermarkOverlay(imgWidth, imgHeight);
 
     const watermarked = await image
-      .composite([
-        {
-          input: watermarkPng,
-          top: 0,
-          left: 0,
-        },
-      ])
+      .composite([wmOverlay])
       .jpeg({ quality: 92 })
       .toBuffer();
 

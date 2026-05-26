@@ -54,7 +54,7 @@ export default function Onboarding() {
   // Redirect if already onboarded
   useEffect(() => {
     if (profileQuery.isLoading || profileQuery.isFetching) return;
-    if (profileQuery.data?.onboarding_complete) navigate("/dashboard");
+    if (profileQuery.data?.onboardingComplete) navigate("/dashboard");
   }, [profileQuery.isLoading, profileQuery.isFetching, profileQuery.data, navigate]);
 
   if (profileQuery.isLoading || profileQuery.isFetching) {

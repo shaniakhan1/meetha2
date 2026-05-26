@@ -1,8 +1,7 @@
 /**
- * Meetha database helpers - powered by Supabase Postgres.
+ * Meetha database helpers - powered by Supabase (MySQL/TiDB via Manus).
  * All queries use the service role client (server-side only).
- * We cast the Supabase client as `any` for query builder calls since we
- * are not using generated Supabase types - all row types are defined below.
+ * Column names match the actual DB schema (camelCase as defined in drizzle/schema.ts).
  */
 import { getSupabase } from "./_core/supabase";
 
@@ -10,22 +9,24 @@ import { getSupabase } from "./_core/supabase";
 
 export type DbUser = {
   id: number;
-  open_id: string;
+  openId: string;
   name: string | null;
   email: string | null;
-  login_method: string | null;
+  loginMethod: string | null;
   role: "user" | "admin";
-  created_at: string;
-  updated_at: string;
-  last_signed_in: string;
+  referral_code: string | null;
+  createdAt: string;
+  updatedAt: string;
+  lastSignedIn: string;
 };
 
 export type DbProfile = {
   id: number;
-  user_id: number;
+  userId: number;
   archetype: string;
   mood: string;
-  onboarding_complete: boolean;
+  onboardingComplete: boolean;
+  // These columns were added directly in Supabase (snake_case)
   aesthetic_descriptors: string | null;
   aesthetic_preview_url: string | null;
   reference_image_urls: string[] | null;
@@ -40,8 +41,8 @@ export type DbProfile = {
   lora_physical_descriptors: string | null;
   body_type: string | null;
   aesthetic_brief: AestheticBrief | null;
-  created_at: string;
-  updated_at: string;
+  createdAt: string;
+  updatedAt: string;
 };
 
 export type AestheticBrief = {
@@ -56,27 +57,27 @@ export type AestheticBrief = {
 
 export type DbCredits = {
   id: number;
-  user_id: number;
-  credits_remaining: number;
-  total_used: number;
+  userId: number;
+  creditsRemaining: number;
+  totalUsed: number;
   tier: "free" | "starter" | "pro";
   free_lora_used: boolean;
-  updated_at: string;
+  updatedAt: string;
 };
 
 export type DbGeneration = {
   id: number;
-  user_id: number;
-  image_url: string;
-  image_key: string;
+  userId: number;
+  imageUrl: string;
+  imageKey: string;
   archetype: string;
   mood: string;
   platform: string;
-  scene_category: string | null;
+  sceneCategory: string | null;
   hooks: string;
   caption: string;
-  selected_hook: string | null;
-  created_at: string;
+  selectedHook: string | null;
+  createdAt: string;
   archived: boolean;
   archivedAt: string | null;
 };
@@ -97,7 +98,7 @@ export async function upsertUser(data: {
   const { data: existing } = await sb
     .from("users")
     .select("*")
-    .eq("open_id", data.openId)
+    .eq("openId", data.openId)
     .single();
 
   if (existing) {
@@ -107,11 +108,11 @@ export async function upsertUser(data: {
       .update({
         name: data.name ?? row.name,
         email: data.email ?? row.email,
-        login_method: data.loginMethod ?? row.login_method,
-        last_signed_in: now,
-        updated_at: now,
+        loginMethod: data.loginMethod ?? row.loginMethod,
+        lastSignedIn: now,
+        updatedAt: now,
       })
-      .eq("open_id", data.openId)
+      .eq("openId", data.openId)
       .select()
       .single();
     return { user: (updated as DbUser) ?? null, isNew: false };
@@ -120,12 +121,12 @@ export async function upsertUser(data: {
   const { data: inserted } = await sb
     .from("users")
     .insert({
-      open_id: data.openId,
+      openId: data.openId,
       name: data.name ?? null,
       email: data.email ?? null,
-      login_method: data.loginMethod ?? null,
+      loginMethod: data.loginMethod ?? null,
       role: data.role ?? "user",
-      last_signed_in: now,
+      lastSignedIn: now,
     })
     .select()
     .single();
@@ -138,7 +139,7 @@ export async function getUserByOpenId(openId: string): Promise<DbUser | null> {
   const { data } = await sb
     .from("users")
     .select("*")
-    .eq("open_id", openId)
+    .eq("openId", openId)
     .single();
   return (data as DbUser) ?? null;
 }
@@ -160,10 +161,10 @@ export async function deleteUserAccount(userId: number, openId: string): Promise
 
   // Delete in dependency order so FK constraints are satisfied
   const steps: Array<{ label: string; result: Promise<{ error: unknown }> }> = [
-    { label: "referrals", result: sb.from("referrals").delete().or(`referrer_user_id.eq.${userId},referred_user_id.eq.${userId}`) },
-    { label: "generations", result: sb.from("generations").delete().eq("user_id", userId) },
-    { label: "credits", result: sb.from("credits").delete().eq("user_id", userId) },
-    { label: "profiles", result: sb.from("profiles").delete().eq("user_id", userId) },
+    { label: "referrals", result: sb.from("referrals").delete().or(`referrerUserId.eq.${userId},referredUserId.eq.${userId}`) },
+    { label: "generations", result: sb.from("generations").delete().eq("userId", userId) },
+    { label: "credits", result: sb.from("credits").delete().eq("userId", userId) },
+    { label: "profiles", result: sb.from("profiles").delete().eq("userId", userId) },
     { label: "users", result: sb.from("users").delete().eq("id", userId) },
   ];
 
@@ -187,7 +188,7 @@ export async function getProfile(userId: number): Promise<DbProfile | null> {
   const { data } = await sb
     .from("profiles")
     .select("*")
-    .eq("user_id", userId)
+    .eq("userId", userId)
     .single();
   return (data as DbProfile) ?? null;
 }
@@ -209,7 +210,7 @@ export async function upsertProfile(data: {
   const { data: existing } = await sb
     .from("profiles")
     .select("id")
-    .eq("user_id", data.userId)
+    .eq("userId", data.userId)
     .single();
 
   if (existing) {
@@ -218,14 +219,14 @@ export async function upsertProfile(data: {
       .update({
         archetype: data.archetype,
         mood: data.mood,
-        onboarding_complete: data.onboardingComplete ?? true,
+        onboardingComplete: data.onboardingComplete ?? true,
         ...(data.aestheticDescriptors !== undefined ? { aesthetic_descriptors: data.aestheticDescriptors } : {}),
         ...(data.niche !== undefined ? { niche: data.niche } : {}),
         ...(data.audience !== undefined ? { audience: data.audience } : {}),
         ...(data.voiceStyle !== undefined ? { voice_style: data.voiceStyle } : {}),
-        updated_at: now,
+        updatedAt: now,
       })
-      .eq("user_id", data.userId)
+      .eq("userId", data.userId)
       .select()
       .single();
     return (updated as DbProfile) ?? null;
@@ -234,10 +235,10 @@ export async function upsertProfile(data: {
   const { data: inserted } = await sb
     .from("profiles")
     .insert({
-      user_id: data.userId,
+      userId: data.userId,
       archetype: data.archetype,
       mood: data.mood,
-      onboarding_complete: data.onboardingComplete ?? true,
+      onboardingComplete: data.onboardingComplete ?? true,
       ...(data.aestheticDescriptors !== undefined ? { aesthetic_descriptors: data.aestheticDescriptors } : {}),
       ...(data.niche !== undefined ? { niche: data.niche } : {}),
       ...(data.audience !== undefined ? { audience: data.audience } : {}),
@@ -257,8 +258,8 @@ export async function updateAestheticDescriptors(
   const now = new Date().toISOString();
   await sb
     .from("profiles")
-    .update({ aesthetic_descriptors: descriptors, updated_at: now })
-    .eq("user_id", userId);
+    .update({ aesthetic_descriptors: descriptors, updatedAt: now })
+    .eq("userId", userId);
 }
 
 export async function updateShareBadge(
@@ -270,8 +271,8 @@ export async function updateShareBadge(
   const now = new Date().toISOString();
   await sb
     .from("profiles")
-    .update({ share_badge_enabled: enabled, updated_at: now })
-    .eq("user_id", userId);
+    .update({ share_badge_enabled: enabled, updatedAt: now })
+    .eq("userId", userId);
 }
 
 export async function updateAestheticPreviewUrl(
@@ -283,8 +284,8 @@ export async function updateAestheticPreviewUrl(
   const now = new Date().toISOString();
   await sb
     .from("profiles")
-    .update({ aesthetic_preview_url: url, updated_at: now })
-    .eq("user_id", userId);
+    .update({ aesthetic_preview_url: url, updatedAt: now })
+    .eq("userId", userId);
 }
 
 export async function updateReferenceImageUrls(
@@ -296,8 +297,8 @@ export async function updateReferenceImageUrls(
   const now = new Date().toISOString();
   await sb
     .from("profiles")
-    .update({ reference_image_urls: urls, updated_at: now })
-    .eq("user_id", userId);
+    .update({ reference_image_urls: urls, updatedAt: now })
+    .eq("userId", userId);
 }
 
 export async function updateAestheticBrief(
@@ -309,8 +310,8 @@ export async function updateAestheticBrief(
   const now = new Date().toISOString();
   await sb
     .from("profiles")
-    .update({ aesthetic_brief: brief, updated_at: now })
-    .eq("user_id", userId);
+    .update({ aesthetic_brief: brief, updatedAt: now })
+    .eq("userId", userId);
 }
 
 export async function updateBodyType(
@@ -322,8 +323,8 @@ export async function updateBodyType(
   const now = new Date().toISOString();
   await sb
     .from("profiles")
-    .update({ body_type: bodyType, updated_at: now })
-    .eq("user_id", userId);
+    .update({ body_type: bodyType, updatedAt: now })
+    .eq("userId", userId);
 }
 
 // ─── Credits ──────────────────────────────────────────────────────────────────
@@ -334,7 +335,7 @@ export async function getCredits(userId: number): Promise<DbCredits | null> {
   const { data } = await sb
     .from("credits")
     .select("*")
-    .eq("user_id", userId)
+    .eq("userId", userId)
     .single();
   return (data as DbCredits) ?? null;
 }
@@ -346,7 +347,7 @@ export async function ensureCredits(userId: number): Promise<DbCredits> {
   const sb = getSupabase() as any;
   const { data } = await sb
     .from("credits")
-    .insert({ user_id: userId, credits_remaining: 1, total_used: 0, tier: "free" })
+    .insert({ userId, creditsRemaining: 1, totalUsed: 0, tier: "free" })
     .select()
     .single();
   return data as DbCredits;
@@ -360,11 +361,11 @@ export async function decrementCredit(userId: number, cost = 1): Promise<void> {
   await sb
     .from("credits")
     .update({
-      credits_remaining: Math.max(0, credits.credits_remaining - cost),
-      total_used: credits.total_used + cost,
-      updated_at: new Date().toISOString(),
+      creditsRemaining: Math.max(0, credits.creditsRemaining - cost),
+      totalUsed: credits.totalUsed + cost,
+      updatedAt: new Date().toISOString(),
     })
-    .eq("user_id", userId);
+    .eq("userId", userId);
 }
 
 // ─── Generations ──────────────────────────────────────────────────────────────
@@ -385,13 +386,13 @@ export async function createGeneration(data: {
   const { data: inserted, error } = await sb
     .from("generations")
     .insert({
-      user_id: data.userId,
-      image_url: data.imageUrl,
-      image_key: data.imageKey,
+      userId: data.userId,
+      imageUrl: data.imageUrl,
+      imageKey: data.imageKey,
       archetype: data.archetype,
       mood: data.mood,
       platform: data.platform,
-      scene_category: data.sceneCategory,
+      sceneCategory: data.sceneCategory,
       hooks: data.hooks,
       caption: data.caption,
     })
@@ -413,9 +414,9 @@ export async function getUserGenerations(
   const { data } = await sb
     .from("generations")
     .select("*")
-    .eq("user_id", userId)
+    .eq("userId", userId)
     .eq("archived", false)
-    .order("created_at", { ascending: false })
+    .order("createdAt", { ascending: false })
     .range(offset, offset + limit - 1);
   return (data as DbGeneration[]) ?? [];
 }
@@ -427,7 +428,7 @@ export async function countUserGenerations(userId: number): Promise<number> {
   const { count } = await sb
     .from("generations")
     .select("id", { count: "exact", head: true })
-    .eq("user_id", userId)
+    .eq("userId", userId)
     .eq("archived", false);
   return (count as number) ?? 0;
 }
@@ -444,9 +445,9 @@ export async function archiveOldGenerations(
   const { data } = await sb
     .from("generations")
     .update({ archived: true, archivedAt: new Date().toISOString() })
-    .eq("user_id", userId)
+    .eq("userId", userId)
     .eq("archived", false)
-    .lt("created_at", cutoffDate.toISOString())
+    .lt("createdAt", cutoffDate.toISOString())
     .select("id");
   return (data as { id: number }[])?.length ?? 0;
 }
@@ -459,7 +460,7 @@ export async function updateGenerationHook(data: {
   const sb = getSupabase() as any;
   await sb
     .from("generations")
-    .update({ selected_hook: data.selectedHook })
+    .update({ selectedHook: data.selectedHook })
     .eq("id", data.generationId);
 }
 
@@ -521,7 +522,6 @@ export async function createReferral(data: {
 }): Promise<DbReferral | null> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const sb = getSupabase() as any;
-  // Upsert - ignore if already exists
   const { data: inserted } = await sb
     .from("referrals")
     .upsert(
@@ -539,7 +539,6 @@ export async function completeReferral(referredEmail: string, referredUserId: nu
   const sb = getSupabase() as any;
   const now = new Date().toISOString();
 
-  // Find pending referrals for this email
   const { data: referrals } = await sb
     .from("referrals")
     .select("*")
@@ -549,35 +548,32 @@ export async function completeReferral(referredEmail: string, referredUserId: nu
   if (!referrals || referrals.length === 0) return;
 
   for (const referral of referrals as DbReferral[]) {
-    // Mark referral as completed
     await sb
       .from("referrals")
       .update({ completed: true, referred_user_id: referredUserId, completed_at: now })
       .eq("id", referral.id);
 
-    // Award 3 credits to referrer
     const referrerCredits = await getCredits(referral.referrer_user_id);
     if (referrerCredits) {
       await sb
         .from("credits")
         .update({
-          credits_remaining: referrerCredits.credits_remaining + 3,
-          updated_at: now,
+          creditsRemaining: referrerCredits.creditsRemaining + 3,
+          updatedAt: now,
         })
-        .eq("user_id", referral.referrer_user_id);
+        .eq("userId", referral.referrer_user_id);
     }
   }
 
-  // Award 3 credits to referred user
   const referredCredits = await getCredits(referredUserId);
   if (referredCredits) {
     await sb
       .from("credits")
       .update({
-        credits_remaining: referredCredits.credits_remaining + 3,
-        updated_at: now,
+        creditsRemaining: referredCredits.creditsRemaining + 3,
+        updatedAt: now,
       })
-      .eq("user_id", referredUserId);
+      .eq("userId", referredUserId);
   }
 }
 
@@ -605,13 +601,13 @@ export async function updateLoraProfile(userId: number, data: {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const sb = getSupabase() as any;
   const now = new Date().toISOString();
-  const patch: Record<string, unknown> = { updated_at: now };
+  const patch: Record<string, unknown> = { updatedAt: now };
   if (data.loraWeightsUrl !== undefined) patch.lora_weights_url = data.loraWeightsUrl;
   if (data.loraTriggerPhrase !== undefined) patch.lora_trigger_phrase = data.loraTriggerPhrase;
   if (data.loraTrainingRequestId !== undefined) patch.lora_training_request_id = data.loraTrainingRequestId;
   if (data.loraStatus !== undefined) patch.lora_status = data.loraStatus;
   if (data.loraPhysicalDescriptors !== undefined) patch.lora_physical_descriptors = data.loraPhysicalDescriptors;
-  await sb.from("profiles").update(patch).eq("user_id", userId);
+  await sb.from("profiles").update(patch).eq("userId", userId);
 }
 
 // ─── Postability Feedback ─────────────────────────────────────────────────────

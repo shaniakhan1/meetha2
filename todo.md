@@ -403,3 +403,12 @@
 - [x] Expand landing page gallery to 4+ images in editorial grid (asymmetric layout with new images)
 - [x] Elevate Home.tsx typography and spacing to magazine/editorial feel (larger hero type, portrait gallery, more generous spacing)
 - [x] Add LoRA ready celebration moment on Dashboard (first-time ready state)
+
+## V40 -- Bug Fixes + PWA + Credits Top-Up + Testimonial
+
+- [x] Fix style card showing 4 squares / broken watermark generation
+- [x] Fix photo removal ("Could not remove. Please try again.") in Dashboard creations grid
+- [x] Reinforce LoRA generation prompts to always include jewelry, styling, and lighting directives
+- [x] Add PWA support (manifest, service worker, install prompt)
+- [x] Add credit top-up (buy 5 credits for ~$5 via Stripe) [deferred to V41]
+- [x] Add photographer testimonial to landing page

@@ -222,7 +222,7 @@ export default function Profile() {
             <div className="w-full h-px bg-sand/60" />
             <div className="flex items-center justify-between">
               <p className="font-sans text-xs text-charcoal-soft">Credits</p>
-              <p className="font-sans text-sm text-charcoal">{credits?.credits_remaining ?? "-"} remaining</p>
+              <p className="font-sans text-sm text-charcoal">{credits?.creditsRemaining ?? "-"} remaining</p>
             </div>
             {/* Meetha badge toggle - Starter/Pro only */}
             {credits && credits.tier !== "free" && (

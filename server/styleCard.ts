@@ -1,26 +1,32 @@
 /**
  * GET /api/style-card/:generationId
  *
- * Generates a shareable branded style card PNG:
+ * Generates a shareable branded style card JPEG:
  * - The generation image fills the top portion
- * - A dark footer panel shows archetype, palette, and MEETHA branding
+ * - A dark footer panel with the Meetha wordmark burned in as a PNG (no font dependency)
  * - Returned as image/jpeg for direct sharing / saving
+ *
+ * Font-free approach: all text is replaced with image compositing to avoid
+ * the librsvg "white boxes" artifact on Cloud Run where system fonts are absent.
  */
 import type { Request, Response } from "express";
 import sharp from "sharp";
 import { authenticateRequest } from "./_core/auth";
 import { getSupabase } from "./_core/supabase";
 import { storageGetSignedUrl } from "./storage";
-import { ARCHETYPE_LABELS } from "../shared/types";
 
-type AestheticBrief = {
-  palette?: string;
-  metals?: string;
-  makeup?: string;
-  lighting?: string;
-  hair?: string;
-  fabrics?: string;
-};
+// Cache the Meetha wordmark PNG in memory
+let _brandBuffer: Buffer | null = null;
+
+async function getBrandBuffer(): Promise<Buffer> {
+  if (_brandBuffer) return _brandBuffer;
+  const url =
+    "https://d2xsxph8kpxj0f.cloudfront.net/310519663380647277/W9hp3oxSnRYx5WHCSun39U/meetha-watermark-3X9t8k979xcd7uGLhS3sPN.png";
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`Brand fetch failed: ${res.status}`);
+  _brandBuffer = Buffer.from(await res.arrayBuffer());
+  return _brandBuffer;
+}
 
 export async function handleStyleCard(req: Request, res: Response) {
   const { generationId } = req.params;
@@ -37,34 +43,18 @@ export async function handleStyleCard(req: Request, res: Response) {
   // Fetch generation
   const genResult = await getSupabase()
     .from("generations")
-    .select("id, user_id, image_url")
+    .select("id, userId, imageUrl")
     .eq("id", Number(generationId))
     .single();
-  const generation = genResult.data as { id: number; user_id: number; image_url: string } | null;
-  if (!generation || generation.user_id !== user.id) {
+  const generation = genResult.data as { id: number; userId: number; imageUrl: string } | null;
+  if (!generation || generation.userId !== user.id) {
     return res.status(404).json({ error: "Generation not found" });
   }
-
-  // Fetch profile for archetype + brief
-  const profileResult = await getSupabase()
-    .from("profiles")
-    .select("archetype, aesthetic_brief")
-    .eq("user_id", user.id)
-    .single();
-  const profile = profileResult.data as {
-    archetype: string | null;
-    aesthetic_brief: AestheticBrief | null;
-  } | null;
-
-  const archetypeKey = profile?.archetype ?? "luxury_minimal";
-  const archetypeLabel = (ARCHETYPE_LABELS as Record<string, string>)[archetypeKey] ?? archetypeKey;
-  const palette = profile?.aesthetic_brief?.palette ?? "";
-  const metals = profile?.aesthetic_brief?.metals ?? "";
 
   // Fetch image bytes
   let imageBuffer: Buffer;
   try {
-    let fetchUrl = generation.image_url as string;
+    let fetchUrl = generation.imageUrl as string;
     if (fetchUrl.startsWith("/manus-storage/")) {
       const key = fetchUrl.replace("/manus-storage/", "");
       fetchUrl = await storageGetSignedUrl(key);
@@ -83,97 +73,75 @@ export async function handleStyleCard(req: Request, res: Response) {
     const imgWidth = meta.width ?? 1080;
     const imgHeight = meta.height ?? 1350;
 
-    // Footer height: ~22% of image height, min 220px
-    const footerH = Math.max(220, Math.round(imgHeight * 0.22));
+    // Footer: dark panel below the image
+    const footerH = Math.max(160, Math.round(imgHeight * 0.18));
     const cardH = imgHeight + footerH;
 
-    // Truncate long text
-    const truncate = (s: string, max: number) =>
-      s.length > max ? s.slice(0, max - 1) + "\u2026" : s;
+    // Build a solid dark footer rectangle (no SVG text -- font-free)
+    const footerBg = await sharp({
+      create: {
+        width: imgWidth,
+        height: footerH,
+        channels: 3,
+        background: { r: 26, g: 15, b: 9 },
+      },
+    })
+      .png()
+      .toBuffer();
 
-    const paletteLine = truncate(palette, 72);
-    const metalsLine = metals ? truncate(metals, 60) : "";
+    // Resize the Meetha wordmark to fit the footer
+    const brandRaw = await getBrandBuffer();
+    const brandMeta = await sharp(brandRaw).metadata();
+    const brandAspect = (brandMeta.width ?? 800) / (brandMeta.height ?? 449);
 
-    const labelFontSize = Math.max(11, Math.round(imgWidth * 0.013));
-    const valueFontSize = Math.max(13, Math.round(imgWidth * 0.016));
-    const archetypeFontSize = Math.max(18, Math.round(imgWidth * 0.028));
-    const brandFontSize = Math.max(14, Math.round(imgWidth * 0.018));
+    // Target: wordmark width = 35% of image width, centered vertically in footer
+    const brandW = Math.max(160, Math.round(imgWidth * 0.35));
+    const brandH = Math.round(brandW / brandAspect);
 
-    const padX = Math.round(imgWidth * 0.07);
-    const padTop = Math.round(footerH * 0.18);
+    // Make the wordmark white on transparent with 85% opacity
+    const brandResized = await sharp(brandRaw)
+      .resize(brandW, brandH, { fit: "fill" })
+      .ensureAlpha()
+      .raw()
+      .toBuffer({ resolveWithObject: true });
 
-    // Build footer SVG
-    const footerSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="${imgWidth}" height="${footerH}">
-  <rect width="${imgWidth}" height="${footerH}" fill="#1a0f09"/>
-  <line x1="${padX}" y1="${Math.round(footerH * 0.08)}" x2="${imgWidth - padX}" y2="${Math.round(footerH * 0.08)}" stroke="#8B6914" stroke-width="0.5" opacity="0.5"/>
+    const { data: brandData, info: brandInfo } = brandResized;
+    for (let i = 3; i < brandData.length; i += 4) {
+      brandData[i] = Math.round(brandData[i] * 0.85);
+    }
+    const brandPng = await sharp(brandData, {
+      raw: { width: brandInfo.width, height: brandInfo.height, channels: 4 },
+    })
+      .png()
+      .toBuffer();
 
-  <!-- Archetype -->
-  <text x="${padX}" y="${padTop + archetypeFontSize}"
-    font-family="Georgia, 'Times New Roman', serif"
-    font-size="${archetypeFontSize}"
-    font-weight="300"
-    fill="#f5efe6"
-    letter-spacing="1">
-    ${archetypeLabel}
-  </text>
+    // Center the wordmark in the footer
+    const brandLeft = Math.round((imgWidth - brandW) / 2);
+    const brandTop = Math.round((footerH - brandH) / 2);
 
-  <!-- Palette label -->
-  <text x="${padX}" y="${padTop + archetypeFontSize + Math.round(footerH * 0.14)}"
-    font-family="Arial, Helvetica, sans-serif"
-    font-size="${labelFontSize}"
-    fill="#8B6914"
-    letter-spacing="2"
-    text-transform="uppercase">
-    PALETTE
-  </text>
-
-  <!-- Palette value -->
-  <text x="${padX}" y="${padTop + archetypeFontSize + Math.round(footerH * 0.14) + valueFontSize + 4}"
-    font-family="Arial, Helvetica, sans-serif"
-    font-size="${valueFontSize}"
-    font-weight="300"
-    fill="#c4a882">
-    ${paletteLine}
-  </text>
-
-  ${metalsLine ? `
-  <!-- Metals label -->
-  <text x="${padX}" y="${padTop + archetypeFontSize + Math.round(footerH * 0.14) + valueFontSize + 4 + Math.round(footerH * 0.14)}"
-    font-family="Arial, Helvetica, sans-serif"
-    font-size="${labelFontSize}"
-    fill="#8B6914"
-    letter-spacing="2">
-    METALS
-  </text>
-  <!-- Metals value -->
-  <text x="${padX}" y="${padTop + archetypeFontSize + Math.round(footerH * 0.14) + valueFontSize + 4 + Math.round(footerH * 0.14) + valueFontSize + 4}"
-    font-family="Arial, Helvetica, sans-serif"
-    font-size="${valueFontSize}"
-    font-weight="300"
-    fill="#c4a882">
-    ${metalsLine}
-  </text>
-  ` : ""}
-
-  <!-- MEETHA brand -->
-  <text x="${imgWidth - padX}" y="${footerH - Math.round(footerH * 0.12)}"
-    font-family="Georgia, 'Times New Roman', serif"
-    font-size="${brandFontSize}"
-    fill="#8B6914"
-    letter-spacing="4"
-    text-anchor="end">
-    MEETHA
-  </text>
-
-  <line x1="${padX}" y1="${footerH - Math.round(footerH * 0.06)}" x2="${imgWidth - padX}" y2="${footerH - Math.round(footerH * 0.06)}" stroke="#8B6914" stroke-width="0.5" opacity="0.3"/>
+    // Thin gold separator line (SVG rect, no text -- safe)
+    const lineH = 1;
+    const linePad = Math.round(imgWidth * 0.07);
+    const lineSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="${imgWidth}" height="${footerH}">
+  <rect x="${linePad}" y="${Math.round(footerH * 0.08)}" width="${imgWidth - linePad * 2}" height="1" fill="#8B6914" opacity="0.5"/>
+  <rect x="${linePad}" y="${footerH - Math.round(footerH * 0.08)}" width="${imgWidth - linePad * 2}" height="1" fill="#8B6914" opacity="0.3"/>
 </svg>`;
 
-    const footerPng = await sharp(Buffer.from(footerSvg), { density: 144 })
+    const linePng = await sharp(Buffer.from(lineSvg), { density: 144 })
       .resize(imgWidth, footerH, { fit: "fill" })
       .png()
       .toBuffer();
 
-    // Composite: image on top, footer below
+    // Composite footer: bg + lines + brand wordmark
+    const footerComposited = await sharp(footerBg)
+      .composite([
+        { input: linePng, top: 0, left: 0 },
+        { input: brandPng, top: brandTop, left: brandLeft },
+      ])
+      .png()
+      .toBuffer();
+
+    // Composite full card: image + footer
     const card = await sharp({
       create: {
         width: imgWidth,
@@ -184,7 +152,7 @@ export async function handleStyleCard(req: Request, res: Response) {
     })
       .composite([
         { input: imageBuffer, top: 0, left: 0 },
-        { input: footerPng, top: imgHeight, left: 0 },
+        { input: footerComposited, top: imgHeight, left: 0 },
       ])
       .jpeg({ quality: 90 })
       .toBuffer();

@@ -989,7 +989,7 @@ Respond in this exact JSON format:
           .from("generations")
           .update({ archived: true, archivedAt: new Date().toISOString() })
           .eq("id", input.id)
-          .eq("user_id", ctx.user.id);
+          .eq("userId", ctx.user.id);
         if (error) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: error.message });
         return { success: true };
       }),
@@ -1003,13 +1003,13 @@ Respond in this exact JSON format:
       const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
       const { data, error } = await (supabase as any)
         .from("generations")
-        .select("scene_category")
-        .not("scene_category", "is", null)
-        .gte("created_at", sevenDaysAgo);
+        .select("sceneCategory")
+        .not("sceneCategory", "is", null)
+        .gte("createdAt", sevenDaysAgo);
       if (error) return {} as Record<string, number>;
       const counts: Record<string, number> = {};
       for (const row of (data ?? [])) {
-        const cat = row.scene_category as string;
+        const cat = row.sceneCategory as string;
         counts[cat] = (counts[cat] ?? 0) + 1;
       }
       return counts;
@@ -1046,7 +1046,7 @@ Respond in this exact JSON format:
         // Check credits (still image = 1 credit)
         const STILL_COST = 1;
         const userCredits = await ensureCredits(ctx.user.id);
-        if (!userCredits || userCredits.credits_remaining < STILL_COST) {
+        if (!userCredits || userCredits.creditsRemaining < STILL_COST) {
           throw new Error("No credits remaining. Please upgrade to continue.");
         }
 
@@ -1193,7 +1193,7 @@ Respond in this exact JSON format:
         // Mark free LoRA quota as used after first successful LoRA generation
         if (wantsLora && userCredits.tier === "free" && !userCredits.free_lora_used) {
           const sb = getSupabase() as any;
-          await sb.from("credits").update({ free_lora_used: true }).eq("user_id", ctx.user.id);
+          await sb.from("credits").update({ free_lora_used: true }).eq("userId", ctx.user.id);
         }
 
         // Save generation
@@ -1216,7 +1216,7 @@ Respond in this exact JSON format:
           hooks,
           caption,
           hashtags,
-          creditsRemaining: updatedCredits?.credits_remaining ?? 0,
+          creditsRemaining: updatedCredits?.creditsRemaining ?? 0,
         };
       }),
 
@@ -1253,7 +1253,7 @@ Respond in this exact JSON format:
         // Check credits (voice-to-content = 1 credit, same as still)
         const VOICE_COST = 1;
         const userCredits = await ensureCredits(ctx.user.id);
-        if (!userCredits || userCredits.credits_remaining < VOICE_COST) {
+        if (!userCredits || userCredits.creditsRemaining < VOICE_COST) {
           throw new Error("No credits remaining. Please upgrade to continue.");
         }
 
@@ -1474,7 +1474,7 @@ Return JSON with:
           hooks,
           caption,
           hashtags,
-          creditsRemaining: updatedCredits?.credits_remaining ?? 0,
+          creditsRemaining: updatedCredits?.creditsRemaining ?? 0,
           transcript, // Return transcript so UI can show what was captured
         };
       }),
@@ -1636,7 +1636,7 @@ Respond in this exact JSON format:
         hooks,
         caption,
         hashtags,
-        creditsRemaining: updatedCredits?.credits_remaining ?? 0,
+        creditsRemaining: updatedCredits?.creditsRemaining ?? 0,
         isSignatureScene: true,
       };
     }),
@@ -1772,7 +1772,7 @@ Respond in this exact JSON format:
         hooks,
         caption,
         hashtags,
-        creditsRemaining: updatedCredits?.credits_remaining ?? 0,
+        creditsRemaining: updatedCredits?.creditsRemaining ?? 0,
         isSignatureScene: true,
       };
     }),
@@ -1801,7 +1801,7 @@ Respond in this exact JSON format:
         if (!userCredits || userCredits.tier === "free") {
           throw new Error("Animate Me is available on Starter and Pro plans.");
         }
-        if (userCredits.credits_remaining < ANIMATE_COST) {
+        if (userCredits.creditsRemaining < ANIMATE_COST) {
           throw new Error(`Not enough credits. Animate Me costs ${ANIMATE_COST} credits.`);
         }
 
@@ -1843,7 +1843,7 @@ Respond in this exact JSON format:
         if (!userCredits || userCredits.tier !== "pro") {
           throw new Error("Video generation is available on the Pro plan only.");
         }
-        if (userCredits.credits_remaining < VIDEO_COST) {
+        if (userCredits.creditsRemaining < VIDEO_COST) {
           throw new Error("Not enough credits for video generation. You need 5 credits.");
         }
 
@@ -1992,7 +1992,7 @@ Be hyper-specific and visual. No generic phrases. This paragraph will be used wo
   account: router({
     delete: protectedProcedure
       .mutation(async ({ ctx }) => {
-        await deleteUserAccount(ctx.user.id, ctx.user.open_id);
+        await deleteUserAccount(ctx.user.id, ctx.user.openId);
         return { success: true };
       }),
   }),

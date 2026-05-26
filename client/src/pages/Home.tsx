@@ -230,7 +230,7 @@ export default function Home() {
     if (loading) return;
     if (!isAuthenticated) return;
     if (profileQuery.isLoading || profileQuery.isFetching) return;
-    if (profileQuery.data?.onboarding_complete) {
+    if (profileQuery.data?.onboardingComplete) {
       navigate("/dashboard");
     } else if (profileQuery.data !== undefined) {
       navigate("/onboarding");
@@ -503,15 +503,29 @@ export default function Home() {
 
       {/* ── Social Proof ── */}
       <section className="py-28 px-6 bg-cream">
-        <div className="max-w-sm mx-auto text-center">
-          <div className="divider-editorial mb-12" />
-          <blockquote className="font-serif font-light text-charcoal leading-snug mb-6" style={{ fontSize: "clamp(1.5rem, 6vw, 2rem)" }}>
-            "It showed me my colors, my jewelry, my makeup. It gave me ideas to improve my content I never would have thought of."
-          </blockquote>
-          <p className="font-sans text-xs tracking-[0.15em] uppercase text-charcoal-soft">
-            Meetha user
-          </p>
-          <div className="divider-editorial mt-10" />
+        <div className="max-w-2xl mx-auto">
+          <div className="divider-editorial mb-16" />
+          <div className="grid grid-cols-1 gap-16 md:grid-cols-2">
+            {/* Testimonial 1 */}
+            <div className="text-center">
+              <blockquote className="font-serif font-light text-charcoal leading-snug mb-6" style={{ fontSize: "clamp(1.3rem, 5vw, 1.75rem)" }}>
+                "It showed me my colors, my jewelry, my makeup. It gave me ideas to improve my content I never would have thought of."
+              </blockquote>
+              <p className="font-sans text-xs tracking-[0.15em] uppercase text-charcoal-soft">
+                Meetha user
+              </p>
+            </div>
+            {/* Testimonial 2 — photographer */}
+            <div className="text-center">
+              <blockquote className="font-serif font-light text-charcoal leading-snug mb-6" style={{ fontSize: "clamp(1.3rem, 5vw, 1.75rem)" }}>
+                "I showed these to my photographer and we had the most amazing styling ideas for my shoot. It completely changed how we planned the whole session."
+              </blockquote>
+              <p className="font-sans text-xs tracking-[0.15em] uppercase text-charcoal-soft">
+                Meetha user &mdash; content creator
+              </p>
+            </div>
+          </div>
+          <div className="divider-editorial mt-16" />
         </div>
       </section>
 

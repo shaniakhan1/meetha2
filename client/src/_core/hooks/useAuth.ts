@@ -3,14 +3,14 @@ import { useLocation } from "wouter";
 
 export type AuthUser = {
   id: number;
-  open_id: string;
+  openId: string;
   name: string | null;
   email: string | null;
-  login_method: string | null;
+  loginMethod: string | null;
   role: "user" | "admin";
-  created_at: string;
-  updated_at: string;
-  last_signed_in: string;
+  createdAt: string;
+  updatedAt: string;
+  lastSignedIn: string;
 };
 
 type AuthState = {
