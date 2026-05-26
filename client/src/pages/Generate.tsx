@@ -66,6 +66,15 @@ export default function Generate() {
   const [showTopUp, setShowTopUp] = useState(false);
   const [showLoraPaywall, setShowLoraPaywall] = useState(false);
   const [templateSlug, setTemplateSlug] = useState<string | null>(null);
+  const [aestheticRead, setAestheticRead] = useState<{
+    color_palette: string;
+    metals: string;
+    fabrics: string;
+    makeup: string;
+    lighting: string;
+    hair: string;
+  } | null>(null);
+  const [aestheticReadOpen, setAestheticReadOpen] = useState(false);
 
   // Voice recording state
   const [isRecording, setIsRecording] = useState(false);
@@ -111,6 +120,12 @@ export default function Generate() {
     });
   };
   const utils = trpc.useUtils();
+
+  const aestheticReadMutation = trpc.generations.aestheticRead.useMutation({
+    onSuccess: (data) => {
+      setAestheticRead(data);
+    },
+  });
 
   const generateMutation = trpc.generate.content.useMutation({
     onSuccess: (data) => {
@@ -222,6 +237,16 @@ export default function Generate() {
     if (result?.generation?.id) {
       selectHookMutation.mutate({ generationId: result.generation.id, selectedHook: hook });
     }
+    // Fire aesthetic read in background so it is ready when user scrolls down on preview
+    if (result?.generation && !aestheticRead) {
+      aestheticReadMutation.mutate({
+        archetype: result.generation.archetype as string,
+        mood: result.generation.mood as string,
+        sceneCategory: sceneCategory ?? undefined,
+        aestheticDescriptors: (profile?.aesthetic_descriptors as string | null | undefined) ?? undefined,
+        loraPhysicalDescriptors: (profile?.lora_physical_descriptors as string | null | undefined) ?? undefined,
+      });
+    }
     setStep("preview");
   };
 
@@ -322,6 +347,8 @@ export default function Generate() {
   const handleRegenerate = () => {
     setResult(null);
     setSelectedHook(null);
+    setAestheticRead(null);
+    setAestheticReadOpen(false);
     setStep("select");
   };
 
@@ -564,8 +591,13 @@ export default function Generate() {
         <span className="font-serif text-lg tracking-widest text-charcoal">MEETHA</span>
         <div className="text-right">
           <p className="font-sans text-xs text-gold">
-            {effectiveCredits?.credits_remaining ?? "\u2014"} left
+            {effectiveCredits?.credits_remaining ?? "—"} left
           </p>
+          {effectiveCredits?.tier === "free" && (
+            <p className="font-sans text-[10px] text-charcoal-soft/50 tracking-wide">
+              Make each one count.
+            </p>
+          )}
         </div>
       </div>
 
@@ -1210,6 +1242,59 @@ export default function Generate() {
             <p className="font-sans text-xs text-gold">
               {result.hashtags?.map((h) => `#${h}`).join(" ")}
             </p>
+          </div>
+
+          {/* Aesthetic Read card */}
+          <div className="mb-6">
+            <button
+              onClick={() => setAestheticReadOpen((v) => !v)}
+              className="w-full flex items-center justify-between px-4 py-3 bg-[#2C1810] text-cream transition-colors hover:bg-[#3d1f0e] active:scale-[0.99]"
+            >
+              <div className="text-left">
+                <p className="font-sans text-xs tracking-[0.2em] uppercase text-gold/80 mb-0.5">Your Styling Brief</p>
+                <p className="font-serif text-sm font-light text-cream">
+                  {aestheticReadMutation.isPending ? "Reading your aesthetic..." : "What to recreate in real life"}
+                </p>
+              </div>
+              <svg
+                className={`w-4 h-4 text-gold/60 transition-transform duration-200 shrink-0 ml-3 ${aestheticReadOpen ? "rotate-180" : ""}`}
+                fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+
+            {aestheticReadOpen && (
+              <div className="border border-[#2C1810]/30 bg-warm-white/80 px-4 py-5 space-y-4">
+                {aestheticReadMutation.isPending ? (
+                  <div className="flex items-center gap-3 py-2">
+                    <div className="w-4 h-4 border border-gold/40 border-t-gold animate-spin rounded-full shrink-0" />
+                    <p className="font-sans text-xs text-charcoal-soft">Composing your brief...</p>
+                  </div>
+                ) : aestheticRead ? (
+                  <>
+                    {([
+                      { label: "Color Palette", value: aestheticRead.color_palette },
+                      { label: "Metals", value: aestheticRead.metals },
+                      { label: "Fabrics", value: aestheticRead.fabrics },
+                      { label: "Makeup", value: aestheticRead.makeup },
+                      { label: "Lighting", value: aestheticRead.lighting },
+                      { label: "Hair", value: aestheticRead.hair },
+                    ] as { label: string; value: string }[]).map(({ label, value }) => (
+                      <div key={label} className="flex gap-3">
+                        <p className="font-sans text-xs tracking-[0.15em] uppercase text-gold w-20 shrink-0 pt-0.5">{label}</p>
+                        <p className="font-sans text-sm text-charcoal font-light leading-relaxed">{value}</p>
+                      </div>
+                    ))}
+                    <p className="font-sans text-xs text-charcoal-soft/60 pt-2 border-t border-sand">
+                      Based on your calibrated aesthetic. Regenerate to refine.
+                    </p>
+                  </>
+                ) : (
+                  <p className="font-sans text-xs text-charcoal-soft">Select a hook first to unlock your styling brief.</p>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Actions */}

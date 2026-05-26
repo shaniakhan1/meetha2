@@ -872,6 +872,106 @@ export const appRouter = router({
       }),
 
     /**
+     * Generates a personalised real-world styling brief from the user's archetype,
+     * mood, calibration descriptors, and the scene that was just generated.
+     * Does NOT cost a credit — it is intelligence derived from data that already exists.
+     */
+    aestheticRead: protectedProcedure
+      .input(
+        z.object({
+          archetype: z.string(),
+          mood: z.string(),
+          sceneCategory: z.string().optional().nullable(),
+          aestheticDescriptors: z.string().optional().nullable(),
+          loraPhysicalDescriptors: z.string().optional().nullable(),
+        })
+      )
+      .mutation(async ({ input }) => {
+        const archetypeVisual = ARCHETYPE_VISUAL[input.archetype] ?? "";
+        const moodVisual = MOOD_VISUAL[input.mood] ?? "";
+        const sceneLabel = input.sceneCategory
+          ? input.sceneCategory.replace(/_/g, " ")
+          : "editorial luxury";
+
+        const calibrationContext = [
+          input.aestheticDescriptors ? `Calibrated aesthetic: ${input.aestheticDescriptors}.` : "",
+          input.loraPhysicalDescriptors ? `Physical descriptors from her photos: ${input.loraPhysicalDescriptors}.` : "",
+        ].filter(Boolean).join(" ");
+
+        const prompt = `You are a personal creative director and stylist. Based on the following aesthetic profile, write a concise real-world styling brief that tells this woman exactly what to wear, what jewelry to choose, what makeup direction suits her, what lighting to recreate, and what fabrics belong in her wardrobe.
+
+Aesthetic profile:
+- Frequency: ${input.archetype.replace(/_/g, " ")} (${archetypeVisual})
+- Energy: ${input.mood} (${moodVisual})
+- Scene just generated: ${sceneLabel}
+${calibrationContext ? `- ${calibrationContext}` : ""}
+
+Write a styling brief with exactly these 6 fields. Each value must be 1-2 short, plain, specific sentences. No jargon, no wellness-speak, no em dashes, no exclamation marks. Write like a Vogue editor giving a direct brief to a model, not like a wellness brand.
+
+Rules:
+- BANNED WORDS: frequency, energy, essence, luminous, transcend, curated, intentional, authentic, elevate, radiate, exude, magic, effortless, serene, healing, sacred, mystical, divine, goddess, feminine, embody
+- Use plain English. Be specific. Say "warm yellow gold" not "golden accents". Say "red or deep berry lip" not "bold lip color".
+- Lighting must describe a real setup she can recreate at home (window direction, time of day, hard vs soft light).
+- Fabrics must name specific materials (silk, satin, cashmere, linen, velvet, heavyweight jersey).
+- Metals must say warm gold, silver, or rose gold and whether to stack or keep minimal.
+
+Respond in this exact JSON format:
+{
+  "color_palette": "2-3 specific colors that belong in her frame. No generic terms.",
+  "metals": "Which metal family and how to wear it.",
+  "fabrics": "2-3 specific fabric types that suit her aesthetic.",
+  "makeup": "One specific makeup direction: what to emphasize, what to leave minimal.",
+  "lighting": "Exact lighting setup she can recreate: window direction, time of day, hard or soft.",
+  "hair": "One specific hair direction: structure, texture, finish."
+}`;
+
+        try {
+          const response = await invokeLLMOpenAI({
+            messages: [{ role: "user", content: prompt }],
+            response_format: {
+              type: "json_schema",
+              json_schema: {
+                name: "aesthetic_read",
+                strict: true,
+                schema: {
+                  type: "object",
+                  properties: {
+                    color_palette: { type: "string" },
+                    metals: { type: "string" },
+                    fabrics: { type: "string" },
+                    makeup: { type: "string" },
+                    lighting: { type: "string" },
+                    hair: { type: "string" },
+                  },
+                  required: ["color_palette", "metals", "fabrics", "makeup", "lighting", "hair"],
+                  additionalProperties: false,
+                },
+              },
+            },
+          });
+          const content = response.choices?.[0]?.message?.content;
+          return JSON.parse(typeof content === "string" ? content : JSON.stringify(content)) as {
+            color_palette: string;
+            metals: string;
+            fabrics: string;
+            makeup: string;
+            lighting: string;
+            hair: string;
+          };
+        } catch {
+          // Graceful fallback
+          return {
+            color_palette: "Warm ivory, deep camel, amber gold.",
+            metals: "Warm yellow gold. Stack bangles or layer chains.",
+            fabrics: "Silk, satin, heavyweight jersey. Anything that catches light.",
+            makeup: "Bold lip in red or deep berry. Strong brow. Minimal eye.",
+            lighting: "Late afternoon window, light source to your left or right. Hard directional, not diffused.",
+            hair: "Sleek and structured. Intentional, not effortless.",
+          };
+        }
+      }),
+
+    /**
      * Returns how many times each template (sceneCategory) has been used in the last 7 days.
      * Public procedure — used for social proof counters on the Templates page.
      */

@@ -310,3 +310,12 @@
 - [x] Fix watermark SVG XML bug (font-family unquoted, sharp silently skipped watermark)
 - [x] Fix Save & Share on Generate page: navigator.share flow reviewed, caption copy + delay logic intact
 - [x] Add "Ordered Everything" template: room service tray, champagne pop, mirror reflection makeup, hotel suite morning energy
+
+## V31 -- Aesthetic Read + Quality Over Quantity
+
+- [x] Add aestheticRead tRPC procedure: takes archetype + mood + calibration descriptors, returns color palette, metals, fabrics, makeup, lighting, hair direction as structured JSON
+- [x] Build Aesthetic Read LLM prompt: grounded, editorial, real-world actionable (no jargon, no wellness-speak)
+- [x] Build Aesthetic Read UI card on preview screen: collapsible dark header, expands to show 6 brief rows
+- [x] Auto-trigger aestheticRead mutation on hook selection so brief is ready when user opens card
+- [x] Add quality-over-quantity copy to credit display: "Make each one count." for free tier
+- [x] Free tier already set to 3 credits in backend (ensureCredits confirmed)
