@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useLocation } from "wouter";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { getLoginUrl } from "@/const";
+import { trpc } from "@/lib/trpc";
 
 const TEMPLATES = [
   {
@@ -240,6 +241,9 @@ export default function Templates() {
   const [, navigate] = useLocation();
   const { user } = useAuth();
   const [hoveredHooks, setHoveredHooks] = useState<Record<string, string | null>>({});
+  const { data: templateCounts } = trpc.generations.templateCounts.useQuery(undefined, {
+    staleTime: 5 * 60 * 1000, // cache for 5 minutes
+  });
 
   const handleMakeMine = (slug: string) => {
     if (!user) {
@@ -365,6 +369,11 @@ export default function Templates() {
                 <p className="mt-3 font-sans text-xs text-cream/40">
                   {user ? "1 credit" : "Free to try. No credit card."}
                 </p>
+                {templateCounts && (templateCounts[template.slug] ?? 0) > 0 && (
+                  <p className="mt-1 font-sans text-xs text-gold/50">
+                    {templateCounts[template.slug]} {templateCounts[template.slug] === 1 ? "generation" : "generations"} this week
+                  </p>
+                )}
               </div>
             </div>
 

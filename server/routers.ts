@@ -813,6 +813,27 @@ export const appRouter = router({
         }
         return { hooks, caption, hashtags };
       }),
+
+    /**
+     * Returns how many times each template (sceneCategory) has been used in the last 7 days.
+     * Public procedure — used for social proof counters on the Templates page.
+     */
+    templateCounts: publicProcedure.query(async () => {
+      const supabase = getSupabase();
+      const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+      const { data, error } = await (supabase as any)
+        .from("generations")
+        .select("scene_category")
+        .not("scene_category", "is", null)
+        .gte("created_at", sevenDaysAgo);
+      if (error) return {} as Record<string, number>;
+      const counts: Record<string, number> = {};
+      for (const row of (data ?? [])) {
+        const cat = row.scene_category as string;
+        counts[cat] = (counts[cat] ?? 0) + 1;
+      }
+      return counts;
+    }),
   }),
 
   // ─── Generate ─────────────────────────────────────────────────────────────
@@ -873,25 +894,37 @@ export const appRouter = router({
         // Use LoRA generation if user has a trained model, otherwise fall back to FLUX Ultra
         let imageUrl: string;
         let imageKey: string;
+        let usedLora = false;
         if (profile?.lora_status === "ready" && profile.lora_weights_url && profile.lora_trigger_phrase) {
-          const loraResult = await generateImageWithLora({
-            prompt: imagePrompt,
-            loraWeightsUrl: profile.lora_weights_url,
-            triggerPhrase: profile.lora_trigger_phrase,
-            imageSize,
-          });
-          // Save the LoRA-generated image to our storage
-          const imageResponse = await fetch(loraResult.url);
-          const imageBuffer = Buffer.from(await imageResponse.arrayBuffer());
-          const { storagePut } = await import("./storage");
-          const saved = await storagePut(`generated/${Date.now()}.jpg`, imageBuffer, "image/jpeg");
-          imageUrl = saved.url;
-          imageKey = saved.key;
+          try {
+            const loraResult = await generateImageWithLora({
+              prompt: imagePrompt,
+              loraWeightsUrl: profile.lora_weights_url,
+              triggerPhrase: profile.lora_trigger_phrase,
+              imageSize,
+            });
+            // Save the LoRA-generated image to our storage
+            const imageResponse = await fetch(loraResult.url);
+            if (!imageResponse.ok) throw new Error(`LoRA image fetch failed: ${imageResponse.status}`);
+            const imageBuffer = Buffer.from(await imageResponse.arrayBuffer());
+            const { storagePut } = await import("./storage");
+            const saved = await storagePut(`generated/${Date.now()}.jpg`, imageBuffer, "image/jpeg");
+            imageUrl = saved.url;
+            imageKey = saved.key;
+            usedLora = true;
+          } catch (loraErr) {
+            // LoRA URL may have expired or changed format -- fall back to FLUX Ultra gracefully
+            console.warn("[generate.content] LoRA generation failed, falling back to FLUX Ultra:", loraErr instanceof Error ? loraErr.message : String(loraErr));
+            const falResult = await generateImageFal({ prompt: imagePrompt, imageSize });
+            imageUrl = falResult.url;
+            imageKey = falResult.key;
+          }
         } else {
           const falResult = await generateImageFal({ prompt: imagePrompt, imageSize });
           imageUrl = falResult.url;
           imageKey = falResult.key;
         }
+        void usedLora; // suppress unused var warning
         // Generate copy (pass aesthetic descriptors + niche/audience if available)
         const copyPrompt = buildCopyPrompt(archetype, mood, input.platform, profile?.aesthetic_descriptors ?? null, profile?.niche ?? null, profile?.audience ?? null, profile?.voice_style ?? null, input.sceneCategory ?? null);
         const copyResponse = await invokeLLMOpenAI({
@@ -1152,17 +1185,26 @@ Return JSON with:
         let imageUrl: string;
         let imageKey: string;
         if (profile?.lora_status === "ready" && profile.lora_weights_url && profile.lora_trigger_phrase) {
-          const loraResult = await generateImageWithLora({
-            prompt: imagePrompt,
-            loraWeightsUrl: profile.lora_weights_url,
-            triggerPhrase: profile.lora_trigger_phrase,
-          });
-          const imageResponse = await fetch(loraResult.url);
-          const imageBuffer = Buffer.from(await imageResponse.arrayBuffer());
-          const { storagePut: sp } = await import("./storage");
-          const saved = await sp(`generated/${Date.now()}.jpg`, imageBuffer, "image/jpeg");
-          imageUrl = saved.url;
-          imageKey = saved.key;
+          try {
+            const loraResult = await generateImageWithLora({
+              prompt: imagePrompt,
+              loraWeightsUrl: profile.lora_weights_url,
+              triggerPhrase: profile.lora_trigger_phrase,
+            });
+            const imageResponse = await fetch(loraResult.url);
+            if (!imageResponse.ok) throw new Error(`LoRA image fetch failed: ${imageResponse.status}`);
+            const imageBuffer = Buffer.from(await imageResponse.arrayBuffer());
+            const { storagePut: sp } = await import("./storage");
+            const saved = await sp(`generated/${Date.now()}.jpg`, imageBuffer, "image/jpeg");
+            imageUrl = saved.url;
+            imageKey = saved.key;
+          } catch (loraErr) {
+            // LoRA URL may have expired or changed format -- fall back to FLUX Ultra gracefully
+            console.warn("[generate.voice] LoRA generation failed, falling back to FLUX Ultra:", loraErr instanceof Error ? loraErr.message : String(loraErr));
+            const falResult = await generateImageFal({ prompt: imagePrompt });
+            imageUrl = falResult.url;
+            imageKey = falResult.key;
+          }
         } else {
           const falResult = await generateImageFal({ prompt: imagePrompt });
           imageUrl = falResult.url;

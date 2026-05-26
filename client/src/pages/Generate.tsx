@@ -1361,22 +1361,43 @@ export default function Generate() {
                 Upgrade to Starter for Animate Me
               </a>
             )}
-            {/* Share nudge — appears after download, auto-dismisses */}
-            {showShareNudge && selectedHook && (
-              <div className="w-full p-4 bg-[#2C1810] text-cream animate-fade-up opacity-0 flex items-center justify-between gap-3">
+            {/* Hook copy strip — always visible on mobile when hook is selected */}
+            {selectedHook && (
+              <div className="w-full p-4 bg-[#2C1810] text-cream flex items-center justify-between gap-3">
                 <div className="flex-1 min-w-0">
-                  <p className="font-sans text-xs tracking-[0.1em] uppercase text-gold/80 mb-1">Post to your story</p>
-                  <p className="font-serif text-sm text-cream truncate">"{selectedHook}"</p>
+                  <p className="font-sans text-xs tracking-[0.1em] uppercase text-gold/80 mb-1">Your hook</p>
+                  <p className="font-serif text-sm text-cream truncate leading-snug">"{selectedHook}"</p>
                 </div>
                 <button
-                  onClick={() => {
-                    navigator.clipboard.writeText(selectedHook);
-                    toast.success("Hook copied.");
+                  onClick={async () => {
+                    try {
+                      if (navigator.clipboard && window.isSecureContext) {
+                        await navigator.clipboard.writeText(selectedHook);
+                      } else {
+                        const ta = document.createElement("textarea");
+                        ta.value = selectedHook;
+                        ta.style.position = "fixed";
+                        ta.style.left = "-9999px";
+                        document.body.appendChild(ta);
+                        ta.focus();
+                        ta.select();
+                        document.execCommand("copy");
+                        document.body.removeChild(ta);
+                      }
+                      toast.success("Hook copied — paste it as your caption.");
+                    } catch {
+                      toast.info(selectedHook, { duration: 8000 });
+                    }
                   }}
-                  className="shrink-0 px-3 py-2 border border-cream/30 font-sans text-xs tracking-widest uppercase text-cream hover:bg-cream/10 transition-colors"
+                  className="shrink-0 px-3 py-2 border border-cream/30 font-sans text-xs tracking-widest uppercase text-cream hover:bg-cream/10 transition-colors active:scale-95"
                 >
-                  Copy hook
+                  Copy
                 </button>
+              </div>
+            )}
+            {showShareNudge && (
+              <div className="w-full py-2 text-center">
+                <p className="font-sans text-xs text-charcoal-soft tracking-[0.1em] uppercase">Screenshot saved to camera roll</p>
               </div>
             )}
             <button onClick={handleDownload} className="btn-luxury w-full min-h-[52px]">

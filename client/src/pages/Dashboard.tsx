@@ -77,13 +77,32 @@ export default function Dashboard() {
     ? `${window.location.origin}/sign-in?ref=${referral.code}`
     : null;
 
-  const handleCopyReferral = () => {
+  const handleCopyReferral = async () => {
     if (!referralUrl) return;
-    navigator.clipboard.writeText(referralUrl).then(() => {
+    try {
+      // Modern clipboard API (requires secure context + user gesture)
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(referralUrl);
+      } else {
+        // Fallback for mobile Safari and older browsers
+        const textArea = document.createElement("textarea");
+        textArea.value = referralUrl;
+        textArea.style.position = "fixed";
+        textArea.style.left = "-9999px";
+        textArea.style.top = "-9999px";
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        document.execCommand("copy");
+        document.body.removeChild(textArea);
+      }
       setReferralCopied(true);
       toast.success("Referral link copied.");
       setTimeout(() => setReferralCopied(false), 2000);
-    });
+    } catch {
+      // Last resort: show the URL in a toast so user can copy manually
+      toast.info("Copy this link: " + referralUrl, { duration: 8000 });
+    }
   };
 
   const handleDownload = async (id: number, hook?: string | null) => {
