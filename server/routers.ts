@@ -66,6 +66,8 @@ const SCENE_PROMPTS: Record<string, string> = {
     "woman lounging on a deep velvet chaise longue or wide linen sofa, looking directly into the lens with absolute calm certainty, no smile, no performance, just presence, warm afternoon light casting long shadows, jewel-toned or cream fabric, one hand resting on the armrest, the stillness of someone who has already decided everything, film grain, editorial female-gaze, 35mm analog warmth, shallow depth of field, vertical 9:16 framing",
   silk_robe_retaliation:
     "luxury hotel suite, woman in ivory or champagne silk robe, standing near floor-to-ceiling windows with morning light flooding in, room service tray visible, coffee cup in hand, looking out the window with complete calm, the energy of someone who chose herself and is not explaining it, warm cream and gold tones, film grain, 35mm analog warmth, quiet luxury editorial, vertical 9:16 framing",
+  ordered_everything:
+    "luxury hotel suite celebration moment, close-up of a champagne bottle being popped with bubbles mid-air, OR a marble bathroom vanity with a woman's hands applying lipstick in the mirror reflection, OR a full room service tray arriving with silver domes and a single rose, warm amber candlelight and golden hour window light, champagne coupe with condensation catching the light, silk robe sleeve visible, mirror reflections showing the suite behind her, the energy of someone who ordered exactly what she wanted and is not apologizing for any of it, warm cream and gold tones, editorial female-gaze, film grain, 35mm analog warmth, cinematic luxury, vertical 9:16 framing",
 };
 
 // Digital Diary: overlay hook options
@@ -161,6 +163,20 @@ const SILK_ROBE_RETALIATION_HOOKS = [
   "she does not share her quiet",
   "the robe stays on",
   "this is what choosing yourself looks like",
+];
+
+// Ordered Everything: overlay hook options
+const ORDERED_EVERYTHING_HOOKS = [
+  "i ordered everything on the menu",
+  "she did not check the price",
+  "the mirror said yes",
+  "she got ready for herself",
+  "champagne before noon is a personality",
+  "ordered for one, tipped generously",
+  "she did not split the bill",
+  "the suite was worth it",
+  "she poured her own glass",
+  "no one else needed to see this",
 ];
 
 const ARCHETYPE_VISUAL: Record<string, string> = {
@@ -517,6 +533,47 @@ Respond in this exact JSON format:
 }`;
   }
 
+  // Ordered Everything template (champagne, mirror, room service)
+  if (sceneCategory === "ordered_everything") {
+    const hookOptions = ORDERED_EVERYTHING_HOOKS.slice(0, 6).map((h) => `"${h}"`).join(", ");
+    const voiceCtx = voiceStyle
+      ? `\n\nVoice style (how she writes online): ${voiceStyle}. Calibrate the caption to match this.`
+      : "";
+    return `You are writing copy for a woman creator. The image is "Ordered Everything": luxury hotel suite, champagne being poured or popped, mirror reflection while getting ready, room service arriving, silk robe visible. She ordered exactly what she wanted and is not apologizing for any of it.${voiceCtx}
+
+Choose exactly 3 hooks from this list (return them verbatim, do not modify): ${hookOptions}
+
+Then write one caption:
+- 1-2 short sentences. Plain everyday words only.
+- No em-dashes, no exclamation marks, no questions
+- BANNED WORDS: whispers, gilded, multitudes, luminous, essence, depth, profound, transcend, resonate, tapestry, curated, intentional, authentic, narrative, embody, elevate, harness, embrace, unleash, radiate, exude, magic, effortless, serene, bliss, tranquil, healing
+- No brand-speak, no affirmations, no motivational quotes
+- Sounds like a real woman typing into her phone, not a wellness brand
+- States something true about ordering what you want, not checking prices, or the specific pleasure of treating yourself without explanation
+- Ends with a quiet statement, never a question or CTA
+
+GOOD caption examples:
+"she stopped splitting the bill and started looking like this."
+"ordered everything on the menu. no one was watching."
+"the mirror said yes before she even asked."
+
+BAD caption examples (never write like this):
+"She radiates luxurious abundance in her sacred celebration." -- brand-speak
+"Blissful indulgence is her essence." -- meaningless, AI-sounding
+
+Then write exactly 5 hashtags:
+- No # symbol
+- No generic tags (no instagood, photooftheday, lifestyle, luxurylife, champagne)
+- Should feel like tags a real creator at this frequency would actually use
+
+Respond in this exact JSON format:
+{
+  "hooks": ["hook one", "hook two", "hook three"],
+  "caption": "The caption text here.",
+  "hashtags": ["word1", "word2", "word3", "word4", "word5"]
+}`;
+  }
+
   // Paparazzi Flash template: override hooks with the subtle overlay list
   if (sceneCategory === "paparazzi_flash") {
     const hookOptions = PAPARAZZI_HOOKS.slice(0, 6).map((h) => `"${h}"`).join(", ");
@@ -752,7 +809,7 @@ export const appRouter = router({
           generationId: z.number(),
           platform: z.enum(["tiktok", "reels", "stories"]).default("reels"),
           sceneCategory: z
-            .enum(["morning_routine", "travel_day", "quiet_luxury", "founder_energy", "date_night", "paparazzi_flash", "digital_diary", "bill_please", "silk_robe_room_service", "irish_goodbye", "cleopatra_principle", "silk_robe_retaliation"])
+            .enum(["morning_routine", "travel_day", "quiet_luxury", "founder_energy", "date_night", "paparazzi_flash", "digital_diary", "bill_please", "silk_robe_room_service", "irish_goodbye", "cleopatra_principle", "silk_robe_retaliation", "ordered_everything"])
             .optional(),
         })
       )
@@ -857,6 +914,7 @@ export const appRouter = router({
               "irish_goodbye",
               "cleopatra_principle",
               "silk_robe_retaliation",
+              "ordered_everything",
             ])
             .optional(),
           videoFormat: z.enum(["tiktok_reels", "square", "landscape"]).optional(),
@@ -1065,6 +1123,7 @@ export const appRouter = router({
               "irish_goodbye",
               "cleopatra_principle",
               "silk_robe_retaliation",
+              "ordered_everything",
             ])
             .optional(),
         })

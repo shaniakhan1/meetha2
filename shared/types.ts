@@ -21,7 +21,8 @@ export type SceneCategory =
   | "silk_robe_room_service"
   | "irish_goodbye"
   | "cleopatra_principle"
-  | "silk_robe_retaliation";
+  | "silk_robe_retaliation"
+  | "ordered_everything";
 
 export type PostabilityResponse = "yes" | "maybe" | "no";
 
@@ -107,4 +108,5 @@ export const SCENE_LABELS: Record<SceneCategory, string> = {
   irish_goodbye: "The Irish Goodbye",
   cleopatra_principle: "The Cleopatra Principle",
   silk_robe_retaliation: "Silk Robe Retaliation",
+  ordered_everything: "Ordered Everything",
 };

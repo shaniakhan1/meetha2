@@ -29,7 +29,7 @@ function buildWatermarkSvg(width: number, height: number): Buffer {
   const fontFaceBlock = fontBase64
     ? `<defs><style>@font-face { font-family: 'WM'; src: url('data:font/truetype;base64,${fontBase64}'); font-weight: bold; }</style></defs>`
     : "";
-  const fontFamily = fontBase64 ? "'WM', serif" : "serif";
+  const fontFamily = fontBase64 ? "WM, serif" : "serif";
 
   // Five rows of "MEETHA" spread across the full image height
   const rowOffsets = [
@@ -48,7 +48,7 @@ function buildWatermarkSvg(width: number, height: number): Buffer {
       `  y="${y}"`,
       `  text-anchor="middle"`,
       `  dominant-baseline="middle"`,
-      `  font-family=${fontFamily}`,
+      `  font-family="${fontFamily}"`,
       `  font-size="${fontSize}"`,
       `  font-weight="bold"`,
       `  fill="white"`,

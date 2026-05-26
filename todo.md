@@ -304,3 +304,9 @@
 - [x] Fix Save & Share: use navigator.share (native iOS share sheet) so users can save to Photos or share to Instagram directly
 - [x] Fix generations not saving to "Your Creations" history (archived column added to Supabase)
 - [x] Fix watermark not appearing even when toggled on (font embedded as base64 constant in watermarkFont.ts)
+
+## V30 -- Bug Fixes + New Template
+
+- [x] Fix watermark SVG XML bug (font-family unquoted, sharp silently skipped watermark)
+- [x] Fix Save & Share on Generate page: navigator.share flow reviewed, caption copy + delay logic intact
+- [x] Add "Ordered Everything" template: room service tray, champagne pop, mirror reflection makeup, hotel suite morning energy

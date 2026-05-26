@@ -80,7 +80,7 @@ export default function Generate() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const template = params.get("template");
-    const validSlugs = ["paparazzi_flash", "digital_diary", "bill_please", "silk_robe_room_service", "irish_goodbye", "cleopatra_principle", "silk_robe_retaliation"];
+    const validSlugs = ["paparazzi_flash", "digital_diary", "bill_please", "silk_robe_room_service", "irish_goodbye", "cleopatra_principle", "silk_robe_retaliation", "ordered_everything"];
     if (template && validSlugs.includes(template)) {
       setSceneCategory(template as SceneCategory);
       setTemplateSlug(template);
@@ -625,6 +625,13 @@ export default function Generate() {
             title: "Silk Robe Retaliation",
             subtitle: "Hotel suite. Silk robe. Morning light. Room service. Completely alone. Completely at peace. She chose herself and she is not explaining it.",
             features: ["Rich Grandma Energy aesthetic", "Warm morning light", "Chose herself hook"],
+            sampleImage: "https://d2xsxph8kpxj0f.cloudfront.net/310519663380647277/W9hp3oxSnRYx5WHCSun39U/template-silk-robe-retaliation-MJXwGjfHhTjt3ENoPKdG8s.webp",
+          },
+          ordered_everything: {
+            number: "Template No. 08",
+            title: "Ordered Everything",
+            subtitle: "Champagne popped. Room service arrived. Mirror reflection while getting ready. She ordered exactly what she wanted and is not apologizing for any of it.",
+            features: ["Champagne and mirror reflection aesthetic", "Warm amber candlelight", "No-apology luxury hook"],
             sampleImage: "https://d2xsxph8kpxj0f.cloudfront.net/310519663380647277/W9hp3oxSnRYx5WHCSun39U/template-silk-robe-retaliation-MJXwGjfHhTjt3ENoPKdG8s.webp",
           },
         };

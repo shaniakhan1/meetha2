@@ -37,6 +37,7 @@ const TEMPLATE_CARDS = [
   { slug: "irish_goodbye", title: "Irish Goodbye Theory", image: "https://d2xsxph8kpxj0f.cloudfront.net/310519663380647277/W9hp3oxSnRYx5WHCSun39U/template-irish-goodbye-ktzNEA3LBpMXoScC2CgPoj.webp" },
   { slug: "cleopatra_principle", title: "Cleopatra Principle", image: "https://d2xsxph8kpxj0f.cloudfront.net/310519663380647277/W9hp3oxSnRYx5WHCSun39U/template-cleopatra-RNkWpwxV5GeWZwStmYqiQx.webp" },
   { slug: "silk_robe_retaliation", title: "Silk Robe Retaliation", image: "https://d2xsxph8kpxj0f.cloudfront.net/310519663380647277/W9hp3oxSnRYx5WHCSun39U/template-silk-robe-retaliation-MJXwGjfHhTjt3ENoPKdG8s.webp" },
+  { slug: "ordered_everything", title: "Ordered Everything", image: "https://d2xsxph8kpxj0f.cloudfront.net/310519663380647277/W9hp3oxSnRYx5WHCSun39U/template-silk-robe-retaliation-MJXwGjfHhTjt3ENoPKdG8s.webp" },
 ];
 
 export default function Dashboard() {
