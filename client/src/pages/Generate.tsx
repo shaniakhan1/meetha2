@@ -250,107 +250,30 @@ export default function Generate() {
     setStep("preview");
   };
 
-  const handleSaveStyleCard = async () => {
+  const handleSaveStyleCard = () => {
     if (!result?.generation?.id) return;
-    try {
-      // Build URL with styling brief as query params
-      const params = new URLSearchParams();
-      if (aestheticRead) {
-        if (aestheticRead.color_palette) params.set("color_palette", aestheticRead.color_palette);
-        if (aestheticRead.metals) params.set("metals", aestheticRead.metals);
-        if (aestheticRead.fabrics) params.set("fabrics", aestheticRead.fabrics);
-        if (aestheticRead.makeup) params.set("makeup", aestheticRead.makeup);
-        if (aestheticRead.lighting) params.set("lighting", aestheticRead.lighting);
-        if (aestheticRead.hair) params.set("hair", aestheticRead.hair);
-      }
-      const qs = params.toString() ? `?${params.toString()}` : "";
-      const response = await fetch(`/api/style-card/${result.generation.id}${qs}`, {
-        credentials: "include",
-      });
-      if (!response.ok) throw new Error(`Style card failed: ${response.status}`);
-      const blob = await response.blob();
-
-      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-      if (isMobile && navigator.canShare) {
-        const file = new File([blob], `meetha-style-card-${result.generation.id}.jpg`, { type: "image/jpeg" });
-        if (navigator.canShare({ files: [file] })) {
-          try {
-            await navigator.share({ files: [file], title: "My Meetha Style Card" });
-            return;
-          } catch (shareErr: unknown) {
-            if (shareErr instanceof Error && shareErr.name === "AbortError") return;
-          }
-        }
-      }
-      // Desktop / fallback
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `meetha-style-card-${result.generation.id}.jpg`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    } catch {
-      toast.error("Could not save style card. Please try again.");
+    // Build URL with styling brief as query params
+    const params = new URLSearchParams();
+    if (aestheticRead) {
+      if (aestheticRead.color_palette) params.set("color_palette", aestheticRead.color_palette);
+      if (aestheticRead.metals) params.set("metals", aestheticRead.metals);
+      if (aestheticRead.fabrics) params.set("fabrics", aestheticRead.fabrics);
+      if (aestheticRead.makeup) params.set("makeup", aestheticRead.makeup);
+      if (aestheticRead.lighting) params.set("lighting", aestheticRead.lighting);
+      if (aestheticRead.hair) params.set("hair", aestheticRead.hair);
     }
+    const qs = params.toString() ? `?${params.toString()}` : "";
+    // Open style card in new tab - iOS: long-press image to Save to Photos
+    window.open(`/api/style-card/${result.generation.id}${qs}`, "_blank");
+    toast.success("Style card opened. Long-press the image to save.", { duration: 4000 });
   };
 
-  const handleDownload = async () => {
-    if (!result?.generation?.id) return;
-    try {
-      const response = await fetch(`/api/download/${result.generation.id}`, {
-        credentials: "include",
-      });
-      if (!response.ok) throw new Error(`Download failed: ${response.status}`);
-      const blob = await response.blob();
-
-      // Mobile: use native share sheet (saves to camera roll, opens Instagram, etc.)
-      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-      if (isMobile && navigator.canShare) {
-        const file = new File([blob], `meetha-${result.generation.id}.jpg`, { type: "image/jpeg" });
-        if (navigator.canShare({ files: [file] })) {
-          try {
-            // Auto-copy caption + hashtags to clipboard BEFORE share sheet opens
-            // Instagram/TikTok strip the `text` field from file shares, so clipboard is the only way
-            const captionText = result.caption
-              ? `${result.caption}\n\n${result.hashtags?.map((h) => `#${h}`).join(" ") ?? ""}`
-              : selectedHook ?? "";
-            if (captionText) {
-              await copyTextToClipboard(captionText);
-              toast.success("Caption copied. Paste it in your post.", { duration: 4000 });
-            }
-            // Small delay so toast is visible before share sheet covers the screen
-            await new Promise((r) => setTimeout(r, 400));
-            await navigator.share({
-              files: [file],
-              title: "Meetha styled me",
-              // Do NOT pass text with files - Android Chrome tries to JSON-parse it
-            });
-            // After share, navigate to dashboard
-            setTimeout(() => navigate("/dashboard"), 800);
-            return;
-          } catch (shareErr: unknown) {
-            if (shareErr instanceof Error && shareErr.name === "AbortError") return;
-            // If share fails for any reason, fall through to anchor download
-          }
-        }
-      }
-
-      // Desktop fallback: anchor download
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `meetha-${result.generation.id}.jpg`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-      setShowShareNudge(true);
-      setTimeout(() => navigate("/dashboard"), 3500);
-    } catch {
-      toast.error("Download failed. Please try again.");
-    }
+  const handleDownload = () => {
+    if (!result?.generation?.image_url) return;
+    // Open image in new tab - iOS Safari: long-press to Save to Photos
+    window.open(result.generation.image_url, "_blank");
+    toast.success("Image opened. Long-press to save to your Photos.", { duration: 4000 });
+    setTimeout(() => navigate("/dashboard"), 1500);
   };
 
   const copyTextToClipboard = async (text: string): Promise<boolean> => {
@@ -1384,14 +1307,14 @@ export default function Generate() {
               </div>
             )}
             <button onClick={handleDownload} className="btn-luxury w-full min-h-[52px]">
-              {/iPhone|iPad|iPod|Android/i.test(navigator.userAgent) ? "Save & Share" : "Download Image"}
+              Save Image
             </button>
             {aestheticRead && (
               <button
                 onClick={handleSaveStyleCard}
                 className="btn-luxury btn-luxury-outline w-full"
               >
-                {/iPhone|iPad|iPod|Android/i.test(navigator.userAgent) ? "Save Style Card" : "Download Style Card"}
+                Save Style Card
               </button>
             )}
             <button
