@@ -412,3 +412,17 @@
 - [x] Add PWA support (manifest, service worker, install prompt)
 - [x] Add credit top-up (buy 5 credits for ~$5 via Stripe) [deferred to V41]
 - [x] Add photographer testimonial to landing page
+
+## V41 -- Editorial Elevation + Spacing Tighten
+
+- [ ] Tighten all section spacing on Home.tsx (py-28 -> py-16/py-20 throughout)
+- [ ] Build editorial before/after transformation section with styling brief cards below the images
+- [ ] Upload before photo (real photo) and after photo (meetha-59) to webdev static assets
+
+## V41 -- Identity Crystallization Rewrite + Editorial Elevation
+
+- [ ] Tighten all section spacing on Home.tsx (py-28 -> py-16/py-20 throughout)
+- [ ] Rewrite hero headline: "The first AI system that designs your visual identity."
+- [ ] Rewrite all homepage copy with identity crystallization positioning (not beauty optimization)
+- [ ] Build editorial before/after coherence transformation section
+- [ ] Upload before/after photos to webdev static assets
