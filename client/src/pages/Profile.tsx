@@ -775,7 +775,7 @@ function UpgradeSection() {
     <div className="p-5 border border-gold/30 bg-warm-white/60">
       <p className="font-sans text-sm font-semibold text-charcoal mb-1">Upgrade</p>
       <p className="font-sans font-light text-xs text-charcoal-soft mb-4">
-        Starter: 30 generations per month. Pro: 75 generations per month.
+        Starter: 10 generations per month. Pro: 25 generations per month.
       </p>
 
       {/* Billing toggle */}

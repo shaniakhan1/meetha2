@@ -330,7 +330,7 @@ export default function Dashboard() {
                   <div
                     className="absolute left-0 top-0 h-full bg-gold transition-all duration-700"
                     style={{
-                      width: `${Math.min(100, ((credits.credits_remaining ?? 0) / (credits.tier === "pro" ? 75 : credits.tier === "starter" ? 30 : 1)) * 100)}%`,
+                      width: `${Math.min(100, ((credits.credits_remaining ?? 0) / (credits.tier === "pro" ? 25 : credits.tier === "starter" ? 10 : 1)) * 100)}%`,
                     }}
                   />
                 </div>

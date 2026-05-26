@@ -35,14 +35,14 @@ const FEATURES = {
     "Watermarked downloads",
   ],
   starter: [
-    "30 generations per month",
+    "10 generations per month",
     "Personal styling brief, saved to your profile",
     "Hook and caption generation",
     "Download without watermark",
     "Retrain anytime for $19",
   ],
   pro: [
-    "75 generations per month",
+    "25 generations per month",
     "Personal styling brief, saved to your profile",
     "Hook and caption generation",
     "Download without watermark",
@@ -122,7 +122,7 @@ function PricingSection({ handleCTA }: { handleCTA: () => void }) {
           <div className="p-7 border border-sand/20 text-left">
             <p className="font-sans text-xs tracking-[0.15em] uppercase text-sand-dark mb-4">Free</p>
             <p className="font-serif text-4xl text-cream mb-1">$0</p>
-            <p className="font-sans text-xs text-sand-dark/60 mb-6">1 generation to start</p>
+            <p className="font-sans text-xs text-sand-dark/60 mb-6">1 generation. No credit card.</p>
             <ul className="space-y-2">
               {FEATURES.free.map((f) => (
                 <li key={f} className="font-sans text-xs text-sand-dark flex items-start gap-3">
@@ -149,7 +149,7 @@ function PricingSection({ handleCTA }: { handleCTA: () => void }) {
             {annual ? (
               <p className="font-sans text-xs text-sand-dark/60 mb-6">$152 billed annually. Save $76.</p>
             ) : (
-              <p className="font-sans text-xs text-sand-dark/60 mb-6">billed monthly</p>
+              <p className="font-sans text-xs text-sand-dark/60 mb-6">10 generations / month</p>
             )}
             <ul className="space-y-2">
               {FEATURES.starter.map((f) => (
@@ -173,7 +173,7 @@ function PricingSection({ handleCTA }: { handleCTA: () => void }) {
             {annual ? (
               <p className="font-sans text-xs text-sand-dark/60 mb-6">$252 billed annually. Save $168.</p>
             ) : (
-              <p className="font-sans text-xs text-sand-dark/60 mb-6">billed monthly</p>
+              <p className="font-sans text-xs text-sand-dark/60 mb-6">25 generations / month</p>
             )}
             <ul className="space-y-2">
               {FEATURES.pro.map((f) => (
@@ -264,7 +264,7 @@ export default function Home() {
       </nav>
 
       {/* ── Hero ── */}
-      <section className="relative min-h-screen flex flex-col items-center justify-center px-6 pt-28 pb-20 text-center overflow-hidden">
+      <section className="relative flex flex-col items-center px-6 pt-28 pb-0 text-center overflow-hidden">
         <div
           className="absolute inset-0 opacity-30"
           style={{
@@ -272,14 +272,8 @@ export default function Home() {
               "radial-gradient(ellipse 80% 60% at 50% 40%, oklch(88% 0.025 70 / 0.6) 0%, transparent 70%)",
           }}
         />
-        <div
-          className="absolute bottom-0 left-0 right-0 h-64 opacity-20"
-          style={{
-            background: "linear-gradient(to top, oklch(72% 0.090 65 / 0.15), transparent)",
-          }}
-        />
 
-        <div className="relative z-10 max-w-sm mx-auto">
+        <div className="relative z-10 max-w-sm mx-auto w-full">
           <p className="font-sans text-xs tracking-[0.25em] uppercase text-gold mb-6 animate-fade-up opacity-0 delay-100">
             Aesthetic intelligence for women
           </p>
@@ -294,13 +288,42 @@ export default function Home() {
             would.
           </h1>
 
-          <div className="divider-editorial animate-fade-in opacity-0 delay-300" />
+          {/* ── Immediate image proof ── */}
+          <div className="w-full mb-8 animate-fade-up opacity-0 delay-300">
+            {/* Hero portrait */}
+            <div className="w-full aspect-[3/4] overflow-hidden mb-1">
+              <img
+                src="/manus-storage/meetha-59_1803b502.jpg"
+                alt="Meetha AI styling result"
+                className="w-full h-full object-cover object-center"
+              />
+            </div>
+            {/* Two-column row */}
+            <div className="grid grid-cols-2 gap-1">
+              <div className="aspect-[3/4] overflow-hidden">
+                <img
+                  src="/manus-storage/gallery_street_lights_8c7a051f.jpg"
+                  alt="Meetha AI styling result"
+                  className="w-full h-full object-cover object-top"
+                />
+              </div>
+              <div className="aspect-[3/4] overflow-hidden">
+                <img
+                  src="/manus-storage/gallery_hands_coffee_b7861070.webp"
+                  alt="Meetha AI styling result"
+                  className="w-full h-full object-cover"
+                />
+              </div>
+            </div>
+          </div>
 
-          <p className="font-sans font-light text-base text-charcoal-soft leading-relaxed mb-10 animate-fade-up opacity-0 delay-300">
+          <div className="divider-editorial animate-fade-in opacity-0 delay-400" />
+
+          <p className="font-sans font-light text-base text-charcoal-soft leading-relaxed mb-10 animate-fade-up opacity-0 delay-400">
             Meetha learns your aesthetic and tells you what to wear, what jewelry to reach for, and how to light your next shoot. Then it generates cinematic images that look like you, in any scene.
           </p>
 
-          <div className="flex flex-col items-center gap-4 animate-fade-up opacity-0 delay-400">
+          <div className="flex flex-col items-center gap-4 pb-20 animate-fade-up opacity-0 delay-500">
             <button onClick={handleCTA} className="btn-luxury w-full max-w-xs">
               Get your aesthetic read
             </button>
@@ -308,10 +331,6 @@ export default function Home() {
               1 free generation. No credit card.
             </p>
           </div>
-        </div>
-
-        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 animate-fade-in opacity-0 delay-500">
-          <div className="w-px h-12 bg-gradient-to-b from-transparent to-gold/60" />
         </div>
       </section>
 
@@ -387,30 +406,6 @@ export default function Home() {
               </p>
             </div>
           ))}
-        </div>
-      </section>
-
-      {/* ── Gallery ── */}
-      <section className="py-28 px-6 bg-cream">
-        <div className="max-w-sm mx-auto text-center mb-10">
-          <p className="font-sans text-xs tracking-[0.2em] uppercase text-gold mb-6">The work</p>
-          <h2 className="font-serif font-light text-charcoal mb-4">Every image, styled to you.</h2>
-          <div className="divider-editorial" />
-        </div>
-        <div className="max-w-sm mx-auto mb-16">
-          {/* Full-width hero image */}
-          <div className="w-full aspect-[3/4] overflow-hidden mb-1">
-            <img src="/manus-storage/meetha-59_1803b502.jpg" alt="Meetha result" className="w-full h-full object-cover object-center" />
-          </div>
-          {/* Two-column bottom row */}
-          <div className="grid grid-cols-2 gap-1">
-            <div className="aspect-[3/4] overflow-hidden">
-              <img src="/manus-storage/gallery_street_lights_8c7a051f.jpg" alt="Meetha result" className="w-full h-full object-cover object-top" />
-            </div>
-            <div className="aspect-[3/4] overflow-hidden">
-              <img src="/manus-storage/gallery_hands_coffee_b7861070.webp" alt="Meetha result" className="w-full h-full object-cover" />
-            </div>
-          </div>
         </div>
       </section>
 
