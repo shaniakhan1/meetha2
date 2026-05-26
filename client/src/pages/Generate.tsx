@@ -1249,6 +1249,12 @@ export default function Generate() {
             >
               Start Over
             </button>
+            <button
+              onClick={() => navigate("/dashboard")}
+              className="w-full py-3 font-sans text-xs tracking-widest uppercase text-charcoal-soft/60 hover:text-charcoal-soft transition-colors"
+            >
+              Done — Back to Dashboard
+            </button>
           </div>
         </div>
       )}
