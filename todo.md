@@ -415,25 +415,25 @@
 
 ## V41 -- Editorial Elevation + Spacing Tighten
 
-- [ ] Tighten all section spacing on Home.tsx (py-28 -> py-16/py-20 throughout)
-- [ ] Build editorial before/after transformation section with styling brief cards below the images
-- [ ] Upload before photo (real photo) and after photo (meetha-59) to webdev static assets
+- [x] Tighten all section spacing on Home.tsx (py-28 -> py-16/py-20 throughout)
+- [x] Build editorial before/after transformation section with styling brief cards below the images
+- [x] Upload before photo (real photo) and after photo (meetha-59) to webdev static assets
 
 ## V41 -- Identity Crystallization Rewrite + Editorial Elevation
 
-- [ ] Tighten all section spacing on Home.tsx (py-28 -> py-16/py-20 throughout)
-- [ ] Rewrite hero headline: "The first AI system that designs your visual identity."
-- [ ] Rewrite all homepage copy with identity crystallization positioning (not beauty optimization)
-- [ ] Build editorial before/after coherence transformation section
-- [ ] Upload before/after photos to webdev static assets
+- [x] Tighten all section spacing on Home.tsx (py-28 -> py-16/py-20 throughout)
+- [x] Rewrite hero headline: "The first AI that designs your visual identity."
+- [x] Rewrite all homepage copy with identity crystallization positioning (not beauty optimization)
+- [x] Build editorial before/after coherence transformation section
+- [x] Upload before/after photos to webdev static assets
 
 ## V21 -- Visual Transformation Card
 
-- [ ] Add transformation_card_url column to profiles table (Supabase migration)
-- [ ] Build server/transformationCard.ts: fetch before photo (calibration ref) + first generation image, call LLM for style brief JSON, composite full card with Sharp (before/after + color palette + style direction + makeup + jewelry + energy keywords)
-- [ ] Add generateTransformationCard tRPC procedure (protected, gated to paid tier + 2nd generation threshold)
-- [ ] Auto-trigger card generation after 2nd successful generation for Starter, 1st for Pro
-- [ ] Profile page: show locked teaser for free users, show card + download button for paid users who qualify
-- [ ] Landing page: rewrite hero + pricing messaging so the card is a crystal-clear sign-up hook (10-year-old readable)
-- [ ] TypeScript: zero errors
-- [ ] Vitest: all tests passing
+- [x] Add transformation_card_url column to profiles table (Supabase migration)
+- [x] Build server/transformationCard.ts: fetch before photo (calibration ref) + first generation image, call LLM for style brief JSON, composite full card with Sharp (before/after + color palette + style direction + makeup + jewelry + energy keywords)
+- [x] Add generateTransformationCard tRPC procedure (protected, gated to paid tier + 2nd generation threshold)
+- [x] Auto-trigger card generation after 2nd successful generation for Starter, 1st for Pro
+- [x] Profile page: show locked teaser for free users, show card + download button for paid users who qualify
+- [x] Landing page: rewrite hero + pricing messaging so the card is a crystal-clear sign-up hook (10-year-old readable)
+- [x] TypeScript: zero errors
+- [x] Vitest: all tests passing

@@ -244,10 +244,8 @@ export default function Home() {
             className="font-serif font-light text-charcoal mb-8 animate-fade-up opacity-0 delay-200"
             style={{ lineHeight: 1.0, fontSize: "clamp(2.8rem, 10vw, 4.5rem)" }}
           >
-            Upload your photos.<br />
-            See yourself<br />
-            the way a stylist<br />
-            would.
+            The first AI that designs<br />
+            your visual identity.
           </h1>
 
           {/* ── Immediate image proof ── */}
@@ -282,7 +280,7 @@ export default function Home() {
           <div className="divider-editorial animate-fade-in opacity-0 delay-400" />
 
           <p className="font-sans font-light text-base text-charcoal-soft leading-relaxed mb-8 animate-fade-up opacity-0 delay-400">
-            Upload one photo. Discover the colors, styling, beauty direction, jewelry, and visual atmosphere that make you look most like yourself.
+            Upload your photos. Meetha reads your coloring, energy, and aesthetic — then shows you exactly who you are visually, and how to show up that way every time.
           </p>
 
           <div className="flex flex-col items-center gap-4 pb-16 animate-fade-up opacity-0 delay-500">
