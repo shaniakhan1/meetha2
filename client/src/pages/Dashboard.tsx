@@ -275,14 +275,22 @@ export default function Dashboard() {
           Generate New Content
         </button>
         {credits?.credits_remaining === 0 && (
-          <div className="text-center -mt-6 mb-8">
+          <div className="text-center -mt-6 mb-8 space-y-1">
             <a
               href={import.meta.env.VITE_STRIPE_STARTER_LINK || "#"}
               target="_blank"
               rel="noopener noreferrer"
-              className="font-sans text-xs text-gold hover:text-charcoal transition-colors tracking-wide"
+              className="font-sans text-xs text-gold hover:text-charcoal transition-colors tracking-wide block"
             >
-              Get more generations
+              Get more generations ($19 / month)
+            </a>
+            <a
+              href={import.meta.env.VITE_STRIPE_STARTER_ANNUAL_LINK || "#"}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-sans text-xs text-charcoal-soft/50 hover:text-charcoal-soft transition-colors tracking-wide block"
+            >
+              Annual plans (save up to 40%)
             </a>
           </div>
         )}

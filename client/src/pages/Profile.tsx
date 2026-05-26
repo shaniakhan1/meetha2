@@ -677,30 +677,7 @@ export default function Profile() {
 
         {/* ── Upgrade ── */}
         {credits?.tier === "free" && (
-          <div className="p-5 border border-gold/30 bg-warm-white/60">
-            <p className="font-sans text-sm font-semibold text-charcoal mb-1">Upgrade</p>
-            <p className="font-sans font-light text-xs text-charcoal-soft mb-4">
-              Starter: 30 generations for $19/mo. Pro: 75 generations for $39/mo.
-            </p>
-            <div className="space-y-2">
-              <a
-                href={import.meta.env.VITE_STRIPE_STARTER_LINK || "#"}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="btn-luxury btn-gold w-full text-center block"
-              >
-                Starter ($19) / month
-              </a>
-              <a
-                href={import.meta.env.VITE_STRIPE_PRO_LINK || "#"}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="btn-luxury btn-luxury-outline w-full text-center block"
-              >
-                Pro ($39) / month
-              </a>
-            </div>
-          </div>
+          <UpgradeSection />
         )}
 
         {/* ── Sign out ── */}
@@ -780,6 +757,85 @@ function AestheticBriefSection() {
       <p className="font-sans text-xs text-charcoal-soft/50 mt-2 leading-relaxed">
         Updates automatically with each generation. Use this as your shopping brief, shoot brief, and styling reference.
       </p>
+    </div>
+  );
+}
+
+function UpgradeSection() {
+  const [annual, setAnnual] = useState(false);
+
+  const starterLink = annual
+    ? import.meta.env.VITE_STRIPE_STARTER_ANNUAL_LINK
+    : import.meta.env.VITE_STRIPE_STARTER_LINK;
+  const proLink = annual
+    ? import.meta.env.VITE_STRIPE_PRO_ANNUAL_LINK
+    : import.meta.env.VITE_STRIPE_PRO_LINK;
+
+  return (
+    <div className="p-5 border border-gold/30 bg-warm-white/60">
+      <p className="font-sans text-sm font-semibold text-charcoal mb-1">Upgrade</p>
+      <p className="font-sans font-light text-xs text-charcoal-soft mb-4">
+        Starter: 30 generations per month. Pro: 75 generations per month.
+      </p>
+
+      {/* Billing toggle */}
+      <div className="flex items-center gap-3 mb-4">
+        <button
+          onClick={() => setAnnual(false)}
+          className={`font-sans text-xs tracking-[0.12em] uppercase transition-colors ${
+            !annual ? "text-charcoal" : "text-charcoal-soft/40"
+          }`}
+        >
+          Monthly
+        </button>
+        <button
+          onClick={() => setAnnual(!annual)}
+          className="relative w-9 h-4 flex-shrink-0"
+          aria-label="Toggle billing period"
+        >
+          <span
+            className="absolute inset-0 border transition-colors"
+            style={{ borderColor: annual ? "oklch(78% 0.09 75)" : "oklch(60% 0.01 80 / 0.3)" }}
+          />
+          <span
+            className="absolute top-0.5 w-3 h-3 transition-all duration-200"
+            style={{
+              left: annual ? "calc(100% - 0.875rem)" : "0.125rem",
+              background: annual ? "oklch(78% 0.09 75)" : "oklch(60% 0.01 80 / 0.4)",
+            }}
+          />
+        </button>
+        <button
+          onClick={() => setAnnual(true)}
+          className={`font-sans text-xs tracking-[0.12em] uppercase transition-colors ${
+            annual ? "text-charcoal" : "text-charcoal-soft/40"
+          }`}
+        >
+          Annual
+        </button>
+        {annual && (
+          <span className="font-sans text-xs text-gold/70 tracking-wide">Save up to 40%</span>
+        )}
+      </div>
+
+      <div className="space-y-2">
+        <a
+          href={starterLink || "#"}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="btn-luxury btn-gold w-full text-center block"
+        >
+          {annual ? "Starter ($152 / year)" : "Starter ($19 / month)"}
+        </a>
+        <a
+          href={proLink || "#"}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="btn-luxury btn-luxury-outline w-full text-center block"
+        >
+          {annual ? "Pro ($252 / year)" : "Pro ($35 / month)"}
+        </a>
+      </div>
     </div>
   );
 }

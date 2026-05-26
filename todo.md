@@ -377,3 +377,14 @@
 - [x] Update navigator.share title/text to "Meetha styled me" in Dashboard.tsx and Generate.tsx
 - [x] TypeScript: zero errors
 - [x] Vitest: 11 tests passing
+
+## V36 -- Annual Plans + Style Card Share + Palette Fix
+
+- [x] Create Stripe annual price IDs via MCP (Starter Annual $152/yr, Pro Annual $252/yr)
+- [x] Add annual price IDs to products.ts
+- [x] Add annual payment links via Stripe MCP and VITE env vars (VITE_STRIPE_STARTER_ANNUAL_LINK, VITE_STRIPE_PRO_ANNUAL_LINK)
+- [x] Update Home.tsx pricing section: elevated monthly/annual toggle, feature list per tier, save up to 40% badge
+- [x] Update Profile.tsx upgrade section: monthly/annual toggle with UpgradeSection component
+- [ ] Build shareable style card: /api/style-card/:userId endpoint generating a branded PNG card (archetype, palette, one generated image, Meetha logo)
+- [ ] Add "Share Your Style Card" button to Dashboard.tsx using navigator.share
+- [x] Fix palette sample data in Home.tsx: "amber gold. No cool tones" -> "amber gold, no cool tones"

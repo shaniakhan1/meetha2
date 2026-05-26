@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
@@ -25,6 +25,197 @@ const WHAT_YOU_LEARN = [
     text: "Silk, satin, heavyweight jersey. Anything that catches light. Nothing synthetic. Your wardrobe anchor piece.",
   },
 ];
+
+const FEATURES = {
+  free: [
+    "3 generations to start",
+    "Personal styling brief after each generation",
+    "Hook and caption generation",
+    "1 free LoRA training (your face)",
+    "Watermarked downloads",
+  ],
+  starter: [
+    "30 generations per month",
+    "Personal styling brief, saved to your profile",
+    "Hook and caption generation",
+    "Download without watermark",
+    "Retrain anytime for $19",
+  ],
+  pro: [
+    "75 generations per month",
+    "Personal styling brief, saved to your profile",
+    "Hook and caption generation",
+    "Download without watermark",
+    "Retrain anytime for $19",
+    "Priority generation queue",
+  ],
+};
+
+function PricingSection({ handleCTA }: { handleCTA: () => void }) {
+  const [annual, setAnnual] = useState(false);
+
+  const starterLink = annual
+    ? import.meta.env.VITE_STRIPE_STARTER_ANNUAL_LINK
+    : import.meta.env.VITE_STRIPE_STARTER_LINK;
+  const proLink = annual
+    ? import.meta.env.VITE_STRIPE_PRO_ANNUAL_LINK
+    : import.meta.env.VITE_STRIPE_PRO_LINK;
+
+  return (
+    <section className="py-20 px-6" style={{ background: "#2C1810" }}>
+      <div className="max-w-sm mx-auto">
+        {/* Header */}
+        <div className="text-center mb-10">
+          <p className="font-sans text-xs tracking-[0.2em] uppercase text-gold mb-6">Pricing</p>
+          <h2 className="font-serif font-light text-cream mb-4">Start free. Scale when ready.</h2>
+          <div className="divider-editorial" />
+        </div>
+
+        {/* Billing toggle */}
+        <div className="flex items-center justify-center gap-4 mb-10">
+          <button
+            onClick={() => setAnnual(false)}
+            className={`font-sans text-xs tracking-[0.15em] uppercase transition-colors ${
+              !annual ? "text-cream" : "text-sand-dark/50"
+            }`}
+          >
+            Monthly
+          </button>
+          <button
+            onClick={() => setAnnual(!annual)}
+            className="relative w-10 h-5 flex-shrink-0"
+            aria-label="Toggle billing period"
+          >
+            <span
+              className="absolute inset-0 border transition-colors"
+              style={{ borderColor: annual ? "oklch(78% 0.09 75)" : "oklch(88% 0.025 70 / 0.3)" }}
+            />
+            <span
+              className="absolute top-0.5 w-4 h-4 transition-all duration-200"
+              style={{
+                left: annual ? "calc(100% - 1.125rem)" : "0.125rem",
+                background: annual ? "oklch(78% 0.09 75)" : "oklch(88% 0.025 70 / 0.4)",
+              }}
+            />
+          </button>
+          <button
+            onClick={() => setAnnual(true)}
+            className={`font-sans text-xs tracking-[0.15em] uppercase transition-colors ${
+              annual ? "text-cream" : "text-sand-dark/50"
+            }`}
+          >
+            Annual
+          </button>
+          {annual && (
+            <span
+              className="font-sans text-xs tracking-wide px-2 py-0.5"
+              style={{ color: "oklch(78% 0.09 75)", border: "1px solid oklch(78% 0.09 75 / 0.4)" }}
+            >
+              Save up to 40%
+            </span>
+          )}
+        </div>
+
+        {/* Tier cards */}
+        <div className="space-y-5">
+          {/* Free */}
+          <div className="p-7 border border-sand/20 text-left">
+            <p className="font-sans text-xs tracking-[0.15em] uppercase text-sand-dark mb-4">Free</p>
+            <p className="font-serif text-4xl text-cream mb-1">$0</p>
+            <p className="font-sans text-xs text-sand-dark/60 mb-6">3 generations to start</p>
+            <ul className="space-y-2">
+              {FEATURES.free.map((f) => (
+                <li key={f} className="font-sans text-xs text-sand-dark flex items-start gap-3">
+                  <span className="w-1 h-1 rounded-full bg-sand-dark/40 flex-shrink-0 mt-1.5" />
+                  {f}
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Starter */}
+          <div className="p-7 border border-gold/40 text-left relative">
+            <div className="absolute -top-px left-0 right-0 h-px" style={{ background: "oklch(78% 0.09 75)" }} />
+            <div className="flex items-start justify-between mb-4">
+              <p className="font-sans text-xs tracking-[0.15em] uppercase text-gold">Starter</p>
+              <span className="font-sans text-xs text-gold/60 tracking-wide">Most popular</span>
+            </div>
+            <div className="flex items-baseline gap-2 mb-1">
+              <p className="font-serif text-4xl text-cream">
+                {annual ? "$12.67" : "$19"}
+              </p>
+              <p className="font-sans text-xs text-sand-dark/60">/ mo</p>
+            </div>
+            {annual ? (
+              <p className="font-sans text-xs text-sand-dark/60 mb-6">$152 billed annually. Save $76.</p>
+            ) : (
+              <p className="font-sans text-xs text-sand-dark/60 mb-6">billed monthly</p>
+            )}
+            <ul className="space-y-2">
+              {FEATURES.starter.map((f) => (
+                <li key={f} className="font-sans text-xs text-sand-dark flex items-start gap-3">
+                  <span className="w-1 h-1 rounded-full bg-gold flex-shrink-0 mt-1.5" />
+                  {f}
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Pro */}
+          <div className="p-7 border border-sand/20 text-left">
+            <p className="font-sans text-xs tracking-[0.15em] uppercase text-sand-dark mb-4">Pro</p>
+            <div className="flex items-baseline gap-2 mb-1">
+              <p className="font-serif text-4xl text-cream">
+                {annual ? "$21" : "$35"}
+              </p>
+              <p className="font-sans text-xs text-sand-dark/60">/ mo</p>
+            </div>
+            {annual ? (
+              <p className="font-sans text-xs text-sand-dark/60 mb-6">$252 billed annually. Save $168.</p>
+            ) : (
+              <p className="font-sans text-xs text-sand-dark/60 mb-6">billed monthly</p>
+            )}
+            <ul className="space-y-2">
+              {FEATURES.pro.map((f) => (
+                <li key={f} className="font-sans text-xs text-sand-dark flex items-start gap-3">
+                  <span className="w-1 h-1 rounded-full bg-sand-dark/40 flex-shrink-0 mt-1.5" />
+                  {f}
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+
+        {/* CTAs */}
+        <div className="mt-8 space-y-3">
+          <a
+            href={starterLink}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="btn-luxury btn-gold w-full text-center block"
+          >
+            {annual ? "Starter ($152 / year)" : "Starter ($19 / month)"}
+          </a>
+          <a
+            href={proLink}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="btn-luxury btn-luxury-outline w-full text-center block"
+            style={{ color: "oklch(97% 0.012 80)", borderColor: "oklch(88% 0.025 70 / 0.4)" }}
+          >
+            {annual ? "Pro ($252 / year)" : "Pro ($35 / month)"}
+          </a>
+          <button
+            onClick={handleCTA}
+            className="w-full py-3 font-sans text-xs tracking-widest uppercase text-sand-dark/60 hover:text-sand-dark transition-colors"
+          >
+            Start free instead
+          </button>
+        </div>
+      </div>
+    </section>
+  );
+}
 
 export default function Home() {
   const { isAuthenticated, loading } = useAuth();
@@ -304,112 +495,7 @@ export default function Home() {
       </section>
 
       {/* ── Pricing ── */}
-      <section className="py-20 px-6" style={{ background: "#2C1810" }}>
-        <div className="max-w-sm mx-auto text-center">
-          <p className="font-sans text-xs tracking-[0.2em] uppercase text-gold mb-6">
-            Simple pricing
-          </p>
-          <h2 className="font-serif font-light text-cream mb-4">
-            Start free. Scale when ready.
-          </h2>
-          <div className="divider-editorial" />
-
-          <div className="mt-12 space-y-6">
-            {/* Free */}
-            <div className="p-8 border border-sand/20 text-left">
-              <p className="font-sans text-xs tracking-[0.15em] uppercase text-sand-dark mb-4">Free</p>
-              <p className="font-serif text-4xl text-cream mb-1">$0</p>
-              <p className="font-sans text-xs text-sand-dark mb-6">3 intentional generations to start</p>
-              <ul className="space-y-2">
-                {[
-                  "3 free generations",
-                  "Full styling brief after each generation",
-                  "Hook + caption generation",
-                  "1 free LoRA training (your face)",
-                  "Download ready assets",
-                ].map((f) => (
-                  <li key={f} className="font-sans text-xs text-sand-dark flex items-center gap-3">
-                    <span className="w-1 h-1 rounded-full bg-gold flex-shrink-0" />
-                    {f}
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            {/* Starter */}
-            <div className="p-8 border border-gold/40 text-left relative">
-              <div className="absolute -top-3 left-6 bg-gold px-3 py-1">
-                <p className="font-sans text-xs tracking-widest uppercase text-warm-white">Popular</p>
-              </div>
-              <p className="font-sans text-xs tracking-[0.15em] uppercase text-gold mb-4">Starter</p>
-              <p className="font-serif text-4xl text-cream mb-1">$19</p>
-              <p className="font-sans text-xs text-sand-dark mb-6">per month</p>
-              <ul className="space-y-2">
-                {[
-                  "30 generations per month",
-                  "Full styling brief, saved to your profile",
-                  "Hook + caption generation",
-                  "Download without watermark",
-                  "Retrain anytime for $19",
-                ].map((f) => (
-                  <li key={f} className="font-sans text-xs text-sand-dark flex items-center gap-3">
-                    <span className="w-1 h-1 rounded-full bg-gold flex-shrink-0" />
-                    {f}
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            {/* Pro */}
-            <div className="p-8 border border-sand/20 text-left">
-              <p className="font-sans text-xs tracking-[0.15em] uppercase text-sand-dark mb-4">Pro</p>
-              <p className="font-serif text-4xl text-cream mb-1">$39</p>
-              <p className="font-sans text-xs text-sand-dark mb-6">per month</p>
-              <ul className="space-y-2">
-                {[
-                  "75 generations per month",
-                  "Full styling brief, saved to your profile",
-                  "Hook + caption generation",
-                  "Download without watermark",
-                  "Retrain anytime for $19",
-                  "Priority generation queue",
-                ].map((f) => (
-                  <li key={f} className="font-sans text-xs text-sand-dark flex items-center gap-3">
-                    <span className="w-1 h-1 rounded-full bg-gold flex-shrink-0" />
-                    {f}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
-
-          <div className="mt-10 space-y-3">
-            <a
-              href={import.meta.env.VITE_STRIPE_STARTER_LINK}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="btn-luxury btn-gold w-full text-center block"
-            >
-              Start with Starter ($19) / mo
-            </a>
-            <a
-              href={import.meta.env.VITE_STRIPE_PRO_LINK}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="btn-luxury btn-luxury-outline w-full text-center block"
-              style={{ color: "oklch(97% 0.012 80)", borderColor: "oklch(88% 0.025 70 / 0.4)" }}
-            >
-              Go Pro ($39) / mo
-            </a>
-            <button
-              onClick={handleCTA}
-              className="w-full py-3 font-sans text-xs tracking-widest uppercase text-sand-dark/60 hover:text-sand-dark transition-colors"
-            >
-              Start free instead
-            </button>
-          </div>
-        </div>
-      </section>
+      <PricingSection handleCTA={handleCTA} />
 
       {/* ── Final CTA ── */}
       <section

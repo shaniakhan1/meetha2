@@ -525,7 +525,15 @@ export default function Generate() {
                 rel="noopener noreferrer"
                 className="btn-luxury btn-luxury-outline w-full text-center block"
               >
-                Pro - $39 / month
+                Pro - $35 / month
+              </a>
+              <a
+                href={import.meta.env.VITE_STRIPE_STARTER_ANNUAL_LINK || "#"}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full py-3 font-sans text-xs tracking-widest uppercase text-charcoal-soft/60 hover:text-charcoal-soft transition-colors text-center block"
+              >
+                Annual plans (save up to 40%)
               </a>
             </div>
           </div>
@@ -573,7 +581,15 @@ export default function Generate() {
                 rel="noopener noreferrer"
                 className="btn-luxury btn-luxury-outline w-full text-center block"
               >
-                Pro - $39 / month
+                Pro - $35 / month
+              </a>
+              <a
+                href={import.meta.env.VITE_STRIPE_STARTER_ANNUAL_LINK || "#"}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full py-3 font-sans text-xs tracking-widest uppercase text-charcoal-soft/60 hover:text-charcoal-soft transition-colors text-center block"
+              >
+                Annual plans (save up to 40%)
               </a>
             </div>
           </div>
