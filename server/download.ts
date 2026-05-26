@@ -6,25 +6,16 @@
  * - Starter / Pro: serves the original image unmodified
  */
 import type { Request, Response } from "express";
-import fs from "fs";
-import path from "path";
 import sharp from "sharp";
 import { authenticateRequest } from "./_core/auth";
 import { getSupabase } from "./_core/supabase";
 import { storageGetSignedUrl } from "./storage";
+import { WATERMARK_FONT_BASE64 } from "./watermarkFont";
 
-// Load the bundled font once at startup and encode as base64.
-// Cloud Run has no system fonts, so we must embed the font in the SVG.
-let _fontBase64: string | null = null;
+// Font is embedded at build time as a base64 constant — no disk I/O needed at runtime.
+// This ensures the font is available on Cloud Run where __dirname has no .ttf files.
 function getFontBase64(): string {
-  if (_fontBase64) return _fontBase64;
-  try {
-    const fontPath = path.join(__dirname, "watermark-font.ttf");
-    _fontBase64 = fs.readFileSync(fontPath).toString("base64");
-  } catch {
-    _fontBase64 = ""; // fallback: no font embed, may render as boxes on minimal containers
-  }
-  return _fontBase64;
+  return WATERMARK_FONT_BASE64;
 }
 
 // SVG watermark: diagonal "MEETHA" text repeated across the image.

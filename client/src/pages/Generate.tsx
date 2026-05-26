@@ -8,20 +8,16 @@ import {
   SCENE_LABELS,
   ARCHETYPE_LABELS,
   MOOD_LABELS,
-  VIDEO_FORMAT_LABELS,
-  VIDEO_FORMAT_DESCRIPTIONS,
   type Platform,
   type SceneCategory,
-  type VideoFormat,
 } from "@shared/types";
 import CinematicPreview from "@/components/CinematicPreview";
 import { getPreviewTier } from "./Preview";
 
-type GenStep = "select" | "template_preview" | "recording" | "transcribing" | "generating" | "hooks" | "preview" | "feedback";
+type GenStep = "select" | "template_preview" | "recording" | "transcribing" | "generating" | "hooks" | "preview";
 
 // Credit costs — keep in sync with server/routers.ts
 const STILL_COST = 1;
-const VIDEO_COST = 5;
 
 interface GenerationResult {
   generation: {
@@ -65,12 +61,7 @@ export default function Generate() {
   const [showCustomHookInput, setShowCustomHookInput] = useState(false);
   const [showShareNudge, setShowShareNudge] = useState(false);
   const [captionCopied, setCaptionCopied] = useState(false);
-  const [feedbackGiven, setFeedbackGiven] = useState(false);
   const [phraseIndex, setPhraseIndex] = useState(0);
-  const [videoUrl, setVideoUrl] = useState<string | null>(null);
-  const [isGeneratingVideo, setIsGeneratingVideo] = useState(false);
-  const [outputType, setOutputType] = useState<"still" | "video">("still");
-  const [videoFormat, setVideoFormat] = useState<VideoFormat>("tiktok_reels");
   const [showCustomize, setShowCustomize] = useState(false);
   const [showTopUp, setShowTopUp] = useState(false);
   const [showLoraPaywall, setShowLoraPaywall] = useState(false);
@@ -100,19 +91,6 @@ export default function Generate() {
   const profileQuery = trpc.profile.get.useQuery();
   const creditsQuery = trpc.credits.get.useQuery();
   const selectHookMutation = trpc.generations.selectHook.useMutation();
-  const videoMutation = trpc.video.generate.useMutation({
-    onSuccess: (data) => {
-      setVideoUrl(data.videoUrl);
-      setIsGeneratingVideo(false);
-    },
-    onError: (err) => {
-      toast.error(err.message);
-      setIsGeneratingVideo(false);
-    },
-  });
-
-  const feedbackMutation = trpc.feedback.savePostability.useMutation();
-
   const regenerateCopyMutation = trpc.generations.regenerateCopy.useMutation({
     onSuccess: (data) => {
       if (result) {
@@ -133,30 +111,6 @@ export default function Generate() {
     });
   };
   const utils = trpc.useUtils();
-
-  const animateMeMutation = trpc.video.animateMe.useMutation({
-    onSuccess: (data) => {
-      setVideoUrl(data.videoUrl);
-      setIsGeneratingVideo(false);
-      utils.credits.get.invalidate();
-    },
-    onError: (err) => {
-      toast.error(err.message);
-      setIsGeneratingVideo(false);
-    },
-  });
-
-  const handleAnimateMe = () => {
-    if (!result?.generation) return;
-    setIsGeneratingVideo(true);
-    animateMeMutation.mutate({
-      generationId: result.generation.id,
-      imageUrl: result.generation.image_url as string,
-      archetype: result.generation.archetype,
-      mood: result.generation.mood,
-      sceneCategory: sceneCategory ?? undefined,
-    });
-  };
 
   const generateMutation = trpc.generate.content.useMutation({
     onSuccess: (data) => {
@@ -258,22 +212,8 @@ export default function Generate() {
       idx = (idx + 1) % GENERATING_PHRASES.length;
       setPhraseIndex(idx);
     }, 3000);
-    generateMutation.mutateAsync({ platform, sceneCategory: sceneCategory ?? undefined, videoFormat: outputType === "video" ? videoFormat : undefined }).then((data) => {
+    generateMutation.mutateAsync({ platform, sceneCategory: sceneCategory ?? undefined }).then(() => {
       clearInterval(interval);
-      // If Pro user chose video output, auto-trigger video generation after still is ready
-      if (outputType === "video" && (effectiveCredits?.tier === "pro" || previewTier === "pro")) {
-        const gen = (data as GenerationResult).generation;
-        if (gen?.image_url && gen?.id) {
-          setIsGeneratingVideo(true);
-          videoMutation.mutate({
-            generationId: gen.id,
-            imageUrl: gen.image_url as string,
-            archetype: gen.archetype,
-            mood: gen.mood,
-            sceneCategory: sceneCategory ?? undefined,
-          });
-        }
-      }
     }).catch(() => clearInterval(interval));
   };
 
@@ -316,8 +256,8 @@ export default function Generate() {
               title: "Meetha",
               // Do NOT pass text with files — Android Chrome tries to JSON-parse it
             });
-            // After share, move to feedback
-            setTimeout(() => setStep("feedback"), 800);
+            // After share, navigate to dashboard
+            setTimeout(() => navigate("/dashboard"), 800);
             return;
           } catch (shareErr: unknown) {
             if (shareErr instanceof Error && shareErr.name === "AbortError") return;
@@ -336,7 +276,7 @@ export default function Generate() {
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
       setShowShareNudge(true);
-      setTimeout(() => setStep("feedback"), 3500);
+      setTimeout(() => navigate("/dashboard"), 3500);
     } catch {
       toast.error("Download failed. Please try again.");
     }
@@ -379,34 +319,10 @@ export default function Generate() {
     }
   };
 
-  const handleFeedback = (response: "yes" | "maybe" | "no") => {
-    if (result?.generation?.id) {
-      feedbackMutation.mutate({ generationId: result.generation.id, response });
-    }
-    setFeedbackGiven(true);
-    toast.success("Thank you. Your feedback shapes Meetha.");
-    setTimeout(() => navigate("/dashboard"), 1500);
-  };
-
   const handleRegenerate = () => {
     setResult(null);
     setSelectedHook(null);
-    setFeedbackGiven(false);
-    setVideoUrl(null);
-    setIsGeneratingVideo(false);
     setStep("select");
-  };
-
-  const handleGenerateVideo = () => {
-    if (!result?.generation) return;
-    setIsGeneratingVideo(true);
-    videoMutation.mutate({
-      generationId: result.generation.id,
-      imageUrl: result.generation.image_url as string,
-      archetype: result.generation.archetype,
-      mood: result.generation.mood,
-      sceneCategory: sceneCategory ?? undefined,
-    });
   };
 
   // ── Voice recording handlers ──────────────────────────────────────────────
@@ -930,35 +846,6 @@ export default function Generate() {
             </div>
           )}
 
-          {/* Output type selector — Pro only */}
-          {(effectiveCredits?.tier === "pro" || previewTier === "pro") && (
-            <div className="mb-8">
-              <p className="font-sans text-sm font-semibold text-charcoal mb-4">
-                Output
-              </p>
-              <div className="grid grid-cols-2 gap-2">
-                {(["still", "video"] as const).map((type) => (
-                  <button
-                    key={type}
-                    onClick={() => setOutputType(type)}
-                    className={`py-3 px-2 text-center border transition-all duration-200 ${
-                      outputType === type
-                        ? "border-gold bg-gold/10 text-charcoal"
-                        : "border-sand/60 bg-warm-white/60 text-charcoal hover:border-gold/40"
-                    }`}
-                  >
-                    <p className="font-sans text-xs tracking-[0.1em] uppercase">
-                      {type === "still" ? "Still Image" : "Animated Video"}
-                    </p>
-                    <p className="font-sans text-xs text-charcoal-soft mt-0.5">
-                      {type === "still" ? "Download or post" : "15-sec cinematic clip"}
-                    </p>
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
           {/* Voice-to-content entry point */}
           <div className="mb-8 p-5 border border-sand/60 bg-warm-white/40">
             <p className="font-sans text-sm font-semibold text-charcoal mb-1">
@@ -988,51 +875,28 @@ export default function Generate() {
             <div className="flex-1 h-px bg-sand/40" />
           </div>
 
-          {/* Format — still image options or video format options depending on outputType */}
+          {/* Format — platform selector */}
           <div className="mb-8">
             <p className="font-sans text-sm font-semibold text-charcoal mb-4">
               Format
             </p>
-            {outputType === "video" ? (
-              <div className="grid grid-cols-1 gap-2">
-                {(Object.keys(VIDEO_FORMAT_LABELS) as VideoFormat[]).map((vf) => (
-                  <button
-                    key={vf}
-                    onClick={() => setVideoFormat(vf)}
-                    className={`py-3 px-4 text-left border transition-all duration-200 ${
-                      videoFormat === vf
-                        ? "border-gold bg-gold/10 text-charcoal"
-                        : "border-sand/60 bg-warm-white/60 text-charcoal hover:border-gold/40"
-                    }`}
-                  >
-                    <p className="font-sans text-xs tracking-[0.1em] uppercase">
-                      {VIDEO_FORMAT_LABELS[vf]}
-                    </p>
-                    <p className="font-sans text-xs text-charcoal-soft mt-0.5">
-                      {VIDEO_FORMAT_DESCRIPTIONS[vf]}
-                    </p>
-                  </button>
-                ))}
-              </div>
-            ) : (
-              <div className="grid grid-cols-3 gap-2">
-                {platforms.map((p) => (
-                  <button
-                    key={p}
-                    onClick={() => setPlatform(p)}
-                    className={`py-3 px-2 text-center border transition-all duration-200 ${
-                      platform === p
-                        ? "border-gold bg-gold/10 text-charcoal"
-                        : "border-sand/60 bg-warm-white/60 text-charcoal hover:border-gold/40"
-                    }`}
-                  >
-                    <p className="font-sans text-xs tracking-[0.1em] uppercase">
-                      {PLATFORM_LABELS[p]}
-                    </p>
-                  </button>
-                ))}
-              </div>
-            )}
+            <div className="grid grid-cols-3 gap-2">
+              {platforms.map((p) => (
+                <button
+                  key={p}
+                  onClick={() => setPlatform(p)}
+                  className={`py-3 px-2 text-center border transition-all duration-200 ${
+                    platform === p
+                      ? "border-gold bg-gold/10 text-charcoal"
+                      : "border-sand/60 bg-warm-white/60 text-charcoal hover:border-gold/40"
+                  }`}
+                >
+                  <p className="font-sans text-xs tracking-[0.1em] uppercase">
+                    {PLATFORM_LABELS[p]}
+                  </p>
+                </button>
+              ))}
+            </div>
           </div>
 
           {/* Scene */}
@@ -1343,46 +1207,6 @@ export default function Generate() {
 
           {/* Actions */}
           <div className="space-y-3">
-            {/* Video — ready to download */}
-            {videoUrl ? (
-              <a
-                href={videoUrl}
-                download={`meetha-video-${Date.now()}.mp4`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="btn-luxury btn-gold w-full text-center block"
-              >
-                Download Video
-              </a>
-            ) : isGeneratingVideo ? (
-              <button disabled className="btn-luxury btn-gold w-full opacity-80">
-                <span className="flex items-center justify-center gap-2">
-                  <span className="w-3 h-3 border border-cream border-t-transparent rounded-full animate-spin" />
-                  Animating your scene...
-                </span>
-              </button>
-            ) : (effectiveCredits?.tier === "starter" || effectiveCredits?.tier === "pro" || previewTier === "starter" || previewTier === "pro") ? (
-              <div>
-                <button
-                  onClick={handleAnimateMe}
-                  className="btn-luxury btn-gold w-full"
-                >
-                  Animate Me
-                </button>
-                <p className="mt-1 text-center font-sans text-xs text-charcoal-soft/60">
-                  Turns your still into a 5-second cinematic clip. {VIDEO_COST} credits.
-                </p>
-              </div>
-            ) : (
-              <a
-                href={import.meta.env.VITE_STRIPE_STARTER_LINK || "#"}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-full py-3 font-sans text-xs tracking-widest uppercase text-charcoal-soft hover:text-charcoal border border-sand hover:border-gold/40 transition-all duration-200 text-center block"
-              >
-                Upgrade to Starter for Animate Me
-              </a>
-            )}
             {/* Hook copy strip — always visible on mobile when hook is selected */}
             {selectedHook && (
               <div className="w-full p-4 bg-[#2C1810] text-cream flex items-center justify-between gap-3">
@@ -1429,46 +1253,6 @@ export default function Generate() {
         </div>
       )}
 
-      {/* ── Step: Feedback ── */}
-      {step === "feedback" && result && (
-        <div className="flex-1 flex flex-col items-center justify-center px-6 py-8 text-center animate-fade-up opacity-0">
-          <div className="max-w-xs mx-auto">
-            <div className="divider-editorial mb-8" />
-
-            <h3 className="font-serif font-light text-charcoal mb-3">
-              Would you post this?
-            </h3>
-            <p className="font-sans font-light text-xs text-charcoal-soft mb-10">
-              Your answer helps Meetha understand what feels postable.
-            </p>
-
-            {!feedbackGiven ? (
-              <div className="grid grid-cols-3 gap-3">
-                {(["yes", "maybe", "no"] as const).map((r) => (
-                  <button
-                    key={r}
-                    onClick={() => handleFeedback(r)}
-                    className="py-4 border border-sand bg-warm-white/60 hover:bg-warm-white hover:border-gold/50 transition-all duration-200"
-                  >
-                    <p className="font-serif text-lg text-charcoal capitalize">{r}</p>
-                  </button>
-                ))}
-              </div>
-            ) : (
-              <div className="animate-fade-in opacity-0">
-                <p className="font-serif text-lg text-charcoal">Thank you.</p>
-              </div>
-            )}
-
-            <button
-              onClick={() => navigate("/dashboard")}
-              className="mt-8 font-sans text-xs tracking-widest uppercase text-charcoal-soft hover:text-charcoal transition-colors"
-            >
-              Back to Dashboard
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

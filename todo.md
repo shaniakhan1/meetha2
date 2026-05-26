@@ -287,13 +287,20 @@
 
 ## V28 -- Visual App Redesign (Premium, Image-Led)
 
-- [ ] Dashboard: full-bleed last generated image as hero (top 45% of screen), name + frequency overlaid in large serif
-- [ ] Dashboard: credits as small pill overlay on hero, not a bordered box
-- [ ] Dashboard: LoRA training status as slim banner, not a bordered card
-- [ ] Dashboard: "Generate New Content" button stays full-width dark, moves below hero
-- [ ] Dashboard: templates as horizontal visual scroll cards (image thumbnails), not a text list box
-- [ ] Dashboard: history grid stays but moves further down, no section label box
-- [ ] Generate screen: frequency/archetype displayed as large serif headline, not a thin bordered label box
-- [ ] Generate screen: scene cards become visual image tiles, not text-only options
-- [ ] Generate screen: remove all thin-bordered "form field" boxes -- replace with open layout
-- [ ] Global: reduce border-heavy box layout throughout -- use whitespace and typography hierarchy instead
+- [x] Dashboard: full-bleed last generated image as hero (top 45% of screen), name + frequency overlaid in large serif
+- [x] Dashboard: credits as small pill overlay on hero, not a bordered box
+- [x] Dashboard: LoRA training status as slim banner, not a bordered card
+- [x] Dashboard: "Generate New Content" button stays full-width dark, moves below hero
+- [x] Dashboard: templates as horizontal visual scroll cards (image thumbnails), not a text list box
+- [x] Dashboard: history grid stays but moves further down, no section label box
+- [x] Generate screen: frequency/archetype displayed as large serif headline, not a thin bordered label box
+- [x] Generate screen: scene cards become visual image tiles, not text-only options
+- [x] Generate screen: remove all thin-bordered "form field" boxes -- replace with open layout
+- [x] Global: reduce border-heavy box layout throughout -- use whitespace and typography hierarchy instead
+
+## V29 -- Post-Generation Fixes
+- [x] Remove "Would you post this?" postability survey screen entirely
+- [x] Remove "Animate Me" / animation feature (stuck, costs 5 credits, confusing)
+- [x] Fix Save & Share: use navigator.share (native iOS share sheet) so users can save to Photos or share to Instagram directly
+- [x] Fix generations not saving to "Your Creations" history (archived column added to Supabase)
+- [x] Fix watermark not appearing even when toggled on (font embedded as base64 constant in watermarkFont.ts)
