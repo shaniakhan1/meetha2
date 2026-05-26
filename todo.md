@@ -385,6 +385,6 @@
 - [x] Add annual payment links via Stripe MCP and VITE env vars (VITE_STRIPE_STARTER_ANNUAL_LINK, VITE_STRIPE_PRO_ANNUAL_LINK)
 - [x] Update Home.tsx pricing section: elevated monthly/annual toggle, feature list per tier, save up to 40% badge
 - [x] Update Profile.tsx upgrade section: monthly/annual toggle with UpgradeSection component
-- [ ] Build shareable style card: /api/style-card/:userId endpoint generating a branded PNG card (archetype, palette, one generated image, Meetha logo)
-- [ ] Add "Share Your Style Card" button to Dashboard.tsx using navigator.share
+- [x] Build shareable style card: /api/style-card/:generationId endpoint generating a branded PNG card (archetype, palette, MEETHA branding)
+- [x] Add "Share Style Card" button to Dashboard.tsx expanded card panel using navigator.share with desktop download fallback
 - [x] Fix palette sample data in Home.tsx: "amber gold. No cool tones" -> "amber gold, no cool tones"
