@@ -190,7 +190,7 @@ export default function Home() {
     if (loading) return;
     if (!isAuthenticated) return;
     if (profileQuery.isLoading || profileQuery.isFetching) return;
-    if (profileQuery.data?.onboardingComplete) {
+    if (profileQuery.data?.onboarding_complete) {
       navigate("/dashboard");
     } else if (profileQuery.data !== undefined) {
       navigate("/onboarding");
@@ -315,9 +315,9 @@ export default function Home() {
             <div className="relative">
               <div className="aspect-[3/4] overflow-hidden">
                 <img
-                  src="/manus-storage/gallery_street_lights_8c7a051f.jpg"
+                  src="/manus-storage/shania-before_bb452c9e.webp"
                   alt="Before — unaligned styling"
-                  className="w-full h-full object-cover object-top grayscale-[20%]"
+                  className="w-full h-full object-cover object-top"
                 />
               </div>
               <div className="absolute top-3 left-3">
@@ -366,6 +366,92 @@ export default function Home() {
               </div>
             ))}
           </div>
+        </div>
+      </section>
+
+      {/* ── Transformation Card Sign-up Hook ── */}
+      <section className="py-16 px-6 bg-cream">
+        <div className="max-w-sm mx-auto">
+          <div className="text-center mb-8">
+            <p className="font-sans text-xs tracking-[0.2em] uppercase text-gold mb-4">
+              Included with every paid plan
+            </p>
+            <h2 className="font-serif font-light text-charcoal mb-3" style={{ lineHeight: 1.1 }}>
+              You get a card that shows<br />your exact transformation.
+            </h2>
+            <div className="divider-editorial" />
+            <p className="font-sans font-light text-sm text-charcoal-soft leading-relaxed mt-4">
+              When you sign up, Meetha creates a personalized card just for you. It shows your photo next to your AI-generated look — plus everything you need to recreate it in real life.
+            </p>
+          </div>
+
+          {/* Card preview mockup */}
+          <div className="border border-gold/30 bg-warm-white overflow-hidden mb-6">
+            {/* Mini before/after */}
+            <div className="grid grid-cols-2 gap-0.5 bg-charcoal">
+              <div className="relative">
+                <div className="aspect-[4/3] overflow-hidden">
+                  <img
+                    src="/manus-storage/shania-before_bb452c9e.webp"
+                    alt="Before"
+                    className="w-full h-full object-cover object-top"
+                  />
+                </div>
+                <span className="absolute top-2 left-2 font-sans text-[9px] tracking-[0.15em] uppercase bg-cream/90 text-charcoal px-1.5 py-0.5">
+                  Before
+                </span>
+              </div>
+              <div className="relative">
+                <div className="aspect-[4/3] overflow-hidden">
+                  <img
+                    src="/manus-storage/meetha-59_1803b502.jpg"
+                    alt="After"
+                    className="w-full h-full object-cover object-center"
+                  />
+                </div>
+                <span className="absolute top-2 left-2 font-sans text-[9px] tracking-[0.15em] uppercase bg-charcoal/80 text-cream px-1.5 py-0.5">
+                  After
+                </span>
+              </div>
+            </div>
+            {/* Brief preview */}
+            <div className="bg-charcoal p-4 grid grid-cols-2 gap-3">
+              {[
+                { label: "Color Palette", text: "Warm ivory, camel, amber gold" },
+                { label: "Style Direction", text: "Elevated essentials, luxurious textures" },
+                { label: "Makeup Energy", text: "Sculpted, warm, bold lip" },
+                { label: "Your Energy", text: "CONFIDENT · REFINED · MAGNETIC" },
+              ].map((item) => (
+                <div key={item.label}>
+                  <p className="font-sans text-[9px] tracking-[0.15em] uppercase text-gold/80 mb-0.5">{item.label}</p>
+                  <p className="font-sans font-light text-[10px] text-cream/70 leading-relaxed">{item.text}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Simple 3-step explanation */}
+          <div className="space-y-3 mb-8">
+            {[
+              { num: "1", text: "Sign up and upload your photos" },
+              { num: "2", text: "Generate your first AI look" },
+              { num: "3", text: "Get your Transformation Card — yours to keep and share" },
+            ].map((step) => (
+              <div key={step.num} className="flex items-center gap-4">
+                <span className="w-7 h-7 rounded-full border border-gold/40 flex items-center justify-center font-sans text-xs text-gold flex-shrink-0">
+                  {step.num}
+                </span>
+                <p className="font-sans text-sm text-charcoal-soft">{step.text}</p>
+              </div>
+            ))}
+          </div>
+
+          <button onClick={handleCTA} className="btn-luxury btn-gold w-full">
+            Get my Transformation Card
+          </button>
+          <p className="font-sans text-xs text-charcoal-soft/50 text-center mt-3">
+            Starter plan — unlocks after your 2nd generation &nbsp;·&nbsp; Pro plan — after your 1st
+          </p>
         </div>
       </section>
 

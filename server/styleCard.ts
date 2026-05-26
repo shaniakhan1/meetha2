@@ -43,18 +43,18 @@ export async function handleStyleCard(req: Request, res: Response) {
   // Fetch generation
   const genResult = await getSupabase()
     .from("generations")
-    .select("id, userId, imageUrl")
+    .select("id, user_id, image_url")
     .eq("id", Number(generationId))
     .single();
-  const generation = genResult.data as { id: number; userId: number; imageUrl: string } | null;
-  if (!generation || generation.userId !== user.id) {
+  const generation = genResult.data as { id: number; user_id: number; image_url: string } | null;
+  if (!generation || generation.user_id !== user.id) {
     return res.status(404).json({ error: "Generation not found" });
   }
 
   // Fetch image bytes
   let imageBuffer: Buffer;
   try {
-    let fetchUrl = generation.imageUrl as string;
+    let fetchUrl = generation.image_url as string;
     if (fetchUrl.startsWith("/manus-storage/")) {
       const key = fetchUrl.replace("/manus-storage/", "");
       fetchUrl = await storageGetSignedUrl(key);

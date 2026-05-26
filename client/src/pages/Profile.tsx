@@ -222,7 +222,7 @@ export default function Profile() {
             <div className="w-full h-px bg-sand/60" />
             <div className="flex items-center justify-between">
               <p className="font-sans text-xs text-charcoal-soft">Credits</p>
-              <p className="font-sans text-sm text-charcoal">{credits?.creditsRemaining ?? "-"} remaining</p>
+              <p className="font-sans text-sm text-charcoal">{credits?.credits_remaining ?? "-"} remaining</p>
             </div>
             {/* Meetha badge toggle - Starter/Pro only */}
             {credits && credits.tier !== "free" && (
@@ -672,6 +672,9 @@ export default function Profile() {
           )}
         </div>
 
+        {/* ── Visual Transformation Card ── */}
+        <TransformationCardSection />
+
         {/* ── Your Aesthetic Brief ── */}
         <AestheticBriefSection />
 
@@ -706,6 +709,147 @@ export default function Profile() {
           <DeleteAccountButton onDeleted={() => { logout(); navigate("/"); }} />
         </div>
       </div>
+    </div>
+  );
+}
+
+function TransformationCardSection() {
+  const profileQuery = trpc.profile.get.useQuery();
+  const creditsQuery = trpc.credits.get.useQuery();
+  const generationsQuery = trpc.generations.list.useQuery({ limit: 1, offset: 0 });
+  const utils = trpc.useUtils();
+
+  const profile = profileQuery.data;
+  const credits = creditsQuery.data;
+  const tier = credits?.tier ?? "free";
+  const cardUrl = profile?.transformation_card_url;
+  const firstGeneration = generationsQuery.data?.items?.[0];
+
+  const generateCard = trpc.profile.generateTransformationCard.useMutation({
+    onSuccess: () => {
+      utils.profile.get.invalidate();
+      toast.success("Your Transformation Card is ready!");
+    },
+    onError: (err) => toast.error(err.message),
+  });
+
+  const handleGenerate = () => {
+    if (!firstGeneration) return;
+    generateCard.mutate({
+      afterImageUrl: firstGeneration.image_url,
+      beforeImageUrl: null,
+    });
+  };
+
+  const tierLabel = tier === "pro" ? "Pro" : tier === "starter" ? "Starter" : null;
+  const threshold = tier === "pro" ? 1 : tier === "starter" ? 2 : null;
+  const genCount = generationsQuery.data?.total ?? 0;
+  const hasEnoughGens = threshold !== null && genCount >= threshold;
+
+  return (
+    <div>
+      <p className="font-sans text-sm font-semibold text-charcoal mb-4">Your Visual Transformation Card</p>
+
+      {tier === "free" ? (
+        // Free tier: locked state with clear upgrade message
+        <div className="border border-gold/30 bg-warm-white/60 p-5 space-y-4">
+          <div className="space-y-2">
+            <p className="font-serif text-base text-charcoal leading-snug">
+              See yourself transformed.
+            </p>
+            <p className="font-sans font-light text-sm text-charcoal-soft leading-relaxed">
+              When you upgrade, we create a personalized card showing your before photo next to your AI-generated look — plus your exact color palette, style direction, makeup energy, and jewelry guide.
+            </p>
+            <p className="font-sans font-light text-xs text-charcoal-soft/70 leading-relaxed">
+              Think of it as your personal style bible. One card. Everything you need to shop, shoot, and show up.
+            </p>
+          </div>
+          <div className="border border-sand/60 p-3 bg-cream/40 space-y-1">
+            <p className="font-sans text-xs font-semibold text-charcoal">What’s inside your card:</p>
+            {[
+              "Before & After photos side by side",
+              "Your personal color palette (4 exact hex swatches)",
+              "Style direction: fabrics, silhouettes, textures",
+              "Makeup energy: techniques and signature look",
+              "Jewelry direction: metals, weight, piece types",
+              "Your energy: 4 words that define your presence",
+            ].map((item) => (
+              <div key={item} className="flex items-start gap-2">
+                <span className="text-gold text-xs mt-0.5 flex-shrink-0">✓</span>
+                <p className="font-sans text-xs text-charcoal-soft">{item}</p>
+              </div>
+            ))}
+          </div>
+          <div className="space-y-2">
+            <p className="font-sans text-xs text-gold tracking-widest uppercase">Starter plan — unlocks after your 2nd generation</p>
+            <p className="font-sans text-xs text-gold tracking-widest uppercase">Pro plan — unlocks after your 1st generation</p>
+          </div>
+        </div>
+      ) : cardUrl ? (
+        // Card is ready
+        <div className="space-y-3">
+          <img
+            src={cardUrl}
+            alt="Your Visual Transformation Card"
+            className="w-full border border-sand/40"
+          />
+          <a
+            href={cardUrl}
+            download="meetha-transformation-card.jpg"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="btn-luxury w-full text-center block"
+          >
+            Download Card
+          </a>
+          <p className="font-sans text-xs text-charcoal-soft/50 text-center leading-relaxed">
+            Share this card anywhere. It’s yours.
+          </p>
+        </div>
+      ) : !hasEnoughGens ? (
+        // Paid but not enough generations yet
+        <div className="border border-sand bg-warm-white/60 p-4 space-y-2">
+          <p className="font-sans text-sm text-charcoal">
+            {genCount === 0
+              ? "Generate your first look to unlock your Transformation Card."
+              : `Generate ${threshold! - genCount} more look${threshold! - genCount === 1 ? "" : "s"} to unlock your Transformation Card.`}
+          </p>
+          <p className="font-sans text-xs text-charcoal-soft leading-relaxed">
+            As a {tierLabel} member, your card unlocks after your {tier === "pro" ? "1st" : "2nd"} generation. It shows your before and after side by side with your complete style brief.
+          </p>
+          <div className="w-full bg-sand/30 h-1 rounded-full">
+            <div
+              className="bg-gold h-1 rounded-full transition-all duration-500"
+              style={{ width: `${Math.min(100, (genCount / (threshold ?? 1)) * 100)}%` }}
+            />
+          </div>
+          <p className="font-sans text-xs text-charcoal-soft/50">{genCount} of {threshold} generation{threshold === 1 ? "" : "s"} complete</p>
+        </div>
+      ) : generateCard.isPending ? (
+        // Generating
+        <div className="border border-sand bg-warm-white/60 p-6 flex items-center gap-4">
+          <span className="w-5 h-5 border border-gold border-t-transparent rounded-full animate-spin flex-shrink-0" />
+          <div>
+            <p className="font-serif text-sm text-charcoal">Creating your card…</p>
+            <p className="font-sans text-xs text-charcoal-soft mt-0.5">This takes about 30 seconds.</p>
+          </div>
+        </div>
+      ) : (
+        // Ready to generate
+        <div className="border border-gold/30 bg-warm-white/60 p-5 space-y-3">
+          <p className="font-serif text-base text-charcoal">Your card is ready to generate.</p>
+          <p className="font-sans font-light text-sm text-charcoal-soft leading-relaxed">
+            We’ll create a personalized before & after card with your complete style brief: color palette, style direction, makeup energy, jewelry guide, and your energy keywords.
+          </p>
+          <button
+            onClick={handleGenerate}
+            disabled={generateCard.isPending}
+            className="btn-luxury btn-gold w-full"
+          >
+            Generate My Transformation Card
+          </button>
+        </div>
+      )}
     </div>
   );
 }

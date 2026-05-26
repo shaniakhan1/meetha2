@@ -22,7 +22,7 @@ const STILL_COST = 1;
 interface GenerationResult {
   generation: {
     id: number;
-    imageUrl: string;
+    image_url: string;
     caption: string;
     archetype: string;
     mood: string;
@@ -195,7 +195,7 @@ export default function Generate() {
     // One-tap generate: uses saved profile defaults, no scene/format selection
     if (!previewTier) {
       const credits = creditsQuery.data;
-      if (!credits || credits.creditsRemaining < STILL_COST) {
+      if (!credits || (credits.credits_remaining ?? 0) < STILL_COST) {
         setShowTopUp(true);
         return;
       }
@@ -215,7 +215,7 @@ export default function Generate() {
     // In preview mode, skip the credit gate entirely
     if (!previewTier) {
       const credits = creditsQuery.data;
-      if (!credits || credits.creditsRemaining < STILL_COST) {
+      if (!credits || (credits.credits_remaining ?? 0) < STILL_COST) {
         setShowTopUp(true);
         return;
       }
@@ -472,12 +472,14 @@ export default function Generate() {
   const credits = creditsQuery.data;
 
   // In preview mode, synthesize a credits object matching the selected tier
+  // Normalize credits to always have creditsRemaining regardless of snake_case DB field
+  const normalizedCredits = credits ? { ...credits, creditsRemaining: credits.credits_remaining } : null;
   const effectiveCredits = previewTier
     ? {
         creditsRemaining: previewTier === "free" ? 3 : previewTier === "starter" ? 28 : 73,
         tier: previewTier,
       }
-    : credits;
+    : normalizedCredits;
 
   const formatTime = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
 
@@ -727,7 +729,7 @@ export default function Generate() {
                 onClick={() => {
                   if (!previewTier) {
                     const credits = creditsQuery.data;
-                    if (!credits || credits.creditsRemaining < STILL_COST) {
+                    if (!credits || (credits.credits_remaining ?? 0) < STILL_COST) {
                       setShowTopUp(true);
                       return;
                     }
@@ -1117,7 +1119,7 @@ export default function Generate() {
           {/* Thumbnail preview - shows hook overlay as user hovers/selects */}
           <div className="mb-6">
             <CinematicPreview
-              imageUrl={result.generation.imageUrl as string}
+              imageUrl={result.generation.image_url as string}
               hook={selectedHook ?? result.hooks[0] ?? null}
               size="thumb"
               platform={platform}
@@ -1227,7 +1229,7 @@ export default function Generate() {
           )}
           <div className="mb-6">
             <CinematicPreview
-              imageUrl={result.generation.imageUrl as string}
+              imageUrl={result.generation.image_url as string}
               hook={selectedHook}
               animated={
                 effectiveCredits?.tier === "starter" ||

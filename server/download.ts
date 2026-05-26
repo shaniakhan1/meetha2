@@ -89,10 +89,10 @@ export async function handleDownload(req: Request, res: Response) {
   // Fetch the generation record
   const genResult = await getSupabase()
     .from("generations")
-    .select("id, userId, imageUrl")
+    .select("id, user_id, image_url")
     .eq("id", Number(generationId))
     .single();
-  const generation = genResult.data as { id: number; userId: number; imageUrl: string } | null;
+  const generation = genResult.data as { id: number; user_id: number; image_url: string } | null;
   const error = genResult.error;
 
   if (error || !generation) {
@@ -100,14 +100,14 @@ export async function handleDownload(req: Request, res: Response) {
   }
 
   // Only the owner can download
-  if (generation.userId !== user.id) {
+  if (generation.user_id !== user.id) {
     return res.status(403).json({ error: "Forbidden" });
   }
 
   // Fetch the image bytes
   let imageBuffer: Buffer;
   try {
-    let fetchUrl = generation.imageUrl as string;
+    let fetchUrl = generation.image_url as string;
     if (fetchUrl.startsWith("/manus-storage/")) {
       const key = fetchUrl.replace("/manus-storage/", "");
       fetchUrl = await storageGetSignedUrl(key);
@@ -125,14 +125,14 @@ export async function handleDownload(req: Request, res: Response) {
   const creditsResult = await getSupabase()
     .from("credits")
     .select("tier")
-    .eq("userId", user.id)
+    .eq("user_id", user.id)
     .single();
   const credits = creditsResult.data as { tier: string } | null;
 
   const profileResult = await getSupabase()
     .from("profiles")
     .select("share_badge_enabled")
-    .eq("userId", user.id)
+    .eq("user_id", user.id)
     .single();
   const profile = profileResult.data as { share_badge_enabled: boolean | null } | null;
 

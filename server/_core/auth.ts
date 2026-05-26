@@ -141,22 +141,36 @@ export async function handleSetSession(req: Request, res: Response) {
     return res.status(400).json({ error: "access_token is required" });
   }
 
+  try {
   const supabase = getSupabaseAdmin();
   const { data: { user: supabaseUser }, error } = await supabase.auth.getUser(access_token);
 
   if (error || !supabaseUser) {
+    console.error("[Auth] getUser failed:", error?.message);
     return res.status(401).json({ error: "Invalid access token" });
   }
 
+  console.log("[Auth] supabaseUser id:", supabaseUser.id, "email:", supabaseUser.email);
+
   // Upsert user in our DB using Supabase auth UUID as open_id
-  const { user: dbUser, isNew } = await db.upsertUser({
-    openId: supabaseUser.id,
-    email: supabaseUser.email ?? null,
-    name: supabaseUser.user_metadata?.full_name ?? supabaseUser.email?.split("@")[0] ?? null,
-    loginMethod: "magic_link",
-  });
+  let dbUser: Awaited<ReturnType<typeof db.upsertUser>>["user"] = null;
+  let isNew = false;
+  try {
+    const result = await db.upsertUser({
+      openId: supabaseUser.id,
+      email: supabaseUser.email ?? null,
+      name: supabaseUser.user_metadata?.full_name ?? supabaseUser.email?.split("@")[0] ?? null,
+      loginMethod: "magic_link",
+    });
+    dbUser = result.user;
+    isNew = result.isNew;
+  } catch (upsertErr) {
+    console.error("[Auth] upsertUser threw:", upsertErr);
+    return res.status(500).json({ error: "Failed to create user (upsert threw)" });
+  }
 
   if (!dbUser) {
+    console.error("[Auth] upsertUser returned null dbUser");
     return res.status(500).json({ error: "Failed to create user" });
   }
 
@@ -183,6 +197,10 @@ export async function handleSetSession(req: Request, res: Response) {
   res.cookie(COOKIE_NAME, sessionToken, cookieOptions);
 
   return res.json({ success: true, user: dbUser });
+  } catch (outerErr) {
+    console.error("[Auth] handleSetSession unhandled error:", outerErr);
+    return res.status(500).json({ error: "Internal server error during session setup" });
+  }
 }
 
 /**

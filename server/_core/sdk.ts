@@ -318,15 +318,15 @@ function buildCronUser(
   const now = new Date().toISOString();
   return {
     id: -1,
-    openId: userInfo.openId,
+    open_id: userInfo.openId,
     name: userInfo.name || "Manus Scheduled Task",
     email: null,
-    loginMethod: null,
+    login_method: null,
     role: "user",
     referral_code: null,
-    createdAt: now,
-    updatedAt: now,
-    lastSignedIn: now,
+    created_at: now,
+    updated_at: now,
+    last_signed_in: now,
     taskUid: userInfo.taskUid ?? undefined,
     isCron: true,
   } as AuthenticatedUser;
