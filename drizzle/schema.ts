@@ -1,5 +1,6 @@
 import {
   int,
+  json,
   mysqlEnum,
   mysqlTable,
   text,
@@ -38,6 +39,9 @@ export const profiles = mysqlTable("profiles", {
   ]),
   mood: mysqlEnum("mood", ["soft", "magnetic", "grounded", "untamed"]),
   onboardingComplete: boolean("onboardingComplete").default(false).notNull(),
+  bodyType: text("body_type"),
+  shareBadgeEnabled: boolean("share_badge_enabled").default(false),
+  aestheticBrief: json("aesthetic_brief"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });

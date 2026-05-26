@@ -11,7 +11,7 @@ import {
   type Mood,
 } from "@shared/types";
 
-type Step = "archetype" | "mood" | "photos" | "complete";
+type Step = "archetype" | "mood" | "body" | "photos" | "complete";
 
 const ARCHETYPE_SYMBOL: Record<Archetype, string> = {
   luxury_minimal: "◻",
@@ -33,6 +33,9 @@ export default function Onboarding() {
   const [step, setStep] = useState<Step>("archetype");
   const [selectedArchetype, setSelectedArchetype] = useState<Archetype | null>(null);
   const [selectedMood, setSelectedMood] = useState<Mood | null>(null);
+  const [selectedBodyType, setSelectedBodyType] = useState<string | null>(null);
+
+  const setBodyTypeMutation = trpc.profile.setBodyType.useMutation();
 
   // LoRA photo upload state
   const [loraFiles, setLoraFiles] = useState<File[]>([]);
@@ -67,7 +70,7 @@ export default function Onboarding() {
 
   const archetypes = Object.keys(ARCHETYPE_LABELS) as Archetype[];
   const moods = Object.keys(MOOD_LABELS) as Mood[];
-  const STEPS: Step[] = ["archetype", "mood", "photos"];
+  const STEPS: Step[] = ["archetype", "mood", "body", "photos"];
   const stepIndex = STEPS.indexOf(step);
 
   const handleLoraFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -159,7 +162,7 @@ export default function Onboarding() {
       {step === "archetype" && (
         <div className="flex-1 flex flex-col px-5 py-8 animate-fade-up opacity-0">
           <div className="mb-8">
-            <p className="font-sans text-xs tracking-[0.25em] uppercase text-gold mb-3">Step 1 of 3</p>
+            <p className="font-sans text-xs tracking-[0.25em] uppercase text-gold mb-3">Step 1 of 4</p>
             <h1 className="font-serif text-4xl font-light text-charcoal leading-tight mb-3">
               What is your<br />frequency?
             </h1>
@@ -201,7 +204,7 @@ export default function Onboarding() {
       {step === "mood" && (
         <div className="flex-1 flex flex-col px-5 py-8 animate-fade-up opacity-0">
           <div className="mb-8">
-            <p className="font-sans text-xs tracking-[0.25em] uppercase text-gold mb-3">Step 2 of 3</p>
+            <p className="font-sans text-xs tracking-[0.25em] uppercase text-gold mb-3">Step 2 of 4</p>
             <h1 className="font-serif text-4xl font-light text-charcoal leading-tight mb-3">
               What is your<br />energy right now?
             </h1>
@@ -216,7 +219,7 @@ export default function Onboarding() {
                 key={mood}
                 onClick={() => {
                   setSelectedMood(mood);
-                  setTimeout(() => setStep("photos"), 150);
+                  setTimeout(() => setStep("body"), 150);
                 }}
                 className="text-left p-5 border-2 border-sand bg-warm-white hover:border-gold hover:bg-warm-white active:scale-[0.99] transition-all duration-200 group flex flex-col justify-between min-h-[140px]"
               >
@@ -244,12 +247,69 @@ export default function Onboarding() {
         </div>
       )}
 
-      {/* ─── Step 3: Photos (optional) ─── */}
+      {/* ─── Step 3: Body Type ─── */}
+      {step === "body" && (
+        <div className="flex-1 flex flex-col px-5 py-8 animate-fade-up opacity-0">
+          <div className="mb-8">
+            <p className="font-sans text-xs tracking-[0.25em] uppercase text-gold mb-3">Step 3 of 4</p>
+            <h1 className="font-serif text-4xl font-light text-charcoal leading-tight mb-3">
+              How do you<br />carry yourself?
+            </h1>
+            <p className="font-sans text-sm text-charcoal-soft leading-relaxed">
+              Meetha uses this to shape the body proportions in your images — so they feel like you, not a generic silhouette.
+            </p>
+          </div>
+
+          <div className="space-y-3 mb-8">
+            {([
+              { value: "petite and slender frame, delicate proportions", label: "Petite", sub: "Small frame, delicate proportions" },
+              { value: "slim athletic build, toned and lean", label: "Slim & Athletic", sub: "Lean, toned, long lines" },
+              { value: "hourglass figure, defined waist, balanced curves", label: "Hourglass", sub: "Defined waist, balanced curves" },
+              { value: "full-figured woman, generous curves, soft and voluptuous", label: "Full-Figured", sub: "Generous curves, soft and voluptuous" },
+              { value: "tall statuesque build, long limbs, commanding presence", label: "Tall & Statuesque", sub: "Long limbs, commanding presence" },
+            ] as { value: string; label: string; sub: string }[]).map(({ value, label, sub }) => (
+              <button
+                key={value}
+                onClick={() => setSelectedBodyType(value)}
+                className={`w-full text-left p-5 border transition-all duration-200 ${
+                  selectedBodyType === value
+                    ? "border-gold bg-gold/10 text-charcoal"
+                    : "border-sand/60 bg-warm-white/60 text-charcoal hover:border-gold/40"
+                }`}
+              >
+                <p className="font-serif text-lg text-charcoal mb-0.5">{label}</p>
+                <p className="font-sans text-xs text-charcoal-soft">{sub}</p>
+              </button>
+            ))}
+          </div>
+
+          <button
+            onClick={() => {
+              if (selectedBodyType) {
+                setBodyTypeMutation.mutate({ bodyType: selectedBodyType });
+              }
+              setStep("photos");
+            }}
+            disabled={!selectedBodyType}
+            className="btn-luxury w-full disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            Continue
+          </button>
+          <button
+            onClick={() => setStep("mood")}
+            className="mt-4 font-sans text-xs text-charcoal-soft/50 hover:text-charcoal-soft transition-colors text-center"
+          >
+            ← Back
+          </button>
+        </div>
+      )}
+
+      {/* ─── Step 4: Photos (optional) ─── */}
       {step === "photos" && (
         <div className="flex-1 flex flex-col px-5 py-8 animate-fade-up opacity-0 overflow-y-auto">
           <div className="mb-6">
             <p className="font-sans text-xs tracking-[0.25em] uppercase text-gold mb-3">
-              Step 3 of 3 — Optional
+              Step 4 of 4 — Optional
             </p>
             <h1 className="font-serif text-4xl font-light text-charcoal leading-tight mb-3">
               Make images<br />look like you.
@@ -409,7 +469,7 @@ export default function Onboarding() {
           ) : null}
 
           <button
-            onClick={() => setStep("mood")}
+            onClick={() => setStep("body")}
             className="mt-4 font-sans text-xs text-charcoal-soft/50 hover:text-charcoal-soft transition-colors text-center"
           >
             ← Back

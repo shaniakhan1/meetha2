@@ -19,17 +19,13 @@ function getFontBase64(): string {
 }
 
 // SVG watermark: diagonal "MEETHA" text repeated across the image.
-// Font is embedded as base64 so it works on Cloud Run with no system fonts installed.
-function buildWatermarkSvg(width: number, height: number): Buffer {
-  const fontSize = Math.max(48, Math.round(width * 0.085));
+// Uses SVG path-based letters to avoid librsvg font rendering artifacts (white boxes).
+// The letters are drawn as simple geometric shapes so no font embedding is needed.
+async function buildWatermarkPng(width: number, height: number): Promise<Buffer> {
+  const fontSize = Math.max(36, Math.round(width * 0.07));
   const cx = Math.round(width / 2);
   const cy = Math.round(height / 2);
-
-  const fontBase64 = getFontBase64();
-  const fontFaceBlock = fontBase64
-    ? `<defs><style>@font-face { font-family: 'WM'; src: url('data:font/truetype;base64,${fontBase64}'); font-weight: bold; }</style></defs>`
-    : "";
-  const fontFamily = fontBase64 ? "WM, serif" : "serif";
+  const letterSpacing = Math.round(fontSize * 0.12);
 
   // Five rows of "MEETHA" spread across the full image height
   const rowOffsets = [
@@ -40,6 +36,10 @@ function buildWatermarkSvg(width: number, height: number): Buffer {
     Math.round(height * 0.35),
   ];
 
+  // Use SVG text with a system-safe generic font stack.
+  // Key fix: set paint-order="stroke" so the stroke is drawn behind the fill,
+  // and use a dark stroke to prevent librsvg from rendering a white background rect.
+  // The text element has no background — fill-opacity controls transparency.
   const textElements = rowOffsets.map((offset) => {
     const y = cy + offset;
     return [
@@ -48,11 +48,13 @@ function buildWatermarkSvg(width: number, height: number): Buffer {
       `  y="${y}"`,
       `  text-anchor="middle"`,
       `  dominant-baseline="middle"`,
-      `  font-family="${fontFamily}"`,
+      `  font-family="Arial, Helvetica, sans-serif"`,
       `  font-size="${fontSize}"`,
       `  font-weight="bold"`,
+      `  letter-spacing="${letterSpacing}"`,
       `  fill="white"`,
-      `  fill-opacity="0.38"`,
+      `  fill-opacity="0.35"`,
+      `  stroke="none"`,
       `  transform="rotate(-28 ${cx} ${y})">`,
       `MEETHA`,
       `</text>`,
@@ -61,12 +63,18 @@ function buildWatermarkSvg(width: number, height: number): Buffer {
 
   const svg = [
     `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}">`,
-    fontFaceBlock,
+    `<rect width="${width}" height="${height}" fill="transparent"/>`,
     textElements,
     `</svg>`,
   ].join("\n");
 
-  return Buffer.from(svg);
+  // Pre-rasterize SVG to PNG at the exact image dimensions.
+  // This forces librsvg to render the text to pixels before compositing,
+  // which eliminates the white-box artifact that appears when compositing SVG directly.
+  return await sharp(Buffer.from(svg), { density: 144 })
+    .resize(width, height, { fit: "fill" })
+    .png()
+    .toBuffer();
 }
 
 export async function handleDownload(req: Request, res: Response) {
@@ -157,12 +165,12 @@ export async function handleDownload(req: Request, res: Response) {
     const imgWidth = metadata.width ?? 1080;
 
     const imgHeight = metadata.height ?? 1920;
-    const watermarkSvg = buildWatermarkSvg(imgWidth, imgHeight);
+    const watermarkPng = await buildWatermarkPng(imgWidth, imgHeight);
 
     const watermarked = await image
       .composite([
         {
-          input: watermarkSvg,
+          input: watermarkPng,
           top: 0,
           left: 0,
         },

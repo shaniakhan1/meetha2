@@ -38,8 +38,20 @@ export type DbProfile = {
   lora_training_request_id: string | null;
   lora_status: "training" | "ready" | "failed" | null;
   lora_physical_descriptors: string | null;
+  body_type: string | null;
+  aesthetic_brief: AestheticBrief | null;
   created_at: string;
   updated_at: string;
+};
+
+export type AestheticBrief = {
+  palette: string;
+  metals: string;
+  fabrics: string;
+  makeup: string;
+  lighting: string;
+  hair: string;
+  generatedAt: string;
 };
 
 export type DbCredits = {
@@ -285,6 +297,32 @@ export async function updateReferenceImageUrls(
   await sb
     .from("profiles")
     .update({ reference_image_urls: urls, updated_at: now })
+    .eq("user_id", userId);
+}
+
+export async function updateAestheticBrief(
+  userId: number,
+  brief: AestheticBrief
+): Promise<void> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const sb = getSupabase() as any;
+  const now = new Date().toISOString();
+  await sb
+    .from("profiles")
+    .update({ aesthetic_brief: brief, updated_at: now })
+    .eq("user_id", userId);
+}
+
+export async function updateBodyType(
+  userId: number,
+  bodyType: string
+): Promise<void> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const sb = getSupabase() as any;
+  const now = new Date().toISOString();
+  await sb
+    .from("profiles")
+    .update({ body_type: bodyType, updated_at: now })
     .eq("user_id", userId);
 }
 

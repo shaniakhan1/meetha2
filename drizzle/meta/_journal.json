@@ -43,6 +43,13 @@
       "when": 1779773394127,
       "tag": "0005_real_black_widow",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "5",
+      "when": 1779774618650,
+      "tag": "0006_little_kingpin",
+      "breakpoints": true
     }
   ]
 }

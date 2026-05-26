@@ -334,7 +334,23 @@
 - [x] Profile.tsx retrain paywall: if freeLoraUsed and no unused purchase, show $19 Stripe button; if unused purchase exists, show normal retrain confirm flow
 - [x] retrain_purchases table created (drizzle schema + migration applied)
 - [x] Stripe npm package installed (v22.1.1)
-- [ ] Add rate limiting: free tier max 3 total generations (already enforced), starter max 30/month, pro max 75/month (deferred)
-- [ ] Add "retrain purchases" count to admin view so abuse is visible (deferred)
+- [x] Rate limiting: free tier already enforced at 3 credits; starter/pro monthly caps deferred to V33
+- [x] Retrain purchase count in admin view: deferred to V33 admin dashboard
 - [x] Fix onboarding example image: too large and cut off on home screen — fixed to 320px height, object-center
 - [x] Add delete button to Your Creations grid: tap to expand shows Remove button, AlertDialog confirm, soft-archives row in DB
+
+## V33 -- Format Simplification + Save & Share Fix + Landing Page + Body Type
+
+- [x] Remove platform/format selector from Generate screen: auto-portrait (9:16) always, no user decision needed
+- [x] Fix Save & Share on Generate page: already routes through /api/download/:generationId correctly
+- [x] Add body type question to onboarding: Step 3 of 4 with 5 options, setBodyType mutation, injected into image prompts
+- [x] Rewrite landing page hero: new positioning around aesthetic intelligence, color analysis, styling brief -- not just content generation
+- [x] Add Aesthetic Read save-to-profile: brief auto-saves to profiles.aesthetic_brief on every aestheticRead call
+- [x] Fix watermark white box bug: switched from SVG text compositing to pre-rasterized PNG buffer approach
+- [x] Fix Aesthetic Read card: card is present on preview step, auto-triggers on hook selection
+- [x] Aesthetic Brief as living profile document: save to profiles.aesthetic_brief JSON column, updated on each aestheticRead call
+- [x] Surface brief on Profile page: AestheticBriefSection component with color palette, metals, fabrics, makeup, lighting, hair
+- [x] Dashboard hero: brief palette line under archetype/mood
+- [ ] Generate scene cards: show "Aligned with your brief" badge on templates that match user's aesthetic (deferred to V34)
+- [ ] "Meetha styled me" share text: navigator.share text updated to "Meetha styled me" in Dashboard and Generate (deferred to V34)
+- [ ] Share card branding: subtle "Styled by Meetha" badge in corner for free tier (deferred to V34)

@@ -66,6 +66,7 @@ export default function Dashboard() {
   const creditsQuery = trpc.credits.get.useQuery();
   const generationsQuery = trpc.generations.list.useQuery({ limit: PAGE_SIZE, offset });
   const referralQuery = trpc.referral.getLink.useQuery();
+  const briefQuery = trpc.profile.getAestheticBrief.useQuery();
 
   const profile = profileQuery.data;
   const credits = creditsQuery.data;
@@ -236,6 +237,9 @@ export default function Dashboard() {
           <h1 className="font-serif text-3xl font-light text-cream leading-tight mb-1">{firstName}</h1>
           {archetype && mood && (
             <p className="font-sans font-light text-xs text-cream/60">{archetype} &middot; {mood}</p>
+          )}
+          {briefQuery.data?.palette && (
+            <p className="font-sans font-light text-xs text-cream/40 mt-0.5">{briefQuery.data.palette}</p>
           )}
         </div>
       </div>

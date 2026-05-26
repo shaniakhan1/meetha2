@@ -635,6 +635,9 @@ export default function Profile() {
           )}
         </div>
 
+        {/* ── Your Aesthetic Brief ── */}
+        <AestheticBriefSection />
+
         {/* ── Upgrade ── */}
         {credits?.tier === "free" && (
           <div className="p-5 border border-gold/30 bg-warm-white/60">
@@ -689,6 +692,57 @@ export default function Profile() {
           <DeleteAccountButton onDeleted={() => { logout(); navigate("/"); }} />
         </div>
       </div>
+    </div>
+  );
+}
+
+function AestheticBriefSection() {
+  const briefQuery = trpc.profile.getAestheticBrief.useQuery();
+  const brief = briefQuery.data;
+
+  if (!brief) {
+    return (
+      <div>
+        <p className="font-sans text-sm font-semibold text-charcoal mb-4">Your Styling Brief</p>
+        <div className="p-4 border border-sand bg-warm-white/60">
+          <p className="font-sans text-xs text-charcoal-soft leading-relaxed">
+            Generate your first image to unlock your personal styling brief — your color palette, metals, fabrics, makeup direction, and lighting guide.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  const rows: { label: string; value: string }[] = [
+    { label: "Palette", value: brief.palette },
+    { label: "Metals", value: brief.metals },
+    { label: "Fabrics", value: brief.fabrics },
+    { label: "Makeup", value: brief.makeup },
+    { label: "Lighting", value: brief.lighting },
+    { label: "Hair", value: brief.hair },
+  ];
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-4">
+        <p className="font-sans text-sm font-semibold text-charcoal">Your Styling Brief</p>
+        {brief.generatedAt && (
+          <p className="font-sans text-xs text-charcoal-soft/50">
+            {new Date(brief.generatedAt).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
+          </p>
+        )}
+      </div>
+      <div className="border border-sand bg-warm-white/60 divide-y divide-sand/60">
+        {rows.map((row) => (
+          <div key={row.label} className="px-4 py-3">
+            <p className="font-sans text-xs text-gold tracking-widest uppercase mb-1">{row.label}</p>
+            <p className="font-sans text-sm text-charcoal leading-relaxed">{row.value}</p>
+          </div>
+        ))}
+      </div>
+      <p className="font-sans text-xs text-charcoal-soft/50 mt-2 leading-relaxed">
+        Updates automatically with each generation. Use this as your shopping brief, shoot brief, and styling reference.
+      </p>
     </div>
   );
 }
