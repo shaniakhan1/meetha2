@@ -907,7 +907,7 @@ Rules:
 - BANNED WORDS: frequency, energy, essence, luminous, transcend, curated, intentional, authentic, elevate, radiate, exude, magic, effortless, serene, healing, sacred, mystical, divine, goddess, feminine, embody
 - Use plain English. Be specific. Say "warm yellow gold" not "golden accents". Say "red or deep berry lip" not "bold lip color".
 - Lighting must describe a real setup she can recreate at home (window direction, time of day, hard vs soft light).
-- Fabrics must name specific materials (silk, satin, cashmere, linen, velvet, heavyweight jersey).
+- Fabrics must name specific materials (silk, cashmere, linen, velvet, heavyweight jersey, crepe, organza).
 - Metals must say warm gold, silver, or rose gold and whether to stack or keep minimal.
 
 Respond in this exact JSON format:
@@ -969,7 +969,7 @@ Respond in this exact JSON format:
           return {
             color_palette: "Warm ivory, deep camel, amber gold.",
             metals: "Warm yellow gold. Stack bangles or layer chains.",
-            fabrics: "Silk, satin, heavyweight jersey. Anything that catches light.",
+            fabrics: "Silk, heavyweight jersey, crepe. Anything that catches light.",
             makeup: "Bold lip in red or deep berry. Strong brow. Minimal eye.",
             lighting: "Late afternoon window, light source to your left or right. Hard directional, not diffused.",
             hair: "Sleek and structured. Intentional, not effortless.",

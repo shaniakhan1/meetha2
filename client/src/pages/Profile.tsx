@@ -526,7 +526,6 @@ export default function Profile() {
                 <input
                   ref={loraInputRef}
                   type="file"
-                  accept="image/*,.heic,.heif"
                   multiple
                   className="hidden"
                   onChange={handleLoraPhotoSelect}

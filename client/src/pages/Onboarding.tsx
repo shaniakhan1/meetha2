@@ -430,7 +430,6 @@ export default function Onboarding() {
           <input
             ref={loraFileInputRef}
             type="file"
-            accept="image/*,.heic,.heif"
             multiple
             className="hidden"
             onChange={handleLoraFileSelect}

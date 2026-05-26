@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useLocation } from "wouter";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
@@ -60,6 +60,8 @@ export default function Dashboard() {
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
   const [sharingCardId, setSharingCardId] = useState<number | null>(null);
+  const [showLoraReady, setShowLoraReady] = useState(false);
+  const prevLoraStatus = useRef<string | null | undefined>(undefined);
 
   const utils = trpc.useUtils();
   const profileQuery = trpc.profile.get.useQuery();
@@ -224,28 +226,13 @@ export default function Dashboard() {
   return (
     <div className="min-h-screen bg-cream flex flex-col">
 
-      {/* HERO - full-bleed image with name overlay */}
-      <div className="relative w-full flex-shrink-0" style={{ height: "52vw", maxHeight: "340px", minHeight: "220px" }}>
-        {heroGen ? (
-          <img
-            src={heroGen.image_url}
-            alt="Your latest creation"
-            className="absolute inset-0 w-full h-full object-cover"
-            style={{ objectPosition: "center top" }}
-          />
-        ) : (
-          <div
-            className="absolute inset-0"
-            style={{ background: "linear-gradient(135deg, #2C1810 0%, #1a0f09 60%, #3a2015 100%)" }}
-          />
-        )}
-        {/* Gradient overlay */}
-        <div
-          className="absolute inset-0"
-          style={{ background: "linear-gradient(to bottom, rgba(0,0,0,0.18) 0%, rgba(26,15,9,0.75) 100%)" }}
-        />
+      {/* HERO - compact editorial masthead */}
+      <div
+        className="relative w-full flex-shrink-0"
+        style={{ background: "linear-gradient(135deg, #2C1810 0%, #1a0f09 100%)" }}
+      >
         {/* Top bar */}
-        <div className="absolute top-0 left-0 right-0 flex items-center justify-between px-5 pt-5">
+        <div className="flex items-center justify-between px-5 pt-5 pb-0">
           <span className="font-serif text-base tracking-[0.2em] text-cream/90">MEETHA</span>
           <button
             onClick={() => navigate("/profile")}
@@ -254,31 +241,49 @@ export default function Dashboard() {
             Profile
           </button>
         </div>
-        {/* Credits pill */}
-        {credits && (
-          <div className="absolute top-14 right-5">
-            <div className="bg-[#1a0f09]/70 backdrop-blur-sm px-3 py-1.5 flex items-center gap-2">
-              <div className="w-14 h-0.5 bg-cream/20 relative overflow-hidden">
-                <div
-                  className="absolute left-0 top-0 h-full bg-gold transition-all duration-700"
-                  style={{
-                    width: `${Math.min(100, ((credits.credits_remaining ?? 0) / (credits.tier === "pro" ? 75 : credits.tier === "starter" ? 30 : 3)) * 100)}%`,
-                  }}
-                />
+
+        {/* Masthead row */}
+        <div className="flex items-center justify-between px-5 pt-4 pb-5 gap-4">
+          {/* Left: identity */}
+          <div className="flex-1 min-w-0">
+            <p className="font-sans text-[10px] tracking-[0.2em] uppercase text-gold/70 mb-1">Welcome back</p>
+            <h1 className="font-serif text-2xl font-light text-cream leading-tight truncate">{firstName}</h1>
+            {archetype && mood && (
+              <p className="font-sans font-light text-xs text-cream/50 mt-0.5 truncate">{archetype} &middot; {mood}</p>
+            )}
+            {briefQuery.data?.palette && (
+              <p className="font-sans font-light text-[10px] text-cream/30 mt-1 leading-relaxed line-clamp-1">{briefQuery.data.palette}</p>
+            )}
+            {/* Credits */}
+            {credits && (
+              <div className="flex items-center gap-2 mt-3">
+                <div className="w-16 h-0.5 bg-cream/15 relative overflow-hidden">
+                  <div
+                    className="absolute left-0 top-0 h-full bg-gold transition-all duration-700"
+                    style={{
+                      width: `${Math.min(100, ((credits.credits_remaining ?? 0) / (credits.tier === "pro" ? 75 : credits.tier === "starter" ? 30 : 1)) * 100)}%`,
+                    }}
+                  />
+                </div>
+                <span className="font-sans text-[10px] text-cream/50 tabular-nums">{credits.credits_remaining} left</span>
               </div>
-              <span className="font-sans text-xs text-cream/80 tabular-nums">{credits.credits_remaining} left</span>
-            </div>
+            )}
           </div>
-        )}
-        {/* Name + frequency */}
-        <div className="absolute bottom-0 left-0 right-0 px-5 pb-5">
-          <p className="font-sans text-xs tracking-[0.18em] uppercase text-gold/80 mb-1">Welcome back</p>
-          <h1 className="font-serif text-3xl font-light text-cream leading-tight mb-1">{firstName}</h1>
-          {archetype && mood && (
-            <p className="font-sans font-light text-xs text-cream/60">{archetype} &middot; {mood}</p>
-          )}
-          {briefQuery.data?.palette && (
-            <p className="font-sans font-light text-xs text-cream/40 mt-0.5">{briefQuery.data.palette}</p>
+
+          {/* Right: latest generation thumbnail */}
+          {heroGen && (
+            <button
+              onClick={() => setExpandedId(heroGen.id)}
+              className="flex-shrink-0 overflow-hidden active:scale-[0.97] transition-transform duration-150"
+              style={{ width: "72px", height: "96px" }}
+            >
+              <img
+                src={heroGen.image_url}
+                alt="Your latest creation"
+                className="w-full h-full object-cover"
+                style={{ objectPosition: "center top" }}
+              />
+            </button>
           )}
         </div>
       </div>

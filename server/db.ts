@@ -346,7 +346,7 @@ export async function ensureCredits(userId: number): Promise<DbCredits> {
   const sb = getSupabase() as any;
   const { data } = await sb
     .from("credits")
-    .insert({ user_id: userId, credits_remaining: 3, total_used: 0, tier: "free" })
+    .insert({ user_id: userId, credits_remaining: 1, total_used: 0, tier: "free" })
     .select()
     .single();
   return data as DbCredits;

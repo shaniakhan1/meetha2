@@ -21,14 +21,14 @@ const WHAT_YOU_LEARN = [
     text: "Late afternoon window. Hard directional. How to recreate the exact light in your generated images, at home, with your phone.",
   },
   {
-    label: "Your fabric frequency",
-    text: "Silk, satin, heavyweight jersey. Anything that catches light. Nothing synthetic. Your wardrobe anchor piece.",
+    label:     "Your fabric frequency",
+    text: "Silk, cashmere, heavyweight jersey, crepe. Anything that catches light. Nothing synthetic. Your wardrobe anchor piece.",
   },
 ];
 
 const FEATURES = {
   free: [
-    "3 generations to start",
+    "1 generation to start",
     "Personal styling brief after each generation",
     "Hook and caption generation",
     "1 free LoRA training (your face)",
@@ -122,7 +122,7 @@ function PricingSection({ handleCTA }: { handleCTA: () => void }) {
           <div className="p-7 border border-sand/20 text-left">
             <p className="font-sans text-xs tracking-[0.15em] uppercase text-sand-dark mb-4">Free</p>
             <p className="font-serif text-4xl text-cream mb-1">$0</p>
-            <p className="font-sans text-xs text-sand-dark/60 mb-6">3 generations to start</p>
+            <p className="font-sans text-xs text-sand-dark/60 mb-6">1 generation to start</p>
             <ul className="space-y-2">
               {FEATURES.free.map((f) => (
                 <li key={f} className="font-sans text-xs text-sand-dark flex items-start gap-3">
@@ -303,7 +303,7 @@ export default function Home() {
               Get your aesthetic read
             </button>
             <p className="font-sans text-xs text-charcoal-soft tracking-wide">
-              3 free generations. No credit card.
+              1 free generation. No credit card.
             </p>
           </div>
         </div>
@@ -367,7 +367,7 @@ export default function Home() {
             {
               step: "02",
               title: "Choose your scene",
-              text: "Hotel suite morning. Caught looking expensive. Irish goodbye. Ordered everything. Pick the energy. Meetha handles the rest.",
+              text: "Caught Looking Expensive. The Goodbye. Room Service. The Cleopatra Principle. Pick the scene. Meetha handles the rest.",
             },
             {
               step: "03",
@@ -385,6 +385,26 @@ export default function Home() {
               </p>
             </div>
           ))}
+        </div>
+      </section>
+
+      {/* ── Gallery ── */}
+      <section className="py-20 px-6 bg-cream">
+        <div className="max-w-sm mx-auto text-center mb-10">
+          <p className="font-sans text-xs tracking-[0.2em] uppercase text-gold mb-6">The work</p>
+          <h2 className="font-serif font-light text-charcoal mb-4">Every image, styled to you.</h2>
+          <div className="divider-editorial" />
+        </div>
+        <div className="max-w-sm mx-auto grid grid-cols-2 gap-2 mb-16">
+          <div className="col-span-2 aspect-[4/3] overflow-hidden">
+            <img src="/manus-storage/hero_sample_f65e4d53.jpg" alt="Meetha result" className="w-full h-full object-cover" />
+          </div>
+          <div className="aspect-square overflow-hidden">
+            <img src="/manus-storage/gallery_street_lights_8c7a051f.jpg" alt="Meetha result" className="w-full h-full object-cover" />
+          </div>
+          <div className="aspect-square overflow-hidden">
+            <img src="/manus-storage/gallery_hands_coffee_b7861070.webp" alt="Meetha result" className="w-full h-full object-cover" />
+          </div>
         </div>
       </section>
 

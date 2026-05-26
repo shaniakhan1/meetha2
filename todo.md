@@ -393,3 +393,13 @@
 
 - [x] Fix LoRA upload: HEIC/HEIF support added (server-side sharp conversion + multer fileFilter updated + file size limit raised to 16MB)
 - [x] Redesign Dashboard LoRA setup section: full-width dark card with headline, description, and Add Photos CTA button
+
+## V38 -- Editorial Redesign
+
+- [ ] Upload new gallery images (meetha-59, meetha-55, meetha-61) to webdev static assets
+- [ ] Remove "satin" from all scene prompts in routers.ts
+- [ ] Reduce free tier from 3 to 1 generation (db default + routers.ts credit check)
+- [ ] Redesign Dashboard hero: compact editorial card, latest render as background, shorter height
+- [ ] Expand landing page gallery to 4+ images in editorial grid
+- [ ] Elevate Home.tsx typography and spacing to magazine/editorial feel
+- [ ] Add LoRA ready celebration moment on Dashboard (first-time ready state)
