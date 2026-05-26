@@ -378,7 +378,7 @@ export default function Onboarding() {
                 </div>
               </div>
               <p className="font-sans text-xs text-charcoal-soft leading-relaxed">
-                I agree to Meetha processing my photos to train a personal AI model. My photos are only used for this and are never shared. I can delete my model anytime from my profile.
+                I confirm that I am 18 or older, I own or have the right to use all photos I am uploading, all people depicted are adults who have consented to this use, and I agree to Meetha processing these photos to train a personal AI model solely for my use. I can delete my model anytime from my profile.
               </p>
             </label>
           </div>

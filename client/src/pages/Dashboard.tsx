@@ -43,11 +43,10 @@ const TEMPLATE_CARDS = [
   { slug: "paparazzi_flash", title: "Caught Looking Expensive", image: "/manus-storage/template-paparazzi-flash_24688a24.jpg" },
   { slug: "digital_diary", title: "Digital Diary", image: "/manus-storage/template-digital-diary_11ffb1d8.jpg" },
   { slug: "bill_please", title: "Bill, Please", image: "/manus-storage/template-bill-please_7eacca04.jpg" },
-  { slug: "silk_robe_room_service", title: "Silk Robe Room Service", image: "/manus-storage/template-silk-robe_705e049a.jpg" },
-  { slug: "irish_goodbye", title: "Irish Goodbye Theory", image: "https://d2xsxph8kpxj0f.cloudfront.net/310519663380647277/W9hp3oxSnRYx5WHCSun39U/template-irish-goodbye-ktzNEA3LBpMXoScC2CgPoj.webp" },
-  { slug: "cleopatra_principle", title: "Cleopatra Principle", image: "https://d2xsxph8kpxj0f.cloudfront.net/310519663380647277/W9hp3oxSnRYx5WHCSun39U/template-cleopatra-RNkWpwxV5GeWZwStmYqiQx.webp" },
-  { slug: "silk_robe_retaliation", title: "Silk Robe Retaliation", image: "https://d2xsxph8kpxj0f.cloudfront.net/310519663380647277/W9hp3oxSnRYx5WHCSun39U/template-silk-robe-retaliation-MJXwGjfHhTjt3ENoPKdG8s.webp" },
-  { slug: "ordered_everything", title: "Ordered Everything", image: "https://d2xsxph8kpxj0f.cloudfront.net/310519663380647277/W9hp3oxSnRYx5WHCSun39U/template-silk-robe-retaliation-MJXwGjfHhTjt3ENoPKdG8s.webp" },
+  { slug: "silk_robe_room_service", title: "Room Service", image: "/manus-storage/template-silk-robe_705e049a.jpg" },
+  { slug: "irish_goodbye", title: "The Goodbye", image: "https://d2xsxph8kpxj0f.cloudfront.net/310519663380647277/W9hp3oxSnRYx5WHCSun39U/template-irish-goodbye-ktzNEA3LBpMXoScC2CgPoj.webp" },
+  { slug: "cleopatra_principle", title: "The Cleopatra Principle", image: "https://d2xsxph8kpxj0f.cloudfront.net/310519663380647277/W9hp3oxSnRYx5WHCSun39U/template-cleopatra-RNkWpwxV5GeWZwStmYqiQx.webp" },
+  { slug: "silk_robe_retaliation", title: "The Robe Reset", image: "https://d2xsxph8kpxj0f.cloudfront.net/310519663380647277/W9hp3oxSnRYx5WHCSun39U/template-silk-robe-retaliation-MJXwGjfHhTjt3ENoPKdG8s.webp" },
 ];
 
 export default function Dashboard() {
@@ -157,7 +156,7 @@ export default function Dashboard() {
         const file = new File([blob], `meetha-${id}.jpg`, { type: "image/jpeg" });
         if (navigator.canShare({ files: [file] })) {
           try {
-            await navigator.share({ files: [file], title: "Meetha", text: hook ?? "Created with Meetha" });
+            await navigator.share({ files: [file], title: "Meetha styled me", text: hook ?? "Meetha styled me" });
             return;
           } catch (shareErr: unknown) {
             if (shareErr instanceof Error && shareErr.name === "AbortError") return;

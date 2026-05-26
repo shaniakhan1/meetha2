@@ -35,6 +35,7 @@ export default function Profile() {
   const [isSubmittingLora, setIsSubmittingLora] = useState(false);
   const [loraStatus, setLoraStatus] = useState<"training" | "ready" | "failed" | null>(null);
   const [showRetrainConfirm, setShowRetrainConfirm] = useState(false);
+  const [loraConsent, setLoraConsent] = useState(false);
   const loraInputRef = useRef<HTMLInputElement>(null);
   const loraPollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -122,6 +123,10 @@ export default function Profile() {
   };
 
   const handleSubmitLoraTraining = async () => {
+    if (!loraConsent) {
+      toast.error("Please confirm the consent statement before training.");
+      return;
+    }
     if (loraPhotos.length < 10) {
       toast.error("Please upload at least 10 photos for best results.");
       return;
@@ -457,6 +462,38 @@ export default function Profile() {
                     </div>
                   ))}
                 </div>
+
+                {/* Consent checkbox */}
+                <label className="flex items-start gap-3 cursor-pointer">
+                  <div className="relative flex-shrink-0 mt-0.5">
+                    <input
+                      type="checkbox"
+                      checked={loraConsent}
+                      onChange={(e) => setLoraConsent(e.target.checked)}
+                      className="sr-only"
+                    />
+                    <div
+                      className={`w-5 h-5 border-2 transition-all duration-200 flex items-center justify-center ${
+                        loraConsent ? "border-charcoal bg-charcoal" : "border-sand bg-warm-white"
+                      }`}
+                    >
+                      {loraConsent && (
+                        <svg className="w-3 h-3 text-cream" viewBox="0 0 10 10" fill="none">
+                          <path
+                            d="M1.5 5L4 7.5L8.5 2.5"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                        </svg>
+                      )}
+                    </div>
+                  </div>
+                  <p className="font-sans text-xs text-charcoal-soft leading-relaxed">
+                    I confirm that I am 18 or older, I own or have the right to use all photos I am uploading, all people depicted are adults who have consented to this use, and I agree to Meetha processing these photos to train a personal AI model solely for my use. I can delete my model anytime.
+                  </p>
+                </label>
 
                 {/* Photo grid */}
                 <div className="grid grid-cols-4 gap-2">

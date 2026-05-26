@@ -139,7 +139,7 @@ const TEMPLATES = [
   {
     slug: "irish_goodbye",
     number: "Template No. 05",
-    title: "Irish Goodbye\nTheory",
+    title: "The\nGoodbye",
     subtitle:
       "She is walking away from the party. Seen from behind. Mid-stride. Not looking back. The crowd is blurred. She is already somewhere else in her head.",
     hooks: [
@@ -172,7 +172,7 @@ const TEMPLATES = [
   {
     slug: "cleopatra_principle",
     number: "Template No. 06",
-    title: "Cleopatra\nPrinciple",
+    title: "The Cleopatra\nPrinciple",
     subtitle:
       "Velvet chaise. Direct eye contact. No smile, no performance. The stillness of someone who has already decided everything.",
     hooks: [
@@ -205,9 +205,9 @@ const TEMPLATES = [
   {
     slug: "silk_robe_retaliation",
     number: "Template No. 07",
-    title: "Silk Robe\nRetaliation",
+    title: "The Robe\nReset",
     subtitle:
-      "Hotel suite. Silk robe. Morning light. Room service. Completely alone. Completely at peace. She chose herself and she is not explaining it. This is Rich Grandma Energy, activated.",
+      "Floor-to-ceiling windows. Silk robe. Golden hour. Seen from behind. The energy of someone who chose herself and does not need to explain it to anyone.",
     hooks: [
       "my isolation is a luxury maintenance ritual",
       "she chose herself again",
@@ -233,39 +233,6 @@ const TEMPLATES = [
     locationsLabel: "Where she woke up alone",
     sampleImage: "https://d2xsxph8kpxj0f.cloudfront.net/310519663380647277/W9hp3oxSnRYx5WHCSun39U/template-silk-robe-retaliation-MJXwGjfHhTjt3ENoPKdG8s.webp",
     gradient: "linear-gradient(160deg, #2C1810 0%, #3d1f0e 50%, #2C1810 100%)",
-    hasFlash: false,
-  },
-  {
-    slug: "ordered_everything",
-    number: "Template No. 08",
-    title: "Ordered\nEverything",
-    subtitle:
-      "Champagne popped. Room service arrived. Mirror reflection while getting ready. She ordered exactly what she wanted and is not apologizing for any of it.",
-    hooks: [
-      "i ordered everything on the menu",
-      "she did not check the price",
-      "the mirror said yes",
-      "champagne before noon is a personality",
-      "ordered for one, tipped generously",
-      "she poured her own glass",
-    ],
-    hooksLabel: "Caption overlays",
-    whyItSpreads: [
-      ["Champagne and mirror energy", "Bubbles mid-air, lipstick in the mirror, room service arriving. Three of the most saved aesthetics on one template."],
-      ["No-apology luxury", "She did not split the bill. She did not check the price. She ordered everything. That energy is deeply aspirational."],
-      ["Gets saved and reposted", "Warm amber candlelight, gold tones, and a woman treating herself without explanation. The algorithm loves this."],
-    ],
-    locations: [
-      "luxury hotel suite",
-      "boutique hotel bathroom vanity",
-      "penthouse suite",
-      "resort villa dining room",
-      "city view suite",
-      "private villa terrace",
-    ],
-    locationsLabel: "Where she ordered everything",
-    sampleImage: "https://d2xsxph8kpxj0f.cloudfront.net/310519663380647277/W9hp3oxSnRYx5WHCSun39U/template-silk-robe-retaliation-MJXwGjfHhTjt3ENoPKdG8s.webp",
-    gradient: "linear-gradient(160deg, #1a0f00 0%, #2e1a05 50%, #1a0f00 100%)",
     hasFlash: false,
   },
 ];

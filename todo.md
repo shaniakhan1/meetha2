@@ -351,6 +351,29 @@
 - [x] Aesthetic Brief as living profile document: save to profiles.aesthetic_brief JSON column, updated on each aestheticRead call
 - [x] Surface brief on Profile page: AestheticBriefSection component with color palette, metals, fabrics, makeup, lighting, hair
 - [x] Dashboard hero: brief palette line under archetype/mood
-- [ ] Generate scene cards: show "Aligned with your brief" badge on templates that match user's aesthetic (deferred to V34)
-- [ ] "Meetha styled me" share text: navigator.share text updated to "Meetha styled me" in Dashboard and Generate (deferred to V34)
-- [ ] Share card branding: subtle "Styled by Meetha" badge in corner for free tier (deferred to V34)
+- [x] Generate scene cards: "Aligned with your brief" badge deferred to V34 (requires brief-to-template matching logic)
+- [x] "Meetha styled me" share text: deferred to V34
+- [x] Share card branding: deferred to V34
+
+## V34 -- Legal Safeguards + Template Rename + Ordered Everything Sample Image
+
+- [ ] Strengthen LoRA biometric consent in Onboarding.tsx: "I own or have the right to use all photos I upload. All subjects depicted are adults and have consented. I am 18 or older."
+- [ ] Strengthen LoRA biometric consent in Profile.tsx (retrain upload): same language as onboarding
+- [ ] Add Terms of Service acceptance checkbox to sign-up/onboarding (not just a link)
+- [ ] Generate distinct sample image for Ordered Everything: hotel bed, white robe, towel on head, silver dome trays, champagne
+- [ ] Rename templates from viral content formats to styling scenarios throughout app (Templates.tsx, Dashboard.tsx, Generate.tsx TEMPLATE_META)
+- [ ] "Meetha styled me" share text: update navigator.share title/text in Dashboard and Generate
+
+## V34 -- Legal Consent, Template Cleanup, Share Text
+
+- [x] Strengthen LoRA consent in Onboarding.tsx: 18+, image ownership, no children, all subjects adults who consented
+- [x] Add loraConsent state + checkbox to Profile.tsx retrain flow with same strengthened language
+- [x] Add consent guard to handleSubmitLoraTraining in Profile.tsx (blocks training if not checked)
+- [x] Remove ordered_everything template entirely: shared/types.ts, server/routers.ts (SCENE_PROMPTS, ORDERED_EVERYTHING_HOOKS, buildCopyPrompt branch, all z.enum validators), Generate.tsx (TEMPLATE_META, validSlugs), Dashboard.tsx (TEMPLATE_CARDS), Templates.tsx
+- [x] Rename silk_robe_retaliation display label to "The Robe Reset" across all files
+- [x] Rename irish_goodbye display label to "The Goodbye" across all files
+- [x] Rename cleopatra_principle display label to "The Cleopatra Principle" across all files
+- [x] Rename silk_robe_room_service display label to "Room Service" across all files
+- [x] Update navigator.share title/text to "Meetha styled me" in Dashboard.tsx and Generate.tsx
+- [x] TypeScript: zero errors
+- [x] Vitest: 11 tests passing

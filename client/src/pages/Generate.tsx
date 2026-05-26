@@ -89,7 +89,7 @@ export default function Generate() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const template = params.get("template");
-    const validSlugs = ["paparazzi_flash", "digital_diary", "bill_please", "silk_robe_room_service", "irish_goodbye", "cleopatra_principle", "silk_robe_retaliation", "ordered_everything"];
+    const validSlugs = ["paparazzi_flash", "digital_diary", "bill_please", "silk_robe_room_service", "irish_goodbye", "cleopatra_principle", "silk_robe_retaliation"];
     if (template && validSlugs.includes(template)) {
       setSceneCategory(template as SceneCategory);
       setTemplateSlug(template);
@@ -278,7 +278,7 @@ export default function Generate() {
             await new Promise((r) => setTimeout(r, 400));
             await navigator.share({
               files: [file],
-              title: "Meetha",
+              title: "Meetha styled me",
               // Do NOT pass text with files — Android Chrome tries to JSON-parse it
             });
             // After share, navigate to dashboard
@@ -640,30 +640,23 @@ export default function Generate() {
           },
           irish_goodbye: {
             number: "Template No. 05",
-            title: "Irish Goodbye Theory",
+            title: "The Goodbye",
             subtitle: "She is walking away from the party. Seen from behind. Mid-stride. The crowd is blurred. She is not looking back.",
             features: ["Night exit cinematic energy", "Motion blur crowd", "No-announcement hook"],
             sampleImage: "https://d2xsxph8kpxj0f.cloudfront.net/310519663380647277/W9hp3oxSnRYx5WHCSun39U/template-irish-goodbye-ktzNEA3LBpMXoScC2CgPoj.webp",
           },
           cleopatra_principle: {
             number: "Template No. 06",
-            title: "Cleopatra Principle",
+            title: "The Cleopatra Principle",
             subtitle: "Velvet chaise. Direct eye contact. No smile, no performance. The stillness of someone who has already decided everything.",
             features: ["Velvet chaise editorial lighting", "Direct gaze presence", "Already decided hook"],
             sampleImage: "https://d2xsxph8kpxj0f.cloudfront.net/310519663380647277/W9hp3oxSnRYx5WHCSun39U/template-cleopatra-RNkWpwxV5GeWZwStmYqiQx.webp",
           },
           silk_robe_retaliation: {
             number: "Template No. 07",
-            title: "Silk Robe Retaliation",
-            subtitle: "Hotel suite. Silk robe. Morning light. Room service. Completely alone. Completely at peace. She chose herself and she is not explaining it.",
-            features: ["Rich Grandma Energy aesthetic", "Warm morning light", "Chose herself hook"],
-            sampleImage: "https://d2xsxph8kpxj0f.cloudfront.net/310519663380647277/W9hp3oxSnRYx5WHCSun39U/template-silk-robe-retaliation-MJXwGjfHhTjt3ENoPKdG8s.webp",
-          },
-          ordered_everything: {
-            number: "Template No. 08",
-            title: "Ordered Everything",
-            subtitle: "Champagne popped. Room service arrived. Mirror reflection while getting ready. She ordered exactly what she wanted and is not apologizing for any of it.",
-            features: ["Champagne and mirror reflection aesthetic", "Warm amber candlelight", "No-apology luxury hook"],
+            title: "The Robe Reset",
+            subtitle: "Floor-to-ceiling windows. Silk robe. Golden hour. Seen from behind. The energy of someone who chose herself and does not need to explain it.",
+            features: ["Golden hour silhouette aesthetic", "Warm amber window light", "Chose herself hook"],
             sampleImage: "https://d2xsxph8kpxj0f.cloudfront.net/310519663380647277/W9hp3oxSnRYx5WHCSun39U/template-silk-robe-retaliation-MJXwGjfHhTjt3ENoPKdG8s.webp",
           },
         };

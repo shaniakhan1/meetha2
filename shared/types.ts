@@ -21,8 +21,7 @@ export type SceneCategory =
   | "silk_robe_room_service"
   | "irish_goodbye"
   | "cleopatra_principle"
-  | "silk_robe_retaliation"
-  | "ordered_everything";
+  | "silk_robe_retaliation";
 
 export type PostabilityResponse = "yes" | "maybe" | "no";
 
@@ -104,9 +103,8 @@ export const SCENE_LABELS: Record<SceneCategory, string> = {
   paparazzi_flash: "Caught Looking Expensive",
   digital_diary: "Digital Diary",
   bill_please: "Bill, Please",
-  silk_robe_room_service: "Silk Robe Room Service",
-  irish_goodbye: "The Irish Goodbye",
+  silk_robe_room_service: "Room Service",
+  irish_goodbye: "The Goodbye",
   cleopatra_principle: "The Cleopatra Principle",
-  silk_robe_retaliation: "Silk Robe Retaliation",
-  ordered_everything: "Ordered Everything",
+  silk_robe_retaliation: "The Robe Reset",
 };
