@@ -15,6 +15,7 @@
 
 import { Request, Response } from "express";
 import multer from "multer";
+import sharp from "sharp";
 import { getProfile, updateLoraProfile, getUserById } from "./db";
 import { submitLoraTraining, pollLoraTraining } from "./_core/falLoraTraining";
 import { authenticateRequest } from "./_core/auth";
@@ -74,14 +75,39 @@ async function extractPhysicalDescriptors(photoBuffer: Buffer, mimeType: string)
 }
 
 // Memory storage - we only need the buffer, not disk persistence
+const ACCEPTED_EXTS = /\.(heic|heif|jpg|jpeg|png|webp|tiff?)$/i;
+
 const upload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 10 * 1024 * 1024, files: 20 }, // 10MB per file, max 20
+  limits: { fileSize: 16 * 1024 * 1024, files: 20 }, // 16MB per file (HEIC can be large), max 20
   fileFilter: (_req, file, cb) => {
-    if (file.mimetype.startsWith("image/")) cb(null, true);
-    else cb(new Error("Only image files are accepted"));
+    const mime = file.mimetype.toLowerCase();
+    // Accept any image/* MIME type, or HEIC/HEIF which browsers may send as application/octet-stream
+    if (mime.startsWith("image/") || ACCEPTED_EXTS.test(file.originalname)) {
+      cb(null, true);
+    } else {
+      cb(new Error("Only image files are accepted. Supported: JPG, PNG, HEIC, WebP."));
+    }
   },
 });
+
+/**
+ * Convert any photo buffer to JPEG.
+ * HEIC/HEIF files from iPhones are converted via sharp (libvips with HEIF support).
+ * Already-JPEG files are returned as-is.
+ */
+async function normalizeToJpeg(buffer: Buffer, mimetype: string, filename: string): Promise<Buffer> {
+  const mime = mimetype.toLowerCase();
+  const ext = (filename.toLowerCase().split(".").pop() ?? "");
+  const isJpeg = mime === "image/jpeg" || mime === "image/jpg" || ext === "jpg" || ext === "jpeg";
+  if (isJpeg) return buffer;
+  try {
+    return await sharp(buffer).jpeg({ quality: 92 }).toBuffer();
+  } catch (err) {
+    console.warn("[LoRA] Image conversion failed, using original:", err instanceof Error ? err.message : String(err));
+    return buffer;
+  }
+}
 
 /** Resolve the authenticated user using the same session cookie as tRPC. */
 async function resolveUserId(req: Request): Promise<number | null> {
@@ -105,10 +131,13 @@ export async function handleLoraUpload(req: Request, res: Response) {
       return res.status(400).json({ error: "Please upload at least 5 photos for best results" });
     }
 
-    const images = files.map((f, i) => ({
-      buffer: f.buffer,
-      filename: `photo_${i + 1}.jpg`,
-    }));
+    // Convert all photos to JPEG (handles HEIC/HEIF from iPhones and other formats)
+    const images = await Promise.all(
+      files.map(async (f, i) => ({
+        buffer: await normalizeToJpeg(f.buffer, f.mimetype, f.originalname),
+        filename: `photo_${i + 1}.jpg`,
+      }))
+    );
 
     const { requestId, triggerPhrase } = await submitLoraTraining(images, userId);
 

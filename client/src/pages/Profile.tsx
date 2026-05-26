@@ -108,7 +108,8 @@ export default function Profile() {
       (f) => f.type.startsWith("image/") || /\.(heic|heif|jpg|jpeg|png|webp|gif|bmp)$/i.test(f.name)
     );
     if (valid.length < incoming.length) {
-      toast.error("Some files were skipped. Please use photos from your camera roll.");
+      const skipped = incoming.length - valid.length;
+      toast.error(`${skipped} photo${skipped > 1 ? "s" : ""} could not be added. Try saving them as JPG from your Photos app first.`, { duration: 6000 });
     }
     const newFiles = [...loraPhotos, ...valid].slice(0, 20);
     setLoraPhotos(newFiles);

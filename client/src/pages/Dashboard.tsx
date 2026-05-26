@@ -293,14 +293,30 @@ export default function Dashboard() {
       {profile && (!profile.lora_status || profile.lora_status === "failed") && (
         <button
           onClick={() => navigate("/profile")}
-          className="flex items-center justify-between px-5 py-3 border-b border-gold/20 bg-gold/5 w-full text-left hover:bg-gold/10 transition-colors min-h-[44px]"
+          className="w-full text-left active:scale-[0.99] transition-transform duration-150"
+          style={{ background: "linear-gradient(135deg, #2C1810 0%, #1a0f09 100%)" }}
         >
-          <p className="font-sans text-xs text-charcoal-soft">
-            {profile.lora_status === "failed"
-              ? "Training did not complete. Tap to retry."
-              : "Make images look like you. Add your photos."}
-          </p>
-          <span className="font-sans text-xs text-gold ml-3 flex-shrink-0">Set up</span>
+          <div className="px-5 py-5">
+            <p className="font-sans text-[10px] tracking-[0.2em] uppercase text-gold mb-2">
+              {profile.lora_status === "failed" ? "Action needed" : "Step 1 of 2"}
+            </p>
+            <h2 className="font-serif text-xl font-light text-cream leading-snug mb-1">
+              {profile.lora_status === "failed"
+                ? "Training did not complete."
+                : "Make every image look like you."}
+            </h2>
+            <p className="font-sans font-light text-xs text-cream/60 leading-relaxed mb-4">
+              {profile.lora_status === "failed"
+                ? "Something went wrong during training. Tap to retry with your photos."
+                : "Upload 10 to 20 photos of yourself. Meetha learns your face, your coloring, your look. Every generation after that is you."}
+            </p>
+            <div className="inline-flex items-center gap-2 border border-gold/50 px-4 py-2">
+              <span className="font-sans text-xs tracking-widest uppercase text-gold">
+                {profile.lora_status === "failed" ? "Retry" : "Add photos"}
+              </span>
+              <span className="text-gold text-xs">&rarr;</span>
+            </div>
+          </div>
         </button>
       )}
 

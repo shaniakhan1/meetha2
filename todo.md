@@ -388,3 +388,8 @@
 - [x] Build shareable style card: /api/style-card/:generationId endpoint generating a branded PNG card (archetype, palette, MEETHA branding)
 - [x] Add "Share Style Card" button to Dashboard.tsx expanded card panel using navigator.share with desktop download fallback
 - [x] Fix palette sample data in Home.tsx: "amber gold. No cool tones" -> "amber gold, no cool tones"
+
+## V37 -- Bug Fixes
+
+- [x] Fix LoRA upload: HEIC/HEIF support added (server-side sharp conversion + multer fileFilter updated + file size limit raised to 16MB)
+- [x] Redesign Dashboard LoRA setup section: full-width dark card with headline, description, and Add Photos CTA button
