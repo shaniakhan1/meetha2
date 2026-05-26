@@ -4,6 +4,16 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
   ARCHETYPE_LABELS,
   MOOD_LABELS,
   PLATFORM_LABELS,
@@ -48,7 +58,10 @@ export default function Dashboard() {
   const [offset, setOffset] = useState(0);
   const [allGenerations, setAllGenerations] = useState<GenerationItem[]>([]);
   const [downloadingId, setDownloadingId] = useState<number | null>(null);
+  const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
 
+  const utils = trpc.useUtils();
   const profileQuery = trpc.profile.get.useQuery();
   const creditsQuery = trpc.credits.get.useQuery();
   const generationsQuery = trpc.generations.list.useQuery({ limit: PAGE_SIZE, offset });
@@ -82,6 +95,26 @@ export default function Dashboard() {
   const mood = profile?.mood
     ? MOOD_LABELS[profile.mood as keyof typeof MOOD_LABELS]
     : null;
+
+  const archiveMutation = trpc.generations.archive.useMutation({
+    onSuccess: (_, variables) => {
+      setAllGenerations((prev) => prev.filter((g) => g.id !== variables.id));
+      setExpandedId(null);
+      setDeletingId(null);
+      setConfirmDeleteId(null);
+      toast.success("Removed from your creations.");
+      utils.generations.list.invalidate();
+    },
+    onError: () => {
+      setDeletingId(null);
+      toast.error("Could not remove. Please try again.");
+    },
+  });
+
+  const handleDelete = (id: number) => {
+    setDeletingId(id);
+    archiveMutation.mutate({ id });
+  };
 
   const referralUrl = referral?.code
     ? `${window.location.origin}/sign-in?ref=${referral.code}`
@@ -400,9 +433,16 @@ export default function Dashboard() {
                         <button
                           onClick={(e) => { e.stopPropagation(); handleDownload(gen.id, gen.selected_hook); }}
                           disabled={isDownloading}
-                          className="font-sans text-xs tracking-widest uppercase text-cream border border-cream/40 px-6 py-3 hover:bg-cream/10 transition-colors active:scale-[0.97] disabled:opacity-50 min-h-[44px]"
+                          className="font-sans text-xs tracking-widest uppercase text-cream border border-cream/40 px-6 py-3 hover:bg-cream/10 transition-colors active:scale-[0.97] disabled:opacity-50 min-h-[44px] w-full"
                         >
                           {isDownloading ? "Saving..." : "Save & Share"}
+                        </button>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); setConfirmDeleteId(gen.id); }}
+                          disabled={deletingId === gen.id}
+                          className="font-sans text-[10px] tracking-widest uppercase text-cream/30 hover:text-cream/60 transition-colors mt-2 min-h-[36px] disabled:opacity-30"
+                        >
+                          {deletingId === gen.id ? "Removing..." : "Remove"}
                         </button>
                       </div>
                     )}
@@ -424,6 +464,27 @@ export default function Dashboard() {
           </>
         )}
       </div>
+
+      {/* Confirm delete dialog */}
+      <AlertDialog open={confirmDeleteId !== null} onOpenChange={(open) => { if (!open) setConfirmDeleteId(null); }}>
+        <AlertDialogContent className="bg-cream border-sand">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="font-serif font-light text-charcoal">Remove this creation?</AlertDialogTitle>
+            <AlertDialogDescription className="font-sans text-sm text-charcoal-soft">
+              It will be removed from your gallery. This cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="font-sans text-xs tracking-widest uppercase" onClick={() => setConfirmDeleteId(null)}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="font-sans text-xs tracking-widest uppercase bg-charcoal text-cream hover:bg-charcoal/80"
+              onClick={() => { if (confirmDeleteId !== null) handleDelete(confirmDeleteId); }}
+            >
+              Remove
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Bottom nav */}
       <div className="fixed bottom-0 left-0 right-0 border-t border-sand/40 bg-cream/95 backdrop-blur-sm pb-safe z-10">

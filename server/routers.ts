@@ -5,6 +5,7 @@ import { getSupabase } from "./_core/supabase";
 import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
+import { TRPCError } from "@trpc/server";
 import { protectedProcedure, publicProcedure, router } from "./_core/trpc";
 import { invokeLLMOpenAI } from "./_core/openaiLLM";
 import { generateImageFal } from "./_core/falImageGeneration";
@@ -59,15 +60,15 @@ const SCENE_PROMPTS: Record<string, string> = {
   bill_please:
     "cinematic fine dining moment, woman in tailored blazer or elegant dress reaching for the check at a candlelit restaurant table, calm and unbothered expression, slight smile, white tablecloth, crystal glasses, warm candlelight bokeh, other diners blurred in background, the gesture is confident and final, film grain, editorial female-gaze, quiet power aesthetic, 35mm analog warmth, vertical 9:16 framing",
   silk_robe_room_service:
-    "luxury hotel suite morning, woman in champagne or ivory silk robe standing near tall sheer-curtained windows, soft morning light flooding in, room service tray with coffee and croissant on marble side table, looking out the window or holding coffee cup, serene and unhurried, warm cream and gold tones, shallow depth of field, film grain, quiet luxury editorial lifestyle, 35mm analog warmth, vertical 9:16 framing",
+    "close-up still life of a luxury hotel room service tray on crisp white linen: silver dome lifted to reveal a croissant and fruit, a ceramic coffee cup with steam rising, a single white rose in a bud vase, gold cutlery, warm morning window light flooding in from the left, no people, the tray is the entire subject, editorial food and lifestyle photography, shallow depth of field, film grain, 35mm analog warmth, warm cream and ivory tones, vertical 9:16 framing",
   irish_goodbye:
     "low angle cinematic shot of a woman walking away from a crowded party or restaurant at night, seen from behind, elegant outfit, motion blur on the background crowd, warm amber streetlight or venue glow, she is mid-stride and not looking back, the crowd is blurred and noisy behind her, she is sharp and moving, film grain, 35mm analog street photography, the energy of someone who left without saying goodbye and felt nothing but relief, vertical 9:16 framing",
   cleopatra_principle:
     "woman lounging on a deep velvet chaise longue or wide linen sofa, looking directly into the lens with absolute calm certainty, no smile, no performance, just presence, warm afternoon light casting long shadows, jewel-toned or cream fabric, one hand resting on the armrest, the stillness of someone who has already decided everything, film grain, editorial female-gaze, 35mm analog warmth, shallow depth of field, vertical 9:16 framing",
   silk_robe_retaliation:
-    "luxury hotel suite, woman in ivory or champagne silk robe, standing near floor-to-ceiling windows with morning light flooding in, room service tray visible, coffee cup in hand, looking out the window with complete calm, the energy of someone who chose herself and is not explaining it, warm cream and gold tones, film grain, 35mm analog warmth, quiet luxury editorial, vertical 9:16 framing",
+    "woman in a white silk robe standing at floor-to-ceiling hotel windows, seen from behind, looking out over a city skyline or treetops at golden hour, one hand resting on the glass, the robe catching the warm amber light, her posture is completely still and certain, the energy of someone who chose herself and does not need to explain it to anyone, no face visible, deep focus on the silhouette and the light, film grain, 35mm analog warmth, vertical 9:16 framing",
   ordered_everything:
-    "luxury hotel suite celebration moment, close-up of a champagne bottle being popped with bubbles mid-air, OR a marble bathroom vanity with a woman's hands applying lipstick in the mirror reflection, OR a full room service tray arriving with silver domes and a single rose, warm amber candlelight and golden hour window light, champagne coupe with condensation catching the light, silk robe sleeve visible, mirror reflections showing the suite behind her, the energy of someone who ordered exactly what she wanted and is not apologizing for any of it, warm cream and gold tones, editorial female-gaze, film grain, 35mm analog warmth, cinematic luxury, vertical 9:16 framing",
+    "woman lying on a wide hotel bed with crisp white linen, wearing a white robe with a white towel wrapped on her head, surrounded by multiple room service trays with silver domes, an open champagne bottle in an ice bucket beside the bed, a champagne flute on the nightstand catching the light, she is completely at ease, one arm extended holding a glass, the scene is abundant and unhurried, Four Seasons energy, warm morning window light, film grain, 35mm analog warmth, editorial female-gaze, cinematic luxury, vertical 9:16 framing",
 };
 
 // Digital Diary: overlay hook options
@@ -969,6 +970,23 @@ Respond in this exact JSON format:
             hair: "Sleek and structured. Intentional, not effortless.",
           };
         }
+      }),
+
+    /**
+     * Soft-deletes (archives) a single generation owned by the current user.
+     * Sets archived = true so it disappears from the grid without destroying the row.
+     */
+    archive: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        const supabase = getSupabase();
+        const { error } = await (supabase as any)
+          .from("generations")
+          .update({ archived: true, archivedAt: new Date().toISOString() })
+          .eq("id", input.id)
+          .eq("user_id", ctx.user.id);
+        if (error) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: error.message });
+        return { success: true };
       }),
 
     /**

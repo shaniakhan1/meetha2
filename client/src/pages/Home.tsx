@@ -241,11 +241,11 @@ export default function Home() {
           {/* Mock generated card */}
           <div className="border border-sand bg-warm-white overflow-hidden">
             {/* Real example image */}
-            <div className="relative w-full aspect-[9/16] max-h-64 overflow-hidden">
+            <div className="relative w-full overflow-hidden" style={{ height: "320px" }}>
               <img
                 src="/manus-storage/shania-hero_9923f04f.png"
                 alt="Content example"
-                className="w-full h-full object-cover object-top"
+                className="w-full h-full object-cover object-center"
               />
               {/* Hook overlay */}
               <div className="absolute bottom-0 left-0 right-0 p-5" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.75) 0%, transparent 100%)" }}>
