@@ -170,8 +170,11 @@ function DashboardLayoutContent({
               </button>
               {!isCollapsed ? (
                 <div className="flex items-center gap-2 min-w-0">
-                  <span className="font-semibold tracking-tight truncate">
-                    Navigation
+                  <span
+                    className="font-serif tracking-widest text-foreground cursor-pointer hover:opacity-70 transition-opacity truncate"
+                    onClick={() => setLocation("/")}
+                  >
+                    MEETHA
                   </span>
                 </div>
               ) : null}
@@ -247,14 +250,16 @@ function DashboardLayoutContent({
           <div className="flex border-b h-14 items-center justify-between bg-background/95 px-2 backdrop-blur supports-[backdrop-filter]:backdrop-blur sticky top-0 z-40">
             <div className="flex items-center gap-2">
               <SidebarTrigger className="h-9 w-9 rounded-lg bg-background" />
-              <div className="flex items-center gap-3">
-                <div className="flex flex-col gap-1">
-                  <span className="tracking-tight text-foreground">
-                    {activeMenuItem?.label ?? "Menu"}
-                  </span>
-                </div>
-              </div>
+              <span
+                className="font-serif tracking-widest text-foreground cursor-pointer hover:opacity-70 transition-opacity"
+                onClick={() => setLocation("/")}
+              >
+                MEETHA
+              </span>
             </div>
+            <span className="font-sans text-xs tracking-widest uppercase text-muted-foreground pr-2">
+              {activeMenuItem?.label ?? ""}
+            </span>
           </div>
         )}
         <main className="flex-1 p-4">{children}</main>
