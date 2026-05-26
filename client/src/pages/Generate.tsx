@@ -720,7 +720,7 @@ export default function Generate() {
             <p className="font-sans text-xs tracking-[0.2em] uppercase text-gold mb-3">
               {meta.number}
             </p>
-            <h2 className="font-serif text-3xl font-light text-charcoal mb-3">
+            <h2 className="font-serif text-4xl font-light text-charcoal mb-3">
               {meta.title}
             </h2>
             <p className="font-sans font-light text-sm text-charcoal-soft leading-relaxed">
@@ -778,9 +778,9 @@ export default function Generate() {
                     clearInterval(interval);
                   }).catch(() => clearInterval(interval));
                 }}
-                className="btn-luxury w-full"
+                className="btn-luxury w-full py-5 text-sm tracking-[0.2em]"
               >
-                Generate Now
+                Generate This Scene
               </button>
             ) : (
               <button onClick={() => setShowTopUp(true)} className="btn-luxury w-full">
@@ -817,23 +817,7 @@ export default function Generate() {
             </div>
           )}
 
-          {/* Calibration nudge — shown when no aesthetic descriptors are set */}
-          {profile && !profile.aesthetic_descriptors && (
-            <div className="mb-6 flex items-start gap-3 p-4 border border-sand/80 bg-warm-white/60">
-              <div className="w-1 h-full min-h-[2rem] bg-sand flex-shrink-0" />
-              <div className="flex-1">
-                <p className="font-sans text-xs text-charcoal-soft leading-relaxed">
-                  Your generations are using a default aesthetic. Upload reference photos to personalize every image to your exact world.
-                </p>
-                <button
-                  onClick={() => navigate("/profile")}
-                  className="mt-2 font-sans text-xs tracking-[0.1em] uppercase text-gold hover:text-charcoal transition-colors"
-                >
-                  Calibrate now
-                </button>
-              </div>
-            </div>
-          )}
+
 
           {/* ── Quick Generate — one tap, zero decisions ── */}
           {effectiveCredits && effectiveCredits.credits_remaining > 0 && (
@@ -952,7 +936,7 @@ export default function Generate() {
           {/* Output type selector — Pro only */}
           {(effectiveCredits?.tier === "pro" || previewTier === "pro") && (
             <div className="mb-8">
-              <p className="font-sans text-xs tracking-[0.15em] uppercase text-charcoal mb-4">
+              <p className="font-sans text-sm font-semibold text-charcoal mb-4">
                 Output
               </p>
               <div className="grid grid-cols-2 gap-2">
@@ -980,7 +964,7 @@ export default function Generate() {
 
           {/* Voice-to-content entry point */}
           <div className="mb-8 p-5 border border-sand/60 bg-warm-white/40">
-            <p className="font-sans text-xs tracking-[0.15em] uppercase text-charcoal mb-1">
+            <p className="font-sans text-sm font-semibold text-charcoal mb-1">
               Speak your moment
             </p>
             <p className="font-sans font-light text-xs text-charcoal-soft mb-4 leading-relaxed">
@@ -1009,7 +993,7 @@ export default function Generate() {
 
           {/* Format — still image options or video format options depending on outputType */}
           <div className="mb-8">
-            <p className="font-sans text-xs tracking-[0.15em] uppercase text-charcoal mb-4">
+            <p className="font-sans text-sm font-semibold text-charcoal mb-4">
               Format
             </p>
             {outputType === "video" ? (
@@ -1057,7 +1041,7 @@ export default function Generate() {
           {/* Scene */}
           <div className="mb-10">
             <div className="flex items-center justify-between mb-4">
-              <p className="font-sans text-xs tracking-[0.15em] uppercase text-charcoal">
+              <p className="font-sans text-sm font-semibold text-charcoal">
                 Scene
               </p>
               <p className="font-sans text-xs text-charcoal-soft">Optional</p>

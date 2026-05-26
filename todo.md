@@ -255,3 +255,32 @@
 - [x] Add lora_physical_descriptors column to Supabase profiles table (SQL migration run by user)
 - [x] Improve photo upload guidance: add clear do/don't list (solo photos only, no groups, clear face, good lighting, no heavy filters, no sunglasses, variety of angles)
 - [x] Run physical descriptor backfill for owner account (user 10)
+
+## V27 -- Onboarding Overhaul + UX Simplification
+
+- [x] Remove aesthetic calibration step entirely from onboarding (step 6 "aesthetic")
+- [x] Remove aesthetic calibration section from Profile page
+- [x] Remove analyzeAesthetic tRPC procedure and related server code (UI removed, procedure kept for backward compat)
+- [x] Reduce onboarding to 3 clear steps: Archetype -> Mood -> Add Photos (optional)
+- [x] Rewrite step labels/copy to be plain English, no jargon
+- [x] Overhaul loading states: full-screen clear message with animated indicator
+- [x] Fix LoRA upload "string did not match expected pattern" error (HEIC support + client-side validation)
+- [x] Make the "Create My Look" step clearly optional with a prominent skip path
+- [x] Remove "beige on beige" color blending -- added contrast to CTAs, step indicators, and key actions
+
+## V27 -- UX Overhaul (Bold, Simple, Obvious)
+
+- [x] Onboarding: cut to 3 steps (Pick Your Vibe -> Pick Your Mood -> Add Your Photos)
+- [x] Onboarding: remove insight/niche/voice/aesthetic steps -- niche+voice remain in profile settings
+- [x] Onboarding: make headlines much larger and bolder (font-serif text-4xl font-medium)
+- [x] Onboarding: progress bar high-contrast (charcoal on cream)
+- [x] Onboarding: loading state full-screen overlay with large text
+- [x] Onboarding: LoRA step renamed to "Add Your Photos" with prominent Skip button
+- [x] Generate page: section headers bold and readable
+- [x] Generate page: template preview title 4xl, CTA button more prominent
+- [x] Generate page: primary CTA button full-width, high contrast
+- [x] Profile page: remove Aesthetic Calibration section entirely
+- [x] Profile page: renamed to "Make Images Look Like You" with plain two-sentence explanation
+- [x] Fix LoRA upload "string did not match expected pattern" error (HEIC support + client-side validation)
+- [x] Global: section headers upgraded from text-xs uppercase to text-sm font-semibold in Profile
+- [x] Global: CTAs remain btn-luxury (charcoal bg + cream text)
