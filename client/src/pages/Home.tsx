@@ -400,7 +400,7 @@ export default function Home() {
         <div className="max-w-sm mx-auto mb-16">
           {/* Full-width hero image */}
           <div className="w-full aspect-[3/4] overflow-hidden mb-1">
-            <img src="/manus-storage/hero_sample_f65e4d53.jpg" alt="Meetha result" className="w-full h-full object-cover object-top" />
+            <img src="/manus-storage/meetha-59_1803b502.jpg" alt="Meetha result" className="w-full h-full object-cover object-center" />
           </div>
           {/* Two-column bottom row */}
           <div className="grid grid-cols-2 gap-1">
