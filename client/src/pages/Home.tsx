@@ -29,23 +29,15 @@ const WHAT_YOU_LEARN = [
 
 const FEATURES = {
   free: [
-    "1 look training included",
-    "Limited generations",
-    "Limited templates",
+    "1 look training",
+    "1 cinematic generation",
+    "Share card export",
     "Watermarked downloads",
   ],
-  starter: [
-    "Premium templates",
-    "Unlimited cinematic generations",
-    "HD exports — no watermark",
-    "Priority generation queue",
-    "Retrain Your Look for $19",
-  ],
-  pro: [
-    "Everything in Membership",
-    "Retrain Your Look for $19",
-    "Priority generation queue",
-    "Early access to new worlds",
+  membership: [
+    "25 cinematic generations monthly",
+    "HD exports",
+    "Share cards — no watermark",
   ],
 };
 
@@ -63,16 +55,11 @@ function PricingSection({ handleCTA }: { handleCTA: () => void }) {
     <section className="py-16 px-6" style={{ background: "#2C1810" }}>
       <div className="max-w-sm mx-auto">
         {/* Header */}
-        <div className="text-center mb-8">
+        <div className="text-center mb-10">
           <p className="font-sans text-xs tracking-[0.2em] uppercase text-gold mb-4">Pricing</p>
-          <h2 className="font-serif font-light text-cream mb-4">Start free. Scale when ready.</h2>
-                    <div className="divider-editorial" />
+          <h2 className="font-serif font-light text-cream mb-4">Two ways in.</h2>
+          <div className="divider-editorial" />
         </div>
-
-        {/* Retrain note */}
-        <p className="font-sans text-xs text-sand-dark/50 text-center mb-6 -mt-4">
-          New haircut. Seasonal shift. New aesthetic. Retrain anytime.
-        </p>
 
         {/* Billing toggle */}
         <div className="flex items-center justify-center gap-4 mb-8">
@@ -101,7 +88,6 @@ function PricingSection({ handleCTA }: { handleCTA: () => void }) {
             }`}
           >
             Annual
-            <span className="ml-2 text-gold">Save 40%</span>
           </button>
         </div>
 
@@ -111,9 +97,9 @@ function PricingSection({ handleCTA }: { handleCTA: () => void }) {
           <div className="p-5 border border-sand/20 bg-white/5">
             <div className="flex items-baseline justify-between mb-3">
               <p className="font-serif text-lg text-cream">Free</p>
-              <p className="font-sans text-xs text-sand-dark">$0 / mo</p>
+              <p className="font-sans text-xs text-sand-dark">$0</p>
             </div>
-            <ul className="space-y-1.5 mb-4">
+            <ul className="space-y-1.5 mb-5">
               {FEATURES.free.map((f) => (
                 <li key={f} className="font-sans text-xs text-sand-dark/70 flex gap-2">
                   <span className="text-gold/60">—</span>
@@ -122,7 +108,7 @@ function PricingSection({ handleCTA }: { handleCTA: () => void }) {
               ))}
             </ul>
             <button onClick={handleCTA} className="w-full py-3 border border-sand/30 font-sans text-xs tracking-[0.15em] uppercase text-cream/70 hover:text-cream transition-colors">
-              Get started
+              Begin
             </button>
           </div>
 
@@ -130,10 +116,10 @@ function PricingSection({ handleCTA }: { handleCTA: () => void }) {
           <div className="p-5 border border-gold/40 bg-white/5">
             <div className="flex items-baseline justify-between mb-3">
               <p className="font-serif text-lg text-cream">Membership</p>
-              <p className="font-sans text-xs text-sand-dark">{annual ? "$17.40/mo" : "$29/mo"}</p>
+              <p className="font-sans text-xs text-sand-dark">{annual ? "$182 / year" : "$19 / mo"}</p>
             </div>
-            <ul className="space-y-1.5 mb-4">
-              {FEATURES.starter.map((f) => (
+            <ul className="space-y-1.5 mb-5">
+              {FEATURES.membership.map((f) => (
                 <li key={f} className="font-sans text-xs text-sand-dark/70 flex gap-2">
                   <span className="text-gold/60">—</span>
                   {f}
@@ -142,36 +128,11 @@ function PricingSection({ handleCTA }: { handleCTA: () => void }) {
             </ul>
             {starterLink ? (
               <a href={starterLink} target="_blank" rel="noopener noreferrer" className="block w-full py-3 bg-gold/90 hover:bg-gold text-center font-sans text-xs tracking-[0.15em] uppercase text-charcoal transition-colors">
-                Train Your Look
+                Become Her
               </a>
             ) : (
               <button onClick={handleCTA} className="w-full py-3 bg-gold/90 hover:bg-gold font-sans text-xs tracking-[0.15em] uppercase text-charcoal transition-colors">
-                Train Your Look
-              </button>
-            )}
-          </div>
-
-          {/* Retrain */}
-          <div className="p-5 border border-sand/20 bg-white/5">
-            <div className="flex items-baseline justify-between mb-3">
-              <p className="font-serif text-lg text-cream">Retrain Your Look</p>
-              <p className="font-sans text-xs text-sand-dark">$19 one-time</p>
-            </div>
-            <ul className="space-y-1.5 mb-4">
-              {FEATURES.pro.map((f) => (
-                <li key={f} className="font-sans text-xs text-sand-dark/70 flex gap-2">
-                  <span className="text-gold/60">—</span>
-                  {f}
-                </li>
-              ))}
-            </ul>
-            {proLink ? (
-              <a href={proLink} target="_blank" rel="noopener noreferrer" className="block w-full py-3 border border-gold/40 text-center font-sans text-xs tracking-[0.15em] uppercase text-cream/70 hover:text-cream transition-colors">
-                Retrain My Look
-              </a>
-            ) : (
-              <button onClick={handleCTA} className="w-full py-3 border border-gold/40 font-sans text-xs tracking-[0.15em] uppercase text-cream/70 hover:text-cream transition-colors">
-                Retrain My Look
+                Become Her
               </button>
             )}
           </div>
