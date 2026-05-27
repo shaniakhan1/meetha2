@@ -69,7 +69,13 @@ export default function Dashboard() {
   const prevLoraStatus = useRef<string | null | undefined>(undefined);
 
   const utils = trpc.useUtils();
-  const profileQuery = trpc.profile.get.useQuery();
+  const profileQuery = trpc.profile.get.useQuery(undefined, {
+    // Auto-refresh every 60s while training so the UI updates without a page reload
+    refetchInterval: (query) => {
+      const data = query.state.data;
+      return data?.lora_status === "training" ? 60_000 : false;
+    },
+  });
   const creditsQuery = trpc.credits.get.useQuery();
   const generationsQuery = trpc.generations.list.useQuery({ limit: PAGE_SIZE, offset });
   const referralQuery = trpc.referral.getLink.useQuery();
@@ -376,22 +382,39 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Slim status banners - no boxes */}
-      {profile?.lora_status === "training" && !trainingBannerDismissed && (
-        <div className="flex items-center gap-3 px-5 py-3 border-b border-gold/30" style={{ background: "linear-gradient(135deg, rgba(139,105,20,0.15) 0%, rgba(139,105,20,0.08) 100%)" }}>
-          <span className="w-3 h-3 border border-gold border-t-transparent rounded-full animate-spin flex-shrink-0" />
-          <p className="font-sans text-xs text-charcoal-soft flex-1 leading-relaxed">
-            Meetha is learning your look. We will email you when it is ready, usually 20 minutes.
-          </p>
-          <button
-            onClick={handleDismissTrainingBanner}
-            className="flex-shrink-0 w-7 h-7 flex items-center justify-center text-charcoal-soft/50 hover:text-charcoal-soft transition-colors"
-            aria-label="Dismiss"
-          >
-            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-              <path d="M1 1l10 10M11 1L1 11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-            </svg>
-          </button>
+      {/* Training card — replaces the "Add Photos" step card while training is in progress */}
+      {profile?.lora_status === "training" && (
+        <div
+          className="w-full"
+          style={{ background: "linear-gradient(135deg, #2C1810 0%, #1a0f09 100%)" }}
+        >
+          <div className="px-5 py-6">
+            <div className="flex items-center gap-2 mb-3">
+              {/* Pulsing ring + spinning border to show active work */}
+              <span className="relative flex-shrink-0">
+                <span className="absolute inset-0 rounded-full bg-gold/20 animate-ping" style={{ width: "16px", height: "16px" }} />
+                <span className="relative block w-4 h-4 border border-gold border-t-transparent rounded-full animate-spin" />
+              </span>
+              <p className="font-sans text-[10px] tracking-[0.2em] uppercase text-gold">
+                Training in progress
+              </p>
+            </div>
+            <h2 className="font-serif text-xl font-light text-cream leading-snug mb-2">
+              Your Visual Identity is Training
+            </h2>
+            <p className="font-sans font-light text-xs text-cream/60 leading-relaxed">
+              Meetha is learning your face, proportions, coloring, and visual presence.
+              This usually takes 10 to 20 minutes. We will email you when it is ready.
+            </p>
+            <div className="mt-4 w-full h-px bg-gold/20 relative overflow-hidden">
+              {/* Shimmer progress bar */}
+              <div
+                className="absolute inset-y-0 left-0 bg-gold/50"
+                style={{ width: "40%", animation: "shimmerProgress 2.5s ease-in-out infinite alternate" }}
+              />
+            </div>
+          </div>
+          <style>{`@keyframes shimmerProgress { from { width: 20%; opacity: 0.5; } to { width: 70%; opacity: 1; } }`}</style>
         </div>
       )}
       {profile && (!profile.lora_status || profile.lora_status === "failed") && (
@@ -448,11 +471,16 @@ export default function Dashboard() {
         {/* PRIMARY CTA */}
         <button
           onClick={() => navigate("/generate")}
-          disabled={credits?.credits_remaining === 0}
+          disabled={credits?.credits_remaining === 0 || profile?.lora_status === "training"}
           className="btn-luxury w-full mb-8 disabled:opacity-40 disabled:cursor-not-allowed"
         >
-          Generate New Content
+          {profile?.lora_status === "training" ? "Training in progress..." : "Generate New Content"}
         </button>
+        {profile?.lora_status === "training" && (
+          <p className="font-sans text-xs text-charcoal-soft/60 text-center -mt-6 mb-8 leading-relaxed">
+            Your model is being built. Generation unlocks when training completes.
+          </p>
+        )}
         {credits?.credits_remaining === 0 && (
           <div className="text-center -mt-6 mb-8 space-y-1">
             <button

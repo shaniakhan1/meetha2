@@ -418,12 +418,38 @@ export default function Profile() {
                 )}
               </>
             ) : loraStatus === "training" ? (
-              <div className="flex items-start gap-3">
-                <span className="w-4 h-4 border border-gold border-t-transparent rounded-full animate-spin flex-shrink-0 mt-0.5" />
-                <div>
-                  <p className="font-serif text-sm text-charcoal">Building your model.</p>
-                  <p className="font-sans text-xs text-charcoal-soft mt-1">About 20 minutes. You can close this page.</p>
+              <div className="space-y-4">
+                {/* Prominent training indicator */}
+                <div
+                  className="p-4 border border-gold/40"
+                  style={{ background: "linear-gradient(135deg, rgba(139,105,20,0.12) 0%, rgba(139,105,20,0.05) 100%)" }}
+                >
+                  <div className="flex items-center gap-3 mb-3">
+                    <span className="relative flex-shrink-0">
+                      <span className="absolute inset-0 rounded-full bg-gold/25 animate-ping" style={{ width: "16px", height: "16px" }} />
+                      <span className="relative block w-4 h-4 border border-gold border-t-transparent rounded-full animate-spin" />
+                    </span>
+                    <p className="font-sans text-[10px] tracking-[0.2em] uppercase text-gold">Training in progress</p>
+                  </div>
+                  <p className="font-serif text-base text-charcoal leading-snug mb-1">
+                    Your Visual Identity is Training
+                  </p>
+                  <p className="font-sans text-xs text-charcoal-soft leading-relaxed">
+                    Meetha is learning your face, proportions, coloring, and visual presence.
+                    This usually takes 10 to 20 minutes.
+                  </p>
+                  {/* Animated shimmer bar */}
+                  <div className="mt-3 w-full h-px bg-gold/20 relative overflow-hidden">
+                    <div
+                      className="absolute inset-y-0 left-0 bg-gold/60"
+                      style={{ width: "40%", animation: "shimmerBar 2.5s ease-in-out infinite alternate" }}
+                    />
+                  </div>
+                  <style>{`@keyframes shimmerBar { from { width: 15%; opacity: 0.5; } to { width: 75%; opacity: 1; } }`}</style>
                 </div>
+                <p className="font-sans text-xs text-charcoal-soft/60 leading-relaxed">
+                  We will email you when your model is ready. You can close this page.
+                </p>
               </div>
             ) : loraStatus === "failed" ? (
               <>

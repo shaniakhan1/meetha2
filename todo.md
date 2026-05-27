@@ -691,3 +691,23 @@
 - [x] body_type injected into generation prompts as lightweight modifier (confirmed existing)
 - [x] TypeScript: zero errors
 - [x] Vitest: 23 tests passing
+
+## V107 -- LoRA Training Lifecycle + Identity Brief Card Preview
+- [ ] Audit DB: check Anum's profile for lora_request_id, photo count, training status
+- [ ] Audit server: verify loraUpload triggers Fal, loraPoller updates status correctly
+- [ ] Schema migration: add lora_status column (not_started | training | ready | failed) if missing
+- [ ] Server: set lora_status=training immediately after Fal training starts
+- [ ] Server: set lora_status=ready when poller confirms completion
+- [ ] Server: set lora_status=failed on Fal error
+- [x] Dashboard UI: show "Your Visual Identity is Training" card when lora_status=training
+- [x] Dashboard UI: disable Generate Content button when lora_status=training
+- [x] Profile UI: show training state in Visual Identity Model section
+- [x] Generate test Identity Brief card PNG and verify visual quality
+- [x] TypeScript: zero errors
+- [x] Vitest: all tests passing
+## V107 (continued) -- LoRA Training Lifecycle UI Improvements
+- [x] Dashboard: replace slim training banner with full prominent training card (replaces "Add Photos" step card)
+- [x] Dashboard: disable Generate Content button when lora_status === 'training'
+- [x] Dashboard: add refetchInterval (60s) to profileQuery so UI auto-updates on training complete
+- [x] Profile: upgrade Visual Identity Model training state to pulsing indicator with more prominent messaging
+- [x] Generate test Identity Brief card PNG to verify visual quality
