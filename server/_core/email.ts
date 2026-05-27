@@ -277,3 +277,45 @@ export async function sendWelcomeEmail({
 
   if (error) throw new Error(`Resend error: ${error.message}`);
 }
+
+// ─── Transformation Card Ready ────────────────────────────────────────────────
+
+export async function sendTransformationCardReadyEmail({
+  to,
+  name,
+  profileUrl,
+}: {
+  to: string;
+  name: string | null;
+  profileUrl: string;
+}): Promise<void> {
+  const resend = getResend();
+  const firstName = name?.split(" ")[0] ?? "You";
+
+  const body = `
+    <p style="margin:0 0 6px;font-size:11px;letter-spacing:0.2em;color:#8b7355;text-transform:uppercase;font-family:system-ui,sans-serif;">
+      Your visual transformation
+    </p>
+    <p style="margin:0 0 24px;font-size:24px;color:#2c2c2c;font-weight:400;line-height:1.25;">
+      ${firstName}, your Transformation Card is ready.
+    </p>
+    <p style="margin:0 0 32px;font-size:14px;color:#6b6b6b;line-height:1.7;font-family:system-ui,sans-serif;">
+      Meetha has created a personalized style card that captures your aesthetic, your colors, and your elevated look. It is yours to save and share.
+    </p>
+    ${ctaButton(profileUrl, "View my Transformation Card")}
+    <p style="margin:0;font-size:12px;color:#9b9b9b;line-height:1.6;font-family:system-ui,sans-serif;">
+      You can download and share your card from the Profile page. Add a before photo to complete the transformation story.
+    </p>`;
+
+  const text = `${firstName}, your Meetha Transformation Card is ready.\n\nView and download it from your profile: ${profileUrl}`;
+
+  const { error } = await resend.emails.send({
+    from: `${FROM_NAME} <${FROM_ADDRESS}>`,
+    to,
+    subject: `Your Transformation Card is ready, ${firstName}`,
+    html: emailWrapper(body),
+    text,
+  });
+
+  if (error) throw new Error(`Resend error: ${error.message}`);
+}

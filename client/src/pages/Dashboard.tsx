@@ -404,6 +404,25 @@ export default function Dashboard() {
         </button>
       )}
 
+      {/* Before-photo nudge: paid users who haven't generated a transformation card yet */}
+      {profile && credits && credits.tier !== "free" && !(profile as Record<string, unknown>).transformation_card_url && profile.lora_status === "ready" && (
+        <button
+          onClick={() => navigate("/profile")}
+          className="w-full text-left border-b border-gold/20 bg-gold/5 active:bg-gold/10 transition-colors duration-150"
+        >
+          <div className="px-5 py-4 flex items-start gap-3">
+            <span className="text-gold text-base mt-0.5 flex-shrink-0">✦</span>
+            <div className="flex-1 min-w-0">
+              <p className="font-sans text-xs font-semibold text-charcoal mb-0.5">Complete your Transformation Card</p>
+              <p className="font-sans font-light text-xs text-charcoal-soft/80 leading-relaxed">
+                Add a before photo to see your full style evolution. Takes 10 seconds.
+              </p>
+            </div>
+            <span className="font-sans text-xs text-gold flex-shrink-0 mt-0.5">&rarr;</span>
+          </div>
+        </button>
+      )}
+
       <div className="flex-1 px-5 pt-6 pb-28">
 
         {/* PRIMARY CTA */}

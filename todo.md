@@ -485,3 +485,10 @@
 - [x] Update generation prompt: shift from body descriptors to styling/lighting/wardrobe focus; body type used as preservation anchor
 - [x] Add negative prompts to LoRA path: avoid hyper-thin, exaggerated waist, model-body distortion
 - [x] Reframe onboarding body step: "How should Meetha handle your body?" with 3 preservation-preference options instead of 5 body-type descriptors
+
+## V48 -- Body Pref Re-answer + Dashboard Nudge + Card Email
+
+- [x] Add body type re-answer option in Profile settings (new "Body Preference" section with 3 preservation options, same edit pattern as archetype/mood)
+- [x] Add before-photo nudge on Dashboard for paid users who have no transformation_card_url yet (shows when lora_status=ready and tier!=free)
+- [x] Add transformation card completion email template (sendTransformationCardReadyEmail)
+- [x] Trigger transformation card email after card is saved in generateTransformationCard procedure

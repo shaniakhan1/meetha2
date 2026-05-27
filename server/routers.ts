@@ -34,6 +34,7 @@ import {
   updateTransformationCardUrl,
 } from "./db";
 import { generateAndSaveTransformationCard } from "./transformationCard";
+import { sendTransformationCardReadyEmail } from "./_core/email";
 import {
   ARCHETYPE_DESCRIPTIONS,
   MOOD_DESCRIPTIONS,
@@ -788,6 +789,15 @@ export const appRouter = router({
           niche: profile?.niche ?? null,
           audience: profile?.audience ?? null,
         });
+        // Send completion email non-blocking
+        if (ctx.user.email) {
+          const profileUrl = `${ctx.req.headers.origin ?? "https://meetha.studio"}/profile`;
+          sendTransformationCardReadyEmail({
+            to: ctx.user.email,
+            name: ctx.user.name ?? null,
+            profileUrl,
+          }).catch((err) => console.error("[TransformationCard] Email error:", err));
+        }
         return { url: cardUrl };
       }),
   }),

@@ -15,7 +15,12 @@ import {
 export default function Profile() {
   const [, navigate] = useLocation();
   const { user, logout } = useAuth();
-  const [editing, setEditing] = useState<"archetype" | "mood" | "voice" | null>(null);
+  const [editing, setEditing] = useState<"archetype" | "mood" | "voice" | "body" | null>(null);
+  const BODY_PREF_OPTIONS = [
+    { value: "preserve exact natural body proportions, do not alter frame or silhouette", label: "Keep me exactly as I am", sub: "Preserve my natural proportions precisely" },
+    { value: "preserve natural proportions with subtle editorial polish", label: "Slight editorial polish", sub: "Natural frame, slightly refined for editorial look" },
+    { value: "editorial styling focus, proportions secondary to aesthetic", label: "Prioritize the aesthetic", sub: "Focus on styling and atmosphere over body accuracy" },
+  ];
   type VoiceTone = "casual" | "polished";
   type VoiceHumor = "funny" | "serious";
   type VoiceLength = "short" | "storytelling";
@@ -24,6 +29,7 @@ export default function Profile() {
   const [pendingVoiceLength, setPendingVoiceLength] = useState<VoiceLength | null>(null);
   const [pendingArchetype, setPendingArchetype] = useState<Archetype | null>(null);
   const [pendingMood, setPendingMood] = useState<Mood | null>(null);
+  const [pendingBodyPref, setPendingBodyPref] = useState<string | null>(null);
 
   const profileQuery = trpc.profile.get.useQuery();
   const creditsQuery = trpc.credits.get.useQuery();
@@ -159,6 +165,9 @@ export default function Profile() {
     if (profile) {
       setPendingArchetype(profile.archetype as Archetype);
       setPendingMood(profile.mood as Mood);
+      if ((profile as Record<string, unknown>).body_type) {
+        setPendingBodyPref((profile as Record<string, unknown>).body_type as string);
+      }
       if (profile.voice_style) {
         const parts = profile.voice_style.split(", ");
         setPendingVoiceTone((parts.find((p) => p === "casual" || p === "polished") as VoiceTone) ?? null);
@@ -184,6 +193,20 @@ export default function Profile() {
   const handleSaveVoice = () => {
     const voiceStyle = [pendingVoiceTone, pendingVoiceHumor, pendingVoiceLength].filter(Boolean).join(", ");
     upsertProfile.mutate({ voiceStyle: voiceStyle || null });
+  };
+
+  const setBodyTypeMutation = trpc.profile.setBodyType.useMutation({
+    onSuccess: () => {
+      utils.profile.get.invalidate();
+      setEditing(null);
+      toast.success("Body preference saved.");
+    },
+    onError: (err) => toast.error(err.message),
+  });
+
+  const handleSaveBodyPref = () => {
+    if (!pendingBodyPref) return;
+    setBodyTypeMutation.mutate({ bodyType: pendingBodyPref });
   };
 
   return (
@@ -676,6 +699,62 @@ export default function Profile() {
               </div>
               <button onClick={handleSaveVoice} disabled={upsertProfile.isPending} className="btn-luxury w-full">
                 {upsertProfile.isPending ? "Saving..." : "Save voice style"}
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* ── Body Preference ── */}
+        <div>
+          <div className="flex items-center justify-between mb-4">
+            <p className="font-sans text-sm font-semibold text-charcoal">Body Preference</p>
+            <button
+              onClick={() => setEditing(editing === "body" ? null : "body")}
+              className="font-sans text-xs tracking-widest uppercase text-gold hover:text-charcoal transition-colors"
+            >
+              {editing === "body" ? "Cancel" : "Update"}
+            </button>
+          </div>
+
+          {editing !== "body" ? (
+            <div className="p-4 border border-sand bg-warm-white/60">
+              {pendingBodyPref ? (
+                <>
+                  <p className="font-sans text-xs text-gold mb-1">Set</p>
+                  <p className="font-serif text-sm text-charcoal">
+                    {BODY_PREF_OPTIONS.find((o) => o.value === pendingBodyPref)?.label ?? "Custom"}
+                  </p>
+                  <p className="font-sans text-xs text-charcoal-soft mt-1">
+                    {BODY_PREF_OPTIONS.find((o) => o.value === pendingBodyPref)?.sub ?? pendingBodyPref}
+                  </p>
+                </>
+              ) : (
+                <>
+                  <p className="font-sans text-sm text-charcoal mb-1">Not set</p>
+                  <p className="font-sans font-light text-xs text-charcoal-soft/70 leading-relaxed">
+                    Tell Meetha how closely to preserve your natural proportions in every image.
+                  </p>
+                </>
+              )}
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {BODY_PREF_OPTIONS.map(({ value, label, sub }) => (
+                <button
+                  key={value}
+                  onClick={() => setPendingBodyPref(value)}
+                  className={`w-full text-left p-4 border transition-all duration-200 ${
+                    pendingBodyPref === value
+                      ? "border-charcoal bg-charcoal text-cream"
+                      : "border-sand bg-warm-white/60 text-charcoal hover:border-charcoal/40"
+                  }`}
+                >
+                  <p className={`font-serif text-base ${pendingBodyPref === value ? "text-cream" : "text-charcoal"}`}>{label}</p>
+                  <p className={`font-sans font-light text-xs mt-1 ${pendingBodyPref === value ? "text-cream/70" : "text-charcoal-soft"}`}>{sub}</p>
+                </button>
+              ))}
+              <button onClick={handleSaveBodyPref} disabled={setBodyTypeMutation.isPending || !pendingBodyPref} className="btn-luxury w-full mt-2">
+                {setBodyTypeMutation.isPending ? "Saving..." : "Save preference"}
               </button>
             </div>
           )}
