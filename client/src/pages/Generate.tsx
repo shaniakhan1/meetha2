@@ -99,6 +99,7 @@ export default function Generate() {
 
   const profileQuery = trpc.profile.get.useQuery();
   const creditsQuery = trpc.credits.get.useQuery();
+  const aestheticBriefQuery = trpc.profile.getAestheticBrief.useQuery();
   const selectHookMutation = trpc.generations.selectHook.useMutation();
   const regenerateCopyMutation = trpc.generations.regenerateCopy.useMutation({
     onSuccess: (data) => {
@@ -258,13 +259,21 @@ export default function Generate() {
   const handleSaveStyleCard = async () => {
     if (!result?.generation?.id) return;
     const params = new URLSearchParams();
-    if (aestheticRead) {
-      if (aestheticRead.color_palette) params.set("color_palette", aestheticRead.color_palette);
-      if (aestheticRead.metals) params.set("metals", aestheticRead.metals);
-      if (aestheticRead.fabrics) params.set("fabrics", aestheticRead.fabrics);
-      if (aestheticRead.makeup) params.set("makeup", aestheticRead.makeup);
-      if (aestheticRead.lighting) params.set("lighting", aestheticRead.lighting);
-      if (aestheticRead.hair) params.set("hair", aestheticRead.hair);
+    // Use live aestheticRead if available, otherwise fall back to saved brief from profile
+    const briefSource = aestheticRead ?? aestheticBriefQuery.data ?? null;
+    if (briefSource) {
+      const cp = (aestheticRead ? aestheticRead.color_palette : aestheticBriefQuery.data?.palette) ?? "";
+      const metals = briefSource.metals ?? "";
+      const fabrics = briefSource.fabrics ?? "";
+      const makeup = briefSource.makeup ?? "";
+      const lighting = briefSource.lighting ?? "";
+      const hair = briefSource.hair ?? "";
+      if (cp) params.set("color_palette", cp);
+      if (metals) params.set("metals", metals);
+      if (fabrics) params.set("fabrics", fabrics);
+      if (makeup) params.set("makeup", makeup);
+      if (lighting) params.set("lighting", lighting);
+      if (hair) params.set("hair", hair);
     }
     const qs = params.toString() ? `?${params.toString()}` : "";
     try {

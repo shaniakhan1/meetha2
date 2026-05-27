@@ -49,7 +49,7 @@ function buildCanvasWatermark(imgWidth: number, imgHeight: number): Buffer {
   ctx.font = `bold ${fontSize}px MeethaFont`;
   ctx.fillStyle = "rgba(255, 255, 255, 0.35)";
   ctx.textAlign = "right";
-  ctx.fillText("MEETHA", imgWidth - pad, imgHeight - pad);
+  ctx.fillText("styled by Meetha", imgWidth - pad, imgHeight - pad);
   return canvas.toBuffer("image/png") as Buffer;
 }
 

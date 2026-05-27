@@ -457,3 +457,21 @@
 - [x] Generate.tsx: all four generation mutations (content, signatureScene, signatureSceneTwo, fromVoice) now invalidate utils.profile.get on success -- ensures auto-triggered transformation card appears on Profile page
 - [x] TypeScript: zero errors
 - [x] Vitest: 13 tests passing
+
+## V43 -- Style Card Brief Panel + Branding Fix
+
+- [x] Style card server: fetch aesthetic_brief directly from DB instead of relying on frontend query params (server owns the data)
+- [x] Style card server: still accepts query params as override for live aestheticRead (backward compat)
+- [x] Dashboard.tsx: pass aesthetic_brief as query params to /api/style-card (belt-and-suspenders fallback)
+- [x] Generate.tsx: add aestheticBriefQuery as fallback when live aestheticRead state is null
+- [x] Watermark text changed from "MEETHA" to "styled by Meetha" in both styleCard.ts and download.ts
+- [x] TypeScript: zero errors
+- [x] Vitest: 13 tests passing
+
+## V44 -- Transformation Card Column + Style Card Text Wrapping
+
+- [x] Applied transformation_card_url column migration to Supabase (was missing — column never existed in Supabase, only in local Drizzle schema)
+- [x] Style card brief panel: replaced single-line truncating layout with stacked label+value layout — value text now wraps to multiple lines, never truncated
+- [x] Style card brief panel: full available width used for value text (no more narrow column constraint)
+- [x] Watermark: confirmed "styled by Meetha" in both styleCard.ts and download.ts
+- [x] TypeScript: zero errors | Vitest: 13 tests passing

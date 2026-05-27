@@ -185,7 +185,17 @@ export default function Dashboard() {
     if (sharingCardId === id) return;
     setSharingCardId(id);
     try {
-      const response = await fetch(`/api/style-card/${id}`, { credentials: "include" });
+      // Build query string from saved aesthetic brief so the server renders the brief panel
+      const brief = briefQuery.data;
+      const params = new URLSearchParams();
+      if (brief?.palette) params.set("color_palette", brief.palette);
+      if (brief?.metals) params.set("metals", brief.metals);
+      if (brief?.fabrics) params.set("fabrics", brief.fabrics);
+      if (brief?.makeup) params.set("makeup", brief.makeup);
+      if (brief?.lighting) params.set("lighting", brief.lighting);
+      if (brief?.hair) params.set("hair", brief.hair);
+      const qs = params.toString();
+      const response = await fetch(`/api/style-card/${id}${qs ? `?${qs}` : ""}`, { credentials: "include" });
       if (!response.ok) throw new Error(`Style card failed: ${response.status}`);
       const blob = await response.blob();
       const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
