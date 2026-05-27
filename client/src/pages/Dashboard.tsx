@@ -62,6 +62,7 @@ export default function Dashboard() {
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
   const [sharingCardId, setSharingCardId] = useState<number | null>(null);
+  const [copiedId, setCopiedId] = useState<number | null>(null);
   const [showLoraReady, setShowLoraReady] = useState(false);
   const [trainingBannerDismissed, setTrainingBannerDismissed] = useState(false);
   const prevLoraStatus = useRef<string | null | undefined>(undefined);
@@ -150,6 +151,17 @@ export default function Dashboard() {
     }
   };
 
+  const copyTextToClipboard = async (text: string): Promise<boolean> => {
+    if (navigator.clipboard && window.isSecureContext) {
+      try { await navigator.clipboard.writeText(text); return true; } catch { /* fall through */ }
+    }
+    try {
+      const ta = document.createElement("textarea");
+      ta.value = text; ta.style.cssText = "position:fixed;top:-9999px;left:-9999px;opacity:0";
+      document.body.appendChild(ta); ta.focus(); ta.select();
+      const ok = document.execCommand("copy"); document.body.removeChild(ta); return ok;
+    } catch { return false; }
+  };
   const handleDownload = async (id: number, hook?: string | null) => {
     if (downloadingId === id) return;
     setDownloadingId(id);
@@ -631,9 +643,19 @@ export default function Dashboard() {
                         <p className="font-serif text-sm text-cream text-center leading-snug mb-4">
                           {gen.selected_hook ?? hooks[0]}
                         </p>
-                        <p className="font-sans font-light text-xs text-cream/70 text-center leading-relaxed mb-4">
-                          {gen.caption}
-                        </p>
+                        <button
+                          onClick={async (e) => {
+                            e.stopPropagation();
+                            const sceneLabel = gen.scene_category ? SCENE_LABELS[gen.scene_category as keyof typeof SCENE_LABELS] : "Meetha";
+                            const text = `${gen.selected_hook ?? ""} \n\nStyled by Meetha. ${sceneLabel}.`;
+                            const ok = await copyTextToClipboard(text.trim());
+                            if (ok) { setCopiedId(gen.id); setTimeout(() => setCopiedId(null), 2000); }
+                            else { toast.info(text.trim(), { duration: 8000 }); }
+                          }}
+                          className="font-sans text-xs tracking-widest uppercase text-cream border border-cream/40 px-6 py-2 hover:bg-cream/10 transition-colors active:scale-[0.97] min-h-[36px] w-full mb-2"
+                        >
+                          {copiedId === gen.id ? "Copied!" : "Copy Text"}
+                        </button>
                         <button
                           onClick={(e) => { e.stopPropagation(); handleDownload(gen.id, gen.selected_hook); }}
                           disabled={isDownloading}

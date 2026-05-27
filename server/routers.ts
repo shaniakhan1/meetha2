@@ -1024,40 +1024,109 @@ export const appRouter = router({
           input.loraPhysicalDescriptors ? `Physical descriptors from her photos: ${input.loraPhysicalDescriptors}.` : "",
         ].filter(Boolean).join(" ");
 
-        const prompt = `You are a personal creative director and stylist. Based on the following aesthetic profile, write a concise real-world styling brief that tells this woman exactly what to wear, what jewelry to choose, what makeup direction suits her, what lighting to recreate, and what fabrics belong in her wardrobe.
+        // STEP 1: Structured diagnostic pass (data first)
+        const diagnosticPrompt = `You are a professional colorist and personal stylist. Analyze the following aesthetic profile and produce a precise color and styling diagnostic. This is the data layer -- be clinical, specific, and direct. No poetry, no metaphors.
 
 Aesthetic profile:
-- Frequency: ${input.archetype.replace(/_/g, " ")} (${archetypeVisual})
-- Energy: ${input.mood} (${moodVisual})
-- Scene just generated: ${sceneLabel}
+- Style archetype: ${input.archetype.replace(/_/g, " ")} (${archetypeVisual})
+- Energy state: ${input.mood} (${moodVisual})
+- Scene context: ${sceneLabel}
 ${calibrationContext ? `- ${calibrationContext}` : ""}
-
-Write a styling brief with exactly these 6 fields. Each value must be 1-2 short, plain, specific sentences. No jargon, no wellness-speak, no em dashes, no exclamation marks. Write like a Vogue editor giving a direct brief to a model, not like a wellness brand.
 
 Rules:
 - BANNED WORDS: frequency, energy, essence, luminous, transcend, curated, intentional, authentic, elevate, radiate, exude, magic, effortless, serene, healing, sacred, mystical, divine, goddess, feminine, embody
-- Use plain English. Be specific. Say "warm yellow gold" not "golden accents". Say "red or deep berry lip" not "bold lip color".
-- Lighting must describe a real setup she can recreate at home (window direction, time of day, hard vs soft light).
-- Fabrics must name specific materials (silk, cashmere, linen, velvet, heavyweight jersey, crepe, organza).
-- Metals must say warm gold, silver, or rose gold and whether to stack or keep minimal.
+- Be a diagnostician. Use precise technical terms.
+- undertone: warm/cool/neutral, and the specific undertone (e.g. "warm golden undertone", "cool pink undertone")
+- contrast_level: high/medium/low contrast between skin, hair, and eyes
+- best_metals: one of warm gold / silver / rose gold / mixed metals, with a specific reason
+- ideal_whites_blacks: whether pure white or off-white works better, whether true black or soft black works better
+- makeup_intensity: low/medium/high, and which feature to lead with
+- lighting_direction: best light direction for her coloring (e.g. "side lighting from the left", "overhead diffused")
+- dominant_feature: the one feature that should be the focal point in styling
+- fabric_weight: light/medium/heavy, and which specific fabrics suit her coloring best
 
 Respond in this exact JSON format:
 {
-  "color_palette": "2-3 specific colors that belong in her frame. No generic terms.",
-  "metals": "Which metal family and how to wear it.",
-  "fabrics": "2-3 specific fabric types that suit her aesthetic.",
-  "makeup": "One specific makeup direction: what to emphasize, what to leave minimal.",
-  "lighting": "Exact lighting setup she can recreate: window direction, time of day, hard or soft.",
-  "hair": "One specific hair direction: structure, texture, finish."
+  "undertone": "specific undertone description",
+  "contrast_level": "high/medium/low with brief explanation",
+  "best_metals": "specific metal recommendation with reason",
+  "ideal_whites_blacks": "which whites and blacks work best",
+  "makeup_intensity": "intensity level and lead feature",
+  "lighting_direction": "specific light direction and quality",
+  "dominant_feature": "the feature to lead with in styling",
+  "fabric_weight": "weight and specific fabric types"
+}`;
+
+        // STEP 2: Editorial translation pass (luxury writing second)
+        const editorialPrompt = (diagnostic: Record<string, string>) => `You are a Vogue creative director. Translate the following color diagnostic into elegant, specific editorial styling language. Write like you are briefing a model before a shoot. Short, direct, no wellness language.
+
+Diagnostic data:
+- Undertone: ${diagnostic.undertone}
+- Contrast: ${diagnostic.contrast_level}
+- Best metals: ${diagnostic.best_metals}
+- Whites/blacks: ${diagnostic.ideal_whites_blacks}
+- Makeup intensity: ${diagnostic.makeup_intensity}
+- Lighting: ${diagnostic.lighting_direction}
+- Dominant feature: ${diagnostic.dominant_feature}
+- Fabric weight: ${diagnostic.fabric_weight}
+
+Scene context: ${sceneLabel}
+
+Rules:
+- BANNED WORDS: frequency, energy, essence, luminous, transcend, curated, intentional, authentic, elevate, radiate, exude, magic, effortless, serene, healing, sacred, mystical, divine, goddess, feminine, embody
+- No em dashes. No exclamation marks. No wellness-speak.
+- Be specific. Say "warm ivory and deep camel" not "neutral tones". Say "red or deep berry lip" not "bold lip".
+- Fabrics must name specific materials (silk, cashmere, linen, velvet, heavyweight jersey, crepe, organza). Never satin.
+- Metals: say exactly warm yellow gold, silver, or rose gold and how to wear it.
+- Lighting: describe a real setup she can recreate at home.
+
+Respond in this exact JSON format:
+{
+  "color_palette": "2-3 specific colors that belong in her frame",
+  "metals": "which metal and how to wear it",
+  "fabrics": "2-3 specific fabric types",
+  "makeup": "one specific makeup direction",
+  "lighting": "exact lighting setup she can recreate",
+  "hair": "one specific hair direction: structure, texture, finish"
 }`;
 
         try {
-          const response = await invokeLLMOpenAI({
-            messages: [{ role: "user", content: prompt }],
+          // Run step 1: diagnostic
+          const diagnosticResponse = await invokeLLMOpenAI({
+            messages: [{ role: "user", content: diagnosticPrompt }],
             response_format: {
               type: "json_schema",
               json_schema: {
-                name: "aesthetic_read",
+                name: "color_diagnostic",
+                strict: true,
+                schema: {
+                  type: "object",
+                  properties: {
+                    undertone: { type: "string" },
+                    contrast_level: { type: "string" },
+                    best_metals: { type: "string" },
+                    ideal_whites_blacks: { type: "string" },
+                    makeup_intensity: { type: "string" },
+                    lighting_direction: { type: "string" },
+                    dominant_feature: { type: "string" },
+                    fabric_weight: { type: "string" },
+                  },
+                  required: ["undertone", "contrast_level", "best_metals", "ideal_whites_blacks", "makeup_intensity", "lighting_direction", "dominant_feature", "fabric_weight"],
+                  additionalProperties: false,
+                },
+              },
+            },
+          });
+          const diagContent = diagnosticResponse.choices?.[0]?.message?.content;
+          const diagnostic = JSON.parse(typeof diagContent === "string" ? diagContent : JSON.stringify(diagContent)) as Record<string, string>;
+
+          // Run step 2: editorial translation
+          const editorialResponse = await invokeLLMOpenAI({
+            messages: [{ role: "user", content: editorialPrompt(diagnostic) }],
+            response_format: {
+              type: "json_schema",
+              json_schema: {
+                name: "editorial_brief",
                 strict: true,
                 schema: {
                   type: "object",
@@ -1075,8 +1144,8 @@ Respond in this exact JSON format:
               },
             },
           });
-          const content = response.choices?.[0]?.message?.content;
-          const parsed = JSON.parse(typeof content === "string" ? content : JSON.stringify(content)) as {
+          const editContent = editorialResponse.choices?.[0]?.message?.content;
+          const editorial = JSON.parse(typeof editContent === "string" ? editContent : JSON.stringify(editContent)) as {
             color_palette: string;
             metals: string;
             fabrics: string;
@@ -1084,26 +1153,62 @@ Respond in this exact JSON format:
             lighting: string;
             hair: string;
           };
-          // Save brief to profile so it persists across sessions
+
+          // Save full brief (diagnostic + editorial) to profile
           await updateAestheticBrief(ctx.user.id, {
-            palette: parsed.color_palette,
-            metals: parsed.metals,
-            fabrics: parsed.fabrics,
-            makeup: parsed.makeup,
-            lighting: parsed.lighting,
-            hair: parsed.hair,
+            undertone: diagnostic.undertone,
+            contrast_level: diagnostic.contrast_level,
+            best_metals: diagnostic.best_metals,
+            ideal_whites_blacks: diagnostic.ideal_whites_blacks,
+            makeup_intensity: diagnostic.makeup_intensity,
+            lighting_direction: diagnostic.lighting_direction,
+            dominant_feature: diagnostic.dominant_feature,
+            fabric_weight: diagnostic.fabric_weight,
+            palette: editorial.color_palette,
+            metals: editorial.metals,
+            fabrics: editorial.fabrics,
+            makeup: editorial.makeup,
+            lighting: editorial.lighting,
+            hair: editorial.hair,
             generatedAt: new Date().toISOString(),
           }).catch(() => { /* non-fatal */ });
-          return parsed;
+
+          // Return combined result for immediate display
+          return {
+            // Diagnostic fields (shown in structured section)
+            undertone: diagnostic.undertone,
+            contrast_level: diagnostic.contrast_level,
+            best_metals: diagnostic.best_metals,
+            ideal_whites_blacks: diagnostic.ideal_whites_blacks,
+            makeup_intensity: diagnostic.makeup_intensity,
+            lighting_direction: diagnostic.lighting_direction,
+            dominant_feature: diagnostic.dominant_feature,
+            fabric_weight: diagnostic.fabric_weight,
+            // Editorial fields (shown in prose section)
+            color_palette: editorial.color_palette,
+            metals: editorial.metals,
+            fabrics: editorial.fabrics,
+            makeup: editorial.makeup,
+            lighting: editorial.lighting,
+            hair: editorial.hair,
+          };
         } catch {
           // Graceful fallback
           return {
+            undertone: "Warm golden undertone.",
+            contrast_level: "Medium contrast.",
+            best_metals: "Warm yellow gold.",
+            ideal_whites_blacks: "Off-white and soft black.",
+            makeup_intensity: "Medium. Lead with the lip.",
+            lighting_direction: "Side lighting from the left, late afternoon.",
+            dominant_feature: "Eyes and bone structure.",
+            fabric_weight: "Medium weight. Silk, crepe, heavyweight jersey.",
             color_palette: "Warm ivory, deep camel, amber gold.",
             metals: "Warm yellow gold. Stack bangles or layer chains.",
-            fabrics: "Silk, heavyweight jersey, crepe. Anything that catches light.",
+            fabrics: "Silk, heavyweight jersey, crepe.",
             makeup: "Bold lip in red or deep berry. Strong brow. Minimal eye.",
             lighting: "Late afternoon window, light source to your left or right. Hard directional, not diffused.",
-            hair: "Sleek and structured. Intentional, not effortless.",
+            hair: "Sleek and structured.",
           };
         }
       }),
@@ -2258,20 +2363,41 @@ Be hyper-specific and visual. No generic phrases. This paragraph will be used wo
         if (!profile) throw new TRPCError({ code: "NOT_FOUND", message: "User profile not found" });
         const archetypeVisual = ARCHETYPE_VISUAL[profile.archetype ?? "luxury_minimal"] ?? "";
         const moodVisual = MOOD_VISUAL[profile.mood ?? "soft"] ?? "";
-        const prompt = `You are a personal creative director. Write a concise styling brief for a woman with archetype: ${profile.archetype ?? "luxury_minimal"} (${archetypeVisual}) and energy: ${profile.mood ?? "soft"} (${moodVisual}). Return JSON with keys: color_palette, metals, fabrics, makeup, lighting, hair. Each value 1-2 short specific sentences.`;
-        const response = await invokeLLMOpenAI({
-          messages: [{ role: "user", content: prompt }],
+        const calibrationContext = [
+          profile.aesthetic_descriptors ? `Calibrated aesthetic: ${profile.aesthetic_descriptors}.` : "",
+          profile.lora_physical_descriptors ? `Physical descriptors: ${profile.lora_physical_descriptors}.` : "",
+        ].filter(Boolean).join(" ");
+        // Step 1: diagnostic
+        const diagPrompt = `You are a professional colorist. Analyze this aesthetic profile and produce a precise color diagnostic. Be clinical and specific.\n\nArchetype: ${profile.archetype ?? "luxury_minimal"} (${archetypeVisual})\nMood: ${profile.mood ?? "soft"} (${moodVisual})\n${calibrationContext ? `Context: ${calibrationContext}` : ""}\n\nReturn JSON: { undertone, contrast_level, best_metals, ideal_whites_blacks, makeup_intensity, lighting_direction, dominant_feature, fabric_weight }`;
+        const diagRes = await invokeLLMOpenAI({
+          messages: [{ role: "user", content: diagPrompt }],
+          response_format: { type: "json_schema", json_schema: { name: "diag", strict: true, schema: { type: "object", properties: { undertone: { type: "string" }, contrast_level: { type: "string" }, best_metals: { type: "string" }, ideal_whites_blacks: { type: "string" }, makeup_intensity: { type: "string" }, lighting_direction: { type: "string" }, dominant_feature: { type: "string" }, fabric_weight: { type: "string" } }, required: ["undertone", "contrast_level", "best_metals", "ideal_whites_blacks", "makeup_intensity", "lighting_direction", "dominant_feature", "fabric_weight"], additionalProperties: false } } },
+        });
+        const diagContent = diagRes.choices?.[0]?.message?.content;
+        const diag = JSON.parse(typeof diagContent === "string" ? diagContent : JSON.stringify(diagContent)) as Record<string, string>;
+        // Step 2: editorial
+        const editPrompt = `You are a Vogue creative director. Translate this color diagnostic into elegant editorial styling language. Short, direct, no wellness language. No satin.\n\nDiagnostic: ${JSON.stringify(diag)}\n\nReturn JSON: { color_palette, metals, fabrics, makeup, lighting, hair }`;
+        const editRes = await invokeLLMOpenAI({
+          messages: [{ role: "user", content: editPrompt }],
           response_format: { type: "json_schema", json_schema: { name: "brief", strict: true, schema: { type: "object", properties: { color_palette: { type: "string" }, metals: { type: "string" }, fabrics: { type: "string" }, makeup: { type: "string" }, lighting: { type: "string" }, hair: { type: "string" } }, required: ["color_palette", "metals", "fabrics", "makeup", "lighting", "hair"], additionalProperties: false } } },
         });
-        const content = response.choices?.[0]?.message?.content;
-        const parsed = JSON.parse(typeof content === "string" ? content : JSON.stringify(content));
+        const editContent = editRes.choices?.[0]?.message?.content;
+        const edit = JSON.parse(typeof editContent === "string" ? editContent : JSON.stringify(editContent)) as Record<string, string>;
         await updateAestheticBrief(input.userId, {
-          palette: parsed.color_palette,
-          metals: parsed.metals,
-          fabrics: parsed.fabrics,
-          makeup: parsed.makeup,
-          lighting: parsed.lighting,
-          hair: parsed.hair,
+          undertone: diag.undertone,
+          contrast_level: diag.contrast_level,
+          best_metals: diag.best_metals,
+          ideal_whites_blacks: diag.ideal_whites_blacks,
+          makeup_intensity: diag.makeup_intensity,
+          lighting_direction: diag.lighting_direction,
+          dominant_feature: diag.dominant_feature,
+          fabric_weight: diag.fabric_weight,
+          palette: edit.color_palette,
+          metals: edit.metals,
+          fabrics: edit.fabrics,
+          makeup: edit.makeup,
+          lighting: edit.lighting,
+          hair: edit.hair,
           generatedAt: new Date().toISOString(),
         });
         return { success: true };

@@ -69,6 +69,16 @@ export default function Generate() {
   const [showLoraPaywall, setShowLoraPaywall] = useState(false);
   const [templateSlug, setTemplateSlug] = useState<string | null>(null);
   const [aestheticRead, setAestheticRead] = useState<{
+    // Diagnostic fields
+    undertone?: string;
+    contrast_level?: string;
+    best_metals?: string;
+    ideal_whites_blacks?: string;
+    makeup_intensity?: string;
+    lighting_direction?: string;
+    dominant_feature?: string;
+    fabric_weight?: string;
+    // Editorial fields
     color_palette: string;
     metals: string;
     fabrics: string;
@@ -134,7 +144,14 @@ export default function Generate() {
     onSuccess: (data) => {
       const genData = data as GenerationResult;
       setResult(genData);
-      setStep("hooks");
+      // Auto-select first hook and skip the hooks step entirely
+      if (genData.hooks && genData.hooks.length > 0) {
+        setSelectedHook(genData.hooks[0]);
+        if (genData.generation?.id) {
+          selectHookMutation.mutate({ generationId: genData.generation.id, selectedHook: genData.hooks[0] });
+        }
+      }
+      setStep("preview");
       utils.credits.get.invalidate();
       utils.generations.list.invalidate();
       // Invalidate profile so auto-triggered transformation card appears on Profile page
@@ -166,8 +183,13 @@ export default function Generate() {
   const signatureSceneTwoStatusQuery = trpc.signatureScene.statusTwo.useQuery();
   const signatureSceneMutation = trpc.signatureScene.generate.useMutation({
     onSuccess: (data) => {
-      setResult(data as GenerationResult);
-      setStep("hooks");
+      const genData = data as GenerationResult;
+      setResult(genData);
+      if (genData.hooks && genData.hooks.length > 0) {
+        setSelectedHook(genData.hooks[0]);
+        if (genData.generation?.id) selectHookMutation.mutate({ generationId: genData.generation.id, selectedHook: genData.hooks[0] });
+      }
+      setStep("preview");
       utils.credits.get.invalidate();
       utils.generations.list.invalidate();
       utils.profile.get.invalidate();
@@ -181,8 +203,13 @@ export default function Generate() {
 
   const signatureSceneTwoMutation = trpc.signatureScene.generateTwo.useMutation({
     onSuccess: (data) => {
-      setResult(data as GenerationResult);
-      setStep("hooks");
+      const genData = data as GenerationResult;
+      setResult(genData);
+      if (genData.hooks && genData.hooks.length > 0) {
+        setSelectedHook(genData.hooks[0]);
+        if (genData.generation?.id) selectHookMutation.mutate({ generationId: genData.generation.id, selectedHook: genData.hooks[0] });
+      }
+      setStep("preview");
       utils.credits.get.invalidate();
       utils.generations.list.invalidate();
       utils.profile.get.invalidate();
@@ -196,8 +223,13 @@ export default function Generate() {
 
   const fromVoiceMutation = trpc.generate.fromVoice.useMutation({
     onSuccess: (data) => {
-      setResult(data as GenerationResult);
-      setStep("hooks");
+      const genData = data as GenerationResult;
+      setResult(genData);
+      if (genData.hooks && genData.hooks.length > 0) {
+        setSelectedHook(genData.hooks[0]);
+        if (genData.generation?.id) selectHookMutation.mutate({ generationId: genData.generation.id, selectedHook: genData.hooks[0] });
+      }
+      setStep("preview");
       utils.credits.get.invalidate();
       utils.generations.list.invalidate();
       utils.profile.get.invalidate();
@@ -1261,10 +1293,10 @@ export default function Generate() {
         <div className="flex-1 flex flex-col px-6 py-8 animate-fade-up opacity-0">
           <div className="mb-6">
             <p className="font-sans text-xs tracking-[0.2em] uppercase text-gold mb-2">
-              Your Content
+              Your Generation
             </p>
             <h3 className="font-serif font-light text-charcoal">
-              Ready to post.
+              Styled by Meetha.
             </h3>
           </div>
 
@@ -1292,29 +1324,16 @@ export default function Generate() {
             />
           </div>
 
-          {/* Caption */}
-          <div className="p-4 border border-sand bg-warm-white/60 mb-6">
-            <p className="font-sans text-xs tracking-[0.1em] uppercase text-charcoal-soft mb-2">
-              Caption
-            </p>
-            <p className="font-sans font-light text-sm text-charcoal leading-relaxed mb-3">
-              {result.caption}
-            </p>
-            <p className="font-sans text-xs text-gold">
-              {result.hashtags?.map((h) => `#${h}`).join(" ")}
-            </p>
-          </div>
-
-          {/* Aesthetic Read card */}
+          {/* Color Analysis card */}
           <div className="mb-6">
             <button
               onClick={() => setAestheticReadOpen((v) => !v)}
               className="w-full flex items-center justify-between px-4 py-3 bg-[#2C1810] text-cream transition-colors hover:bg-[#3d1f0e] active:scale-[0.99]"
             >
               <div className="text-left">
-                <p className="font-sans text-xs tracking-[0.2em] uppercase text-gold/80 mb-0.5">Your Styling Brief</p>
+                <p className="font-sans text-xs tracking-[0.2em] uppercase text-gold/80 mb-0.5">Your Color Analysis</p>
                 <p className="font-serif text-sm font-light text-cream">
-                  {aestheticReadMutation.isPending ? "Reading your aesthetic..." : "What to recreate in real life"}
+                  {aestheticReadMutation.isPending ? "Analyzing your palette..." : "Diagnostic + styling guide"}
                 </p>
               </div>
               <svg
@@ -1330,29 +1349,54 @@ export default function Generate() {
                 {aestheticReadMutation.isPending ? (
                   <div className="flex items-center gap-3 py-2">
                     <div className="w-4 h-4 border border-gold/40 border-t-gold animate-spin rounded-full shrink-0" />
-                    <p className="font-sans text-xs text-charcoal-soft">Composing your brief...</p>
+                    <p className="font-sans text-xs text-charcoal-soft">Analyzing your palette...</p>
                   </div>
                 ) : aestheticRead ? (
                   <>
-                    {([
-                      { label: "Color Palette", value: aestheticRead.color_palette },
-                      { label: "Metals", value: aestheticRead.metals },
-                      { label: "Fabrics", value: aestheticRead.fabrics },
-                      { label: "Makeup", value: aestheticRead.makeup },
-                      { label: "Lighting", value: aestheticRead.lighting },
-                      { label: "Hair", value: aestheticRead.hair },
-                    ] as { label: string; value: string }[]).map(({ label, value }) => (
-                      <div key={label} className="flex gap-3">
-                        <p className="font-sans text-xs tracking-[0.15em] uppercase text-gold w-20 shrink-0 pt-0.5">{label}</p>
-                        <p className="font-sans text-sm text-charcoal font-light leading-relaxed">{value}</p>
+                    {/* Diagnostic section */}
+                    {(aestheticRead.undertone || aestheticRead.contrast_level) && (
+                      <div className="mb-4">
+                        <p className="font-sans text-[10px] tracking-[0.2em] uppercase text-charcoal-soft/50 mb-2">Diagnostic</p>
+                        {([
+                          { label: "Undertone", value: aestheticRead.undertone },
+                          { label: "Contrast", value: aestheticRead.contrast_level },
+                          { label: "Metals", value: aestheticRead.best_metals },
+                          { label: "Whites/Blacks", value: aestheticRead.ideal_whites_blacks },
+                          { label: "Makeup", value: aestheticRead.makeup_intensity },
+                          { label: "Lighting", value: aestheticRead.lighting_direction },
+                          { label: "Lead Feature", value: aestheticRead.dominant_feature },
+                          { label: "Fabrics", value: aestheticRead.fabric_weight },
+                        ] as { label: string; value?: string }[]).filter(r => r.value).map(({ label, value }) => (
+                          <div key={label} className="flex gap-3 mb-1.5">
+                            <p className="font-sans text-[10px] tracking-[0.12em] uppercase text-gold/70 w-24 shrink-0 pt-0.5">{label}</p>
+                            <p className="font-sans text-xs text-charcoal font-light leading-relaxed">{value}</p>
+                          </div>
+                        ))}
                       </div>
-                    ))}
+                    )}
+                    {/* Editorial section */}
+                    <div className="border-t border-sand/60 pt-4">
+                      <p className="font-sans text-[10px] tracking-[0.2em] uppercase text-charcoal-soft/50 mb-2">Styling Guide</p>
+                      {([
+                        { label: "Palette", value: aestheticRead.color_palette },
+                        { label: "Metals", value: aestheticRead.metals },
+                        { label: "Fabrics", value: aestheticRead.fabrics },
+                        { label: "Makeup", value: aestheticRead.makeup },
+                        { label: "Lighting", value: aestheticRead.lighting },
+                        { label: "Hair", value: aestheticRead.hair },
+                      ] as { label: string; value: string }[]).map(({ label, value }) => (
+                        <div key={label} className="flex gap-3 mb-2">
+                          <p className="font-sans text-xs tracking-[0.15em] uppercase text-gold w-20 shrink-0 pt-0.5">{label}</p>
+                          <p className="font-sans text-sm text-charcoal font-light leading-relaxed">{value}</p>
+                        </div>
+                      ))}
+                    </div>
                     <p className="font-sans text-xs text-charcoal-soft/60 pt-2 border-t border-sand">
                       Based on your calibrated aesthetic. Regenerate to refine.
                     </p>
                   </>
                 ) : (
-                  <p className="font-sans text-xs text-charcoal-soft">Select a hook first to unlock your styling brief.</p>
+                  <p className="font-sans text-xs text-charcoal-soft">Your color analysis will appear here.</p>
                 )}
               </div>
             )}
@@ -1360,28 +1404,6 @@ export default function Generate() {
 
           {/* Actions */}
           <div className="space-y-3">
-            {/* Hook copy strip - always visible on mobile when hook is selected */}
-            {selectedHook && (
-              <div className="w-full p-4 bg-[#2C1810] text-cream flex items-center justify-between gap-3">
-                <div className="flex-1 min-w-0">
-                  <p className="font-sans text-xs tracking-[0.1em] uppercase text-gold/80 mb-1">Your hook</p>
-                  <p className="font-serif text-sm text-cream truncate leading-snug">"{selectedHook}"</p>
-                </div>
-                <button
-                  onClick={async () => {
-                    const ok = await copyTextToClipboard(selectedHook);
-                    if (ok) {
-                      toast.success("Hook copied. Paste it as your caption.");
-                    } else {
-                      toast.info(selectedHook, { duration: 8000 });
-                    }
-                  }}
-                  className="shrink-0 px-3 py-2 border border-cream/30 font-sans text-xs tracking-widest uppercase text-cream hover:bg-cream/10 transition-colors active:scale-95"
-                >
-                  Copy
-                </button>
-              </div>
-            )}
             {showShareNudge && (
               <div className="w-full py-2 text-center">
                 <p className="font-sans text-xs text-charcoal-soft tracking-[0.1em] uppercase">Screenshot saved to camera roll</p>
@@ -1399,10 +1421,16 @@ export default function Generate() {
               </button>
             )}
             <button
-              onClick={handleCopyCaption}
+              onClick={async () => {
+                const sceneLabel = sceneCategory ? (SCENE_LABELS[sceneCategory] ?? "Meetha") : "Meetha";
+                const text = `${selectedHook ?? ""}\n\nStyled by Meetha. ${sceneLabel}.`.trim();
+                const ok = await copyTextToClipboard(text);
+                if (ok) { setCaptionCopied(true); setTimeout(() => setCaptionCopied(false), 2000); }
+                else { toast.info(text, { duration: 8000 }); }
+              }}
               className="btn-luxury btn-luxury-outline w-full"
             >
-              {captionCopied ? "Copied!" : "Copy Caption + Hashtags"}
+              {captionCopied ? "Copied!" : "Copy Text"}
             </button>
             <button
               onClick={handleRegenerate}

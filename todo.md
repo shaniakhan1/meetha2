@@ -552,3 +552,35 @@
 - [x] Natural fibers only in brief prompts (no satin)
 - [x] TypeScript: zero errors
 - [x] Vitest: 13 tests passing
+
+## V60 -- Strip Captions/Hashtags, Fix Brief + Style Card Pipeline
+- [ ] Remove captions, hashtags, hooks from generation pipeline (routers.ts)
+- [ ] Remove hook/caption text overlay from Dashboard generation card flip view
+- [ ] Remove caption/hashtag display from Generate.tsx result view
+- [ ] Fix styling brief (aestheticRead) generation -- debug why it never resolves
+- [ ] Fix style card generation -- ensure card_url is stored for every image
+- [x] TypeScript: zero errors
+- [x] Vitest: all tests passing
+
+## V60 -- Pipeline Stabilization + Color Analysis Upgrade
+- [ ] Fix styling brief (aestheticRead) generation -- debug and fix why it never resolves
+- [ ] Fix style card generation -- ensure card_url is stored for every image
+- [ ] Strip captions, hashtags, hooks from generation pipeline and UI
+- [ ] Add "Copy text" button (one line: template name or scene + "styled by Meetha")
+- [ ] Upgrade color analysis to two-step: structured attributes first (undertone, contrast, metals, whites/blacks, makeup intensity, lighting direction, dominant feature, fabric weight), then editorial translation
+- [ ] Rename "Your Styling Brief" to "Your Color Analysis" in Profile
+- [x] TypeScript: zero errors
+- [x] Vitest: all tests passing
+
+## V60 -- Supabase Migration + Pipeline Fix (current session)
+- [x] Add missing columns to Supabase: aesthetic_brief, body_type, card_url, card_key (DONE by user)
+- [x] Fix updateAestheticBrief in db.ts -- column now exists in Supabase, verify it saves correctly
+- [x] Fix updateGenerationCardUrl in db.ts -- card_url/card_key now exist in Supabase, verify
+- [x] Fix getProfile in db.ts -- ensure aesthetic_brief is returned
+- [x] Strip captions, hashtags, hooks from Generate.tsx result view (hooks step -> skip to preview, remove caption/hashtag display)
+- [x] Strip caption/hashtag display from Dashboard.tsx generation card flip view
+- [x] Add simple "Copy text" button: copies scene label + "styled by Meetha"
+- [x] Upgrade aestheticRead to two-step Color Analysis (structured attributes -> editorial translation)
+- [x] Rename "Your Styling Brief" -> "Your Color Analysis" in Profile.tsx
+- [x] TypeScript: zero errors
+- [x] Vitest: all tests passing

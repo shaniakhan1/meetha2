@@ -46,6 +46,16 @@ export type DbProfile = {
 };
 
 export type AestheticBrief = {
+  // Structured diagnostic layer (data first)
+  undertone: string;
+  contrast_level: string;
+  best_metals: string;
+  ideal_whites_blacks: string;
+  makeup_intensity: string;
+  lighting_direction: string;
+  dominant_feature: string;
+  fabric_weight: string;
+  // Editorial translation layer (luxury writing second)
   palette: string;
   metals: string;
   fabrics: string;

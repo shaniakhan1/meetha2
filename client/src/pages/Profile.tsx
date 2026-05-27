@@ -840,7 +840,7 @@ function AestheticBriefSection() {
     return (
       <div>
         <div className="flex items-center justify-between mb-4">
-          <p className="font-sans text-sm font-semibold text-charcoal">Your Styling Brief</p>
+          <p className="font-sans text-sm font-semibold text-charcoal">Your Color Analysis</p>
           <button
             onClick={handleRegenerateBrief}
             disabled={regenerateBriefMutation.isPending}
@@ -851,14 +851,24 @@ function AestheticBriefSection() {
         </div>
         <div className="p-4 border border-sand bg-warm-white/60">
           <p className="font-sans text-xs text-charcoal-soft leading-relaxed">
-            Your personal styling brief unlocks after your first generation. If you have already generated, tap "Generate now" above.
+            Your personal color analysis unlocks after your first generation. If you have already generated, tap "Generate now" above.
           </p>
         </div>
       </div>
     );
   }
 
-  const rows: { label: string; value: string }[] = [
+  const diagnosticRows: { label: string; value?: string }[] = [
+    { label: "Undertone", value: (brief as any).undertone },
+    { label: "Contrast", value: (brief as any).contrast_level },
+    { label: "Metals", value: (brief as any).best_metals },
+    { label: "Whites/Blacks", value: (brief as any).ideal_whites_blacks },
+    { label: "Makeup", value: (brief as any).makeup_intensity },
+    { label: "Lighting", value: (brief as any).lighting_direction },
+    { label: "Lead Feature", value: (brief as any).dominant_feature },
+    { label: "Fabrics", value: (brief as any).fabric_weight },
+  ].filter(r => r.value);
+  const editorialRows: { label: string; value: string }[] = [
     { label: "Palette", value: brief.palette },
     { label: "Metals", value: brief.metals },
     { label: "Fabrics", value: brief.fabrics },
@@ -870,7 +880,7 @@ function AestheticBriefSection() {
   return (
     <div>
       <div className="flex items-center justify-between mb-4">
-        <p className="font-sans text-sm font-semibold text-charcoal">Your Styling Brief</p>
+        <p className="font-sans text-sm font-semibold text-charcoal">Your Color Analysis</p>
         <div className="flex items-center gap-3">
           {brief.generatedAt && (
             <p className="font-sans text-xs text-charcoal-soft/50">
@@ -886,8 +896,24 @@ function AestheticBriefSection() {
           </button>
         </div>
       </div>
+      {diagnosticRows.length > 0 && (
+        <div className="border border-sand bg-warm-white/60 divide-y divide-sand/60 mb-3">
+          <div className="px-4 py-2">
+            <p className="font-sans text-[10px] tracking-[0.2em] uppercase text-charcoal-soft/50">Diagnostic</p>
+          </div>
+          {diagnosticRows.map((row) => (
+            <div key={row.label} className="px-4 py-2 flex gap-3">
+              <p className="font-sans text-[10px] tracking-[0.12em] uppercase text-gold/70 w-24 shrink-0 pt-0.5">{row.label}</p>
+              <p className="font-sans text-xs text-charcoal leading-relaxed">{row.value}</p>
+            </div>
+          ))}
+        </div>
+      )}
       <div className="border border-sand bg-warm-white/60 divide-y divide-sand/60">
-        {rows.map((row) => (
+        <div className="px-4 py-2">
+          <p className="font-sans text-[10px] tracking-[0.2em] uppercase text-charcoal-soft/50">Styling Guide</p>
+        </div>
+        {editorialRows.map((row) => (
           <div key={row.label} className="px-4 py-3">
             <p className="font-sans text-xs text-gold tracking-widest uppercase mb-1">{row.label}</p>
             <p className="font-sans text-sm text-charcoal leading-relaxed">{row.value}</p>
