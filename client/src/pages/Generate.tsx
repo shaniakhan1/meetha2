@@ -18,6 +18,7 @@ import {
   type CreateRefinements,
 } from "@shared/types";
 import CinematicPreview from "@/components/CinematicPreview";
+import StyleBriefCard from "@/components/StyleBriefCard";
 import { getPreviewTier } from "./Preview";
 import { downloadRawImage } from "@/lib/storyCardExport";
 import html2canvas from "html2canvas";
@@ -107,6 +108,9 @@ export default function Generate() {
   const [aestheticReadOpen, setAestheticReadOpen] = useState(false);
   const [exportLoading, setExportLoading] = useState<"share" | "download" | "raw" | null>(null);
   const cardRef = useRef<HTMLDivElement>(null);
+  const styleCardRef = useRef<HTMLDivElement>(null);
+  // Track whether the last generation came from a template (shows hook) or Create Studio (no hook)
+  const [generationSource, setGenerationSource] = useState<"template" | "studio">("template");
 
   // Create Studio state
   const [showStudio, setShowStudio] = useState(false);
@@ -222,6 +226,7 @@ export default function Generate() {
     }
     let idx = 0;
     const interval = setInterval(() => { idx = (idx + 1) % GENERATING_PHRASES.length; setPhraseIndex(idx); }, 3000);
+    setGenerationSource("template");
     generateMutation.mutateAsync({ platform, sceneCategory: slug as SceneCategory }).finally(() => clearInterval(interval));
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pendingTemplateSlug, creditsQuery.isLoading]);
@@ -246,15 +251,19 @@ export default function Generate() {
 
   const handleQuickGenerate = () => startGenerating(() => generateMutation.mutateAsync({ platform: "reels" }));
 
-  const handleTemplateGenerate = () => startGenerating(() =>
-    generateMutation.mutateAsync({ platform, sceneCategory: sceneCategory ?? undefined })
-  );
+  const handleTemplateGenerate = () => {
+    setGenerationSource("template");
+    startGenerating(() =>
+      generateMutation.mutateAsync({ platform, sceneCategory: sceneCategory ?? undefined })
+    );
+  };
 
   const handleStudioGenerate = () => {
     if (!studioOccasion || !studioEnergy) {
       toast.error("Please choose an occasion and energy first.");
       return;
     }
+    setGenerationSource("studio");
     startGenerating(() =>
       createStudioMutation.mutateAsync({
         occasion: studioOccasion,
@@ -277,40 +286,39 @@ export default function Generate() {
     }
   }, [cardPollQuery.data?.cardUrl]);
 
-  /** Capture the rendered CinematicPreview card DOM node as a PNG blob via html2canvas */
-  const captureCardBlob = async (): Promise<Blob | null> => {
-    const node = cardRef.current;
+  /** Capture the rendered StyleBriefCard DOM node as a PNG blob via html2canvas */
+  const captureStyleCardBlob = async (): Promise<Blob | null> => {
+    const node = styleCardRef.current;
     if (!node) return null;
     try {
       const canvas = await html2canvas(node, {
-        scale: 3,
+        scale: 2,
         useCORS: true,
-        backgroundColor: null,
+        backgroundColor: "#fbf8f1",
         logging: false,
-        // Ignore elements that html2canvas can't handle (e.g. video, canvas)
         ignoreElements: (el) => el.tagName === "VIDEO",
       });
       return await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/png", 1.0));
     } catch (e) {
-      console.error("[captureCard] html2canvas failed", e);
+      console.error("[captureStyleCard] html2canvas failed", e);
       return null;
     }
   };
 
-  /** PRIMARY CTA — share the full rendered style card (DOM capture) */
-  const handleShareCard = async () => {
+  /** Save & Share Style Card — captures the StyleBriefCard DOM node */
+  const handleSaveShareStyleCard = async () => {
     if (!result?.generation?.id) return;
     setExportLoading("share");
     try {
-      const blob = await captureCardBlob();
+      const blob = await captureStyleCardBlob();
       if (!blob) { toast.error("Could not capture card. Try downloading instead."); return; }
-      const file = new File([blob], `meetha-story-${result.generation.id}.png`, { type: "image/png" });
+      const filename = `meetha-style-card-${result.generation.id}.png`;
+      const file = new File([blob], filename, { type: "image/png" });
       if (navigator.canShare && navigator.canShare({ files: [file] })) {
         await navigator.share({ files: [file], title: "Meetha", text: selectedHook ?? "Styled by Meetha." });
       } else {
-        // Desktop fallback: download
         const url = URL.createObjectURL(blob);
-        const a = document.createElement("a"); a.href = url; a.download = file.name;
+        const a = document.createElement("a"); a.href = url; a.download = filename;
         document.body.appendChild(a); a.click(); document.body.removeChild(a);
         setTimeout(() => URL.revokeObjectURL(url), 10000);
       }
@@ -321,32 +329,27 @@ export default function Generate() {
     }
   };
 
-  /** Download the full rendered style card as PNG (DOM capture) */
-  const handleDownloadCard = async () => {
-    if (!result?.generation?.id) return;
-    setExportLoading("download");
-    try {
-      const blob = await captureCardBlob();
-      if (!blob) { toast.error("Download failed. Please try again."); return; }
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a"); a.href = url; a.download = `meetha-story-${result.generation.id}.png`;
-      document.body.appendChild(a); a.click(); document.body.removeChild(a);
-      setTimeout(() => URL.revokeObjectURL(url), 10000);
-    } catch {
-      toast.error("Download failed. Please try again.");
-    } finally {
-      setExportLoading(null);
-    }
-  };
-
-  /** Download the clean raw generation image (no overlays) */
-  const handleDownloadRaw = async () => {
+  /** Save & Share Image — shares/downloads the raw generation image */
+  const handleSaveShareImage = async () => {
     if (!result?.generation?.id) return;
     setExportLoading("raw");
     try {
-      await downloadRawImage(result.generation.image_url as string, result.generation.id);
-    } catch {
-      toast.error("Download failed. Please try again.");
+      const imageUrl = result.generation.image_url as string;
+      const response = await fetch(imageUrl, { credentials: "include" });
+      if (!response.ok) throw new Error(`Fetch failed: ${response.status}`);
+      const blob = await response.blob();
+      const filename = `meetha-${result.generation.id}.png`;
+      const file = new File([blob], filename, { type: "image/png" });
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({ files: [file], title: "Meetha", text: "Styled by Meetha." });
+      } else {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a"); a.href = url; a.download = filename;
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+        setTimeout(() => URL.revokeObjectURL(url), 10000);
+      }
+    } catch (e: unknown) {
+      if (e instanceof Error && e.name !== "AbortError") toast.error("Download failed. Please try again.");
     } finally {
       setExportLoading(null);
     }
@@ -647,149 +650,61 @@ export default function Generate() {
       )}
 
       {/* ── Step: Preview ── */}
-      {step === "preview" && result && selectedHook && (
+      {step === "preview" && result && (
         <div className="flex-1 flex flex-col px-6 py-8 animate-fade-up opacity-0">
           <div className="mb-6">
             <p className="font-sans text-xs tracking-[0.2em] uppercase text-gold mb-2">Your Generation</p>
             <h3 className="font-serif font-light text-charcoal">Styled by Meetha.</h3>
           </div>
 
-          {(effectiveCredits?.tier === "free" || (!effectiveCredits?.tier && !previewTier)) && (
-            <div className="mb-2 px-1">
-              <p className="font-sans text-xs text-charcoal-soft/70">Animated preview unlocked on Starter and Pro plans.</p>
-            </div>
-          )}
+          {/* Style Card — the shareable artifact */}
           <div className="mb-6">
-            <CinematicPreview
-              ref={cardRef}
+            <StyleBriefCard
+              ref={styleCardRef}
               imageUrl={result.generation.image_url as string}
-              hook={selectedHook}
-              animated={effectiveCredits?.tier === "starter" || effectiveCredits?.tier === "pro" || previewTier === "starter" || previewTier === "pro"}
-              size="full"
-              platform={platform}
+              brief={{
+                // Template generations show the curated hook; Create Studio shows no hook
+                hook: generationSource === "template" ? (selectedHook ?? null) : null,
+                title: "Your Identity Brief",
+                palette: aestheticRead?.color_palette,
+                metals: aestheticRead?.metals,
+                makeup: aestheticRead?.makeup,
+                lighting: aestheticRead?.lighting,
+                presence: aestheticRead?.hair ?? undefined,
+              }}
             />
-          </div>
-
-          {/* Color Analysis card */}
-          <div className="mb-6">
-            <button
-              onClick={() => setAestheticReadOpen((v) => !v)}
-              className="w-full flex items-center justify-between px-4 py-3 bg-[#2C1810] text-cream transition-colors hover:bg-[#3d1f0e] active:scale-[0.99]"
-            >
-              <div className="text-left">
-                <p className="font-sans text-xs tracking-[0.2em] uppercase text-gold/80 mb-0.5">Your Color Analysis</p>
-                <p className="font-serif text-sm font-light text-cream">
-                  {aestheticReadMutation.isPending ? "Analyzing your palette..." : "Diagnostic + styling guide"}
-                </p>
-              </div>
-              <svg className={`w-4 h-4 text-gold/60 transition-transform duration-200 shrink-0 ml-3 ${aestheticReadOpen ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-              </svg>
-            </button>
-
-            {aestheticReadOpen && (
-              <div className="border border-[#2C1810]/30 bg-warm-white/80 px-4 py-5 space-y-4">
-                {aestheticReadMutation.isPending ? (
-                  <div className="flex items-center gap-3 py-2">
-                    <div className="w-4 h-4 border border-gold/40 border-t-gold animate-spin rounded-full shrink-0" />
-                    <p className="font-sans text-xs text-charcoal-soft">Analyzing your palette...</p>
-                  </div>
-                ) : aestheticRead ? (
-                  <>
-                    {(aestheticRead.undertone || aestheticRead.contrast_level) && (
-                      <div className="mb-4">
-                        <p className="font-sans text-[10px] tracking-[0.2em] uppercase text-charcoal-soft/50 mb-2">Diagnostic</p>
-                        {([
-                          { label: "Undertone", value: aestheticRead.undertone },
-                          { label: "Contrast", value: aestheticRead.contrast_level },
-                          { label: "Metals", value: aestheticRead.best_metals },
-                          { label: "Whites/Blacks", value: aestheticRead.ideal_whites_blacks },
-                          { label: "Makeup", value: aestheticRead.makeup_intensity },
-                          { label: "Lighting", value: aestheticRead.lighting_direction },
-                          { label: "Lead Feature", value: aestheticRead.dominant_feature },
-                          { label: "Fabrics", value: aestheticRead.fabric_weight },
-                        ] as { label: string; value?: string }[]).filter(r => r.value).map(({ label, value }) => (
-                          <div key={label} className="flex gap-3 mb-1.5">
-                            <p className="font-sans text-[10px] tracking-[0.12em] uppercase text-gold/70 w-24 shrink-0 pt-0.5">{label}</p>
-                            <p className="font-sans text-xs text-charcoal font-light leading-relaxed">{value}</p>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                    <div className="border-t border-sand/60 pt-4">
-                      <p className="font-sans text-[10px] tracking-[0.2em] uppercase text-charcoal-soft/50 mb-2">Styling Guide</p>
-                      {([
-                        { label: "Palette", value: aestheticRead.color_palette },
-                        { label: "Metals", value: aestheticRead.metals },
-                        { label: "Fabrics", value: aestheticRead.fabrics },
-                        { label: "Makeup", value: aestheticRead.makeup },
-                        { label: "Lighting", value: aestheticRead.lighting },
-                        { label: "Hair", value: aestheticRead.hair },
-                      ] as { label: string; value: string }[]).map(({ label, value }) => (
-                        <div key={label} className="flex gap-3 mb-2">
-                          <p className="font-sans text-xs tracking-[0.15em] uppercase text-gold w-20 shrink-0 pt-0.5">{label}</p>
-                          <p className="font-sans text-sm text-charcoal font-light leading-relaxed">{value}</p>
-                        </div>
-                      ))}
-                    </div>
-                    <p className="font-sans text-xs text-charcoal-soft/60 pt-2 border-t border-sand">Based on your calibrated aesthetic. Regenerate to refine.</p>
-                  </>
-                ) : (
-                  <p className="font-sans text-xs text-charcoal-soft">Your color analysis will appear here.</p>
-                )}
+            {aestheticReadMutation.isPending && (
+              <div className="flex items-center gap-2 mt-3 px-1">
+                <div className="w-3 h-3 border border-gold/40 border-t-gold animate-spin rounded-full shrink-0" />
+                <p className="font-sans text-xs text-charcoal-soft/60">Building your identity brief...</p>
               </div>
             )}
           </div>
 
-          {/* Actions */}
+          {/* Actions — two primary buttons */}
           <div className="space-y-3">
-            {/* PRIMARY: Share Story Card */}
             <button
-              onClick={handleShareCard}
+              onClick={handleSaveShareStyleCard}
               disabled={exportLoading !== null}
               className="btn-luxury w-full min-h-[52px] flex items-center justify-center gap-2"
             >
               {exportLoading === "share" ? (
-                <><div className="w-4 h-4 border border-cream/40 border-t-cream animate-spin rounded-full" /> Preparing card…</>
+                <><div className="w-4 h-4 border border-cream/40 border-t-cream animate-spin rounded-full" /> Preparing card...</>
               ) : (
-                <>Share Story Card</>
+                "Save & Share Style Card"
               )}
             </button>
 
-            {/* SECONDARY: Download Story Card */}
             <button
-              onClick={handleDownloadCard}
+              onClick={handleSaveShareImage}
               disabled={exportLoading !== null}
-              className="btn-luxury btn-luxury-outline w-full flex items-center justify-center gap-2"
+              className="btn-luxury btn-luxury-outline w-full min-h-[52px] flex items-center justify-center gap-2"
             >
-              {exportLoading === "download" ? (
-                <><div className="w-3.5 h-3.5 border border-charcoal/40 border-t-charcoal animate-spin rounded-full" /> Preparing…</>
+              {exportLoading === "raw" ? (
+                <><div className="w-3.5 h-3.5 border border-charcoal/40 border-t-charcoal animate-spin rounded-full" /> Preparing...</>
               ) : (
-                "Download Story Card"
+                "Save & Share Image"
               )}
-            </button>
-
-            {/* TERTIARY: Copy text */}
-            <button
-              onClick={async () => {
-                const sceneLabel = sceneCategory ? (SCENE_LABELS[sceneCategory] ?? "Meetha") : "Meetha";
-                const text = `${selectedHook ?? ""}\n\nStyled by Meetha. ${sceneLabel}.`.trim();
-                const ok = await copyTextToClipboard(text);
-                if (ok) { setCaptionCopied(true); setTimeout(() => setCaptionCopied(false), 2000); }
-                else { toast.info(text, { duration: 8000 }); }
-              }}
-              className="btn-luxury btn-luxury-outline w-full"
-            >
-              {captionCopied ? "Copied!" : "Copy Text"}
-            </button>
-
-            {/* MINIMAL: Download clean image */}
-            <button
-              onClick={handleDownloadRaw}
-              disabled={exportLoading !== null}
-              className="w-full py-3 font-sans text-xs tracking-widest uppercase text-charcoal-soft/60 hover:text-charcoal-soft transition-colors"
-            >
-              {exportLoading === "raw" ? "Downloading…" : "Download Clean Image"}
             </button>
 
             <button onClick={handleRegenerate} className="w-full py-3 font-sans text-xs tracking-widest uppercase text-charcoal-soft hover:text-charcoal border border-sand hover:border-charcoal/40 transition-all duration-200">
