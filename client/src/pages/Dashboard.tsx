@@ -40,7 +40,7 @@ type GenerationItem = {
   card_key: string | null;
 };
 
-const PAGE_SIZE = 20;
+const PAGE_SIZE = 12;
 
 const TEMPLATE_CARDS = [
   { slug: "paparazzi_flash", title: "Caught Looking Expensive", image: "/manus-storage/template-paparazzi-flash_24688a24.jpg" },
@@ -527,9 +527,9 @@ export default function Dashboard() {
         </div>
 
         {generationsQuery.isLoading && allGenerations.length === 0 ? (
-          <div className="grid grid-cols-2 gap-3">
-            {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="aspect-story bg-sand/40 animate-pulse" />
+          <div className="grid grid-cols-3 gap-1.5">
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <div key={i} className="aspect-[9/16] bg-sand/40 animate-pulse" />
             ))}
           </div>
         ) : allGenerations.length === 0 ? (
@@ -544,97 +544,42 @@ export default function Dashboard() {
           </div>
         ) : (
           <>
-            <div className="grid grid-cols-2 gap-3">
-              {allGenerations.map((gen) => {
-                const hooks = (() => {
-                  try { return JSON.parse(gen.hooks) as string[]; }
-                  catch { return []; }
-                })();
-                const isExpanded = expandedId === gen.id;
-                const isDownloading = downloadingId === gen.id;
-                return (
-                  <div
-                    key={gen.id}
-                    className="relative overflow-hidden bg-[#1a0f09] cursor-pointer group"
-                    style={{ borderRadius: "2px" }}
-                    onClick={() => setExpandedId(isExpanded ? null : gen.id)}
-                  >
-                    <div className="aspect-story">
-                      <img
-                        src={gen.image_url}
-                        alt={gen.selected_hook ?? "Generated content"}
-                        className="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity duration-300"
-                        loading="lazy"
-                      />
-                      {gen.selected_hook && !isExpanded && (
-                        <div className="absolute inset-0 flex items-end justify-center pb-4 px-3"
-                          style={{ background: "linear-gradient(to bottom, transparent 50%, rgba(26,15,9,0.7) 100%)" }}
+            {/* 3-column thumbnail grid */}
+            <div className="grid grid-cols-3 gap-1.5">
+              {allGenerations.map((gen) => (
+                <button
+                  key={gen.id}
+                  className="relative overflow-hidden bg-[#1a0f09] focus:outline-none group"
+                  style={{ borderRadius: "2px" }}
+                  onClick={() => setExpandedId(gen.id)}
+                  aria-label={gen.selected_hook ?? "View creation"}
+                >
+                  <div className="aspect-[9/16]">
+                    <img
+                      src={gen.image_url}
+                      alt={gen.selected_hook ?? "Generated content"}
+                      className="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity duration-200"
+                      loading="lazy"
+                    />
+                    {/* Subtle bottom scrim with hook text */}
+                    <div
+                      className="absolute inset-x-0 bottom-0 flex items-end pb-1.5 px-1"
+                      style={{ height: "50%", background: "linear-gradient(to top, rgba(26,15,9,0.75) 0%, transparent 100%)" }}
+                    >
+                      {gen.selected_hook && (
+                        <p
+                          className="font-serif text-cream leading-tight text-center w-full"
+                          style={{ fontSize: "clamp(0.5rem, 2vw, 0.65rem)", textShadow: "0 1px 4px rgba(0,0,0,0.6)" }}
                         >
-                          <p
-                            className="font-serif text-cream text-center leading-tight"
-                            style={{ fontSize: "clamp(0.65rem, 2.5vw, 0.85rem)", textShadow: "0 1px 8px rgba(0,0,0,0.5)" }}
-                          >
-                            {gen.selected_hook}
-                          </p>
-                        </div>
+                          {gen.selected_hook}
+                        </p>
                       )}
-                      <div className="absolute top-2 left-2">
-                        <span className="font-sans text-xs bg-[#1a0f09]/80 text-cream px-1.5 py-0.5 tracking-widest uppercase">
-                          {PLATFORM_LABELS[gen.platform as keyof typeof PLATFORM_LABELS] ?? gen.platform}
-                        </span>
-                      </div>
                     </div>
-                    {isExpanded && (
-                      <div
-                        className="absolute inset-0 bg-[#1a0f09]/92 flex flex-col items-center justify-center p-4 animate-fade-in opacity-0"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <p className="font-sans text-xs tracking-widest uppercase text-gold mb-3">
-                          {gen.scene_category ? SCENE_LABELS[gen.scene_category as keyof typeof SCENE_LABELS] : ""}
-                        </p>
-                        <p className="font-serif text-sm text-cream text-center leading-snug mb-4">
-                          {gen.selected_hook ?? hooks[0]}
-                        </p>
-                        <button
-                          onClick={async (e) => {
-                            e.stopPropagation();
-                            const sceneLabel = gen.scene_category ? SCENE_LABELS[gen.scene_category as keyof typeof SCENE_LABELS] : "Meetha";
-                            const text = `${gen.selected_hook ?? ""} \n\nStyled by Meetha. ${sceneLabel}.`;
-                            const ok = await copyTextToClipboard(text.trim());
-                            if (ok) { setCopiedId(gen.id); setTimeout(() => setCopiedId(null), 2000); }
-                            else { toast.info(text.trim(), { duration: 8000 }); }
-                          }}
-                          className="font-sans text-xs tracking-widest uppercase text-cream border border-cream/40 px-6 py-2 hover:bg-cream/10 transition-colors active:scale-[0.97] min-h-[36px] w-full mb-2"
-                        >
-                          {copiedId === gen.id ? "Copied!" : "Copy Text"}
-                        </button>
-                        <button
-                          onClick={(e) => { e.stopPropagation(); handleDownload(gen.id, gen.selected_hook, gen.image_url); }}
-                          disabled={isDownloading}
-                          className="font-sans text-xs tracking-widest uppercase text-cream border border-cream/40 px-6 py-3 hover:bg-cream/10 transition-colors active:scale-[0.97] disabled:opacity-50 min-h-[44px] w-full"
-                        >
-                          {isDownloading ? "Preparing card…" : "Share Story Card"}
-                        </button>
-                        <button
-                          onClick={(e) => { e.stopPropagation(); handleShareStyleCard(gen.id, gen.selected_hook, gen.card_url, gen.image_url); }}
-                          disabled={sharingCardId === gen.id}
-                          className="font-sans text-[10px] tracking-widest uppercase text-gold/70 hover:text-gold transition-colors mt-1 min-h-[36px] disabled:opacity-40 w-full"
-                        >
-                          {sharingCardId === gen.id ? "Downloading…" : "Download Clean Image"}
-                        </button>
-                        <button
-                          onClick={(e) => { e.stopPropagation(); setConfirmDeleteId(gen.id); }}
-                          disabled={deletingId === gen.id}
-                          className="font-sans text-[10px] tracking-widest uppercase text-cream/30 hover:text-cream/60 transition-colors mt-1 min-h-[36px] disabled:opacity-30"
-                        >
-                          {deletingId === gen.id ? "Removing..." : "Remove"}
-                        </button>
-                      </div>
-                    )}
                   </div>
-                );
-              })}
+                </button>
+              ))}
             </div>
+
             {hasMore && (
               <div className="mt-6 text-center">
                 <button
@@ -646,6 +591,101 @@ export default function Dashboard() {
                 </button>
               </div>
             )}
+
+            {/* Full-screen detail modal */}
+            {expandedId !== null && (() => {
+              const gen = allGenerations.find((g) => g.id === expandedId);
+              if (!gen) return null;
+              const hooks = (() => { try { return JSON.parse(gen.hooks) as string[]; } catch { return []; } })();
+              const isDownloading = downloadingId === gen.id;
+              return (
+                <div
+                  className="fixed inset-0 z-50 flex flex-col"
+                  style={{ background: "rgba(13,10,7,0.96)", animation: "slideUp 220ms cubic-bezier(0.23,1,0.32,1) both" }}
+                >
+                  <style>{`@keyframes slideUp { from { transform: translateY(6%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }`}</style>
+
+                  {/* Close bar */}
+                  <div className="flex items-center justify-between px-5 pt-safe pt-4 pb-3 shrink-0">
+                    <button
+                      onClick={() => setExpandedId(null)}
+                      className="font-sans text-xs tracking-widest uppercase text-cream/50 hover:text-cream transition-colors min-h-[44px] pr-4"
+                    >
+                      Close
+                    </button>
+                    <span className="font-sans text-xs tracking-widest uppercase text-gold/60">
+                      {gen.scene_category ? SCENE_LABELS[gen.scene_category as keyof typeof SCENE_LABELS] : ""}
+                    </span>
+                    <div className="w-16" />
+                  </div>
+
+                  {/* Image */}
+                  <div className="flex-1 flex items-center justify-center px-6 min-h-0">
+                    <div className="relative w-full max-w-xs" style={{ aspectRatio: "9/16" }}>
+                      <img
+                        src={gen.image_url}
+                        alt={gen.selected_hook ?? "Generated content"}
+                        className="w-full h-full object-cover"
+                        style={{ borderRadius: "2px" }}
+                      />
+                      {/* Hook + MEETHA overlay */}
+                      <div
+                        className="absolute inset-x-0 bottom-0 flex flex-col items-center pb-6 px-6"
+                        style={{ height: "45%", background: "linear-gradient(to top, rgba(13,10,7,0.8) 0%, transparent 100%)", justifyContent: "flex-end" }}
+                      >
+                        {(gen.selected_hook ?? hooks[0]) && (
+                          <p className="font-serif text-cream text-center leading-snug mb-2"
+                            style={{ fontSize: "clamp(1rem, 4vw, 1.25rem)", textShadow: "0 1px 8px rgba(0,0,0,0.6)" }}
+                          >
+                            {gen.selected_hook ?? hooks[0]}
+                          </p>
+                        )}
+                        <p className="font-sans text-cream/30 tracking-[0.2em] uppercase" style={{ fontSize: "7px" }}>M  E  E  T  H  A</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Actions */}
+                  <div className="shrink-0 px-6 pb-safe pb-8 pt-4 space-y-2">
+                    <button
+                      onClick={() => handleDownload(gen.id, gen.selected_hook, gen.image_url)}
+                      disabled={isDownloading}
+                      className="w-full font-sans text-xs tracking-widest uppercase text-charcoal bg-cream py-4 hover:bg-cream/90 transition-colors active:scale-[0.98] disabled:opacity-50 min-h-[52px]"
+                      style={{ borderRadius: "1px" }}
+                    >
+                      {isDownloading ? "Preparing…" : "Share Story Card"}
+                    </button>
+                    <button
+                      onClick={async () => {
+                        const sceneLabel = gen.scene_category ? SCENE_LABELS[gen.scene_category as keyof typeof SCENE_LABELS] : "Meetha";
+                        const text = `${gen.selected_hook ?? ""} \n\nStyled by Meetha. ${sceneLabel}.`;
+                        const ok = await copyTextToClipboard(text.trim());
+                        if (ok) { setCopiedId(gen.id); setTimeout(() => setCopiedId(null), 2000); }
+                        else { toast.info(text.trim(), { duration: 8000 }); }
+                      }}
+                      className="w-full font-sans text-xs tracking-widest uppercase text-cream border border-cream/30 py-3 hover:bg-cream/10 transition-colors active:scale-[0.98] min-h-[44px]"
+                      style={{ borderRadius: "1px" }}
+                    >
+                      {copiedId === gen.id ? "Copied!" : "Copy Caption"}
+                    </button>
+                    <button
+                      onClick={() => handleShareStyleCard(gen.id, gen.selected_hook, gen.card_url, gen.image_url)}
+                      disabled={sharingCardId === gen.id}
+                      className="w-full font-sans text-xs tracking-widest uppercase text-cream/40 hover:text-cream/70 transition-colors py-2 min-h-[36px] disabled:opacity-40"
+                    >
+                      {sharingCardId === gen.id ? "Downloading…" : "Download Clean Image"}
+                    </button>
+                    <button
+                      onClick={() => { setExpandedId(null); setConfirmDeleteId(gen.id); }}
+                      disabled={deletingId === gen.id}
+                      className="w-full font-sans text-[10px] tracking-widest uppercase text-cream/20 hover:text-cream/50 transition-colors py-1 min-h-[32px] disabled:opacity-30"
+                    >
+                      {deletingId === gen.id ? "Removing..." : "Remove"}
+                    </button>
+                  </div>
+                </div>
+              );
+            })()}
           </>
         )}
       </div>
