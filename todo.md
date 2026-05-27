@@ -500,3 +500,11 @@
 - [x] Add dismissible LoRA training banner on Dashboard (shows when lora_status=training, auto-hides when ready)
 - [x] Fix LoRA generation path: loraPoller.ts used wrong model slug (flux-lora-fast-training vs flux-lora-portrait-trainer) causing poller to never detect COMPLETED status
 - [x] Add buildPhysicalAnchor() helper: rewrites raw descriptors into preservation-first language, injected into base model path and LoRA fallback path
+
+## V53 -- Anum LoRA Recovery + Before/After Slider
+
+- [x] Anum LoRA: user will delete and retrain (poller bug now fixed, new job will complete correctly)
+- [x] Add before/after drag slider to homepage: "undefined → aligned" framing, "Your features, styled with intention." copy
+- [x] BeforeAfterSlider component: touch + mouse drag, labels, handle, clips before image to left of divider
+- [x] TypeScript: zero errors
+- [x] Vitest: 13 tests passing

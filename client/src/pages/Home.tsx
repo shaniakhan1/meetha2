@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
+import { BeforeAfterSlider } from "@/components/BeforeAfterSlider";
 
 const WHAT_YOU_LEARN = [
   {
@@ -300,54 +301,31 @@ export default function Home() {
         <div className="max-w-sm mx-auto">
           <div className="text-center mb-10">
             <p className="font-sans text-xs tracking-[0.2em] uppercase text-gold mb-4">
-              The transformation
+              The shift
             </p>
             <h2 className="font-serif font-light text-charcoal mb-3" style={{ lineHeight: 1.1 }}>
-              She finally looks aligned.
+              Your features, styled<br />with intention.
             </h2>
             <div className="divider-editorial" />
             <p className="font-sans font-light text-sm text-charcoal-soft leading-relaxed mt-4">
-              Not better. Not hotter. Most like herself. That is the shift Meetha makes.
+              Not a better version of you. The most aligned version of you. Drag to see the difference.
             </p>
           </div>
 
-          {/* Side by side */}
-          <div className="grid grid-cols-2 gap-2 mb-6">
-            <div className="relative">
-              <div className="aspect-[3/4] overflow-hidden">
-                <img
-                  src="/manus-storage/shania-before_bb452c9e.webp"
-                  alt="Before — unaligned styling"
-                  className="w-full h-full object-cover object-top"
-                />
-              </div>
-              <div className="absolute top-3 left-3">
-                <span className="font-sans text-[10px] tracking-[0.2em] uppercase bg-cream/90 text-charcoal px-2 py-1">
-                  Before
-                </span>
-              </div>
-              <p className="font-sans text-xs text-charcoal-soft/70 text-center mt-2 tracking-wide">
-                trend-following
-              </p>
-            </div>
-            <div className="relative">
-              <div className="aspect-[3/4] overflow-hidden">
-                <img
-                  src="/manus-storage/meetha-59_1803b502.jpg"
-                  alt="After — identity-aligned"
-                  className="w-full h-full object-cover object-center"
-                />
-              </div>
-              <div className="absolute top-3 left-3">
-                <span className="font-sans text-[10px] tracking-[0.2em] uppercase bg-charcoal/80 text-cream px-2 py-1">
-                  After
-                </span>
-              </div>
-              <p className="font-sans text-xs text-charcoal-soft/70 text-center mt-2 tracking-wide">
-                identity-based
-              </p>
-            </div>
+          {/* Interactive drag slider */}
+          <div className="mb-3">
+            <BeforeAfterSlider
+              beforeSrc="/manus-storage/shania-before_bb452c9e.webp"
+              afterSrc="/manus-storage/meetha-59_1803b502.jpg"
+              beforeLabel="undefined"
+              afterLabel="aligned"
+              initialPosition={42}
+              className="aspect-[3/4] w-full"
+            />
           </div>
+          <p className="font-sans text-[11px] text-charcoal-soft/60 text-center tracking-wide mb-6">
+            Drag the handle to reveal
+          </p>
 
           {/* Identity brief cards */}
           <div className="grid grid-cols-2 gap-2">
