@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { saveOrShare } from "@/lib/saveOrShare";
 import { useLocation } from "wouter";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
@@ -144,26 +145,14 @@ export default function Profile() {
     onError: (err) => toast.error(err.message),
   });
 
-  // Share/download style card
+  // Save/share style card
   const handleShareCard = async () => {
     const cardUrl = profile?.transformation_card_url ?? null;
     if (!cardUrl) { toast.error("No style card found."); return; }
     try {
-      const res = await fetch(cardUrl);
-      const blob = await res.blob();
-      const file = new File([blob], "meetha-style-card.jpg", { type: blob.type || "image/jpeg" });
-      // Download first
-      const a = document.createElement("a");
-      a.href = URL.createObjectURL(blob);
-      a.download = "meetha-style-card.jpg";
-      a.click();
-      URL.revokeObjectURL(a.href);
-      // Then share if supported
-      if (navigator.canShare?.({ files: [file] })) {
-        await navigator.share({ files: [file], title: "My Meetha Style Card" });
-      }
+      await saveOrShare(cardUrl, "meetha-style-card.jpg", "My Meetha Style Card");
     } catch {
-      toast.error("Could not share. Try downloading directly.");
+      toast.error("Could not save. Try downloading directly.");
     }
   };
 
@@ -292,19 +281,8 @@ export default function Profile() {
                     <button
                       onClick={async () => {
                         try {
-                          const res = await fetch(profile.identity_brief_card_url!);
-                          const blob = await res.blob();
-                          const file = new File([blob], 'meetha-identity-brief.png', { type: 'image/png' });
-                          const url = URL.createObjectURL(blob);
-                          const a = document.createElement('a');
-                          a.href = url;
-                          a.download = 'meetha-identity-brief.png';
-                          a.click();
-                          URL.revokeObjectURL(url);
-                          if (navigator.canShare?.({ files: [file] })) {
-                            await navigator.share({ files: [file], title: 'My Meetha Identity Brief' });
-                          }
-                        } catch { /* ignore share cancel */ }
+                          await saveOrShare(profile.identity_brief_card_url!, 'meetha-identity-brief.png', 'My Meetha Identity Brief');
+                        } catch { /* ignore */ }
                       }}
                       className="btn-luxury btn-gold flex-1"
                     >

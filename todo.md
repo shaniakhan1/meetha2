@@ -713,10 +713,10 @@
 - [x] Generate test Identity Brief card PNG to verify visual quality
 
 ## Card Display Architecture Fix
-- [ ] Fix Profile card width: constrain transformation_card_url image to max-w-sm on desktop
-- [ ] Clear legacy transformation_card_url for owner (old "YOUR VISUAL TRANSFORMATION" format)
-- [ ] Add identity_brief_card_url column to Supabase (ALTER TABLE migration)
-- [ ] Update db.ts DbProfile type to include identity_brief_card_url
-- [ ] Fix Gen 1 save flow: updateTransformationCardUrl called after every generation
-- [ ] Fix Gen 2 save flow: updateIdentityBriefCardUrl called after Gen 2 identity brief card render
-- [ ] TypeScript: 0 errors, Vitest: all passing, checkpoint
+- [x] Fix Profile card width: constrain transformation_card_url image to max-w-sm on desktop
+- [x] Clear legacy transformation_card_url for owner (old "YOUR VISUAL TRANSFORMATION" format)
+- [x] Add identity_brief_card_url column to Supabase (ALTER TABLE migration)
+- [x] Update db.ts DbProfile type to include identity_brief_card_url
+- [x] Fix Gen 1 save flow: updateTransformationCardUrl called after every generation
+- [x] Fix Gen 2 save flow: updateIdentityBriefCardUrl called after Gen 2 identity brief card render
+- [x] TypeScript: 0 errors, Vitest: all passing, checkpoint

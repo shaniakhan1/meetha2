@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { saveOrShareBlob } from "@/lib/saveOrShare";
 import { useLocation } from "wouter";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
@@ -171,49 +172,27 @@ export default function Dashboard() {
     }
   };
 
-  /** Fetch a server-rendered blob from our own API (session cookie required) */
-  const fetchServerBlob = async (url: string): Promise<Blob> => {
-    const res = await fetch(url, { credentials: "include" });
-    if (!res.ok) throw new Error(`Server fetch failed: ${res.status}`);
-    return res.blob();
-  };
-
-  /** Share or download a blob as a file */
-  const shareBlobFile = async (blob: Blob, filename: string, shareText?: string) => {
-    const file = new File([blob], filename, { type: blob.type });
-    if (navigator.canShare && navigator.canShare({ files: [file] })) {
-      await navigator.share({ files: [file], title: "Meetha", text: shareText ?? "Styled by Meetha." });
-    } else {
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a"); a.href = url; a.download = filename;
-      document.body.appendChild(a); a.click(); document.body.removeChild(a);
-      setTimeout(() => URL.revokeObjectURL(url), 10000);
-    }
-  };
-
-  /** Share style card — server-rendered via /api/style-card/:id (uses selected_hook from DB) */
+  /** Save style card — server-rendered via /api/style-card/:id */
   const handleDownload = async (id: number, hook?: string | null) => {
     if (downloadingId === id) return;
     setDownloadingId(id);
     try {
-      const blob = await fetchServerBlob(`/api/style-card/${id}`);
-      await shareBlobFile(blob, `meetha-style-card-${id}.jpg`, hook ?? "Styled by Meetha.");
+      await saveOrShareBlob(`/api/style-card/${id}`, `meetha-style-card-${id}.jpg`, hook ?? "Styled by Meetha.");
     } catch (e: unknown) {
-      if (e instanceof Error && e.name !== "AbortError") toast.error("Could not share. Please try again.");
+      if (e instanceof Error && e.name !== "AbortError") toast.error("Could not save. Please try again.");
     } finally {
       setDownloadingId(null);
     }
   };
 
-  /** Download clean image — server-rendered via /api/download/:id */
+  /** Save clean image — server-rendered via /api/download/:id */
   const handleShareStyleCard = async (id: number, hook?: string | null) => {
     if (sharingCardId === id) return;
     setSharingCardId(id);
     try {
-      const blob = await fetchServerBlob(`/api/download/${id}`);
-      await shareBlobFile(blob, `meetha-${id}.jpg`, hook ?? "Styled by Meetha.");
+      await saveOrShareBlob(`/api/download/${id}`, `meetha-${id}.jpg`, hook ?? "Styled by Meetha.");
     } catch (e: unknown) {
-      if (e instanceof Error && e.name !== "AbortError") toast.error("Could not download image. Please try again.");
+      if (e instanceof Error && e.name !== "AbortError") toast.error("Could not save image. Please try again.");
     } finally {
       setSharingCardId(null);
     }
