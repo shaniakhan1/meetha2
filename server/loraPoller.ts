@@ -21,7 +21,7 @@ fal.config({ credentials: ENV.falApiKey });
 
 const POLL_INTERVAL_MS = 60_000; // 60 seconds
 const MAX_POLL_DURATION_MS = 2 * 60 * 60 * 1000; // 2 hours max
-const FAL_MODEL = "fal-ai/flux-lora-fast-training";
+const FAL_MODEL = "fal-ai/flux-lora-portrait-trainer";
 const BASE_URL = ENV.isProduction ? "https://meetha.studio" : "http://localhost:3000";
 
 // ─── Active pollers registry ─────────────────────────────────────────────────

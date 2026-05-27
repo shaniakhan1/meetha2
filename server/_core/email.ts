@@ -254,18 +254,18 @@ export async function sendWelcomeEmail({
       You are the aesthetic, ${firstName}.
     </h1>
     <p style="margin:0 0 16px;font-size:15px;color:#5c4a3a;line-height:1.7;font-family:system-ui,sans-serif;">
-      You have 3 free generations waiting. Each one gives you a cinematic image, three editorial hooks, and a caption tuned to your frequency.
+      You have 1 free generation waiting. It gives you a cinematic image, editorial hooks, and a caption tuned to your frequency.
     </p>
     <p style="margin:0 0 32px;font-size:15px;color:#5c4a3a;line-height:1.7;font-family:system-ui,sans-serif;">
       No filming. No blank page. Just tap Generate and see what comes through.
     </p>
-    ${ctaButton(generateUrl, "Create My First Post")}
+    ${ctaButton(generateUrl, "Discover Your Visual Identity")}
     <p style="margin:0 0 8px;font-size:13px;color:#8b7355;line-height:1.6;font-family:system-ui,sans-serif;text-align:center;">
       Or browse the <a href="${templatesUrl}" style="color:#8b7355;">template library</a> for a starting point.
     </p>
   `;
 
-  const text = `Welcome to Meetha, ${firstName}.\n\nYou have 3 free generations waiting. No filming. No blank page.\n\nCreate your first post: ${generateUrl}\n\nOr browse templates: ${templatesUrl}`;
+  const text = `Welcome to Meetha, ${firstName}.\n\nYou have 1 free generation waiting. No filming. No blank page.\n\nDiscover your visual identity: ${generateUrl}\n\nOr browse templates: ${templatesUrl}`;
 
   const { error } = await resend.emails.send({
     from: `${FROM_NAME} <${FROM_ADDRESS}>`,

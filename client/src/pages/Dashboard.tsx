@@ -61,6 +61,7 @@ export default function Dashboard() {
   const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
   const [sharingCardId, setSharingCardId] = useState<number | null>(null);
   const [showLoraReady, setShowLoraReady] = useState(false);
+  const [trainingBannerDismissed, setTrainingBannerDismissed] = useState(false);
   const prevLoraStatus = useRef<string | null | undefined>(undefined);
 
   const utils = trpc.useUtils();
@@ -253,6 +254,32 @@ export default function Dashboard() {
     prevLoraStatus.current = currentStatus;
   }, [profile?.lora_status, user?.id]);
 
+  // Load training banner dismissal state from localStorage
+  useEffect(() => {
+    if (!user?.id) return;
+    const bannerKey = `meetha_training_banner_dismissed_${user.id}`;
+    if (localStorage.getItem(bannerKey)) {
+      setTrainingBannerDismissed(true);
+    }
+  }, [user?.id]);
+
+  // Auto-clear dismissal when LoRA becomes ready (so banner can show again if user retrains)
+  useEffect(() => {
+    if (!user?.id || !profile) return;
+    if (profile.lora_status === "ready" || profile.lora_status === "failed") {
+      const bannerKey = `meetha_training_banner_dismissed_${user.id}`;
+      localStorage.removeItem(bannerKey);
+      setTrainingBannerDismissed(false);
+    }
+  }, [profile?.lora_status, user?.id]);
+
+  const handleDismissTrainingBanner = () => {
+    if (!user?.id) return;
+    const bannerKey = `meetha_training_banner_dismissed_${user.id}`;
+    localStorage.setItem(bannerKey, "1");
+    setTrainingBannerDismissed(true);
+  };
+
   return (
     <div className="min-h-screen bg-cream flex flex-col">
 
@@ -368,10 +395,21 @@ export default function Dashboard() {
       </div>
 
       {/* Slim status banners - no boxes */}
-      {profile?.lora_status === "training" && (
-        <div className="flex items-center gap-3 px-5 py-3 border-b border-gold/20 bg-gold/5">
+      {profile?.lora_status === "training" && !trainingBannerDismissed && (
+        <div className="flex items-center gap-3 px-5 py-3 border-b border-gold/30" style={{ background: "linear-gradient(135deg, rgba(139,105,20,0.15) 0%, rgba(139,105,20,0.08) 100%)" }}>
           <span className="w-3 h-3 border border-gold border-t-transparent rounded-full animate-spin flex-shrink-0" />
-          <p className="font-sans text-xs text-charcoal-soft">Your look is being learned. About 20 minutes. We will email you.</p>
+          <p className="font-sans text-xs text-charcoal-soft flex-1 leading-relaxed">
+            Meetha is learning your look. We will email you when it is ready, usually 20 minutes.
+          </p>
+          <button
+            onClick={handleDismissTrainingBanner}
+            className="flex-shrink-0 w-7 h-7 flex items-center justify-center text-charcoal-soft/50 hover:text-charcoal-soft transition-colors"
+            aria-label="Dismiss"
+          >
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+              <path d="M1 1l10 10M11 1L1 11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+            </svg>
+          </button>
         </div>
       )}
       {profile && (!profile.lora_status || profile.lora_status === "failed") && (

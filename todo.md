@@ -492,3 +492,11 @@
 - [x] Add before-photo nudge on Dashboard for paid users who have no transformation_card_url yet (shows when lora_status=ready and tier!=free)
 - [x] Add transformation card completion email template (sendTransformationCardReadyEmail)
 - [x] Trigger transformation card email after card is saved in generateTransformationCard procedure
+
+## V52 -- Homepage Gallery + Email Fix + Training Banner + LoRA Fix + Physical Anchors
+
+- [x] Upload all 7 new images to webdev static assets and add to homepage gallery section
+- [x] Fix welcome email: "1 free generation" and CTA "Discover Your Visual Identity"
+- [x] Add dismissible LoRA training banner on Dashboard (shows when lora_status=training, auto-hides when ready)
+- [x] Fix LoRA generation path: loraPoller.ts used wrong model slug (flux-lora-fast-training vs flux-lora-portrait-trainer) causing poller to never detect COMPLETED status
+- [x] Add buildPhysicalAnchor() helper: rewrites raw descriptors into preservation-first language, injected into base model path and LoRA fallback path

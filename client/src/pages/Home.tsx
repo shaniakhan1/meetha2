@@ -652,6 +652,86 @@ export default function Home() {
         </div>
       </section>
 
+      {/* ── Gallery ── */}
+      <section className="py-16 px-6 bg-charcoal overflow-hidden">
+        <div className="max-w-sm mx-auto">
+          <div className="text-center mb-8">
+            <p className="font-sans text-xs tracking-[0.2em] uppercase text-gold mb-4">
+              Real results
+            </p>
+            <h2 className="font-serif font-light text-cream mb-3" style={{ lineHeight: 1.1 }}>
+              Your features, styled<br />with intention.
+            </h2>
+            <div className="divider-editorial" />
+            <p className="font-sans font-light text-sm text-cream/60 leading-relaxed mt-4">
+              Every image preserves who you are. Meetha reveals your visual language, it does not replace it.
+            </p>
+          </div>
+
+          {/* Masonry-style grid */}
+          <div className="grid grid-cols-2 gap-1.5">
+            {/* Row 1: tall left, short right */}
+            <div className="row-span-2 aspect-[3/5] overflow-hidden">
+              <img
+                src="/manus-storage/meetha-gallery-car-dark_f8bb64d1.webp"
+                alt="Meetha styling — cinematic dark"
+                className="w-full h-full object-cover object-center"
+              />
+            </div>
+            <div className="aspect-square overflow-hidden">
+              <img
+                src="/manus-storage/meetha-gallery-restaurant_33c494d6.webp"
+                alt="Meetha styling — restaurant"
+                className="w-full h-full object-cover object-center"
+              />
+            </div>
+            <div className="aspect-square overflow-hidden">
+              <img
+                src="/manus-storage/meetha-gallery-hands-coffee_2b4e9461.webp"
+                alt="Meetha styling — hands coffee"
+                className="w-full h-full object-cover object-center"
+              />
+            </div>
+
+            {/* Row 2: full width */}
+            <div className="col-span-2 aspect-[16/9] overflow-hidden">
+              <img
+                src="/manus-storage/meetha-gallery-street-back_d0e260dd.webp"
+                alt="Meetha styling — street back"
+                className="w-full h-full object-cover object-center"
+              />
+            </div>
+
+            {/* Row 3: short left, tall right */}
+            <div className="aspect-square overflow-hidden">
+              <img
+                src="/manus-storage/meetha-gallery-polaroid_2d1d8320.webp"
+                alt="Meetha styling — polaroid"
+                className="w-full h-full object-cover object-top"
+              />
+            </div>
+            <div className="row-span-2 aspect-[3/5] overflow-hidden">
+              <img
+                src="/manus-storage/meetha-gallery-sofa_84cbf7ec.webp"
+                alt="Meetha styling — sofa"
+                className="w-full h-full object-cover object-center"
+              />
+            </div>
+            <div className="aspect-square overflow-hidden">
+              <img
+                src="/manus-storage/meetha-gallery-car-window_beac299e.webp"
+                alt="Meetha styling — car window"
+                className="w-full h-full object-cover object-center"
+              />
+            </div>
+          </div>
+
+          <p className="font-sans text-xs text-cream/30 text-center mt-6 tracking-wide">
+            undefined &rarr; aligned
+          </p>
+        </div>
+      </section>
+
       {/* ── Pricing ── */}
       <PricingSection handleCTA={handleCTA} />
 
