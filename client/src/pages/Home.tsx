@@ -237,7 +237,7 @@ export default function Home() {
 
         <div className="relative z-10 max-w-sm mx-auto w-full">
           <p className="font-sans text-xs tracking-[0.25em] uppercase text-gold mb-6 animate-fade-up opacity-0 delay-100">
-            Your visual identity system
+            The art of becoming visually unforgettable.
           </p>
 
           <h1
