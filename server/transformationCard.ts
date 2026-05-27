@@ -9,14 +9,37 @@
  * Generated once per paid user after their 2nd generation (Starter) or 1st generation (Pro).
  * Saved to S3 and URL stored in profiles.transformation_card_url.
  *
- * Font-free approach: all text rendered via SVG overlays (no system font dependency).
+ * Font approach: uses @napi-rs/canvas with GlobalFonts.registerFromPath() — same as styleCard.ts.
+ * SVG text is NOT used because system fonts (Georgia, Arial) are unavailable on the server.
  */
 
+import path from "path";
+import { fileURLToPath } from "url";
 import sharp from "sharp";
+import { createCanvas, GlobalFonts } from "@napi-rs/canvas";
 import { invokeLLM } from "./_core/llm";
 import { storagePut } from "./storage";
 import { storageGetSignedUrl } from "./storage";
 import { updateTransformationCardUrl } from "./db";
+
+// ESM-safe __dirname
+const _thisDir = (() => {
+  try {
+    return path.dirname(fileURLToPath(import.meta.url));
+  } catch {
+    return typeof __dirname !== "undefined" ? __dirname : process.cwd();
+  }
+})();
+
+// Register fonts once
+let _fontsRegistered = false;
+function ensureFonts() {
+  if (_fontsRegistered) return;
+  const fontsDir = path.join(_thisDir, "fonts");
+  GlobalFonts.registerFromPath(path.join(fontsDir, "LiberationSans-Regular.ttf"), "MeethaFont");
+  GlobalFonts.registerFromPath(path.join(fontsDir, "LiberationSans-Bold.ttf"), "MeethaFont");
+  _fontsRegistered = true;
+}
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -177,48 +200,298 @@ async function fetchImageBuffer(url: string): Promise<Buffer> {
   return Buffer.from(await res.arrayBuffer());
 }
 
-// ─── SVG Text Helpers ─────────────────────────────────────────────────────────
+// ─── Text Sanitization ──────────────────────────────────────────────────────
 
-function svgText(
-  text: string,
-  x: number,
-  y: number,
-  opts: {
-    fontSize?: number;
-    fill?: string;
-    fontFamily?: string;
-    fontWeight?: string;
-    letterSpacing?: number;
-    textAnchor?: string;
-    opacity?: number;
-  } = {}
-): string {
-  const {
-    fontSize = 24,
-    fill = "#F5F0E8",
-    fontFamily = "Georgia, serif",
-    fontWeight = "normal",
-    letterSpacing = 0,
-    textAnchor = "middle",
-    opacity = 1,
-  } = opts;
-  return `<text x="${x}" y="${y}" font-size="${fontSize}" fill="${fill}" font-family="${fontFamily}" font-weight="${fontWeight}" letter-spacing="${letterSpacing}" text-anchor="${textAnchor}" opacity="${opacity}">${text}</text>`;
+/**
+ * Normalize AI-generated text to ASCII-safe characters that LiberationSans supports.
+ * Replaces smart quotes, em dashes, ellipses, and other unicode punctuation.
+ */
+function sanitizeText(text: string): string {
+  return text
+    .replace(/[\u2018\u2019\u201A\u201B]/g, "'")   // smart single quotes
+    .replace(/[\u201C\u201D\u201E\u201F]/g, '"')   // smart double quotes
+    .replace(/[\u2013\u2014\u2015]/g, "-")          // en dash, em dash, horizontal bar
+    .replace(/\u2026/g, "...")                       // ellipsis
+    .replace(/[\u2022\u2023\u25E6\u2043]/g, "-")   // bullets
+    .replace(/[\u00B7\u2027]/g, ".")                 // middle dot
+    .replace(/[^\x00-\x7F]/g, (ch) => {             // remaining non-ASCII: try common replacements
+      const map: Record<string, string> = {
+        "\u00E9": "e", "\u00E8": "e", "\u00EA": "e", "\u00EB": "e",
+        "\u00E0": "a", "\u00E1": "a", "\u00E2": "a", "\u00E4": "a",
+        "\u00F6": "o", "\u00F3": "o", "\u00F4": "o",
+        "\u00FC": "u", "\u00FA": "u", "\u00FB": "u",
+        "\u00F1": "n", "\u00E7": "c",
+      };
+      return map[ch] ?? "";
+    });
 }
 
-function wrapText(text: string, maxChars: number): string[] {
+// ─── Canvas Text Helpers ──────────────────────────────────────────────────────
+
+/** Parse a hex color string into {r,g,b,a} components (0-255) */
+function hexToRgba(hex: string, alpha = 1): { r: number; g: number; b: number; a: number } {
+  const h = hex.replace("#", "");
+  const r = parseInt(h.substring(0, 2), 16);
+  const g = parseInt(h.substring(2, 4), 16);
+  const b = parseInt(h.substring(4, 6), 16);
+  return { r, g, b, a: Math.round(alpha * 255) };
+}
+
+/** Wrap text to fit within maxWidth pixels, returns array of lines */
+function wrapTextCanvas(
+  ctx: ReturnType<ReturnType<typeof createCanvas>["getContext"]>,
+  text: string,
+  maxWidth: number
+): string[] {
   const words = text.split(" ");
   const lines: string[] = [];
   let current = "";
   for (const word of words) {
-    if ((current + " " + word).trim().length > maxChars) {
-      if (current) lines.push(current.trim());
+    const test = current ? current + " " + word : word;
+    if (ctx.measureText(test).width > maxWidth && current) {
+      lines.push(current);
       current = word;
     } else {
-      current = (current + " " + word).trim();
+      current = test;
     }
   }
-  if (current) lines.push(current.trim());
+  if (current) lines.push(current);
   return lines;
+}
+
+// ─── Section Renderers ────────────────────────────────────────────────────────
+
+/** Render the header band: dark bg + title + subtitle */
+function renderHeader(cardW: number, headerH: number): Buffer {
+  ensureFonts();
+  const canvas = createCanvas(cardW, headerH);
+  const ctx = canvas.getContext("2d");
+
+  // Background
+  ctx.fillStyle = "#12080A";
+  ctx.fillRect(0, 0, cardW, headerH);
+
+  // Bottom separator line
+  ctx.strokeStyle = "rgba(201,168,76,0.4)";
+  ctx.lineWidth = 0.5;
+  ctx.beginPath();
+  ctx.moveTo(80, headerH - 8);
+  ctx.lineTo(cardW - 80, headerH - 8);
+  ctx.stroke();
+
+  // Title
+  const titleFontSize = Math.round(cardW * 0.028);
+  ctx.font = `bold ${titleFontSize}px MeethaFont`;
+  ctx.fillStyle = "#F5F0E8";
+  ctx.textAlign = "center";
+  ctx.fillText("YOUR VISUAL TRANSFORMATION", cardW / 2, Math.round(headerH * 0.44));
+
+  // Subtitle
+  const subFontSize = Math.round(cardW * 0.011);
+  ctx.font = `${subFontSize}px MeethaFont`;
+  ctx.fillStyle = "#C9A84C";
+  ctx.globalAlpha = 0.9;
+  ctx.fillText("PERSONALIZED. ELEVATED. AUTHENTICALLY YOU.", cardW / 2, Math.round(headerH * 0.73));
+  ctx.globalAlpha = 1;
+
+  return canvas.toBuffer("image/png") as Buffer;
+}
+
+/** Render BEFORE or AFTER label as a small cream rectangle with dark text */
+function renderLabel(text: string, labelW: number, labelH: number): Buffer {
+  ensureFonts();
+  const canvas = createCanvas(labelW, labelH);
+  const ctx = canvas.getContext("2d");
+
+  ctx.fillStyle = "#F5F0E8";
+  ctx.fillRect(0, 0, labelW, labelH);
+
+  const fontSize = Math.round(labelH * 0.38);
+  ctx.font = `bold ${fontSize}px MeethaFont`;
+  ctx.fillStyle = "#1A1008";
+  ctx.textAlign = "center";
+  ctx.fillText(text, labelW / 2, Math.round(labelH * 0.68));
+
+  return canvas.toBuffer("image/png") as Buffer;
+}
+
+/** Render the placeholder panel when no before photo is available */
+function renderBeforePlaceholder(w: number, h: number): Buffer {
+  ensureFonts();
+  const canvas = createCanvas(w, h);
+  const ctx = canvas.getContext("2d");
+
+  ctx.fillStyle = "#1A1008";
+  ctx.fillRect(0, 0, w, h);
+
+  // Circle with + icon
+  const cx = w / 2;
+  const cy = h / 2;
+  const r = 40;
+  ctx.strokeStyle = "rgba(201,168,76,0.5)";
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, 0, Math.PI * 2);
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.moveTo(cx, cy - 20);
+  ctx.lineTo(cx, cy + 20);
+  ctx.moveTo(cx - 20, cy);
+  ctx.lineTo(cx + 20, cy);
+  ctx.stroke();
+
+  const fontSize = Math.round(w * 0.022);
+  ctx.font = `${fontSize}px MeethaFont`;
+  ctx.fillStyle = "rgba(201,168,76,0.6)";
+  ctx.textAlign = "center";
+  ctx.fillText("YOUR PHOTO", cx, cy + r + 30);
+  ctx.fillText("GOES HERE", cx, cy + r + 30 + fontSize * 1.4);
+
+  return canvas.toBuffer("image/png") as Buffer;
+}
+
+/** Render the footer band with 5 columns of style brief data */
+function renderFooter(cardW: number, footerH: number, brief: StyleBrief): Buffer {
+  ensureFonts();
+  const canvas = createCanvas(cardW, footerH);
+  const ctx = canvas.getContext("2d");
+
+  const GOLD = "#C9A84C";
+  const CREAM = "#F5F0E8";
+  const WARM_GREY = "#8A7F74";
+  const COL_W = cardW / 5;
+  const COL_PAD = Math.round(cardW * 0.016);
+  const HEADER_FONT = Math.round(cardW * 0.009);
+  const BODY_FONT = Math.round(cardW * 0.010);
+  const LABEL_Y = Math.round(footerH * 0.10);
+  const CONTENT_START_Y = Math.round(footerH * 0.18);
+
+  // Background
+  ctx.fillStyle = "#12080A";
+  ctx.fillRect(0, 0, cardW, footerH);
+
+  // Top separator
+  ctx.strokeStyle = "rgba(201,168,76,0.3)";
+  ctx.lineWidth = 0.5;
+  ctx.beginPath();
+  ctx.moveTo(80, 1);
+  ctx.lineTo(cardW - 80, 1);
+  ctx.stroke();
+
+  // Column dividers
+  ctx.strokeStyle = "rgba(201,168,76,0.15)";
+  for (let i = 1; i < 5; i++) {
+    ctx.beginPath();
+    ctx.moveTo(COL_W * i, 20);
+    ctx.lineTo(COL_W * i, footerH - 20);
+    ctx.stroke();
+  }
+
+  // Helper: draw column header
+  function drawColHeader(label: string, colIndex: number) {
+    const cx = COL_W * colIndex + COL_W / 2;
+    ctx.font = `bold ${HEADER_FONT}px MeethaFont`;
+    ctx.fillStyle = CREAM;
+    ctx.globalAlpha = 0.9;
+    ctx.textAlign = "center";
+    ctx.fillText(label, cx, LABEL_Y);
+    ctx.globalAlpha = 1;
+  }
+
+  // Helper: draw wrapped body text centered in column
+  function drawColBody(text: string, colIndex: number, startY: number, fill = WARM_GREY) {
+    const cx = COL_W * colIndex + COL_W / 2;
+    const maxW = COL_W - COL_PAD * 2;
+    ctx.font = `${BODY_FONT}px MeethaFont`;
+    ctx.fillStyle = fill;
+    ctx.textAlign = "center";
+    const lines = wrapTextCanvas(ctx, text, maxW);
+    const lineH = BODY_FONT * 1.5;
+    lines.slice(0, 6).forEach((line, i) => {
+      ctx.fillText(line, cx, startY + i * lineH);
+    });
+  }
+
+  // Sanitize all brief text to prevent tofu boxes from AI-generated unicode
+  const sanitizedBrief = {
+    colorPalette: {
+      swatches: brief.colorPalette.swatches,
+      description: sanitizeText(brief.colorPalette.description),
+    },
+    styleDirection: { description: sanitizeText(brief.styleDirection.description) },
+    makeupEnergy: { description: sanitizeText(brief.makeupEnergy.description) },
+    jewelryDirection: { description: sanitizeText(brief.jewelryDirection.description) },
+    yourEnergy: {
+      keywords: brief.yourEnergy.keywords.map(sanitizeText),
+      description: sanitizeText(brief.yourEnergy.description),
+    },
+  };
+
+  // ── Col 0: Color Palette ──
+  drawColHeader("YOUR COLOR PALETTE", 0);
+  const swatches = sanitizedBrief.colorPalette.swatches.slice(0, 5);
+  const swatchR = Math.round(cardW * 0.013);
+  const swatchSpacing = swatchR * 2 + 6;
+  const swatchY = CONTENT_START_Y + swatchR + 4;
+  const swatchStartX = COL_W * 0 + COL_W / 2 - ((swatches.length - 1) * swatchSpacing) / 2;
+  swatches.forEach((hex, i) => {
+    ctx.beginPath();
+    ctx.arc(swatchStartX + i * swatchSpacing, swatchY, swatchR, 0, Math.PI * 2);
+    ctx.fillStyle = hex;
+    ctx.fill();
+  });
+  drawColBody(sanitizedBrief.colorPalette.description, 0, swatchY + swatchR + 16);
+
+  // ── Col 1: Style Direction ──
+  drawColHeader("STYLE DIRECTION", 1);
+  drawColBody(sanitizedBrief.styleDirection.description, 1, CONTENT_START_Y);
+
+  // ── Col 2: Makeup Energy ──
+  drawColHeader("MAKEUP ENERGY", 2);
+  drawColBody(sanitizedBrief.makeupEnergy.description, 2, CONTENT_START_Y);
+
+  // ── Col 3: Jewelry Direction ──
+  drawColHeader("JEWELRY DIRECTION", 3);
+  drawColBody(sanitizedBrief.jewelryDirection.description, 3, CONTENT_START_Y);
+
+  // ── Col 4: Your Energy ──
+  drawColHeader("YOUR ENERGY", 4);
+  const energyKeywords = sanitizedBrief.yourEnergy.keywords.slice(0, 4);
+  const kwFontSize = Math.round(cardW * 0.011);
+  const boxPad = COL_PAD;
+  const boxX = COL_W * 4 + boxPad;
+  const boxW = COL_W - boxPad * 2;
+  const boxH = energyKeywords.length * (kwFontSize * 2) + 16;
+  const boxY = CONTENT_START_Y - 4;
+
+  // Energy box border
+  ctx.strokeStyle = "rgba(201,168,76,0.4)";
+  ctx.lineWidth = 0.8;
+  ctx.strokeRect(boxX, boxY, boxW, boxH);
+
+  // Keywords
+  ctx.font = `bold ${kwFontSize}px MeethaFont`;
+  ctx.fillStyle = CREAM;
+  ctx.textAlign = "center";
+  const kwCx = COL_W * 4 + COL_W / 2;
+  energyKeywords.forEach((kw, i) => {
+    ctx.fillText(kw, kwCx, boxY + kwFontSize * 1.5 + i * kwFontSize * 2);
+  });
+
+  // Energy description below box
+  drawColBody(sanitizedBrief.yourEnergy.description, 4, boxY + boxH + 14);
+
+  // ── Bottom wordmark ──
+  const wmFontSize = Math.round(cardW * 0.009);
+  ctx.font = `${wmFontSize}px MeethaFont`;
+  ctx.fillStyle = GOLD;
+  ctx.globalAlpha = 0.5;
+  ctx.textAlign = "center";
+  ctx.fillText("styled by Meetha", cardW / 2, footerH - 12);
+  ctx.globalAlpha = 1;
+
+  return canvas.toBuffer("image/png") as Buffer;
 }
 
 // ─── Card Compositor ─────────────────────────────────────────────────────────
@@ -234,49 +507,24 @@ export async function buildTransformationCard(params: {
   const FOOTER_H = 340;
   const CARD_H = HEADER_H + PHOTO_H + FOOTER_H;
 
-  const BG_DARK = { r: 18, g: 12, b: 8 };
-  const GOLD = "#C9A84C";
-  const CREAM = "#F5F0E8";
-  const WARM_GREY = "#8A7F74";
+  const BG_DARK = { r: 18, g: 8, b: 10 };
 
-  // ── 1. Header SVG ──────────────────────────────────────────────────────────
-  const headerSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="${CARD_W}" height="${HEADER_H}">
-  <rect width="${CARD_W}" height="${HEADER_H}" fill="rgb(${BG_DARK.r},${BG_DARK.g},${BG_DARK.b})"/>
-  <line x1="80" y1="${HEADER_H - 8}" x2="${CARD_W - 80}" y2="${HEADER_H - 8}" stroke="${GOLD}" stroke-width="0.5" opacity="0.4"/>
-  ${svgText("YOUR VISUAL TRANSFORMATION", CARD_W / 2, 52, {
-    fontSize: 34,
-    fill: CREAM,
-    fontFamily: "Georgia, 'Times New Roman', serif",
-    fontWeight: "bold",
-    letterSpacing: 6,
-  })}
-  ${svgText("PERSONALIZED. ELEVATED. AUTHENTICALLY YOU.", CARD_W / 2, 88, {
-    fontSize: 13,
-    fill: GOLD,
-    fontFamily: "Arial, sans-serif",
-    letterSpacing: 3,
-    opacity: 0.9,
-  })}
-</svg>`;
-
-  const headerBuf = await sharp(Buffer.from(headerSvg))
-    .resize(CARD_W, HEADER_H, { fit: "fill" })
-    .png()
-    .toBuffer();
+  // ── 1. Header ──────────────────────────────────────────────────────────────
+  const headerBuf = renderHeader(CARD_W, HEADER_H);
 
   // ── 2. Photo Panel ─────────────────────────────────────────────────────────
   const HALF_W = CARD_W / 2;
   const GAP = 4;
   const PHOTO_W = HALF_W - GAP / 2;
 
-  // Fetch after image (always available)
+  // After image (always available)
   const afterBuf = await fetchImageBuffer(params.afterImageUrl);
   const afterResized = await sharp(afterBuf)
     .resize(PHOTO_W, PHOTO_H, { fit: "cover", position: "top" })
     .jpeg({ quality: 90 })
     .toBuffer();
 
-  // Fetch before image or create placeholder
+  // Before image or placeholder
   let beforeResized: Buffer;
   if (params.beforeImageUrl) {
     const beforeBuf = await fetchImageBuffer(params.beforeImageUrl);
@@ -285,39 +533,19 @@ export async function buildTransformationCard(params: {
       .jpeg({ quality: 90 })
       .toBuffer();
   } else {
-    // Placeholder: dark panel with "Upload your before photo" text
-    const placeholderSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="${PHOTO_W}" height="${PHOTO_H}">
-      <rect width="${PHOTO_W}" height="${PHOTO_H}" fill="#1A1008"/>
-      <rect x="${PHOTO_W / 2 - 40}" y="${PHOTO_H / 2 - 40}" width="80" height="80" rx="40" fill="none" stroke="${GOLD}" stroke-width="1.5" opacity="0.5"/>
-      <line x1="${PHOTO_W / 2}" y1="${PHOTO_H / 2 - 20}" x2="${PHOTO_W / 2}" y2="${PHOTO_H / 2 + 20}" stroke="${GOLD}" stroke-width="1.5" opacity="0.5"/>
-      <line x1="${PHOTO_W / 2 - 20}" y1="${PHOTO_H / 2}" x2="${PHOTO_W / 2 + 20}" y2="${PHOTO_H / 2}" stroke="${GOLD}" stroke-width="1.5" opacity="0.5"/>
-      ${svgText("YOUR PHOTO", PHOTO_W / 2, PHOTO_H / 2 + 70, { fontSize: 14, fill: GOLD, letterSpacing: 3, opacity: 0.6 })}
-      ${svgText("GOES HERE", PHOTO_W / 2, PHOTO_H / 2 + 92, { fontSize: 14, fill: GOLD, letterSpacing: 3, opacity: 0.6 })}
-    </svg>`;
-    beforeResized = await sharp(Buffer.from(placeholderSvg))
+    const placeholderBuf = renderBeforePlaceholder(PHOTO_W, PHOTO_H);
+    beforeResized = await sharp(placeholderBuf)
       .resize(PHOTO_W, PHOTO_H, { fit: "fill" })
       .jpeg({ quality: 90 })
       .toBuffer();
   }
 
-  // Label overlays
-  const labelW = 120;
-  const labelH = 36;
-  const labelSvg = (text: string) => `<svg xmlns="http://www.w3.org/2000/svg" width="${labelW}" height="${labelH}">
-    <rect width="${labelW}" height="${labelH}" fill="#F5F0E8" rx="2"/>
-    ${svgText(text, labelW / 2, 25, { fontSize: 14, fill: "#1A1008", fontFamily: "Arial, sans-serif", fontWeight: "bold", letterSpacing: 2 })}
-  </svg>`;
+  // BEFORE / AFTER labels
+  const LABEL_W = 120;
+  const LABEL_H = 36;
+  const beforeLabelBuf = renderLabel("BEFORE", LABEL_W, LABEL_H);
+  const afterLabelBuf = renderLabel("AFTER", LABEL_W, LABEL_H);
 
-  const beforeLabelBuf = await sharp(Buffer.from(labelSvg("BEFORE")))
-    .resize(labelW, labelH, { fit: "fill" })
-    .png()
-    .toBuffer();
-  const afterLabelBuf = await sharp(Buffer.from(labelSvg("AFTER")))
-    .resize(labelW, labelH, { fit: "fill" })
-    .png()
-    .toBuffer();
-
-  // Composite labels onto photos
   const beforeWithLabel = await sharp(beforeResized)
     .composite([{ input: beforeLabelBuf, top: 20, left: 20 }])
     .jpeg({ quality: 90 })
@@ -327,7 +555,7 @@ export async function buildTransformationCard(params: {
     .jpeg({ quality: 90 })
     .toBuffer();
 
-  // Combine side by side
+  // Side-by-side photo panel
   const photoPanelBuf = await sharp({
     create: { width: CARD_W, height: PHOTO_H, channels: 3, background: BG_DARK },
   })
@@ -338,122 +566,8 @@ export async function buildTransformationCard(params: {
     .jpeg({ quality: 90 })
     .toBuffer();
 
-  // ── 3. Footer SVG ──────────────────────────────────────────────────────────
-  const { brief } = params;
-  const COL_W = CARD_W / 5;
-  const COL_PAD = 20;
-  const SWATCH_R = 16;
-  const SWATCH_Y = 60;
-  const LABEL_Y = 30;
-
-  // Color swatches row
-  const swatches = brief.colorPalette.swatches.slice(0, 5);
-  const swatchSpacing = 44;
-  const swatchStartX = COL_W / 2 - ((swatches.length - 1) * swatchSpacing) / 2;
-  const swatchSvg = swatches
-    .map(
-      (hex, i) =>
-        `<circle cx="${swatchStartX + i * swatchSpacing}" cy="${SWATCH_Y}" r="${SWATCH_R}" fill="${hex}"/>`
-    )
-    .join("");
-
-  // Wrap description text for each column
-  const MAX_CHARS = 22;
-  const LINE_H = 18;
-
-  function renderWrappedText(text: string, x: number, startY: number, fill = WARM_GREY): string {
-    const lines = wrapText(text, MAX_CHARS);
-    return lines
-      .slice(0, 5)
-      .map((line, i) =>
-        svgText(line, x, startY + i * LINE_H, {
-          fontSize: 12,
-          fill,
-          fontFamily: "Arial, sans-serif",
-          textAnchor: "middle",
-        })
-      )
-      .join("");
-  }
-
-  // Column 1: Color Palette
-  const col1X = COL_W * 0 + COL_W / 2;
-  // Column 2: Style Direction
-  const col2X = COL_W * 1 + COL_W / 2;
-  // Column 3: Makeup Energy
-  const col3X = COL_W * 2 + COL_W / 2;
-  // Column 4: Jewelry Direction
-  const col4X = COL_W * 3 + COL_W / 2;
-  // Column 5: Your Energy
-  const col5X = COL_W * 4 + COL_W / 2;
-
-  const energyKeywords = brief.yourEnergy.keywords.slice(0, 4);
-  const energyBoxW = COL_W - COL_PAD * 2;
-  const energyBoxH = energyKeywords.length * 26 + 16;
-  const energyBoxX = COL_W * 4 + COL_PAD;
-  const energyBoxY = SWATCH_Y - SWATCH_R;
-
-  const footerSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="${CARD_W}" height="${FOOTER_H}">
-  <rect width="${CARD_W}" height="${FOOTER_H}" fill="rgb(${BG_DARK.r},${BG_DARK.g},${BG_DARK.b})"/>
-  <line x1="80" y1="1" x2="${CARD_W - 80}" y2="1" stroke="${GOLD}" stroke-width="0.5" opacity="0.3"/>
-
-  <!-- Column dividers -->
-  ${[1, 2, 3, 4]
-    .map(
-      (i) =>
-        `<line x1="${COL_W * i}" y1="20" x2="${COL_W * i}" y2="${FOOTER_H - 20}" stroke="${GOLD}" stroke-width="0.5" opacity="0.15"/>`
-    )
-    .join("")}
-
-  <!-- Column headers -->
-  ${svgText("YOUR COLOR PALETTE", col1X, LABEL_Y, { fontSize: 10, fill: CREAM, fontFamily: "Arial, sans-serif", fontWeight: "bold", letterSpacing: 1.5, opacity: 0.9 })}
-  ${svgText("STYLE DIRECTION", col2X, LABEL_Y, { fontSize: 10, fill: CREAM, fontFamily: "Arial, sans-serif", fontWeight: "bold", letterSpacing: 1.5, opacity: 0.9 })}
-  ${svgText("MAKEUP ENERGY", col3X, LABEL_Y, { fontSize: 10, fill: CREAM, fontFamily: "Arial, sans-serif", fontWeight: "bold", letterSpacing: 1.5, opacity: 0.9 })}
-  ${svgText("JEWELRY DIRECTION", col4X, LABEL_Y, { fontSize: 10, fill: CREAM, fontFamily: "Arial, sans-serif", fontWeight: "bold", letterSpacing: 1.5, opacity: 0.9 })}
-  ${svgText("YOUR ENERGY", col5X, LABEL_Y, { fontSize: 10, fill: CREAM, fontFamily: "Arial, sans-serif", fontWeight: "bold", letterSpacing: 1.5, opacity: 0.9 })}
-
-  <!-- Col 1: Color swatches -->
-  ${swatchSvg.replace(/cx="/g, `cx="`).replace(/cy="/g, `cy="`)}
-  ${renderWrappedText(brief.colorPalette.description, col1X, SWATCH_Y + SWATCH_R + 24)}
-
-  <!-- Col 2: Style Direction -->
-  ${renderWrappedText(brief.styleDirection.description, col2X, SWATCH_Y - 10)}
-
-  <!-- Col 3: Makeup Energy -->
-  ${renderWrappedText(brief.makeupEnergy.description, col3X, SWATCH_Y - 10)}
-
-  <!-- Col 4: Jewelry Direction -->
-  ${renderWrappedText(brief.jewelryDirection.description, col4X, SWATCH_Y - 10)}
-
-  <!-- Col 5: Your Energy box + keywords -->
-  <rect x="${energyBoxX}" y="${energyBoxY}" width="${energyBoxW}" height="${energyBoxH}" fill="none" stroke="${GOLD}" stroke-width="0.8" opacity="0.4" rx="2"/>
-  ${energyKeywords
-    .map((kw, i) =>
-      svgText(kw, col5X, energyBoxY + 26 + i * 26, {
-        fontSize: 13,
-        fill: CREAM,
-        fontFamily: "Arial, sans-serif",
-        fontWeight: "bold",
-        letterSpacing: 2,
-      })
-    )
-    .join("")}
-  ${renderWrappedText(brief.yourEnergy.description, col5X, energyBoxY + energyBoxH + 24)}
-
-  <!-- Bottom Meetha wordmark -->
-  ${svgText("MEETHA", CARD_W / 2, FOOTER_H - 16, {
-    fontSize: 11,
-    fill: GOLD,
-    fontFamily: "Georgia, serif",
-    letterSpacing: 8,
-    opacity: 0.5,
-  })}
-</svg>`;
-
-  const footerBuf = await sharp(Buffer.from(footerSvg))
-    .resize(CARD_W, FOOTER_H, { fit: "fill" })
-    .png()
-    .toBuffer();
+  // ── 3. Footer ──────────────────────────────────────────────────────────────
+  const footerBuf = renderFooter(CARD_W, FOOTER_H, params.brief);
 
   // ── 4. Assemble full card ──────────────────────────────────────────────────
   const card = await sharp({
