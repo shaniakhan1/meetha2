@@ -68,12 +68,13 @@ export default function Profile() {
   const profile = profileQuery.data;
   const credits = creditsQuery.data;
 
-  // Sync LoRA status from profile on load
+  // Sync LoRA status from profile on load — always reflect DB state
+  // Only sync when profile has loaded (profileQuery.data is defined)
   useEffect(() => {
-    if (profile?.lora_status) {
-      setLoraStatus(profile.lora_status as "training" | "ready" | "failed" | null);
+    if (profileQuery.data !== undefined) {
+      setLoraStatus((profileQuery.data?.lora_status as "training" | "ready" | "failed" | null) ?? null);
     }
-  }, [profile?.lora_status]);
+  }, [profileQuery.data?.lora_status, profileQuery.data]);
 
   // Poll for LoRA training completion
   useEffect(() => {
@@ -425,12 +426,20 @@ export default function Profile() {
                 )}
               </>
             ) : loraStatus === "training" ? (
-              <div className="flex items-start gap-3">
-                <span className="w-4 h-4 border border-gold border-t-transparent rounded-full animate-spin flex-shrink-0 mt-0.5" />
-                <div>
-                  <p className="font-serif text-sm text-charcoal">Your look is being learned.</p>
-                  <p className="font-sans text-xs text-charcoal-soft mt-1 leading-relaxed">
-                    About 20 minutes. We'll email you when it's ready. You can close this page.
+              <div className="space-y-3">
+                <div className="flex items-start gap-3">
+                  <span className="w-4 h-4 border border-gold border-t-transparent rounded-full animate-spin flex-shrink-0 mt-0.5" />
+                  <div>
+                    <p className="font-serif text-sm text-charcoal">Your look is being learned.</p>
+                    <p className="font-sans text-xs text-charcoal-soft mt-1 leading-relaxed">
+                      About 20 minutes. We'll email you when it's ready. You can close this page.
+                    </p>
+                  </div>
+                </div>
+                <div className="border border-gold/20 bg-gold/5 p-3">
+                  <p className="font-sans text-xs text-charcoal font-semibold mb-1">✓ Your photos have been received.</p>
+                  <p className="font-sans text-xs text-charcoal-soft leading-relaxed">
+                    You do not need to upload again. Meetha is training your personal AI model right now. Once complete, every image you generate will look like you.
                   </p>
                 </div>
               </div>
