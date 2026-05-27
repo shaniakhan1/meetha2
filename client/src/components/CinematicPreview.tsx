@@ -105,15 +105,15 @@ const CinematicPreview = forwardRef<HTMLDivElement, CinematicPreviewProps>(funct
         </div>
       )}
 
-      {/* ── Hook text overlay ── */}
-      {hook && (
-        <div
-          className={`absolute inset-x-0 bottom-0 flex flex-col items-center justify-end pb-8 px-6 text-center ${
-            isThumb ? "pb-4 px-3" : "pb-10 px-8"
-          }`}
-        >
+      {/* ── Hook text overlay + MEETHA branding ── */}
+      <div
+        className={`absolute inset-x-0 bottom-0 flex flex-col items-center justify-end ${
+          isThumb ? "pb-4 px-3" : "pb-10 px-8"
+        }`}
+      >
+        {hook && (
           <p
-            className="text-white leading-tight font-serif"
+            className="text-white leading-tight font-serif text-center"
             style={{
               fontSize: isThumb ? "clamp(0.75rem, 3vw, 1rem)" : "clamp(1.15rem, 5vw, 1.6rem)",
               textShadow: "0 1px 8px rgba(0,0,0,0.6), 0 2px 24px rgba(0,0,0,0.3)",
@@ -123,17 +123,17 @@ const CinematicPreview = forwardRef<HTMLDivElement, CinematicPreviewProps>(funct
           >
             {hook}
           </p>
-          {/* Meetha watermark */}
-          {!isThumb && (
-            <p
-              className="text-white/40 font-sans tracking-[0.2em] uppercase mt-3"
-              style={{ fontSize: "8px" }}
-            >
-              MEETHA
-            </p>
-          )}
-        </div>
-      )}
+        )}
+        {/* MEETHA wordmark — always visible */}
+        {!isThumb && (
+          <p
+            className="text-white/40 font-sans tracking-[0.2em] uppercase"
+            style={{ fontSize: "8px", marginTop: hook ? "12px" : "0" }}
+          >
+            M  E  E  T  H  A
+          </p>
+        )}
+      </div>
 
       {/* ── Loading shimmer ── */}
       {!loaded && (

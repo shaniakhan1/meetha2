@@ -123,23 +123,26 @@ export default function Generate() {
 
   const previewTier = getPreviewTier();
 
-  // Pre-select template from URL query param
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const template = params.get("template");
-    const validSlugs = ["paparazzi_flash", "digital_diary", "bill_please", "silk_robe_room_service", "irish_goodbye", "cleopatra_principle", "silk_robe_retaliation"];
-    if (template && validSlugs.includes(template)) {
-      setSceneCategory(template as SceneCategory);
-      setTemplateSlug(template);
-      setStep("template_preview");
-    }
-  }, []);
-
+  // Queries — declared early so useEffects below can reference them
   const profileQuery = trpc.profile.get.useQuery();
   const creditsQuery = trpc.credits.get.useQuery();
   const aestheticBriefQuery = trpc.profile.getAestheticBrief.useQuery();
   const selectHookMutation = trpc.generations.selectHook.useMutation();
   const utils = trpc.useUtils();
+
+  // Pre-select template from URL query param
+  const [pendingTemplateSlug, setPendingTemplateSlug] = useState<string | null>(null);
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const template = params.get("template");
+    const validSlugs = ["paparazzi_flash", "digital_diary", "bill_please", "silk_robe_room_service", "irish_goodbye", "cleopatra_principle", "silk_robe_retaliation", "motion_blur"];
+    if (template && validSlugs.includes(template)) {
+      setSceneCategory(template as SceneCategory);
+      setTemplateSlug(template);
+      setPendingTemplateSlug(template);
+      setStep("generating");
+    }
+  }, []);
 
   const aestheticReadMutation = trpc.generations.aestheticRead.useMutation({
     onSuccess: (data) => setAestheticRead(data),
@@ -204,6 +207,24 @@ export default function Generate() {
       }
     },
   });
+
+  // Auto-fire generation once credits are loaded (for Make Mine / template URL flow)
+  useEffect(() => {
+    if (!pendingTemplateSlug) return;
+    if (creditsQuery.isLoading) return;
+    const slug = pendingTemplateSlug;
+    setPendingTemplateSlug(null);
+    const c = creditsQuery.data;
+    if (!previewTier && (!c || (c.credits_remaining ?? 0) < STILL_COST)) {
+      setShowTopUp(true);
+      setStep("select");
+      return;
+    }
+    let idx = 0;
+    const interval = setInterval(() => { idx = (idx + 1) % GENERATING_PHRASES.length; setPhraseIndex(idx); }, 3000);
+    generateMutation.mutateAsync({ platform, sceneCategory: slug as SceneCategory }).finally(() => clearInterval(interval));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pendingTemplateSlug, creditsQuery.isLoading]);
 
   const profile = profileQuery.data;
   const credits = creditsQuery.data;
