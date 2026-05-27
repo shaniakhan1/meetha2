@@ -1044,6 +1044,12 @@ Rules:
 - lighting_direction: best light direction for her coloring (e.g. "side lighting from the left", "overhead diffused")
 - dominant_feature: the one feature that should be the focal point in styling
 - fabric_weight: light/medium/heavy, and which specific fabrics suit her coloring best
+- avoid_colors: 2-3 specific colors that wash her out or clash with her undertone (be specific: "cool grey", "orange-red", "neon yellow")
+- lipstick_family: the exact lipstick family that works best (e.g. "warm berry and brick reds", "nude rose", "deep plum")
+- jewelry_guidance: how to wear jewelry — scale, layering, and finish (e.g. "chunky warm gold, stacked, no silver")
+- silhouette_guidance: which silhouettes flatter her coloring and archetype (e.g. "structured shoulders, clean lines, minimal volume")
+- contrast_recommendation: how to use contrast in her outfits (e.g. "high contrast works — pair warm ivory with deep chocolate")
+- shopping_notes: 2-3 specific shopping rules she can use immediately (e.g. "avoid anything with a cool grey undertone", "always choose the warmer shade")
 
 Respond in this exact JSON format:
 {
@@ -1054,7 +1060,13 @@ Respond in this exact JSON format:
   "makeup_intensity": "intensity level and lead feature",
   "lighting_direction": "specific light direction and quality",
   "dominant_feature": "the feature to lead with in styling",
-  "fabric_weight": "weight and specific fabric types"
+  "fabric_weight": "weight and specific fabric types",
+  "avoid_colors": "2-3 specific colors to avoid",
+  "lipstick_family": "exact lipstick family that works best",
+  "jewelry_guidance": "scale, layering, and finish guidance",
+  "silhouette_guidance": "silhouettes that flatter her coloring and archetype",
+  "contrast_recommendation": "how to use contrast in her outfits",
+  "shopping_notes": "2-3 specific shopping rules she can use immediately"
 }`;
 
         // STEP 2: Editorial translation pass (luxury writing second)
@@ -1110,8 +1122,14 @@ Respond in this exact JSON format:
                     lighting_direction: { type: "string" },
                     dominant_feature: { type: "string" },
                     fabric_weight: { type: "string" },
+                    avoid_colors: { type: "string" },
+                    lipstick_family: { type: "string" },
+                    jewelry_guidance: { type: "string" },
+                    silhouette_guidance: { type: "string" },
+                    contrast_recommendation: { type: "string" },
+                    shopping_notes: { type: "string" },
                   },
-                  required: ["undertone", "contrast_level", "best_metals", "ideal_whites_blacks", "makeup_intensity", "lighting_direction", "dominant_feature", "fabric_weight"],
+                  required: ["undertone", "contrast_level", "best_metals", "ideal_whites_blacks", "makeup_intensity", "lighting_direction", "dominant_feature", "fabric_weight", "avoid_colors", "lipstick_family", "jewelry_guidance", "silhouette_guidance", "contrast_recommendation", "shopping_notes"],
                   additionalProperties: false,
                 },
               },
@@ -1164,6 +1182,12 @@ Respond in this exact JSON format:
             lighting_direction: diagnostic.lighting_direction,
             dominant_feature: diagnostic.dominant_feature,
             fabric_weight: diagnostic.fabric_weight,
+            avoid_colors: diagnostic.avoid_colors,
+            lipstick_family: diagnostic.lipstick_family,
+            jewelry_guidance: diagnostic.jewelry_guidance,
+            silhouette_guidance: diagnostic.silhouette_guidance,
+            contrast_recommendation: diagnostic.contrast_recommendation,
+            shopping_notes: diagnostic.shopping_notes,
             palette: editorial.color_palette,
             metals: editorial.metals,
             fabrics: editorial.fabrics,
@@ -1184,6 +1208,12 @@ Respond in this exact JSON format:
             lighting_direction: diagnostic.lighting_direction,
             dominant_feature: diagnostic.dominant_feature,
             fabric_weight: diagnostic.fabric_weight,
+            avoid_colors: diagnostic.avoid_colors,
+            lipstick_family: diagnostic.lipstick_family,
+            jewelry_guidance: diagnostic.jewelry_guidance,
+            silhouette_guidance: diagnostic.silhouette_guidance,
+            contrast_recommendation: diagnostic.contrast_recommendation,
+            shopping_notes: diagnostic.shopping_notes,
             // Editorial fields (shown in prose section)
             color_palette: editorial.color_palette,
             metals: editorial.metals,
@@ -1203,6 +1233,12 @@ Respond in this exact JSON format:
             lighting_direction: "Side lighting from the left, late afternoon.",
             dominant_feature: "Eyes and bone structure.",
             fabric_weight: "Medium weight. Silk, crepe, heavyweight jersey.",
+            avoid_colors: "Cool grey, neon yellow, icy lavender.",
+            lipstick_family: "Warm berry and brick reds.",
+            jewelry_guidance: "Chunky warm gold, stacked. No silver.",
+            silhouette_guidance: "Structured shoulders, clean lines, minimal volume.",
+            contrast_recommendation: "High contrast works. Pair warm ivory with deep chocolate.",
+            shopping_notes: "Always choose the warmer shade. Avoid cool grey undertones. Cashmere and silk over synthetic.",
             color_palette: "Warm ivory, deep camel, amber gold.",
             metals: "Warm yellow gold. Stack bangles or layer chains.",
             fabrics: "Silk, heavyweight jersey, crepe.",

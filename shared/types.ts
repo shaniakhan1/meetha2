@@ -48,38 +48,38 @@ export const VIDEO_FORMAT_ASPECT: Record<VideoFormat, string> = {
 };
 
 export const ARCHETYPE_LABELS: Record<Archetype, string> = {
-  luxury_minimal: "Still Frequency",
-  elegant_chaos: "Electric Frequency",
-  soft_power: "Magnetic Frequency",
-  dark_feminine: "Deep Frequency",
-  ethereal: "Light Frequency",
+  luxury_minimal: "Quiet Luxury",
+  elegant_chaos: "Warm Editorial",
+  soft_power: "Magnetic Minimalist",
+  dark_feminine: "Sculpted Glamour",
+  ethereal: "Soft Contrast",
 };
 
 export const ARCHETYPE_DESCRIPTIONS: Record<Archetype, string> = {
   luxury_minimal:
-    "Stillness as power. Negative space that speaks. The room goes quiet when this energy enters.",
+    "Extreme negative space. Cream, ivory, and warm stone. One deliberate piece. Nothing unnecessary.",
   elegant_chaos:
-    "High voltage, soft landing. Contradictions that make sense only when you feel them.",
+    "Rich texture, layered warmth. Amber, cognac, and deep camel. Structured silhouettes with one undone element.",
   soft_power:
-    "Warmth with edges. People lean in without knowing why. Presence that does not announce itself.",
+    "Clean lines, warm neutrals. Cashmere and linen. Understated jewelry. The look that does not try.",
   dark_feminine:
-    "Depth that cannot be measured. Unhurried, unshaken. Felt before it is seen.",
+    "Deep jewel tones and warm blacks. Velvet, leather, and heavy silk. Bold lip, strong brow, minimal eye.",
   ethereal:
-    "Translucent and luminous. The frequency of something sacred. Light moving through silk.",
+    "Soft whites, blush, and warm ivory. Lightweight fabrics. Diffused light. Delicate metals and minimal contrast.",
 };
 
 export const MOOD_LABELS: Record<Mood, string> = {
-  soft: "Low and Warm",
-  magnetic: "High and Clear",
-  grounded: "Rooted and Steady",
-  untamed: "Open and Moving",
+  soft: "Intimate and Warm",
+  magnetic: "Sharp and Polished",
+  grounded: "Grounded and Certain",
+  untamed: "Alive and Uncontained",
 };
 
 export const MOOD_DESCRIPTIONS: Record<Mood, string> = {
-  soft: "Slow, intimate, and deeply present. The frequency of a quiet morning that belongs only to you.",
-  magnetic: "Effortlessly drawing. Clear signal, no static. Everything in the frame feels chosen.",
-  grounded: "Unhurried and certain. The confidence of someone who has already decided.",
-  untamed: "Uncontained and alive. Beauty that refuses to be organized. Wildness with taste.",
+  soft: "Soft light, close framing, warm tones. Styling is intimate and layered. The camera moves slowly.",
+  magnetic: "High contrast, precise styling, clean lines. Every element is deliberate. Nothing is accidental.",
+  grounded: "Natural light, relaxed silhouettes, warm textures. Unhurried. The confidence of someone who has already decided.",
+  untamed: "Movement, texture, and energy. Styling is bold and layered. The frame cannot fully contain it.",
 };
 
 export const PLATFORM_LABELS: Record<Platform, string> = {

@@ -554,21 +554,21 @@
 - [x] Vitest: 13 tests passing
 
 ## V60 -- Strip Captions/Hashtags, Fix Brief + Style Card Pipeline
-- [ ] Remove captions, hashtags, hooks from generation pipeline (routers.ts)
-- [ ] Remove hook/caption text overlay from Dashboard generation card flip view
-- [ ] Remove caption/hashtag display from Generate.tsx result view
-- [ ] Fix styling brief (aestheticRead) generation -- debug why it never resolves
-- [ ] Fix style card generation -- ensure card_url is stored for every image
+- [x] Remove captions, hashtags, hooks from generation pipeline (routers.ts)
+- [x] Remove hook/caption text overlay from Dashboard generation card flip view
+- [x] Remove caption/hashtag display from Generate.tsx result view
+- [x] Fix styling brief (aestheticRead) generation -- debug why it never resolves
+- [x] Fix style card generation -- ensure card_url is stored for every image
 - [x] TypeScript: zero errors
 - [x] Vitest: all tests passing
 
 ## V60 -- Pipeline Stabilization + Color Analysis Upgrade
-- [ ] Fix styling brief (aestheticRead) generation -- debug and fix why it never resolves
-- [ ] Fix style card generation -- ensure card_url is stored for every image
-- [ ] Strip captions, hashtags, hooks from generation pipeline and UI
-- [ ] Add "Copy text" button (one line: template name or scene + "styled by Meetha")
-- [ ] Upgrade color analysis to two-step: structured attributes first (undertone, contrast, metals, whites/blacks, makeup intensity, lighting direction, dominant feature, fabric weight), then editorial translation
-- [ ] Rename "Your Styling Brief" to "Your Color Analysis" in Profile
+- [x] Fix styling brief (aestheticRead) generation -- debug and fix why it never resolves
+- [x] Fix style card generation -- ensure card_url is stored for every image
+- [x] Strip captions, hashtags, hooks from generation pipeline and UI
+- [x] Add "Copy text" button (one line: template name or scene + "styled by Meetha")
+- [x] Upgrade color analysis to two-step: structured attributes first (undertone, contrast, metals, whites/blacks, makeup intensity, lighting direction, dominant feature, fabric weight), then editorial translation
+- [x] Rename "Your Styling Brief" to "Your Color Analysis" in Profile
 - [x] TypeScript: zero errors
 - [x] Vitest: all tests passing
 
@@ -584,3 +584,16 @@
 - [x] Rename "Your Styling Brief" -> "Your Color Analysis" in Profile.tsx
 - [x] TypeScript: zero errors
 - [x] Vitest: all tests passing
+
+## Profile Page Restructure (V70)
+- [x] Reorder Profile sections: Visual Identity → Color Analysis → Styling Guide → Training → Optional settings
+- [x] Remove Caption Voice section entirely
+- [x] Reframe ARCHETYPE_LABELS from "Frequency" language to visual styling descriptors
+- [x] Reframe MOOD_LABELS from abstract energy to style-connected descriptors
+- [x] Reframe ARCHETYPE_DESCRIPTIONS to be styling-specific, not affirmation language
+- [x] Reframe MOOD_DESCRIPTIONS to be styling-specific
+- [x] Reframe "Make Images Look Like You" training section as premium identity intelligence
+- [x] Strengthen Color Analysis display: add avoid colors, lipstick families, jewelry, silhouette, contrast guidance
+- [x] Update aestheticRead LLM prompt for richer output fields
+- [x] Update AestheticBrief type in db.ts for new fields
+- [x] Update Profile.tsx AestheticBriefSection to display new fields

@@ -55,6 +55,13 @@ export type AestheticBrief = {
   lighting_direction: string;
   dominant_feature: string;
   fabric_weight: string;
+  // Extended diagnostic fields
+  avoid_colors?: string;
+  lipstick_family?: string;
+  jewelry_guidance?: string;
+  silhouette_guidance?: string;
+  contrast_recommendation?: string;
+  shopping_notes?: string;
   // Editorial translation layer (luxury writing second)
   palette: string;
   metals: string;

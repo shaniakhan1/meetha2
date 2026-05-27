@@ -229,9 +229,9 @@ export default function Profile() {
           <div className="border border-gold/40 bg-gold/8 p-4 flex items-start gap-3">
             <span className="w-4 h-4 border border-gold border-t-transparent rounded-full animate-spin flex-shrink-0 mt-0.5" />
             <div>
-              <p className="font-sans text-sm font-semibold text-charcoal">Your personal model is training.</p>
+              <p className="font-sans text-sm font-semibold text-charcoal">Your visual identity is being built.</p>
               <p className="font-sans text-xs text-charcoal-soft mt-1 leading-relaxed">
-                This takes about 20 minutes. We'll email you when it's ready — you can close this page and come back later.
+                About 20 minutes. We'll email you when it's ready. You can close this page and come back later.
               </p>
             </div>
           </div>
@@ -239,6 +239,9 @@ export default function Profile() {
       )}
 
       <div className="flex-1 px-4 py-6 space-y-8">
+
+        {/* ── Color Analysis HERO ── */}
+        <AestheticBriefSection />
 
         {/* ── Account ── */}
         <div>
@@ -300,7 +303,7 @@ export default function Profile() {
         {/* ── Frequency (Archetype) ── */}
         <div>
           <div className="flex items-center justify-between mb-4">
-            <p className="font-sans text-sm font-semibold text-charcoal">Your Frequency</p>
+            <p className="font-sans text-sm font-semibold text-charcoal">Your Style Archetype</p>
             <button
               onClick={() => setEditing(editing === "archetype" ? null : "archetype")}
               className="font-sans text-xs tracking-widest uppercase text-gold hover:text-charcoal transition-colors"
@@ -350,7 +353,7 @@ export default function Profile() {
         {/* ── Energy (Mood) ── */}
         <div>
           <div className="flex items-center justify-between mb-4">
-            <p className="font-sans text-sm font-semibold text-charcoal">Your Energy</p>
+            <p className="font-sans text-sm font-semibold text-charcoal">Your Styling Energy</p>
             <button
               onClick={() => setEditing(editing === "mood" ? null : "mood")}
               className="font-sans text-xs tracking-widest uppercase text-gold hover:text-charcoal transition-colors"
@@ -395,15 +398,15 @@ export default function Profile() {
           )}
         </div>
 
-        {/* ── Make Images Look Like You (LoRA) ── */}
+        {/* ── Your Visual Identity (LoRA) ── */}
         <div>
           <div className="flex items-center justify-between mb-2">
-            <p className="font-sans text-sm font-semibold text-charcoal">Make Images Look Like You</p>
+            <p className="font-sans text-sm font-semibold text-charcoal">Your Visual Identity</p>
             {loraStatus === "ready" && <span className="font-sans text-xs text-gold">Active ✓</span>}
-            {loraStatus === "training" && <span className="font-sans text-xs text-charcoal-soft animate-pulse">Training...</span>}
+            {loraStatus === "training" && <span className="font-sans text-xs text-charcoal-soft animate-pulse">Learning...</span>}
           </div>
           <p className="font-sans text-xs text-charcoal-soft mb-4 leading-relaxed">
-            Upload 10–20 solo selfies. Meetha trains a personal AI model on your face so every image it creates actually looks like you, in any scene, any outfit.
+            Upload 10–20 solo photos. Meetha builds a custom visual model from your face so every image it creates looks like you, in any scene, any outfit, any light.
           </p>
 
           <div className="p-4 border border-sand bg-warm-white/60 space-y-4">
@@ -411,10 +414,10 @@ export default function Profile() {
               <>
                 <div className="flex items-center gap-3">
                   <div className="w-2 h-2 rounded-full bg-gold flex-shrink-0" />
-                  <p className="font-sans text-sm text-charcoal">Your personal look is active.</p>
+                  <p className="font-sans text-sm text-charcoal">Your visual identity is active.</p>
                 </div>
                 <p className="font-sans text-xs text-charcoal-soft leading-relaxed">
-                  Every image you generate now looks like you. Training a new look will replace the current one.
+                  Every image Meetha creates now looks like you. Your custom model is built from your photos and updates with each generation.
                 </p>
 {/* Retrain section - free first retrain, $19 for subsequent */}
                 {retrainStatusQuery.data?.hasUnusedPurchase ? (
@@ -468,16 +471,16 @@ export default function Profile() {
                 <div className="flex items-start gap-3">
                   <span className="w-4 h-4 border border-gold border-t-transparent rounded-full animate-spin flex-shrink-0 mt-0.5" />
                   <div>
-                    <p className="font-serif text-sm text-charcoal">Your look is being learned.</p>
+                    <p className="font-serif text-sm text-charcoal">Your visual identity is being built.</p>
                     <p className="font-sans text-xs text-charcoal-soft mt-1 leading-relaxed">
                       About 20 minutes. We'll email you when it's ready. You can close this page.
                     </p>
                   </div>
                 </div>
                 <div className="border border-gold/20 bg-gold/5 p-3">
-                  <p className="font-sans text-xs text-charcoal font-semibold mb-1">✓ Your photos have been received.</p>
+                  <p className="font-sans text-xs text-charcoal font-semibold mb-1">✓ Photos received. Building your model now.</p>
                   <p className="font-sans text-xs text-charcoal-soft leading-relaxed">
-                    You do not need to upload again. Meetha is training your personal AI model right now. Once complete, every image you generate will look like you.
+                    You do not need to upload again. Once complete, every image Meetha creates will look like you.
                   </p>
                 </div>
               </div>
@@ -620,8 +623,8 @@ export default function Profile() {
           </div>
         </div>
 
-        {/* ── Caption Voice ── */}
-        <div>
+        {/* Caption Voice removed - not a primary profile feature */}
+        {false && <div className="hidden">
           <div className="flex items-center justify-between mb-4">
             <p className="font-sans text-sm font-semibold text-charcoal">Caption Voice</p>
             <button
@@ -638,7 +641,7 @@ export default function Profile() {
                 <>
                   <p className="font-sans text-xs text-gold mb-1">Set</p>
                   <p className="font-serif text-sm text-charcoal capitalize">
-                    {profile.voice_style.replace(/,/g, " ·")}
+                    {profile?.voice_style?.replace(/,/g, " ·")}
                   </p>
                 </>
               ) : (
@@ -717,7 +720,7 @@ export default function Profile() {
               </button>
             </div>
           )}
-        </div>
+        </div>}
 
         {/* ── Body Preference ── */}
         <div>
@@ -774,9 +777,6 @@ export default function Profile() {
             </div>
           )}
         </div>
-
-        {/* ── Your Aesthetic Brief ── */}
-        <AestheticBriefSection />
 
         {/* ── Upgrade ── */}
         {credits?.tier === "free" && (
@@ -861,11 +861,16 @@ function AestheticBriefSection() {
   const diagnosticRows: { label: string; value?: string }[] = [
     { label: "Undertone", value: (brief as any).undertone },
     { label: "Contrast", value: (brief as any).contrast_level },
-    { label: "Metals", value: (brief as any).best_metals },
-    { label: "Whites/Blacks", value: (brief as any).ideal_whites_blacks },
-    { label: "Makeup", value: (brief as any).makeup_intensity },
-    { label: "Lighting", value: (brief as any).lighting_direction },
     { label: "Lead Feature", value: (brief as any).dominant_feature },
+    { label: "Best Metals", value: (brief as any).best_metals },
+    { label: "Whites / Blacks", value: (brief as any).ideal_whites_blacks },
+    { label: "Avoid", value: (brief as any).avoid_colors },
+    { label: "Makeup Intensity", value: (brief as any).makeup_intensity },
+    { label: "Lipstick", value: (brief as any).lipstick_family },
+    { label: "Jewelry", value: (brief as any).jewelry_guidance },
+    { label: "Silhouette", value: (brief as any).silhouette_guidance },
+    { label: "Contrast Rule", value: (brief as any).contrast_recommendation },
+    { label: "Lighting", value: (brief as any).lighting_direction },
     { label: "Fabrics", value: (brief as any).fabric_weight },
   ].filter(r => r.value);
   const editorialRows: { label: string; value: string }[] = [
@@ -876,6 +881,7 @@ function AestheticBriefSection() {
     { label: "Lighting", value: brief.lighting },
     { label: "Hair", value: brief.hair },
   ];
+  const shoppingNotes: string | undefined = (brief as any).shopping_notes;
 
   return (
     <div>
@@ -920,8 +926,18 @@ function AestheticBriefSection() {
           </div>
         ))}
       </div>
+      {shoppingNotes && (
+        <div className="border border-sand bg-warm-white/60 mt-3">
+          <div className="px-4 py-2 border-b border-sand/60">
+            <p className="font-sans text-[10px] tracking-[0.2em] uppercase text-charcoal-soft/50">Shopping Brief</p>
+          </div>
+          <div className="px-4 py-3">
+            <p className="font-sans text-sm text-charcoal leading-relaxed">{shoppingNotes}</p>
+          </div>
+        </div>
+      )}
       <p className="font-sans text-xs text-charcoal-soft/50 mt-2 leading-relaxed">
-        Updates automatically with each generation. Use this as your shopping brief, shoot brief, and styling reference.
+        Send this to your stylist, photographer, or use it to shop. Updates with each generation.
       </p>
     </div>
   );
