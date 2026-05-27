@@ -155,22 +155,22 @@ export async function generateImageWithLora(options: {
     | "landscape_16_9"
     | "landscape_4_3";
 
-  // Inject trigger phrase AND physical descriptors as a text anchor.
-  // Physical descriptors (e.g. "white/silver hair, warm medium-brown skin") override
-  // FLUX's base model priors so the generated image matches the user's actual appearance.
+  // Scene composition MUST come first — Flux/FLUX-LoRA heavily weights early tokens.
+  // Placing the trigger phrase first causes the model to collapse into beauty-portrait mode
+  // before it reads the cinematic scene instructions.
+  // Physical descriptors are appended after the trigger as a soft identity anchor.
   const physicalAnchor = options.physicalDescriptors
-    ? `, ${options.physicalDescriptors},`
+    ? `, ${options.physicalDescriptors}`
     : "";
-  // Always reinforce jewelry, styling, and lighting so every LoRA output looks editorial and styled.
-  const stylingReinforcement = " layered gold jewelry, delicate necklace, statement earrings or rings visible, polished skin, editorial makeup, intentional styling, cinematic directional lighting, warm golden hour or soft studio light, photorealistic,";
-  const promptWithTrigger = `${options.triggerPhrase}${physicalAnchor}${stylingReinforcement} ${options.prompt}`;
+  // Scene prompt leads. Identity injected at the end.
+  const promptWithTrigger = `${options.prompt}, PERSON: ${options.triggerPhrase}${physicalAnchor}`;
 
   const result = (await fal.subscribe("fal-ai/flux-lora", {
     input: {
       prompt: promptWithTrigger,
       // negative_prompt is supported by flux-lora at runtime but not in the TS type definitions
       ...({
-        negative_prompt: "hyper-thin body, extremely slender waist, exaggerated hourglass, unrealistic proportions, model-thin, emaciated, underweight appearance, distorted body shape, elongated limbs, stretched figure, body modification, plastic surgery look, unnatural waist, pinched waist, corset-thin, fashion-model distortion",
+        negative_prompt: "centered portrait, beauty headshot, glamour shot, studio portrait, influencer selfie, symmetrical composition, direct eye contact, clean background, posed headshot, close-up beauty portrait, fashion editorial portrait, hyper-thin body, extremely slender waist, exaggerated hourglass, unrealistic proportions, model-thin, emaciated, underweight appearance, distorted body shape, elongated limbs, stretched figure, body modification, plastic surgery look, unnatural waist, pinched waist, corset-thin, fashion-model distortion",
       } as Record<string, unknown>),
       image_size: imageSize,
       loras: [

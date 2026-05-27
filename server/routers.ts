@@ -58,22 +58,65 @@ const SCENE_PROMPTS: Record<string, string> = {
     "a thick leather journal open on a marble surface, gold pen resting across the page, warm morning window light, intentional workspace, no clutter",
   date_night:
     "a champagne coupe close-up, soft candlelight catching the rim, deep jewel-toned velvet in the background, warm amber bokeh, cinematic and unhurried",
+
+  // ── CINEMATIC TEMPLATES ────────────────────────────────────────────────────
+  // Scene composition leads. Camera position, movement, environment, imperfection.
+  // Identity/LoRA trigger is injected LAST by the caller.
+  // "photorealistic" and "beautiful" are intentionally absent — they collapse Flux into beauty-portrait mode.
+
   paparazzi_flash:
-    "harsh direct flash photography, slight motion blur, overexposed highlights, heavy film grain, candid street angle, woman caught mid-movement looking effortlessly stunning, one of these locations: blurry restaurant exit at night, back seat of a taxi with window reflections, hotel elevator mirror, late-night diner booth, airport terminal gate, convenience store exit, laughing with someone off-frame - no face visible, just the energy of someone who looks incredible without trying, editorial female-gaze, 2000s paparazzi aesthetic, anti-AI texture, vertical 9:16 framing",
+    "CAMERA: harsh direct flash from street level, slightly below eye line, off-center framing, subject not looking at camera. " +
+    "MOVEMENT: woman caught mid-turn exiting upscale restaurant or bar at night, hair mid-swing, one hand raised, mid-stride. " +
+    "ENVIRONMENT: blurred crowd behind her, wet street reflections, warm amber venue light spilling through glass doors, other guests blurred. " +
+    "LIGHTING: overexposed flash highlights, mixed flash and ambient nightlife warmth, harsh shadows. " +
+    "IMPERFECTION: slight motion blur, imperfect candid framing, partial body crop, asymmetric composition, documentary texture. " +
+    "STYLE: 2000s paparazzi film grain, anti-AI texture, 35mm analog, editorial female-gaze, vertical 9:16 framing",
+
   digital_diary:
     "analog scrapbook aesthetic, one instant polaroid photo taped with a small piece of washi tape, handwritten note on lined paper beside it, dried flower or pressed petal detail, soft warm window light, linen or cork board surface, film grain texture, intimate and personal, feels like a page from a real woman's private journal, no faces, editorial stillness, warm cream and faded yellow tones, vertical 9:16 framing",
+
   bill_please:
-    "cinematic fine dining moment, woman in tailored blazer or elegant dress reaching for the check at a candlelit restaurant table, calm and unbothered expression, slight smile, white tablecloth, crystal glasses, warm candlelight bokeh, other diners blurred in background, the gesture is confident and final, film grain, editorial female-gaze, quiet power aesthetic, 35mm analog warmth, vertical 9:16 framing",
+    "CAMERA: eye-level shot across the restaurant table, slightly off-center, candid angle as if photographed by someone seated nearby. " +
+    "MOVEMENT: woman's arm extended reaching for the check, hand mid-motion, slight blur on the gesture. " +
+    "ENVIRONMENT: candlelit fine dining restaurant, white tablecloth, crystal glasses, other diners blurred in background, warm amber bokeh. " +
+    "LIGHTING: warm candlelight from below, soft ambient restaurant glow, no flash. " +
+    "IMPERFECTION: natural candid framing, slight depth-of-field softness on background, asymmetric crop. " +
+    "STYLE: 35mm analog warmth, film grain, editorial female-gaze, quiet power, vertical 9:16 framing",
+
   silk_robe_room_service:
     "close-up still life of a luxury hotel room service tray on crisp white linen: silver dome lifted to reveal a croissant and fruit, a ceramic coffee cup with steam rising, a single white rose in a bud vase, gold cutlery, warm morning window light flooding in from the left, no people, the tray is the entire subject, editorial food and lifestyle photography, shallow depth of field, film grain, 35mm analog warmth, warm cream and ivory tones, vertical 9:16 framing",
+
   irish_goodbye:
-    "low angle cinematic shot of a woman walking away from a crowded party or restaurant at night, seen from behind, elegant outfit, motion blur on the background crowd, warm amber streetlight or venue glow, she is mid-stride and not looking back, the crowd is blurred and noisy behind her, she is sharp and moving, film grain, 35mm analog street photography, the energy of someone who left without saying goodbye and felt nothing but relief, vertical 9:16 framing",
+    "CAMERA: low angle, shot from behind and below, subject walking away, no face visible. " +
+    "MOVEMENT: woman mid-stride walking away from crowded venue at night, hair moving, coat or dress in motion, not looking back. " +
+    "ENVIRONMENT: blurred noisy crowd behind her, warm amber streetlight or venue glow, wet pavement reflections, depth of field separating her from the crowd. " +
+    "LIGHTING: warm backlight from venue, rim light on silhouette, ambient nightlife warmth. " +
+    "IMPERFECTION: motion blur on background, asymmetric framing, partial crop of subject, documentary street energy. " +
+    "STYLE: 35mm analog street photography, film grain, editorial female-gaze, vertical 9:16 framing",
+
   cleopatra_principle:
-    "woman lounging on a deep velvet chaise longue or wide linen sofa, looking directly into the lens with absolute calm certainty, no smile, no performance, just presence, warm afternoon light casting long shadows, jewel-toned or cream fabric, one hand resting on the armrest, the stillness of someone who has already decided everything, film grain, editorial female-gaze, 35mm analog warmth, shallow depth of field, vertical 9:16 framing",
+    "CAMERA: eye-level, centered but unhurried, slightly wide to include environment, not a close-up portrait. " +
+    "MOVEMENT: woman completely still, one hand resting on armrest, absolute stillness as a power statement. " +
+    "ENVIRONMENT: deep velvet chaise longue or wide linen sofa, warm afternoon light casting long architectural shadows, jewel-toned or cream fabric, interior depth. " +
+    "LIGHTING: warm afternoon side light, long shadows, rich ambient warmth, no flash. " +
+    "IMPERFECTION: slight depth-of-field softness, natural asymmetry, environmental context visible. " +
+    "STYLE: 35mm analog warmth, film grain, shallow depth of field, editorial female-gaze, vertical 9:16 framing",
+
   silk_robe_retaliation:
-    "woman in a white silk robe standing at floor-to-ceiling hotel windows, seen from behind, looking out over a city skyline or treetops at golden hour, one hand resting on the glass, the robe catching the warm amber light, her posture is completely still and certain, the energy of someone who chose herself and does not need to explain it to anyone, no face visible, deep focus on the silhouette and the light, film grain, 35mm analog warmth, vertical 9:16 framing",
+    "CAMERA: shot from behind, no face visible, wide enough to include window and cityscape. " +
+    "MOVEMENT: woman completely still at floor-to-ceiling windows, one hand resting on glass, silhouette against the light. " +
+    "ENVIRONMENT: luxury hotel suite, floor-to-ceiling windows, city skyline or treetops at golden hour, robe catching warm amber light. " +
+    "LIGHTING: golden hour backlight flooding through windows, rim light on silhouette, warm amber and ivory tones. " +
+    "IMPERFECTION: deep focus on silhouette and light, natural asymmetry, environmental depth. " +
+    "STYLE: 35mm analog warmth, film grain, editorial female-gaze, vertical 9:16 framing",
+
   motion_blur:
-    "cinematic paparazzi realism, woman photographed through taxi window glass at night, city light reflections streaking across the wet glass, her silhouette partially obscured by the window frame and reflections, side profile barely visible through the blur, neon and amber light trails in the background, the image feels accidentally captured mid-life not mid-photoshoot, partial obstruction by foreground elements, shallow depth of field, heavy film grain, 35mm analog street photography, lens bloom on streetlights, wet pavement reflections, the energy of someone who became the moment without trying, no full face visible, editorial female-gaze, vertical 9:16 framing",
+    "CAMERA: photographed through moving taxi or car window glass, exterior paparazzi angle, partial obstruction by window frame. " +
+    "MOVEMENT: woman seen through wet glass mid-life, side profile barely visible, city passing behind her, she is not posing. " +
+    "ENVIRONMENT: city at night, neon and amber light trails streaking across wet glass, wet pavement reflections, light smearing from streetlights and signs. " +
+    "LIGHTING: mixed neon and amber city light through glass, lens bloom on streetlights, no flash, available light only. " +
+    "IMPERFECTION: heavy horizontal motion streaks across glass, reflections partially obscuring face, off-center framing, shallow depth of field, accidental composition. " +
+    "STYLE: heavy film grain, 35mm analog street photography, lens bloom, anti-AI texture, editorial female-gaze, vertical 9:16 framing",
 };
 
 // Digital Diary: overlay hook options
@@ -281,7 +324,7 @@ function buildImagePrompt(
   // Template scenes are complete prompts -- return them as-is with cinematic quality suffix
   // Deliberately avoid "high resolution" and "photorealistic" to prevent beauty-portrait collapse
   if (sceneCategory && SELF_CONTAINED_SCENES.has(sceneCategory) && SCENE_PROMPTS[sceneCategory]) {
-    return `${scene}, film grain, analog texture, imperfect focus, mood over sharpness, no beauty retouching, no over-sharpened faces, no sterile AI polish, photorealistic`;
+    return `${scene}, documentary realism, film grain, analog texture, imperfect focus, mood over sharpness, no beauty retouching, no over-sharpened faces, no sterile AI polish, no studio lighting, no clean background`;
   }
 
   const archetypeStyle = ARCHETYPE_VISUAL[archetype] || "";

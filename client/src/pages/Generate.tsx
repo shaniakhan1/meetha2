@@ -19,7 +19,8 @@ import {
 } from "@shared/types";
 import CinematicPreview from "@/components/CinematicPreview";
 import { getPreviewTier } from "./Preview";
-import { shareStoryCard, downloadStoryCard, downloadRawImage } from "@/lib/storyCardExport";
+import { downloadRawImage } from "@/lib/storyCardExport";
+import html2canvas from "html2canvas";
 
 const SCENE_PREVIEW_IMAGES: Record<string, string> = {
   paparazzi_flash: "/manus-storage/template-paparazzi-flash_24688a24.jpg",
@@ -105,6 +106,7 @@ export default function Generate() {
   } | null>(null);
   const [aestheticReadOpen, setAestheticReadOpen] = useState(false);
   const [exportLoading, setExportLoading] = useState<"share" | "download" | "raw" | null>(null);
+  const cardRef = useRef<HTMLDivElement>(null);
 
   // Create Studio state
   const [showStudio, setShowStudio] = useState(false);
@@ -246,30 +248,61 @@ export default function Generate() {
     }
   }, [cardPollQuery.data?.cardUrl]);
 
-  /** PRIMARY CTA — share the full 1080×1920 story card */
+  /** Capture the rendered CinematicPreview card DOM node as a PNG blob via html2canvas */
+  const captureCardBlob = async (): Promise<Blob | null> => {
+    const node = cardRef.current;
+    if (!node) return null;
+    try {
+      const canvas = await html2canvas(node, {
+        scale: 3,
+        useCORS: true,
+        backgroundColor: null,
+        logging: false,
+        // Ignore elements that html2canvas can't handle (e.g. video, canvas)
+        ignoreElements: (el) => el.tagName === "VIDEO",
+      });
+      return await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/png", 1.0));
+    } catch (e) {
+      console.error("[captureCard] html2canvas failed", e);
+      return null;
+    }
+  };
+
+  /** PRIMARY CTA — share the full rendered style card (DOM capture) */
   const handleShareCard = async () => {
     if (!result?.generation?.id) return;
     setExportLoading("share");
     try {
-      const outcome = await shareStoryCard(
-        { imageUrl: result.generation.image_url as string, hook: selectedHook },
-        result.generation.id
-      );
-      if (outcome === "error") toast.error("Could not share. Try downloading instead.");
+      const blob = await captureCardBlob();
+      if (!blob) { toast.error("Could not capture card. Try downloading instead."); return; }
+      const file = new File([blob], `meetha-story-${result.generation.id}.png`, { type: "image/png" });
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({ files: [file], title: "Meetha", text: selectedHook ?? "Styled by Meetha." });
+      } else {
+        // Desktop fallback: download
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a"); a.href = url; a.download = file.name;
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+        setTimeout(() => URL.revokeObjectURL(url), 10000);
+      }
+    } catch (e: unknown) {
+      if (e instanceof Error && e.name !== "AbortError") toast.error("Could not share. Try downloading instead.");
     } finally {
       setExportLoading(null);
     }
   };
 
-  /** Download the full branded story card as PNG */
+  /** Download the full rendered style card as PNG (DOM capture) */
   const handleDownloadCard = async () => {
     if (!result?.generation?.id) return;
     setExportLoading("download");
     try {
-      await downloadStoryCard(
-        { imageUrl: result.generation.image_url as string, hook: selectedHook },
-        result.generation.id
-      );
+      const blob = await captureCardBlob();
+      if (!blob) { toast.error("Download failed. Please try again."); return; }
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a"); a.href = url; a.download = `meetha-story-${result.generation.id}.png`;
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 10000);
     } catch {
       toast.error("Download failed. Please try again.");
     } finally {
@@ -611,6 +644,7 @@ export default function Generate() {
           )}
           <div className="mb-6">
             <CinematicPreview
+              ref={cardRef}
               imageUrl={result.generation.image_url as string}
               hook={selectedHook}
               animated={effectiveCredits?.tier === "starter" || effectiveCredits?.tier === "pro" || previewTier === "starter" || previewTier === "pro"}

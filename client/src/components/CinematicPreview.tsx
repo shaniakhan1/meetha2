@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react";
 import { PLATFORM_LABELS, type Platform } from "@shared/types";
 
 interface CinematicPreviewProps {
@@ -19,15 +19,19 @@ interface CinematicPreviewProps {
  * - Subtle film grain overlay
  * - Format badge (Feed Post / Portrait / Stories)
  */
-export default function CinematicPreview({
+const CinematicPreview = forwardRef<HTMLDivElement, CinematicPreviewProps>(function CinematicPreview({
   imageUrl,
   hook,
   animated = false,
   size = "full",
   platform,
-}: CinematicPreviewProps) {
+}, ref) {
   const [loaded, setLoaded] = useState(false);
   const imgRef = useRef<HTMLImageElement>(null);
+  const cardRef = useRef<HTMLDivElement>(null);
+
+  // Expose the card DOM node to parent via ref
+  useImperativeHandle(ref, () => cardRef.current as HTMLDivElement);
 
   useEffect(() => {
     if (imgRef.current?.complete) setLoaded(true);
@@ -37,6 +41,7 @@ export default function CinematicPreview({
 
   return (
     <div
+      ref={cardRef}
       className={`relative overflow-hidden bg-charcoal select-none ${
         isThumb ? "aspect-[9/16] max-h-56 w-full" : "aspect-[9/16] w-full max-w-sm mx-auto"
       }`}
@@ -47,6 +52,7 @@ export default function CinematicPreview({
         ref={imgRef}
         src={imageUrl}
         alt="Generated cinematic content"
+        crossOrigin="anonymous"
         onLoad={() => setLoaded(true)}
         className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-700 ${
           loaded ? "opacity-100" : "opacity-0"
@@ -135,4 +141,6 @@ export default function CinematicPreview({
       )}
     </div>
   );
-}
+});
+
+export default CinematicPreview;
