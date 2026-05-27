@@ -29,28 +29,23 @@ const WHAT_YOU_LEARN = [
 
 const FEATURES = {
   free: [
-    "1 generation to start",
-    "Personal styling brief after each generation",
-    "Hook and caption generation",
-    "1 free LoRA training (your face)",
+    "1 look training included",
+    "Limited generations",
+    "Limited templates",
     "Watermarked downloads",
   ],
   starter: [
-    "10 generations per month",
-    "Your Visual Transformation Card (after 2nd generation)",
-    "Personal styling brief, saved to your profile",
-    "Hook and caption generation",
-    "Download without watermark",
-    "Retrain anytime for $19",
+    "Premium templates",
+    "Unlimited cinematic generations",
+    "HD exports — no watermark",
+    "Priority generation queue",
+    "Retrain Your Look for $19",
   ],
   pro: [
-    "25 generations per month",
-    "Your Visual Transformation Card (after 1st generation)",
-    "Personal styling brief, saved to your profile",
-    "Hook and caption generation",
-    "Download without watermark",
-    "Retrain anytime for $19",
+    "Everything in Membership",
+    "Retrain Your Look for $19",
     "Priority generation queue",
+    "Early access to new worlds",
   ],
 };
 
@@ -71,8 +66,13 @@ function PricingSection({ handleCTA }: { handleCTA: () => void }) {
         <div className="text-center mb-8">
           <p className="font-sans text-xs tracking-[0.2em] uppercase text-gold mb-4">Pricing</p>
           <h2 className="font-serif font-light text-cream mb-4">Start free. Scale when ready.</h2>
-          <div className="divider-editorial" />
+                    <div className="divider-editorial" />
         </div>
+
+        {/* Retrain note */}
+        <p className="font-sans text-xs text-sand-dark/50 text-center mb-6 -mt-4">
+          New haircut. Seasonal shift. New aesthetic. Retrain anytime.
+        </p>
 
         {/* Billing toggle */}
         <div className="flex items-center justify-center gap-4 mb-8">
@@ -111,7 +111,7 @@ function PricingSection({ handleCTA }: { handleCTA: () => void }) {
           <div className="p-5 border border-sand/20 bg-white/5">
             <div className="flex items-baseline justify-between mb-3">
               <p className="font-serif text-lg text-cream">Free</p>
-              <p className="font-sans text-xs text-sand-dark">$0</p>
+              <p className="font-sans text-xs text-sand-dark">$0 / mo</p>
             </div>
             <ul className="space-y-1.5 mb-4">
               {FEATURES.free.map((f) => (
@@ -126,11 +126,11 @@ function PricingSection({ handleCTA }: { handleCTA: () => void }) {
             </button>
           </div>
 
-          {/* Starter */}
+          {/* Membership */}
           <div className="p-5 border border-gold/40 bg-white/5">
             <div className="flex items-baseline justify-between mb-3">
-              <p className="font-serif text-lg text-cream">Starter</p>
-              <p className="font-sans text-xs text-sand-dark">{annual ? "$12.67/mo" : "$19/mo"}</p>
+              <p className="font-serif text-lg text-cream">Membership</p>
+              <p className="font-sans text-xs text-sand-dark">{annual ? "$17.40/mo" : "$29/mo"}</p>
             </div>
             <ul className="space-y-1.5 mb-4">
               {FEATURES.starter.map((f) => (
@@ -142,20 +142,20 @@ function PricingSection({ handleCTA }: { handleCTA: () => void }) {
             </ul>
             {starterLink ? (
               <a href={starterLink} target="_blank" rel="noopener noreferrer" className="block w-full py-3 bg-gold/90 hover:bg-gold text-center font-sans text-xs tracking-[0.15em] uppercase text-charcoal transition-colors">
-                Start Starter
+                Train Your Look
               </a>
             ) : (
               <button onClick={handleCTA} className="w-full py-3 bg-gold/90 hover:bg-gold font-sans text-xs tracking-[0.15em] uppercase text-charcoal transition-colors">
-                Start Starter
+                Train Your Look
               </button>
             )}
           </div>
 
-          {/* Pro */}
+          {/* Retrain */}
           <div className="p-5 border border-sand/20 bg-white/5">
             <div className="flex items-baseline justify-between mb-3">
-              <p className="font-serif text-lg text-cream">Pro</p>
-              <p className="font-sans text-xs text-sand-dark">{annual ? "$21/mo" : "$39/mo"}</p>
+              <p className="font-serif text-lg text-cream">Retrain Your Look</p>
+              <p className="font-sans text-xs text-sand-dark">$19 one-time</p>
             </div>
             <ul className="space-y-1.5 mb-4">
               {FEATURES.pro.map((f) => (
@@ -167,11 +167,11 @@ function PricingSection({ handleCTA }: { handleCTA: () => void }) {
             </ul>
             {proLink ? (
               <a href={proLink} target="_blank" rel="noopener noreferrer" className="block w-full py-3 border border-gold/40 text-center font-sans text-xs tracking-[0.15em] uppercase text-cream/70 hover:text-cream transition-colors">
-                Start Pro
+                Retrain My Look
               </a>
             ) : (
               <button onClick={handleCTA} className="w-full py-3 border border-gold/40 font-sans text-xs tracking-[0.15em] uppercase text-cream/70 hover:text-cream transition-colors">
-                Start Pro
+                Retrain My Look
               </button>
             )}
           </div>
@@ -316,7 +316,7 @@ export default function Home() {
           <div className="mb-3">
             <BeforeAfterSlider
               beforeSrc="/manus-storage/shania-before_bb452c9e.webp"
-              afterSrc="/manus-storage/meetha-59_1803b502.jpg"
+              afterSrc="/manus-storage/meetha-nightlife-aligned_2737f232.jpg"
               beforeLabel="undefined"
               afterLabel="aligned"
               initialPosition={42}
@@ -327,112 +327,11 @@ export default function Home() {
             Drag the handle to reveal
           </p>
 
-          {/* Identity brief cards */}
-          <div className="grid grid-cols-2 gap-2">
-            {[
-              { label: "Color palette", text: "Warm ivory, deep camel, amber gold. No cool tones." },
-              { label: "Jewelry direction", text: "Bold yet refined gold. Quality over quantity. Timeless." },
-              { label: "Makeup energy", text: "Sculpted, warm, luminous. Bold lip. The mouth is your focal point." },
-              { label: "Your presence", text: "Confident. Refined. Magnetic. You don't follow trends. You set the tone." },
-            ].map((card) => (
-              <div key={card.label} className="p-3 border border-sand bg-cream/60">
-                <p className="font-sans text-[9px] tracking-[0.15em] uppercase text-gold mb-1.5">
-                  {card.label}
-                </p>
-                <p className="font-sans font-light text-[11px] text-charcoal-soft leading-relaxed">
-                  {card.text}
-                </p>
-              </div>
-            ))}
-          </div>
+
         </div>
       </section>
 
-      {/* ── Transformation Card Sign-up Hook ── */}
-      <section className="py-16 px-6 bg-charcoal">
-        <div className="max-w-sm mx-auto">
-          <div className="text-center mb-8">
-            <p className="font-sans text-xs tracking-[0.2em] uppercase text-gold mb-4">
-              You get this when you sign up
-            </p>
-            <h2 className="font-serif font-light text-cream mb-3" style={{ lineHeight: 1.1 }}>
-              Your personal<br />Transformation Card.
-            </h2>
-            <div className="divider-editorial" />
-            <p className="font-sans font-light text-sm text-cream/70 leading-relaxed mt-4">
-              It's simple: upload your photos, generate your first AI look, and Meetha makes you a card. Your real photo on the left. Your elevated look on the right. Plus your exact color palette, style direction, and makeup brief — so you can recreate it in real life.
-            </p>
-          </div>
 
-          {/* Card preview mockup */}
-          <div className="border border-gold/30 bg-warm-white overflow-hidden mb-6" style={{boxShadow: '0 8px 40px rgba(0,0,0,0.4)'}}>
-            {/* Mini before/after */}
-            <div className="grid grid-cols-2 gap-0.5 bg-charcoal">
-              <div className="relative">
-                <div className="aspect-[3/4] overflow-hidden">
-                  <img
-                    src="/manus-storage/shania-before_bb452c9e.webp"
-                    alt="Before"
-                    className="w-full h-full object-cover object-top"
-                  />
-                </div>
-                <span className="absolute top-2 left-2 font-sans text-[9px] tracking-[0.15em] uppercase bg-cream/90 text-charcoal px-1.5 py-0.5">
-                  Before
-                </span>
-              </div>
-              <div className="relative">
-                <div className="aspect-[3/4] overflow-hidden">
-                  <img
-                    src="/manus-storage/meetha-59_1803b502.jpg"
-                    alt="After"
-                    className="w-full h-full object-cover object-center"
-                  />
-                </div>
-                <span className="absolute top-2 left-2 font-sans text-[9px] tracking-[0.15em] uppercase bg-charcoal/80 text-cream px-1.5 py-0.5">
-                  After
-                </span>
-              </div>
-            </div>
-            {/* Brief preview */}
-            <div className="bg-charcoal p-4 grid grid-cols-2 gap-3">
-              {[
-                { label: "Color Palette", text: "Warm ivory, camel, amber gold" },
-                { label: "Style Direction", text: "Elevated essentials, luxurious textures" },
-                { label: "Makeup Energy", text: "Sculpted, warm, bold lip" },
-                { label: "Your Energy", text: "CONFIDENT · REFINED · MAGNETIC" },
-              ].map((item) => (
-                <div key={item.label}>
-                  <p className="font-sans text-[9px] tracking-[0.15em] uppercase text-gold/80 mb-0.5">{item.label}</p>
-                  <p className="font-sans font-light text-[10px] text-cream/70 leading-relaxed">{item.text}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Simple 3-step explanation */}
-          <div className="space-y-3 mb-8">
-            {[
-              { num: "1", text: "Sign up and upload your photos" },
-              { num: "2", text: "Generate your first AI look" },
-              { num: "3", text: "Get your Transformation Card — yours to keep and share" },
-            ].map((step) => (
-              <div key={step.num} className="flex items-center gap-4">
-                <span className="w-7 h-7 rounded-full border border-gold/40 flex items-center justify-center font-sans text-xs text-gold flex-shrink-0">
-                  {step.num}
-                </span>
-                <p className="font-sans text-sm text-cream/80">{step.text}</p>
-              </div>
-            ))}
-          </div>
-
-          <button onClick={handleCTA} className="btn-luxury btn-gold w-full">
-            Get my Transformation Card
-          </button>
-          <p className="font-sans text-xs text-cream/40 text-center mt-3">
-            Free plan: 1 generation to try &nbsp;·&nbsp; Paid plan: get your card after your 2nd generation
-          </p>
-        </div>
-      </section>
 
       {/* ── What You Learn ── */}
       <section className="py-16 px-6 bg-cream">
@@ -487,13 +386,13 @@ export default function Home() {
             },
             {
               step: "02",
-              title: "Choose your scene",
-              text: "Caught Looking Expensive. The Goodbye. Room Service. The Cleopatra Principle. Pick the scene. Meetha handles the rest.",
+              title: "Choose your world",
+              text: "Rooftop Dinner. Airport Lounge. Mediterranean Morning. Bill, Please. Choose the styling world. Meetha handles the rest.",
             },
             {
               step: "03",
-              title: "Get your identity brief",
-              text: "A cinematic image of you, a caption ready to post, and a complete identity brief: your colors, your metals, your makeup direction, your lighting. Yours to keep.",
+              title: "See yourself",
+              text: "A cinematic image that looks like you — your face, your proportions, your presence — styled for the moment you chose. Plus your Color Analysis: palette, metals, makeup, lighting.",
             },
           ].map((item) => (
             <div key={item.step} className="p-5 border border-sand bg-cream/60">
@@ -770,19 +669,46 @@ export default function Home() {
 
       {/* ── Final CTA ── */}
       <section
-        className="px-6 py-16 text-center"
-        style={{ background: "linear-gradient(160deg, #2C1810 0%, #1a0f09 100%)" }}
+        className="relative px-6 py-24 text-center overflow-hidden"
+        style={{ background: "linear-gradient(160deg, #1a0a05 0%, #2C1810 40%, #1a0f09 100%)" }}
       >
-        <div className="max-w-sm mx-auto">
-          <h2 className="font-serif font-light text-cream mb-4" style={{ lineHeight: 1.1 }}>
-            Become recognizable<br />to yourself.
+        {/* Film grain overlay */}
+        <div
+          className="absolute inset-0 opacity-[0.06] pointer-events-none"
+          style={{
+            backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='1'/%3E%3C/svg%3E")`,
+            backgroundSize: '128px 128px',
+          }}
+        />
+        {/* Ambient light bloom */}
+        <div
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            background: 'radial-gradient(ellipse 70% 50% at 50% 60%, rgba(139,105,20,0.12) 0%, transparent 70%)',
+          }}
+        />
+        <div className="relative z-10 max-w-sm mx-auto">
+          <p className="font-sans text-xs tracking-[0.25em] uppercase text-gold/70 mb-6">
+            Your visual identity
+          </p>
+          <h2
+            className="font-serif font-light text-cream mb-6"
+            style={{ lineHeight: 1.0, fontSize: 'clamp(2.8rem, 10vw, 4.5rem)' }}
+          >
+            Become Her.
           </h2>
-          <p className="font-sans font-light text-sm text-sand-dark leading-relaxed mb-8">
-            Upload your photos. Discover the colors, styling, and visual atmosphere that make you look most like yourself.
+          <div className="divider-editorial mb-6" />
+          <p className="font-sans font-light text-sm text-sand-dark/80 leading-relaxed mb-10 max-w-xs mx-auto">
+            Train your look once.
+            <br />
+            Meetha turns your photos into cinematic, socially believable moments that feel photographed, not generated.
           </p>
           <button onClick={handleCTA} className="btn-luxury btn-gold w-full max-w-xs mx-auto block">
-            Discover your visual identity
+            Train Your Look
           </button>
+          <p className="font-sans text-xs text-sand-dark/30 text-center mt-4">
+            Free to start. No credit card required.
+          </p>
         </div>
       </section>
 

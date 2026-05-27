@@ -610,9 +610,9 @@
 
 ## Create Studio (V90)
 - [x] Add CreateOccasion, CreateEnergy, CreateRefinements types to shared/types.ts
-- [ ] Build buildCreateStudioPrompt() in routers.ts with cinematic scene-first prompts per occasion
-- [ ] Add generate.createStudio procedure to routers.ts (separate from generate.content)
-- [ ] Remove voice/microphone section from Generate.tsx
-- [ ] Remove Signature Scene cards from Generate.tsx
-- [ ] Replace showCustomize panel with 4-step Create Studio flow (Occasion → Energy → Refinements → Generate)
-- [ ] Update Quick Generate button to remain as-is
+- [x] Build buildCreateStudioPrompt() in routers.ts with cinematic scene-first prompts per occasion
+- [x] Add generate.createStudio procedure to routers.ts (separate from generate.content)
+- [x] Remove voice/microphone section from Generate.tsx
+- [x] Remove Signature Scene cards from Generate.tsx
+- [x] Replace showCustomize panel with 4-step Create Studio flow (Occasion → Energy → Refinements → Generate)
+- [x] Update Quick Generate button to remain as-is
