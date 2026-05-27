@@ -244,8 +244,10 @@ export default function Home() {
             className="font-serif font-light text-charcoal mb-8 animate-fade-up opacity-0 delay-200"
             style={{ lineHeight: 1.0, fontSize: "clamp(2.8rem, 10vw, 4.5rem)" }}
           >
-            The first AI that designs<br />
-            your visual identity.
+            Upload your photos.<br />
+            See yourself<br />
+            the way a stylist<br />
+            would.
           </h1>
 
           {/* ── Immediate image proof ── */}
@@ -390,7 +392,7 @@ export default function Home() {
             {/* Mini before/after */}
             <div className="grid grid-cols-2 gap-0.5 bg-charcoal">
               <div className="relative">
-                <div className="aspect-[4/3] overflow-hidden">
+                <div className="aspect-[3/4] overflow-hidden">
                   <img
                     src="/manus-storage/shania-before_bb452c9e.webp"
                     alt="Before"
@@ -402,7 +404,7 @@ export default function Home() {
                 </span>
               </div>
               <div className="relative">
-                <div className="aspect-[4/3] overflow-hidden">
+                <div className="aspect-[3/4] overflow-hidden">
                   <img
                     src="/manus-storage/meetha-59_1803b502.jpg"
                     alt="After"
