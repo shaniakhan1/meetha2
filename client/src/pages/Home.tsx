@@ -657,8 +657,8 @@ export default function Home() {
         <div className="grid grid-cols-2 gap-0.5">
           <div className="aspect-[3/4] overflow-hidden">
             <img
-              src="/manus-storage/meetha-gallery-car-dark_f8bb64d1.webp"
-              alt="Meetha styling — cinematic dark"
+              src="/manus-storage/meetha-17_4b386d9e.jpg"
+              alt="Meetha styling — car window portrait"
               className="w-full h-full object-cover object-center"
             />
           </div>

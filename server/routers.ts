@@ -72,6 +72,8 @@ const SCENE_PROMPTS: Record<string, string> = {
     "woman lounging on a deep velvet chaise longue or wide linen sofa, looking directly into the lens with absolute calm certainty, no smile, no performance, just presence, warm afternoon light casting long shadows, jewel-toned or cream fabric, one hand resting on the armrest, the stillness of someone who has already decided everything, film grain, editorial female-gaze, 35mm analog warmth, shallow depth of field, vertical 9:16 framing",
   silk_robe_retaliation:
     "woman in a white silk robe standing at floor-to-ceiling hotel windows, seen from behind, looking out over a city skyline or treetops at golden hour, one hand resting on the glass, the robe catching the warm amber light, her posture is completely still and certain, the energy of someone who chose herself and does not need to explain it to anyone, no face visible, deep focus on the silhouette and the light, film grain, 35mm analog warmth, vertical 9:16 framing",
+  motion_blur:
+    "intentional motion blur street photography, a woman mid-stride through a city at night, she is the only sharp element in the frame, background streaked with light trails and neon reflections, warm amber and electric blue light streaks, her silhouette is crisp and deliberate against the blurred world, the energy of someone always somewhere interesting, film grain, 35mm analog street photography, no face visible, editorial female-gaze, vertical 9:16 framing",
 };
 
 // Digital Diary: overlay hook options
@@ -153,6 +155,20 @@ const CLEOPATRA_HOOKS = [
   "the stillness is the statement",
   "she did not need to speak",
   "the decision was already made",
+];
+
+// The Blur: overlay hook options
+const MOTION_BLUR_HOOKS = [
+  "she was always somewhere interesting",
+  "the world blurred around her",
+  "she moved and the city moved with her",
+  "in motion",
+  "she never stood still long enough to be ordinary",
+  "the blur is the point",
+  "she was already gone",
+  "caught mid-stride",
+  "the city couldn't keep up",
+  "she moved like she had somewhere to be",
 ];
 
 // Silk Robe Retaliation: overlay hook options
@@ -558,6 +574,47 @@ Respond in this exact JSON format:
 }`;
   }
 
+  // The Blur: motion blur street photography copy
+  if (sceneCategory === "motion_blur") {
+    const hookOptions = MOTION_BLUR_HOOKS.slice(0, 6).map((h) => `"${h}"`).join(", ");
+    const voiceCtx = voiceStyle
+      ? `\n\nVoice style (how she writes online): ${voiceStyle}. Calibrate the caption to match this.`
+      : "";
+    return `You are writing copy for a woman creator. The image is "The Blur": intentional motion blur street photography, she is mid-stride through a city at night, the only sharp element in the frame, light trails and neon reflections streaking behind her. The energy of someone always somewhere interesting.${voiceCtx}
+
+Choose exactly 3 hooks from this list (return them verbatim, do not modify): ${hookOptions}
+
+Then write one caption:
+- 1-2 short sentences. Plain everyday words only.
+- No em-dashes, no exclamation marks, no questions
+- BANNED WORDS: whispers, gilded, multitudes, luminous, essence, depth, profound, transcend, resonate, tapestry, curated, intentional, authentic, narrative, embody, elevate, harness, embrace, unleash, radiate, exude, magic, effortless
+- No brand-speak, no affirmations, no motivational quotes
+- Sounds like a real woman typing into her phone, not a copywriter
+- States something true about being in motion, always moving, or the specific energy of someone who never stays still
+- Ends with a quiet statement, never a question or CTA
+
+GOOD caption examples:
+"she was always somewhere interesting. the city just tried to keep up."
+"i stopped waiting and started moving. the blur is the point."
+"she never stood still long enough to be ordinary."
+
+BAD caption examples (never write like this):
+"She radiates kinetic energy through the urban landscape." -- brand-speak
+"Her luminous presence blurs the boundaries of time." -- meaningless, AI-sounding
+
+Then write exactly 5 hashtags:
+- No # symbol
+- No generic tags (no instagood, photooftheday, lifestyle, cityvibes)
+- Should feel like tags a real creator at this frequency would actually use
+
+Respond in this exact JSON format:
+{
+  "hooks": ["hook one", "hook two", "hook three"],
+  "caption": "The caption text here.",
+  "hashtags": ["word1", "word2", "word3", "word4", "word5"]
+}`;
+  }
+
   // Paparazzi Flash template: override hooks with the subtle overlay list
   if (sceneCategory === "paparazzi_flash") {
     const hookOptions = PAPARAZZI_HOOKS.slice(0, 6).map((h) => `"${h}"`).join(", ");
@@ -885,7 +942,7 @@ export const appRouter = router({
           generationId: z.number(),
           platform: z.enum(["tiktok", "reels", "stories"]).default("reels"),
           sceneCategory: z
-            .enum(["morning_routine", "travel_day", "quiet_luxury", "founder_energy", "date_night", "paparazzi_flash", "digital_diary", "bill_please", "silk_robe_room_service", "irish_goodbye", "cleopatra_principle", "silk_robe_retaliation"])
+            .enum(["morning_routine", "travel_day", "quiet_luxury", "founder_energy", "date_night", "paparazzi_flash", "digital_diary", "bill_please", "silk_robe_room_service", "irish_goodbye", "cleopatra_principle", "silk_robe_retaliation", "motion_blur"])
             .optional(),
         })
       )
@@ -1118,6 +1175,7 @@ Respond in this exact JSON format:
               "irish_goodbye",
               "cleopatra_principle",
               "silk_robe_retaliation",
+              "motion_blur",
             ])
             .optional(),
           videoFormat: z.enum(["tiktok_reels", "square", "landscape"]).optional(),
@@ -1362,6 +1420,7 @@ Respond in this exact JSON format:
               "irish_goodbye",
               "cleopatra_principle",
               "silk_robe_retaliation",
+              "motion_blur",
             ])
             .optional(),
         })

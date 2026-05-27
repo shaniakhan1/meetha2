@@ -1,13 +1,11 @@
 /**
  * Visual Transformation Card Generator
  *
- * Generates a shareable "Your Visual Transformation" card:
- * - Header: "YOUR VISUAL TRANSFORMATION" title + subtitle
- * - Main: before photo (left) + after/generation photo (right) with BEFORE/AFTER labels
- * - Footer: 5 columns: Color Palette swatches, Style Direction, Makeup Energy, Jewelry Direction, Your Energy
- *
- * Generated once per paid user after their 2nd generation (Starter) or 1st generation (Pro).
- * Saved to S3 and URL stored in profiles.transformation_card_url.
+ * Generates a shareable "Your Visual Transformation" card (1080×1350, 4:5 ratio):
+ * - Header: "YOUR VISUAL TRANSFORMATION" title + subtitle (dark bg, gold accent)
+ * - Main: BEFORE photo (left) + AFTER photo (right) side by side with cream/gold labels
+ * - Brief: 2×2 grid — Color Palette (swatches), Style Direction, Makeup Energy, Your Energy
+ * - Footer: "styled by Meetha · meetha.studio" wordmark
  *
  * Font approach: uses @napi-rs/canvas with GlobalFonts.registerFromPath() — same as styleCard.ts.
  * SVG text is NOT used because system fonts (Georgia, Arial) are unavailable on the server.
@@ -16,7 +14,7 @@
 import path from "path";
 import { fileURLToPath } from "url";
 import sharp from "sharp";
-import { createCanvas, GlobalFonts } from "@napi-rs/canvas";
+import { createCanvas, GlobalFonts, loadImage } from "@napi-rs/canvas";
 import { invokeLLM } from "./_core/llm";
 import { storagePut } from "./storage";
 import { storageGetSignedUrl } from "./storage";
@@ -208,13 +206,13 @@ async function fetchImageBuffer(url: string): Promise<Buffer> {
  */
 function sanitizeText(text: string): string {
   return text
-    .replace(/[\u2018\u2019\u201A\u201B]/g, "'")   // smart single quotes
-    .replace(/[\u201C\u201D\u201E\u201F]/g, '"')   // smart double quotes
-    .replace(/[\u2013\u2014\u2015]/g, "-")          // en dash, em dash, horizontal bar
-    .replace(/\u2026/g, "...")                       // ellipsis
-    .replace(/[\u2022\u2023\u25E6\u2043]/g, "-")   // bullets
-    .replace(/[\u00B7\u2027]/g, ".")                 // middle dot
-    .replace(/[^\x00-\x7F]/g, (ch) => {             // remaining non-ASCII: try common replacements
+    .replace(/[\u2018\u2019\u201A\u201B]/g, "'")
+    .replace(/[\u201C\u201D\u201E\u201F]/g, '"')
+    .replace(/[\u2013\u2014\u2015]/g, "-")
+    .replace(/\u2026/g, "...")
+    .replace(/[\u2022\u2023\u25E6\u2043]/g, "-")
+    .replace(/[\u00B7\u2027]/g, ".")
+    .replace(/[^\x00-\x7F]/g, (ch) => {
       const map: Record<string, string> = {
         "\u00E9": "e", "\u00E8": "e", "\u00EA": "e", "\u00EB": "e",
         "\u00E0": "a", "\u00E1": "a", "\u00E2": "a", "\u00E4": "a",
@@ -227,15 +225,6 @@ function sanitizeText(text: string): string {
 }
 
 // ─── Canvas Text Helpers ──────────────────────────────────────────────────────
-
-/** Parse a hex color string into {r,g,b,a} components (0-255) */
-function hexToRgba(hex: string, alpha = 1): { r: number; g: number; b: number; a: number } {
-  const h = hex.replace("#", "");
-  const r = parseInt(h.substring(0, 2), 16);
-  const g = parseInt(h.substring(2, 4), 16);
-  const b = parseInt(h.substring(4, 6), 16);
-  return { r, g, b, a: Math.round(alpha * 255) };
-}
 
 /** Wrap text to fit within maxWidth pixels, returns array of lines */
 function wrapTextCanvas(
@@ -259,247 +248,14 @@ function wrapTextCanvas(
   return lines;
 }
 
-// ─── Section Renderers ────────────────────────────────────────────────────────
-
-/** Render the header band: dark bg + title + subtitle */
-function renderHeader(cardW: number, headerH: number): Buffer {
-  ensureFonts();
-  const canvas = createCanvas(cardW, headerH);
-  const ctx = canvas.getContext("2d");
-
-  // Background
-  ctx.fillStyle = "#12080A";
-  ctx.fillRect(0, 0, cardW, headerH);
-
-  // Bottom separator line
-  ctx.strokeStyle = "rgba(201,168,76,0.4)";
-  ctx.lineWidth = 0.5;
-  ctx.beginPath();
-  ctx.moveTo(80, headerH - 8);
-  ctx.lineTo(cardW - 80, headerH - 8);
-  ctx.stroke();
-
-  // Title
-  const titleFontSize = Math.round(cardW * 0.028);
-  ctx.font = `bold ${titleFontSize}px MeethaFont`;
-  ctx.fillStyle = "#F5F0E8";
-  ctx.textAlign = "center";
-  ctx.fillText("YOUR VISUAL TRANSFORMATION", cardW / 2, Math.round(headerH * 0.44));
-
-  // Subtitle
-  const subFontSize = Math.round(cardW * 0.011);
-  ctx.font = `${subFontSize}px MeethaFont`;
-  ctx.fillStyle = "#C9A84C";
-  ctx.globalAlpha = 0.9;
-  ctx.fillText("PERSONALIZED. ELEVATED. AUTHENTICALLY YOU.", cardW / 2, Math.round(headerH * 0.73));
-  ctx.globalAlpha = 1;
-
-  return canvas.toBuffer("image/png") as Buffer;
-}
-
-/** Render BEFORE or AFTER label as a small cream rectangle with dark text */
-function renderLabel(text: string, labelW: number, labelH: number): Buffer {
-  ensureFonts();
-  const canvas = createCanvas(labelW, labelH);
-  const ctx = canvas.getContext("2d");
-
-  ctx.fillStyle = "#F5F0E8";
-  ctx.fillRect(0, 0, labelW, labelH);
-
-  const fontSize = Math.round(labelH * 0.38);
-  ctx.font = `bold ${fontSize}px MeethaFont`;
-  ctx.fillStyle = "#1A1008";
-  ctx.textAlign = "center";
-  ctx.fillText(text, labelW / 2, Math.round(labelH * 0.68));
-
-  return canvas.toBuffer("image/png") as Buffer;
-}
-
-/** Render the placeholder panel when no before photo is available */
-function renderBeforePlaceholder(w: number, h: number): Buffer {
-  ensureFonts();
-  const canvas = createCanvas(w, h);
-  const ctx = canvas.getContext("2d");
-
-  ctx.fillStyle = "#1A1008";
-  ctx.fillRect(0, 0, w, h);
-
-  // Circle with + icon
-  const cx = w / 2;
-  const cy = h / 2;
-  const r = 40;
-  ctx.strokeStyle = "rgba(201,168,76,0.5)";
-  ctx.lineWidth = 1.5;
-  ctx.beginPath();
-  ctx.arc(cx, cy, r, 0, Math.PI * 2);
-  ctx.stroke();
-
-  ctx.beginPath();
-  ctx.moveTo(cx, cy - 20);
-  ctx.lineTo(cx, cy + 20);
-  ctx.moveTo(cx - 20, cy);
-  ctx.lineTo(cx + 20, cy);
-  ctx.stroke();
-
-  const fontSize = Math.round(w * 0.022);
-  ctx.font = `${fontSize}px MeethaFont`;
-  ctx.fillStyle = "rgba(201,168,76,0.6)";
-  ctx.textAlign = "center";
-  ctx.fillText("YOUR PHOTO", cx, cy + r + 30);
-  ctx.fillText("GOES HERE", cx, cy + r + 30 + fontSize * 1.4);
-
-  return canvas.toBuffer("image/png") as Buffer;
-}
-
-/** Render the footer band with 5 columns of style brief data */
-function renderFooter(cardW: number, footerH: number, brief: StyleBrief): Buffer {
-  ensureFonts();
-  const canvas = createCanvas(cardW, footerH);
-  const ctx = canvas.getContext("2d");
-
-  const GOLD = "#C9A84C";
-  const CREAM = "#F5F0E8";
-  const WARM_GREY = "#8A7F74";
-  const COL_W = cardW / 5;
-  const COL_PAD = Math.round(cardW * 0.016);
-  const HEADER_FONT = Math.round(cardW * 0.009);
-  const BODY_FONT = Math.round(cardW * 0.010);
-  const LABEL_Y = Math.round(footerH * 0.10);
-  const CONTENT_START_Y = Math.round(footerH * 0.18);
-
-  // Background
-  ctx.fillStyle = "#12080A";
-  ctx.fillRect(0, 0, cardW, footerH);
-
-  // Top separator
-  ctx.strokeStyle = "rgba(201,168,76,0.3)";
-  ctx.lineWidth = 0.5;
-  ctx.beginPath();
-  ctx.moveTo(80, 1);
-  ctx.lineTo(cardW - 80, 1);
-  ctx.stroke();
-
-  // Column dividers
-  ctx.strokeStyle = "rgba(201,168,76,0.15)";
-  for (let i = 1; i < 5; i++) {
-    ctx.beginPath();
-    ctx.moveTo(COL_W * i, 20);
-    ctx.lineTo(COL_W * i, footerH - 20);
-    ctx.stroke();
-  }
-
-  // Helper: draw column header
-  function drawColHeader(label: string, colIndex: number) {
-    const cx = COL_W * colIndex + COL_W / 2;
-    ctx.font = `bold ${HEADER_FONT}px MeethaFont`;
-    ctx.fillStyle = CREAM;
-    ctx.globalAlpha = 0.9;
-    ctx.textAlign = "center";
-    ctx.fillText(label, cx, LABEL_Y);
-    ctx.globalAlpha = 1;
-  }
-
-  // Helper: draw wrapped body text centered in column
-  function drawColBody(text: string, colIndex: number, startY: number, fill = WARM_GREY) {
-    const cx = COL_W * colIndex + COL_W / 2;
-    const maxW = COL_W - COL_PAD * 2;
-    ctx.font = `${BODY_FONT}px MeethaFont`;
-    ctx.fillStyle = fill;
-    ctx.textAlign = "center";
-    const lines = wrapTextCanvas(ctx, text, maxW);
-    const lineH = BODY_FONT * 1.5;
-    lines.slice(0, 6).forEach((line, i) => {
-      ctx.fillText(line, cx, startY + i * lineH);
-    });
-  }
-
-  // Sanitize all brief text to prevent tofu boxes from AI-generated unicode
-  const sanitizedBrief = {
-    colorPalette: {
-      swatches: brief.colorPalette.swatches,
-      description: sanitizeText(brief.colorPalette.description),
-    },
-    styleDirection: { description: sanitizeText(brief.styleDirection.description) },
-    makeupEnergy: { description: sanitizeText(brief.makeupEnergy.description) },
-    jewelryDirection: { description: sanitizeText(brief.jewelryDirection.description) },
-    yourEnergy: {
-      keywords: brief.yourEnergy.keywords.map(sanitizeText),
-      description: sanitizeText(brief.yourEnergy.description),
-    },
-  };
-
-  // ── Col 0: Color Palette ──
-  drawColHeader("YOUR COLOR PALETTE", 0);
-  const swatches = sanitizedBrief.colorPalette.swatches.slice(0, 5);
-  const swatchR = Math.round(cardW * 0.013);
-  const swatchSpacing = swatchR * 2 + 6;
-  const swatchY = CONTENT_START_Y + swatchR + 4;
-  const swatchStartX = COL_W * 0 + COL_W / 2 - ((swatches.length - 1) * swatchSpacing) / 2;
-  swatches.forEach((hex, i) => {
-    ctx.beginPath();
-    ctx.arc(swatchStartX + i * swatchSpacing, swatchY, swatchR, 0, Math.PI * 2);
-    ctx.fillStyle = hex;
-    ctx.fill();
-  });
-  drawColBody(sanitizedBrief.colorPalette.description, 0, swatchY + swatchR + 16);
-
-  // ── Col 1: Style Direction ──
-  drawColHeader("STYLE DIRECTION", 1);
-  drawColBody(sanitizedBrief.styleDirection.description, 1, CONTENT_START_Y);
-
-  // ── Col 2: Makeup Energy ──
-  drawColHeader("MAKEUP ENERGY", 2);
-  drawColBody(sanitizedBrief.makeupEnergy.description, 2, CONTENT_START_Y);
-
-  // ── Col 3: Jewelry Direction ──
-  drawColHeader("JEWELRY DIRECTION", 3);
-  drawColBody(sanitizedBrief.jewelryDirection.description, 3, CONTENT_START_Y);
-
-  // ── Col 4: Your Energy ──
-  drawColHeader("YOUR ENERGY", 4);
-  const energyKeywords = sanitizedBrief.yourEnergy.keywords.slice(0, 4);
-  const kwFontSize = Math.round(cardW * 0.011);
-  const boxPad = COL_PAD;
-  const boxX = COL_W * 4 + boxPad;
-  const boxW = COL_W - boxPad * 2;
-  const boxH = energyKeywords.length * (kwFontSize * 2) + 16;
-  const boxY = CONTENT_START_Y - 4;
-
-  // Energy box border
-  ctx.strokeStyle = "rgba(201,168,76,0.4)";
-  ctx.lineWidth = 0.8;
-  ctx.strokeRect(boxX, boxY, boxW, boxH);
-
-  // Keywords
-  ctx.font = `bold ${kwFontSize}px MeethaFont`;
-  ctx.fillStyle = CREAM;
-  ctx.textAlign = "center";
-  const kwCx = COL_W * 4 + COL_W / 2;
-  energyKeywords.forEach((kw, i) => {
-    ctx.fillText(kw, kwCx, boxY + kwFontSize * 1.5 + i * kwFontSize * 2);
-  });
-
-  // Energy description below box
-  drawColBody(sanitizedBrief.yourEnergy.description, 4, boxY + boxH + 14);
-
-  // ── Bottom wordmark ──
-  const wmFontSize = Math.round(cardW * 0.009);
-  ctx.font = `${wmFontSize}px MeethaFont`;
-  ctx.fillStyle = GOLD;
-  ctx.globalAlpha = 0.5;
-  ctx.textAlign = "center";
-  ctx.fillText("styled by Meetha", cardW / 2, footerH - 12);
-  ctx.globalAlpha = 1;
-
-  return canvas.toBuffer("image/png") as Buffer;
-}
-
-// ─── Card Compositor ─────────────────────────────────────────────────────────
+// ─── Main Card Builder ────────────────────────────────────────────────────────
 
 /**
- * Builds a vertical portrait card (800×1200) matching the homepage mockup:
- * - Top: after image (full width, 480px tall) with caption overlay
- * - Bottom: cream background with "YOUR IDENTITY BRIEF" header + stacked label/value rows
+ * Builds a dark transformation card (1080×1350):
+ * - Header band: "YOUR VISUAL TRANSFORMATION" + subtitle
+ * - Photo section: BEFORE (left) + AFTER (right) side by side
+ * - Brief section: 2×2 grid — Color Palette, Style Direction, Makeup Energy, Your Energy
+ * - Footer: "styled by Meetha" wordmark
  */
 export async function buildTransformationCard(params: {
   beforeImageUrl: string | null;
@@ -508,179 +264,278 @@ export async function buildTransformationCard(params: {
 }): Promise<Buffer> {
   ensureFonts();
 
-  const CARD_W = 800;
-  const IMAGE_H = 480;
-  const BRIEF_H = 720;
-  const CARD_H = IMAGE_H + BRIEF_H;
+  // ── Card dimensions ──
+  const CARD_W = 1080;
+  const HEADER_H = 100;
+  const PHOTO_H = 580;
+  const BRIEF_H = 620;
+  const FOOTER_H = 50;
+  const CARD_H = HEADER_H + PHOTO_H + BRIEF_H + FOOTER_H;
 
+  // ── Colors ──
+  const BG = "#12080A";
   const GOLD = "#C9A84C";
   const CREAM = "#F5F0E8";
-  const CHARCOAL = "#1A1008";
-  const WARM_GREY = "#6B6259";
-  const BG_CREAM = { r: 245, g: 240, b: 232 }; // #F5F0E8
+  const WARM_GREY = "#8A7F74";
 
-  // ── 1. After image (full width, cropped to top) ─────────────────────────────
-  const afterBuf = await fetchImageBuffer(params.afterImageUrl);
-  const afterResized = await sharp(afterBuf)
-    .resize(CARD_W, IMAGE_H, { fit: "cover", position: "top" })
-    .jpeg({ quality: 92 })
-    .toBuffer();
-
-  // ── 2. Caption overlay on image ─────────────────────────────────────────────
-  // Render a gradient + caption text as SVG overlay
-  const captionSvg = `<svg width="${CARD_W}" height="${IMAGE_H}" xmlns="http://www.w3.org/2000/svg">
-    <defs>
-      <linearGradient id="g" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="50%" stop-color="#000" stop-opacity="0"/>
-        <stop offset="100%" stop-color="#000" stop-opacity="0.72"/>
-      </linearGradient>
-    </defs>
-    <rect width="${CARD_W}" height="${IMAGE_H}" fill="url(#g)"/>
-  </svg>`;
-
-  const imageWithGradient = await sharp(afterResized)
-    .composite([{ input: Buffer.from(captionSvg), top: 0, left: 0 }])
-    .jpeg({ quality: 92 })
-    .toBuffer();
-
-  // ── 3. Brief panel (canvas) ─────────────────────────────────────────────────
-  const canvas = createCanvas(CARD_W, BRIEF_H);
+  // ── Create main canvas ──
+  const canvas = createCanvas(CARD_W, CARD_H);
   const ctx = canvas.getContext("2d");
 
-  // Background
-  ctx.fillStyle = CREAM;
-  ctx.fillRect(0, 0, CARD_W, BRIEF_H);
+  // Fill dark background
+  ctx.fillStyle = BG;
+  ctx.fillRect(0, 0, CARD_W, CARD_H);
 
-  const PAD = 48;
-  const ROW_PAD = 28;
-  let y = 44;
+  // ════════════════════════════════════════════════════════════
+  // SECTION 1: HEADER
+  // ════════════════════════════════════════════════════════════
+  {
+    const cx = CARD_W / 2;
+    const headerMid = HEADER_H / 2;
 
-  // "YOUR IDENTITY BRIEF" header
-  ctx.font = `bold ${Math.round(CARD_W * 0.022)}px MeethaFont`;
-  ctx.fillStyle = GOLD;
-  ctx.textAlign = "left";
-  ctx.fillText("YOUR IDENTITY BRIEF", PAD, y);
-  y += 18;
-
-  // Thin gold rule
-  ctx.strokeStyle = GOLD;
-  ctx.globalAlpha = 0.35;
-  ctx.lineWidth = 0.8;
-  ctx.beginPath();
-  ctx.moveTo(PAD, y);
-  ctx.lineTo(CARD_W - PAD, y);
-  ctx.stroke();
-  ctx.globalAlpha = 1;
-  y += ROW_PAD;
-
-  const LABEL_FONT = Math.round(CARD_W * 0.018);
-  const BODY_FONT = Math.round(CARD_W * 0.022);
-  const LABEL_W_PX = 140;
-  const TEXT_X = PAD + LABEL_W_PX + 16;
-  const TEXT_MAX_W = CARD_W - TEXT_X - PAD;
-  const LINE_H = BODY_FONT * 1.55;
-
-  function drawRow(label: string, text: string) {
-    // Label
-    ctx.font = `bold ${LABEL_FONT}px MeethaFont`;
-    ctx.fillStyle = GOLD;
-    ctx.globalAlpha = 0.85;
-    ctx.textAlign = "left";
-    ctx.fillText(label, PAD, y);
+    // Thin gold top rule
+    ctx.strokeStyle = GOLD;
+    ctx.globalAlpha = 0.35;
+    ctx.lineWidth = 0.8;
+    ctx.beginPath();
+    ctx.moveTo(60, 14);
+    ctx.lineTo(CARD_W - 60, 14);
+    ctx.stroke();
     ctx.globalAlpha = 1;
 
-    // Body text (wrapped)
-    ctx.font = `${BODY_FONT}px MeethaFont`;
-    ctx.fillStyle = WARM_GREY;
-    ctx.textAlign = "left";
-    const lines = wrapTextCanvas(ctx, sanitizeText(text), TEXT_MAX_W);
-    lines.forEach((line, i) => {
-      ctx.fillText(line, TEXT_X, y + i * LINE_H);
-    });
+    // Title
+    ctx.font = `bold 26px MeethaFont`;
+    ctx.fillStyle = CREAM;
+    ctx.textAlign = "center";
+    ctx.fillText("YOUR VISUAL TRANSFORMATION", cx, headerMid + 4);
 
-    const rowH = Math.max(BODY_FONT * 1.4, lines.length * LINE_H);
-    y += rowH + ROW_PAD;
+    // Subtitle
+    ctx.font = `11px MeethaFont`;
+    ctx.fillStyle = GOLD;
+    ctx.globalAlpha = 0.8;
+    ctx.fillText("PERSONALIZED  \u00B7  ELEVATED  \u00B7  AUTHENTICALLY YOU", cx, headerMid + 24);
+    ctx.globalAlpha = 1;
 
-    // Separator
-    ctx.strokeStyle = CHARCOAL;
-    ctx.globalAlpha = 0.08;
-    ctx.lineWidth = 0.7;
+    // Bottom rule
+    ctx.strokeStyle = GOLD;
+    ctx.globalAlpha = 0.25;
+    ctx.lineWidth = 0.8;
     ctx.beginPath();
-    ctx.moveTo(PAD, y - ROW_PAD / 2);
-    ctx.lineTo(CARD_W - PAD, y - ROW_PAD / 2);
+    ctx.moveTo(60, HEADER_H - 6);
+    ctx.lineTo(CARD_W - 60, HEADER_H - 6);
     ctx.stroke();
     ctx.globalAlpha = 1;
   }
 
-  // ── Color Palette row with swatches ──
-  ctx.font = `bold ${LABEL_FONT}px MeethaFont`;
-  ctx.fillStyle = GOLD;
-  ctx.globalAlpha = 0.85;
-  ctx.textAlign = "left";
-  ctx.fillText("Palette", PAD, y);
-  ctx.globalAlpha = 1;
+  // ════════════════════════════════════════════════════════════
+  // SECTION 2: BEFORE / AFTER PHOTOS
+  // ════════════════════════════════════════════════════════════
+  const PHOTO_TOP = HEADER_H;
+  const PHOTO_GAP = 4;
+  const EACH_PHOTO_W = Math.floor((CARD_W - PHOTO_GAP) / 2);
 
-  // Draw swatches inline
-  const swatches = params.brief.colorPalette.swatches.slice(0, 5);
-  const swatchR = 10;
-  const swatchSpacing = swatchR * 2 + 6;
-  const swatchStartX = TEXT_X;
-  swatches.forEach((hex, i) => {
-    ctx.beginPath();
-    ctx.arc(swatchStartX + i * swatchSpacing + swatchR, y - swatchR + 2, swatchR, 0, Math.PI * 2);
-    ctx.fillStyle = hex;
-    ctx.fill();
-  });
+  // BEFORE photo (left)
+  {
+    let beforeBuf: Buffer;
+    if (params.beforeImageUrl) {
+      const raw = await fetchImageBuffer(params.beforeImageUrl);
+      beforeBuf = await sharp(raw)
+        .resize(EACH_PHOTO_W, PHOTO_H, { fit: "cover", position: "top" })
+        .jpeg({ quality: 88 })
+        .toBuffer();
+    } else {
+      // Placeholder canvas
+      const ph = createCanvas(EACH_PHOTO_W, PHOTO_H);
+      const phCtx = ph.getContext("2d");
+      phCtx.fillStyle = "#1E1008";
+      phCtx.fillRect(0, 0, EACH_PHOTO_W, PHOTO_H);
+      const cx = EACH_PHOTO_W / 2;
+      const cy = PHOTO_H / 2;
+      phCtx.strokeStyle = "rgba(201,168,76,0.4)";
+      phCtx.lineWidth = 1.5;
+      phCtx.beginPath();
+      phCtx.arc(cx, cy, 44, 0, Math.PI * 2);
+      phCtx.stroke();
+      phCtx.beginPath();
+      phCtx.moveTo(cx, cy - 22); phCtx.lineTo(cx, cy + 22);
+      phCtx.moveTo(cx - 22, cy); phCtx.lineTo(cx + 22, cy);
+      phCtx.stroke();
+      phCtx.font = `bold 14px MeethaFont`;
+      phCtx.fillStyle = "rgba(201,168,76,0.55)";
+      phCtx.textAlign = "center";
+      phCtx.fillText("YOUR PHOTO", cx, cy + 68);
+      phCtx.fillText("GOES HERE", cx, cy + 88);
+      beforeBuf = ph.toBuffer("image/png") as Buffer;
+    }
+    const beforeImg = await loadImage(beforeBuf);
+    ctx.drawImage(beforeImg, 0, PHOTO_TOP, EACH_PHOTO_W, PHOTO_H);
+  }
 
-  // Palette description below swatches
-  const swatchRowH = swatchR * 2 + 8;
-  ctx.font = `${BODY_FONT}px MeethaFont`;
-  ctx.fillStyle = WARM_GREY;
-  const paletteLines = wrapTextCanvas(ctx, sanitizeText(params.brief.colorPalette.description), TEXT_MAX_W);
-  paletteLines.forEach((line, i) => {
-    ctx.fillText(line, TEXT_X, y + swatchRowH / 2 + i * LINE_H);
-  });
-  y += swatchRowH + Math.max(0, (paletteLines.length - 1) * LINE_H) + ROW_PAD;
+  // AFTER photo (right)
+  {
+    const afterRaw = await fetchImageBuffer(params.afterImageUrl);
+    const afterBuf = await sharp(afterRaw)
+      .resize(EACH_PHOTO_W, PHOTO_H, { fit: "cover", position: "top" })
+      .jpeg({ quality: 88 })
+      .toBuffer();
+    const afterImg = await loadImage(afterBuf);
+    ctx.drawImage(afterImg, EACH_PHOTO_W + PHOTO_GAP, PHOTO_TOP, EACH_PHOTO_W, PHOTO_H);
+  }
 
-  // Separator
-  ctx.strokeStyle = CHARCOAL;
-  ctx.globalAlpha = 0.08;
-  ctx.lineWidth = 0.7;
+  // BEFORE / AFTER labels (pill at bottom of each photo)
+  const LABEL_W = 90;
+  const LABEL_H = 26;
+  const LABEL_Y = PHOTO_TOP + PHOTO_H - LABEL_H - 14;
+  const LABEL_PAD_X = 14;
+  const LABEL_FONT = 11;
+  const LABEL_RADIUS = 4;
+
+  // BEFORE label — cream bg
+  ctx.fillStyle = CREAM;
+  ctx.globalAlpha = 0.92;
   ctx.beginPath();
-  ctx.moveTo(PAD, y - ROW_PAD / 2);
-  ctx.lineTo(CARD_W - PAD, y - ROW_PAD / 2);
+  ctx.roundRect(LABEL_PAD_X, LABEL_Y, LABEL_W, LABEL_H, LABEL_RADIUS);
+  ctx.fill();
+  ctx.globalAlpha = 1;
+  ctx.font = `bold ${LABEL_FONT}px MeethaFont`;
+  ctx.fillStyle = BG;
+  ctx.textAlign = "center";
+  ctx.fillText("BEFORE", LABEL_PAD_X + LABEL_W / 2, LABEL_Y + LABEL_H * 0.68);
+
+  // AFTER label — gold bg
+  const afterLabelX = EACH_PHOTO_W + PHOTO_GAP + LABEL_PAD_X;
+  ctx.fillStyle = GOLD;
+  ctx.globalAlpha = 0.95;
+  ctx.beginPath();
+  ctx.roundRect(afterLabelX, LABEL_Y, LABEL_W, LABEL_H, LABEL_RADIUS);
+  ctx.fill();
+  ctx.globalAlpha = 1;
+  ctx.font = `bold ${LABEL_FONT}px MeethaFont`;
+  ctx.fillStyle = BG;
+  ctx.textAlign = "center";
+  ctx.fillText("AFTER", afterLabelX + LABEL_W / 2, LABEL_Y + LABEL_H * 0.68);
+
+  // ════════════════════════════════════════════════════════════
+  // SECTION 3: 2×2 BRIEF GRID
+  // ════════════════════════════════════════════════════════════
+  const BRIEF_TOP = HEADER_H + PHOTO_H;
+  const CELL_W = Math.floor(CARD_W / 2);
+  const CELL_H = Math.floor(BRIEF_H / 2);
+  const CELL_PAD = 28;
+  const CELL_HEADER_FONT = 10;
+  const CELL_BODY_FONT = 13;
+  const CELL_LINE_H = CELL_BODY_FONT * 1.65;
+
+  // Top rule above brief section
+  ctx.strokeStyle = GOLD;
+  ctx.globalAlpha = 0.25;
+  ctx.lineWidth = 0.8;
+  ctx.beginPath();
+  ctx.moveTo(40, BRIEF_TOP + 1);
+  ctx.lineTo(CARD_W - 40, BRIEF_TOP + 1);
   ctx.stroke();
   ctx.globalAlpha = 1;
 
-  // ── Remaining rows ──
-  drawRow("Metals", params.brief.jewelryDirection.description);
-  drawRow("Makeup", params.brief.makeupEnergy.description);
-  drawRow("Style", params.brief.styleDirection.description);
-  drawRow("Presence", params.brief.yourEnergy.description);
+  // Grid dividers
+  ctx.strokeStyle = "rgba(201,168,76,0.2)";
+  ctx.lineWidth = 0.8;
+  // Vertical center divider
+  ctx.beginPath();
+  ctx.moveTo(CELL_W, BRIEF_TOP + 20);
+  ctx.lineTo(CELL_W, BRIEF_TOP + BRIEF_H - 20);
+  ctx.stroke();
+  // Horizontal center divider
+  ctx.beginPath();
+  ctx.moveTo(40, BRIEF_TOP + CELL_H);
+  ctx.lineTo(CARD_W - 40, BRIEF_TOP + CELL_H);
+  ctx.stroke();
 
-  // ── Wordmark ──
-  const wmFontSize = Math.round(CARD_W * 0.018);
-  ctx.font = `${wmFontSize}px MeethaFont`;
-  ctx.fillStyle = GOLD;
-  ctx.globalAlpha = 0.45;
-  ctx.textAlign = "right";
-  ctx.fillText("styled by Meetha", CARD_W - PAD, BRIEF_H - 20);
+  // Helper: draw a brief cell
+  function drawBriefCell(
+    col: 0 | 1,
+    row: 0 | 1,
+    label: string,
+    content: string,
+    swatches?: string[]
+  ) {
+    const cellX = col * CELL_W;
+    const cellY = BRIEF_TOP + row * CELL_H;
+    const textX = cellX + CELL_PAD;
+    const maxW = CELL_W - CELL_PAD * 2;
+    let y = cellY + CELL_PAD;
+
+    // Label
+    ctx.font = `bold ${CELL_HEADER_FONT}px MeethaFont`;
+    ctx.fillStyle = GOLD;
+    ctx.globalAlpha = 0.85;
+    ctx.textAlign = "left";
+    ctx.fillText(label, textX, y);
+    ctx.globalAlpha = 1;
+    y += CELL_HEADER_FONT + 10;
+
+    // Color swatches (for palette cell)
+    if (swatches && swatches.length > 0) {
+      const swatchR = 9;
+      const swatchSpacing = swatchR * 2 + 5;
+      swatches.slice(0, 5).forEach((hex, i) => {
+        ctx.beginPath();
+        ctx.arc(textX + swatchR + i * swatchSpacing, y + swatchR, swatchR, 0, Math.PI * 2);
+        ctx.fillStyle = hex;
+        ctx.fill();
+        ctx.strokeStyle = "rgba(255,255,255,0.15)";
+        ctx.lineWidth = 0.5;
+        ctx.stroke();
+      });
+      y += swatchR * 2 + 12;
+    }
+
+    // Body text
+    ctx.font = `${CELL_BODY_FONT}px MeethaFont`;
+    ctx.fillStyle = WARM_GREY;
+    ctx.textAlign = "left";
+    const lines = wrapTextCanvas(ctx, sanitizeText(content), maxW);
+    lines.slice(0, 7).forEach((line, i) => {
+      ctx.fillText(line, textX, y + i * CELL_LINE_H);
+    });
+  }
+
+  // Cell (0,0) — Color Palette (top-left)
+  drawBriefCell(0, 0, "COLOR PALETTE", params.brief.colorPalette.description, params.brief.colorPalette.swatches);
+
+  // Cell (1,0) — Style Direction (top-right)
+  drawBriefCell(1, 0, "STYLE DIRECTION", params.brief.styleDirection.description);
+
+  // Cell (0,1) — Makeup Energy (bottom-left)
+  drawBriefCell(0, 1, "MAKEUP ENERGY", params.brief.makeupEnergy.description);
+
+  // Cell (1,1) — Your Energy (bottom-right) — keywords + description
+  const energyKeywords = params.brief.yourEnergy.keywords.slice(0, 4);
+  const energyContent = energyKeywords.join("  \u00B7  ") + "  " + params.brief.yourEnergy.description;
+  drawBriefCell(1, 1, "YOUR ENERGY", energyContent);
+
+  // ════════════════════════════════════════════════════════════
+  // SECTION 4: FOOTER WORDMARK
+  // ════════════════════════════════════════════════════════════
+  const FOOTER_TOP = HEADER_H + PHOTO_H + BRIEF_H;
+
+  ctx.strokeStyle = GOLD;
+  ctx.globalAlpha = 0.2;
+  ctx.lineWidth = 0.8;
+  ctx.beginPath();
+  ctx.moveTo(60, FOOTER_TOP + 8);
+  ctx.lineTo(CARD_W - 60, FOOTER_TOP + 8);
+  ctx.stroke();
   ctx.globalAlpha = 1;
 
-  const briefBuf = canvas.toBuffer("image/png") as Buffer;
+  ctx.font = `11px MeethaFont`;
+  ctx.fillStyle = GOLD;
+  ctx.globalAlpha = 0.45;
+  ctx.textAlign = "center";
+  ctx.fillText("styled by Meetha  \u00B7  meetha.studio", CARD_W / 2, FOOTER_TOP + 34);
+  ctx.globalAlpha = 1;
 
-  // ── 4. Assemble ─────────────────────────────────────────────────────────────
-  const card = await sharp({
-    create: { width: CARD_W, height: CARD_H, channels: 3, background: BG_CREAM },
-  })
-    .composite([
-      { input: imageWithGradient, top: 0, left: 0 },
-      { input: briefBuf, top: IMAGE_H, left: 0 },
-    ])
-    .jpeg({ quality: 92 })
-    .toBuffer();
-
-  return card;
+  // ── Export as JPEG ──
+  return canvas.toBuffer("image/jpeg", 92) as Buffer;
 }
 
 // ─── Main Entry Point ─────────────────────────────────────────────────────────
