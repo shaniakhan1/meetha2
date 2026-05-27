@@ -1285,7 +1285,13 @@ Respond in this exact JSON format:
             try {
               const { getUserGenerations: getGens } = await import("./db");
               const gens = await getGens(ctx.user.id, { limit: 1 });
-              const heroUrl = gens[0]?.image_url ?? null;
+              const rawHeroUrl = gens[0]?.image_url ?? null;
+              // Resolve relative /manus-storage/ paths to full URL for canvas image loading
+              const heroUrl = rawHeroUrl
+                ? rawHeroUrl.startsWith("http")
+                  ? rawHeroUrl
+                  : `https://meetha.studio${rawHeroUrl}`
+                : null;
               const cardBuffer = await renderIdentityBriefCard(briefData, heroUrl);
               const key = `identity-brief/${ctx.user.id}-${Date.now()}.png`;
               const { url } = await storagePut(key, cardBuffer, "image/png");
