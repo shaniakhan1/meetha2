@@ -3,7 +3,8 @@
  * Generates a premium PNG card from the user's aesthetic brief data.
  * Card dimensions: 900 x 1560px (portrait, shareable)
  */
-import { createCanvas, loadImage, registerFont, CanvasRenderingContext2D } from "canvas";
+import { createCanvas, loadImage, GlobalFonts } from "@napi-rs/canvas";
+import type { SKRSContext2D } from "@napi-rs/canvas";
 import path from "path";
 import { fileURLToPath } from "url";
 import { AestheticBrief } from "./db";
@@ -22,18 +23,17 @@ function getDirname(): string {
 const FONTS_DIR = path.join(getDirname(), "fonts");
 
 function registerFonts() {
-  // Use Noto Serif TTF for the serif display font (node-canvas supports TTF natively)
+  // Use Noto Serif TTF for the serif display font
   // Use Liberation Sans TTF for the sans-serif body font
   const fontDefs = [
-    { file: "NotoSerif-Light.ttf", family: "Cormorant", weight: "300" },
-    { file: "NotoSerif-Regular.ttf", family: "Cormorant", weight: "400" },
-    { file: "NotoSerif-Regular.ttf", family: "Cormorant", weight: "500" },
-    { file: "LiberationSans-Regular.ttf", family: "Liberation", weight: "400" },
-    { file: "LiberationSans-Bold.ttf", family: "Liberation", weight: "700" },
+    { file: "NotoSerif-Light.ttf", family: "Cormorant" },
+    { file: "NotoSerif-Regular.ttf", family: "Cormorant" },
+    { file: "LiberationSans-Regular.ttf", family: "Liberation" },
+    { file: "LiberationSans-Bold.ttf", family: "Liberation" },
   ];
   for (const def of fontDefs) {
     try {
-      registerFont(path.join(FONTS_DIR, def.file), { family: def.family, weight: def.weight });
+      GlobalFonts.registerFromPath(path.join(FONTS_DIR, def.file), def.family);
     } catch (e) {
       console.warn(`[identityBriefCard] Font registration warning for ${def.file}:`, e);
     }
@@ -63,7 +63,7 @@ function sans(size: number, weight: "400" | "700" = "400") {
   return `${weight} ${size}px Liberation, sans-serif`;
 }
 
-function drawDivider(ctx: CanvasRenderingContext2D, x: number, y: number, width: number, alpha = 0.35) {
+function drawDivider(ctx: SKRSContext2D, x: number, y: number, width: number, alpha = 0.35) {
   ctx.save();
   ctx.globalAlpha = alpha;
   ctx.strokeStyle = DIVIDER;
@@ -75,7 +75,7 @@ function drawDivider(ctx: CanvasRenderingContext2D, x: number, y: number, width:
   ctx.restore();
 }
 
-function drawSectionLabel(ctx: CanvasRenderingContext2D, text: string, x: number, y: number) {
+function drawSectionLabel(ctx: SKRSContext2D, text: string, x: number, y: number) {
   ctx.save();
   ctx.font = sans(9, "400");
   ctx.fillStyle = CHARCOAL_MUTED;
@@ -85,7 +85,7 @@ function drawSectionLabel(ctx: CanvasRenderingContext2D, text: string, x: number
   ctx.restore();
 }
 
-function drawSectionNumber(ctx: CanvasRenderingContext2D, num: string, x: number, y: number) {
+function drawSectionNumber(ctx: SKRSContext2D, num: string, x: number, y: number) {
   ctx.save();
   ctx.font = sans(8, "400");
   ctx.fillStyle = GOLD;
@@ -93,7 +93,7 @@ function drawSectionNumber(ctx: CanvasRenderingContext2D, num: string, x: number
   ctx.restore();
 }
 
-function drawBodyText(ctx: CanvasRenderingContext2D, text: string, x: number, y: number, maxWidth: number, lineHeight = 16, color = CHARCOAL_SOFT, fontSize = 10) {
+function drawBodyText(ctx: SKRSContext2D, text: string, x: number, y: number, maxWidth: number, lineHeight = 16, color = CHARCOAL_SOFT, fontSize = 10) {
   ctx.save();
   ctx.font = sans(fontSize, "400");
   ctx.fillStyle = color;
@@ -116,7 +116,7 @@ function drawBodyText(ctx: CanvasRenderingContext2D, text: string, x: number, y:
   return currentY;
 }
 
-function drawColorSwatch(ctx: CanvasRenderingContext2D, hex: string, x: number, y: number, size = 40, label?: string) {
+function drawColorSwatch(ctx: SKRSContext2D, hex: string, x: number, y: number, size = 40, label?: string) {
   ctx.save();
   // Swatch
   ctx.fillStyle = hex;
@@ -138,7 +138,7 @@ function drawColorSwatch(ctx: CanvasRenderingContext2D, hex: string, x: number, 
   ctx.restore();
 }
 
-function drawCircle(ctx: CanvasRenderingContext2D, x: number, y: number, r: number, fill: string, stroke?: string) {
+function drawCircle(ctx: SKRSContext2D, x: number, y: number, r: number, fill: string, stroke?: string) {
   ctx.save();
   ctx.beginPath();
   ctx.arc(x, y, r, 0, Math.PI * 2);
@@ -152,7 +152,7 @@ function drawCircle(ctx: CanvasRenderingContext2D, x: number, y: number, r: numb
   ctx.restore();
 }
 
-function drawCompassStar(ctx: CanvasRenderingContext2D, cx: number, cy: number, size: number, color: string) {
+function drawCompassStar(ctx: SKRSContext2D, cx: number, cy: number, size: number, color: string) {
   ctx.save();
   ctx.fillStyle = color;
   ctx.strokeStyle = color;
@@ -302,7 +302,7 @@ function parseAvoidColors(avoidStr: string): string[] {
 
 // ─── Section Renderers ────────────────────────────────────────────────────────
 
-function renderHero(ctx: CanvasRenderingContext2D, heroImage: import("canvas").Image | null, W: number) {
+function renderHero(ctx: SKRSContext2D, heroImage: import("@napi-rs/canvas").Image | null, W: number) {
   const heroH = 280;
 
   if (heroImage) {
@@ -349,7 +349,7 @@ function renderHero(ctx: CanvasRenderingContext2D, heroImage: import("canvas").I
   return heroH;
 }
 
-function renderHeadline(ctx: CanvasRenderingContext2D, brief: AestheticBrief, y: number, W: number, PAD: number): number {
+function renderHeadline(ctx: SKRSContext2D, brief: AestheticBrief, y: number, W: number, PAD: number): number {
   const startY = y + 36;
 
   // YOUR IDENTITY BRIEF
@@ -373,7 +373,7 @@ function renderHeadline(ctx: CanvasRenderingContext2D, brief: AestheticBrief, y:
   return lineY + 20;
 }
 
-function renderColorPalette(ctx: CanvasRenderingContext2D, brief: AestheticBrief, y: number, W: number, PAD: number): number {
+function renderColorPalette(ctx: SKRSContext2D, brief: AestheticBrief, y: number, W: number, PAD: number): number {
   const col1W = (W - PAD * 2) * 0.55;
   const col2X = PAD + col1W + 20;
   const col2W = W - col2X - PAD;
@@ -525,7 +525,7 @@ function renderColorPalette(ctx: CanvasRenderingContext2D, brief: AestheticBrief
   return maxY + 20;
 }
 
-function renderMakeupLightingFabrics(ctx: CanvasRenderingContext2D, brief: AestheticBrief, y: number, W: number, PAD: number): number {
+function renderMakeupLightingFabrics(ctx: SKRSContext2D, brief: AestheticBrief, y: number, W: number, PAD: number): number {
   const thirdW = (W - PAD * 2) / 3;
   const col2X = PAD + thirdW + 10;
   const col3X = PAD + thirdW * 2 + 20;
@@ -716,7 +716,7 @@ function renderMakeupLightingFabrics(ctx: CanvasRenderingContext2D, brief: Aesth
   return maxY + 20;
 }
 
-function renderPresenceAndWorlds(ctx: CanvasRenderingContext2D, brief: AestheticBrief, y: number, W: number, PAD: number): number {
+function renderPresenceAndWorlds(ctx: SKRSContext2D, brief: AestheticBrief, y: number, W: number, PAD: number): number {
   const halfW = (W - PAD * 2) / 2;
   const col2X = PAD + halfW + 20;
   let col1Y = y;
@@ -811,7 +811,7 @@ function renderPresenceAndWorlds(ctx: CanvasRenderingContext2D, brief: Aesthetic
   return maxY + 20;
 }
 
-function renderFooter(ctx: CanvasRenderingContext2D, y: number, W: number) {
+function renderFooter(ctx: SKRSContext2D, y: number, W: number) {
   // Compass star left
   drawCompassStar(ctx, 32, y + 12, 8, GOLD);
 
@@ -899,7 +899,7 @@ export async function renderIdentityBriefCard(
   const PAD = 32;
 
   // Load hero image if available
-  let heroImage: import("canvas").Image | null = null;
+  let heroImage: import("@napi-rs/canvas").Image | null = null;
   if (heroImageUrl) {
     try {
       heroImage = await loadImage(heroImageUrl);
