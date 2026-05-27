@@ -475,3 +475,13 @@
 - [x] Style card brief panel: full available width used for value text (no more narrow column constraint)
 - [x] Watermark: confirmed "styled by Meetha" in both styleCard.ts and download.ts
 - [x] TypeScript: zero errors | Vitest: 13 tests passing
+
+## V47 -- Body Preservation + Card Improvements
+
+- [x] Reset all broken transformation_card_url values in Supabase to NULL so users can regenerate
+- [x] Add "Regenerate Card" button to Profile transformation card section
+- [x] Add before-photo upload to Profile transformation card section (initial generate + regenerate flows)
+- [x] Add /api/upload-before-photo endpoint with multer + sharp + storage
+- [x] Update generation prompt: shift from body descriptors to styling/lighting/wardrobe focus; body type used as preservation anchor
+- [x] Add negative prompts to LoRA path: avoid hyper-thin, exaggerated waist, model-body distortion
+- [x] Reframe onboarding body step: "How should Meetha handle your body?" with 3 preservation-preference options instead of 5 body-type descriptors

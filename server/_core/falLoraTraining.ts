@@ -168,6 +168,10 @@ export async function generateImageWithLora(options: {
   const result = (await fal.subscribe("fal-ai/flux-lora", {
     input: {
       prompt: promptWithTrigger,
+      // negative_prompt is supported by flux-lora at runtime but not in the TS type definitions
+      ...({
+        negative_prompt: "hyper-thin body, extremely slender waist, exaggerated hourglass, unrealistic proportions, model-thin, emaciated, underweight appearance, distorted body shape, elongated limbs, stretched figure, body modification, plastic surgery look, unnatural waist, pinched waist, corset-thin, fashion-model distortion",
+      } as Record<string, unknown>),
       image_size: imageSize,
       loras: [
         {

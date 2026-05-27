@@ -735,6 +735,10 @@ function TransformationCardSection() {
   const firstGeneration = generationsQuery.data?.items?.[0];
 
   const cardRef = useRef<HTMLDivElement>(null);
+  const [beforePhotoFile, setBeforePhotoFile] = useState<File | null>(null);
+  const [beforePhotoPreview, setBeforePhotoPreview] = useState<string | null>(null);
+  const [showRegenerateConfirm, setShowRegenerateConfirm] = useState(false);
+
   const generateCard = trpc.profile.generateTransformationCard.useMutation({
     onSuccess: (data) => {
       // Immediately update the cache with the returned URL so the card
@@ -750,21 +754,53 @@ function TransformationCardSection() {
           cardRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
         }, 300);
       });
+      setShowRegenerateConfirm(false);
       toast.success("Your Transformation Card is ready!");
     },
     onError: (err) => toast.error(err.message),
   });
 
-  const handleGenerate = () => {
+  const handleBeforePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setBeforePhotoFile(file);
+    const reader = new FileReader();
+    reader.onload = (ev) => setBeforePhotoPreview(ev.target?.result as string);
+    reader.readAsDataURL(file);
+  };
+
+  const handleGenerate = async (forceRegenerate = false) => {
     if (!firstGeneration) return;
     // Convert relative /manus-storage/ URL to absolute so z.string().url() validation passes
     const rawUrl = firstGeneration.image_url as string;
     const afterImageUrl = rawUrl.startsWith("http")
       ? rawUrl
       : `${window.location.origin}${rawUrl.startsWith("/") ? rawUrl : "/" + rawUrl}`;
+
+    // Upload before photo to storage if provided
+    let beforeImageUrl: string | null = null;
+    if (beforePhotoFile) {
+      try {
+        const formData = new FormData();
+        formData.append("file", beforePhotoFile);
+        const res = await fetch("/api/upload-before-photo", {
+          method: "POST",
+          body: formData,
+          credentials: "include",
+        });
+        if (res.ok) {
+          const { url } = await res.json() as { url: string };
+          beforeImageUrl = url.startsWith("http") ? url : `${window.location.origin}${url}`;
+        }
+      } catch {
+        // If upload fails, proceed without before photo
+      }
+    }
+
     generateCard.mutate({
       afterImageUrl,
-      beforeImageUrl: null,
+      beforeImageUrl,
+      forceRegenerate,
     });
   };
 
@@ -848,6 +884,57 @@ function TransformationCardSection() {
           >
             {/iPhone|iPad|iPod|Android/i.test(navigator.userAgent) ? "Save & Share Card" : "Download Card"}
           </button>
+
+          {/* Regenerate section */}
+          {!showRegenerateConfirm ? (
+            <button
+              onClick={() => setShowRegenerateConfirm(true)}
+              className="w-full text-center font-sans text-xs text-charcoal-soft/50 underline underline-offset-2 py-1"
+            >
+              Regenerate card
+            </button>
+          ) : (
+            <div className="border border-sand bg-warm-white/60 p-4 space-y-3">
+              <p className="font-sans text-sm text-charcoal">Regenerate your card?</p>
+              <p className="font-sans text-xs text-charcoal-soft leading-relaxed">
+                This will replace your current card. Optionally add a before photo below.
+              </p>
+              {/* Before photo upload */}
+              <div className="space-y-2">
+                <p className="font-sans text-xs font-semibold text-charcoal">Before photo (optional)</p>
+                {beforePhotoPreview ? (
+                  <div className="relative">
+                    <img src={beforePhotoPreview} alt="Before" className="w-24 h-24 object-cover border border-sand" />
+                    <button
+                      onClick={() => { setBeforePhotoFile(null); setBeforePhotoPreview(null); }}
+                      className="absolute top-1 right-1 bg-charcoal/80 text-cream text-xs px-1.5 py-0.5 rounded"
+                    >x</button>
+                  </div>
+                ) : (
+                  <label className="flex items-center gap-2 cursor-pointer border border-dashed border-sand/60 p-3 hover:border-gold/40 transition-colors">
+                    <span className="font-sans text-xs text-charcoal-soft">+ Add a before photo</span>
+                    <input type="file" accept="image/*" className="hidden" onChange={handleBeforePhotoChange} />
+                  </label>
+                )}
+              </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => handleGenerate(true)}
+                  disabled={generateCard.isPending}
+                  className="btn-luxury btn-gold flex-1 text-sm"
+                >
+                  {generateCard.isPending ? "Generating..." : "Regenerate"}
+                </button>
+                <button
+                  onClick={() => setShowRegenerateConfirm(false)}
+                  className="flex-1 border border-sand font-sans text-sm text-charcoal py-2 px-4"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          )}
+
           <p className="font-sans text-xs text-charcoal-soft/50 text-center leading-relaxed">
             Share this card anywhere. It's yours.
           </p>
@@ -882,17 +969,42 @@ function TransformationCardSection() {
         </div>
       ) : (
         // Ready to generate
-        <div className="border border-gold/30 bg-warm-white/60 p-5 space-y-3">
-          <p className="font-serif text-base text-charcoal">Your card is ready to generate.</p>
-          <p className="font-sans font-light text-sm text-charcoal-soft leading-relaxed">
-            We’ll create a personalized before & after card with your complete style brief: color palette, style direction, makeup energy, jewelry guide, and your energy keywords.
-          </p>
+        <div className="border border-gold/30 bg-warm-white/60 p-5 space-y-4">
+          <div>
+            <p className="font-serif text-base text-charcoal">Your card is ready to generate.</p>
+            <p className="font-sans font-light text-sm text-charcoal-soft leading-relaxed mt-1">
+              We'll create a personalized before & after card with your complete style brief: color palette, style direction, makeup energy, jewelry guide, and your energy keywords.
+            </p>
+          </div>
+
+          {/* Before photo upload */}
+          <div className="space-y-2">
+            <p className="font-sans text-xs font-semibold text-charcoal">Add a before photo (optional)</p>
+            <p className="font-sans text-xs text-charcoal-soft/70 leading-relaxed">
+              Upload a photo of yourself before your style transformation. It will appear on the left side of your card.
+            </p>
+            {beforePhotoPreview ? (
+              <div className="relative inline-block">
+                <img src={beforePhotoPreview} alt="Before" className="w-24 h-24 object-cover border border-sand" />
+                <button
+                  onClick={() => { setBeforePhotoFile(null); setBeforePhotoPreview(null); }}
+                  className="absolute top-1 right-1 bg-charcoal/80 text-cream text-xs px-1.5 py-0.5 rounded"
+                >x</button>
+              </div>
+            ) : (
+              <label className="flex items-center gap-2 cursor-pointer border border-dashed border-sand/60 p-3 hover:border-gold/40 transition-colors">
+                <span className="font-sans text-xs text-charcoal-soft">+ Add a before photo</span>
+                <input type="file" accept="image/*" className="hidden" onChange={handleBeforePhotoChange} />
+              </label>
+            )}
+          </div>
+
           <button
-            onClick={handleGenerate}
+            onClick={() => handleGenerate(false)}
             disabled={generateCard.isPending}
             className="btn-luxury btn-gold w-full"
           >
-            Generate My Transformation Card
+            {generateCard.isPending ? "Generating..." : "Generate My Transformation Card"}
           </button>
         </div>
       )}

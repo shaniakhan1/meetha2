@@ -223,8 +223,9 @@ function buildImagePrompt(
     : "warm honey skin tones where hands are visible, gold jewelry details,";
 
   const nicheLayer = niche ? `visual world of a ${niche} creator,` : "";
-  const bodyLayer = bodyType ? `${bodyType},` : "";
-  return `${scene}, ${archetypeStyle}, ${moodStyle}, ${aestheticLayer} ${nicheLayer} ${bodyLayer} editorial female-gaze luxury aesthetic, cinematic lighting, subtle film grain, realistic textures, warm amber tones, atmospheric depth, no faces, no full bodies, hands only when naturally holding an object, vertical 9:16 framing, social-media-ready, photorealistic, high resolution`;
+  // Body type is used as a preservation anchor, not a descriptor — we name it to preserve it, not to change it
+  const bodyLayer = bodyType ? `authentic ${bodyType} frame preserved exactly as-is,` : "";
+  return `${scene}, ${archetypeStyle}, ${moodStyle}, ${aestheticLayer} ${nicheLayer} ${bodyLayer} editorial female-gaze aesthetic, focus on wardrobe styling, fabric texture, jewelry detail, and atmospheric lighting — not body shape, cinematic lighting, subtle film grain, realistic textures, warm amber tones, atmospheric depth, no faces, no full bodies, hands only when naturally holding an object, vertical 9:16 framing, social-media-ready, photorealistic, high resolution`;
 }
 
 const PLATFORM_TONE: Record<string, string> = {
@@ -764,6 +765,7 @@ export const appRouter = router({
         // Accept both absolute URLs (https://...) and relative paths (/manus-storage/...)
         afterImageUrl: z.string().min(1),
         beforeImageUrl: z.string().min(1).optional().nullable(),
+        forceRegenerate: z.boolean().optional().default(false),
       }))
       .mutation(async ({ ctx, input }) => {
         const [profile, credits] = await Promise.all([
@@ -773,7 +775,7 @@ export const appRouter = router({
         if (!credits || credits.tier === "free") {
           throw new TRPCError({ code: "FORBIDDEN", message: "Upgrade to Starter or Pro to unlock your Visual Transformation Card." });
         }
-        if (profile?.transformation_card_url) {
+        if (profile?.transformation_card_url && !input.forceRegenerate) {
           return { url: profile.transformation_card_url };
         }
         const cardUrl = await generateAndSaveTransformationCard({

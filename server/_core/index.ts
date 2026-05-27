@@ -11,6 +11,7 @@ import { handleArchiveGenerations } from "../archiveCron";
 import { handleWelcomeEmail } from "../welcomeEmailCron";
 import { handleStripeRetrainWebhook } from "../stripeWebhook";
 import { loraUploadMiddleware, handleLoraUpload, handleLoraStatus } from "../loraUpload";
+import { beforePhotoUploadMiddleware, handleBeforePhotoUpload } from "../beforePhotoUpload";
 import { recoverStuckJobs } from "../loraPoller";
 import { registerStorageProxy } from "./storageProxy";
 import { appRouter } from "../routers";
@@ -56,6 +57,7 @@ async function startServer() {
   app.get("/api/download/:generationId", handleDownload);
   app.get("/api/style-card/:generationId", handleStyleCard);
   app.post("/api/lora/upload", loraUploadMiddleware, handleLoraUpload);
+  app.post("/api/upload-before-photo", beforePhotoUploadMiddleware, handleBeforePhotoUpload);
   app.get("/api/lora/status", handleLoraStatus);
   app.post("/api/scheduled/lora-check", handleLoraCheck);
   app.post("/api/scheduled/archive-generations", handleArchiveGenerations);

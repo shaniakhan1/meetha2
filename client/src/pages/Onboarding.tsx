@@ -253,20 +253,18 @@ export default function Onboarding() {
           <div className="mb-8">
             <p className="font-sans text-xs tracking-[0.25em] uppercase text-gold mb-3">Step 3 of 4</p>
             <h1 className="font-serif text-4xl font-light text-charcoal leading-tight mb-3">
-              How do you<br />carry yourself?
+              How should Meetha<br />handle your body?
             </h1>
             <p className="font-sans text-sm text-charcoal-soft leading-relaxed">
-              Meetha uses this to shape the body proportions in your images, so they feel like you, not a generic silhouette.
+              Meetha focuses on styling — wardrobe, lighting, and atmosphere. Tell us how closely to preserve your natural proportions.
             </p>
           </div>
 
           <div className="space-y-3 mb-8">
             {([
-              { value: "petite and slender frame, delicate proportions", label: "Petite", sub: "Small frame, delicate proportions" },
-              { value: "slim athletic build, toned and lean", label: "Slim & Athletic", sub: "Lean, toned, long lines" },
-              { value: "hourglass figure, defined waist, balanced curves", label: "Hourglass", sub: "Defined waist, balanced curves" },
-              { value: "full-figured woman, generous curves, soft and voluptuous", label: "Full-Figured", sub: "Generous curves, soft and voluptuous" },
-              { value: "tall statuesque build, long limbs, commanding presence", label: "Tall & Statuesque", sub: "Long limbs, commanding presence" },
+              { value: "preserve exact natural body proportions, do not alter frame or silhouette", label: "Keep me exactly as I am", sub: "Preserve my natural proportions precisely" },
+              { value: "preserve natural proportions with subtle editorial polish", label: "Slight editorial polish", sub: "Natural frame, slightly refined for editorial look" },
+              { value: "editorial styling focus, proportions secondary to aesthetic", label: "Prioritize the aesthetic", sub: "Focus on styling and atmosphere over body accuracy" },
             ] as { value: string; label: string; sub: string }[]).map(({ value, label, sub }) => (
               <button
                 key={value}
