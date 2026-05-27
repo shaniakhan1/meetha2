@@ -525,7 +525,7 @@ export default function Home() {
           <div className="border border-sand bg-warm-white overflow-hidden">
             <div className="relative w-full overflow-hidden" style={{ height: "320px" }}>
               <img
-                src="/manus-storage/hero_sample_f65e4d53.jpg"
+                src="/manus-storage/meetha-car-laughing_257c6ff8.jpg"
                 alt="Content example"
                 className="w-full h-full object-cover object-center"
               />

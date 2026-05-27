@@ -518,3 +518,9 @@
 - [x] Anum: delete and retrain (poller bug fixed, new job will complete correctly)
 - [x] TypeScript: zero errors
 - [x] Vitest: 13 tests passing
+
+## V56 -- Card Redesign + Photo Swap
+- [x] Upload IMG_4771 (laughing car photo) and replace black-clothes woman in homepage mockup
+- [x] Redesign actual generated styling card: vertical 800x1200, after image on top, cream panel with gold "YOUR IDENTITY BRIEF" header, stacked Palette/Metals/Makeup/Style/Presence rows, readable text
+- [x] TypeScript: zero errors
+- [x] Vitest: 13 tests passing

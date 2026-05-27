@@ -496,87 +496,186 @@ function renderFooter(cardW: number, footerH: number, brief: StyleBrief): Buffer
 
 // ─── Card Compositor ─────────────────────────────────────────────────────────
 
+/**
+ * Builds a vertical portrait card (800×1200) matching the homepage mockup:
+ * - Top: after image (full width, 480px tall) with caption overlay
+ * - Bottom: cream background with "YOUR IDENTITY BRIEF" header + stacked label/value rows
+ */
 export async function buildTransformationCard(params: {
   beforeImageUrl: string | null;
   afterImageUrl: string;
   brief: StyleBrief;
 }): Promise<Buffer> {
-  const CARD_W = 1200;
-  const HEADER_H = 120;
-  const PHOTO_H = 700;
-  const FOOTER_H = 340;
-  const CARD_H = HEADER_H + PHOTO_H + FOOTER_H;
+  ensureFonts();
 
-  const BG_DARK = { r: 18, g: 8, b: 10 };
+  const CARD_W = 800;
+  const IMAGE_H = 480;
+  const BRIEF_H = 720;
+  const CARD_H = IMAGE_H + BRIEF_H;
 
-  // ── 1. Header ──────────────────────────────────────────────────────────────
-  const headerBuf = renderHeader(CARD_W, HEADER_H);
+  const GOLD = "#C9A84C";
+  const CREAM = "#F5F0E8";
+  const CHARCOAL = "#1A1008";
+  const WARM_GREY = "#6B6259";
+  const BG_CREAM = { r: 245, g: 240, b: 232 }; // #F5F0E8
 
-  // ── 2. Photo Panel ─────────────────────────────────────────────────────────
-  const HALF_W = CARD_W / 2;
-  const GAP = 4;
-  const PHOTO_W = HALF_W - GAP / 2;
-
-  // After image (always available)
+  // ── 1. After image (full width, cropped to top) ─────────────────────────────
   const afterBuf = await fetchImageBuffer(params.afterImageUrl);
   const afterResized = await sharp(afterBuf)
-    .resize(PHOTO_W, PHOTO_H, { fit: "cover", position: "top" })
-    .jpeg({ quality: 90 })
+    .resize(CARD_W, IMAGE_H, { fit: "cover", position: "top" })
+    .jpeg({ quality: 92 })
     .toBuffer();
 
-  // Before image or placeholder
-  let beforeResized: Buffer;
-  if (params.beforeImageUrl) {
-    const beforeBuf = await fetchImageBuffer(params.beforeImageUrl);
-    beforeResized = await sharp(beforeBuf)
-      .resize(PHOTO_W, PHOTO_H, { fit: "cover", position: "top" })
-      .jpeg({ quality: 90 })
-      .toBuffer();
-  } else {
-    const placeholderBuf = renderBeforePlaceholder(PHOTO_W, PHOTO_H);
-    beforeResized = await sharp(placeholderBuf)
-      .resize(PHOTO_W, PHOTO_H, { fit: "fill" })
-      .jpeg({ quality: 90 })
-      .toBuffer();
+  // ── 2. Caption overlay on image ─────────────────────────────────────────────
+  // Render a gradient + caption text as SVG overlay
+  const captionSvg = `<svg width="${CARD_W}" height="${IMAGE_H}" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <linearGradient id="g" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="50%" stop-color="#000" stop-opacity="0"/>
+        <stop offset="100%" stop-color="#000" stop-opacity="0.72"/>
+      </linearGradient>
+    </defs>
+    <rect width="${CARD_W}" height="${IMAGE_H}" fill="url(#g)"/>
+  </svg>`;
+
+  const imageWithGradient = await sharp(afterResized)
+    .composite([{ input: Buffer.from(captionSvg), top: 0, left: 0 }])
+    .jpeg({ quality: 92 })
+    .toBuffer();
+
+  // ── 3. Brief panel (canvas) ─────────────────────────────────────────────────
+  const canvas = createCanvas(CARD_W, BRIEF_H);
+  const ctx = canvas.getContext("2d");
+
+  // Background
+  ctx.fillStyle = CREAM;
+  ctx.fillRect(0, 0, CARD_W, BRIEF_H);
+
+  const PAD = 48;
+  const ROW_PAD = 28;
+  let y = 44;
+
+  // "YOUR IDENTITY BRIEF" header
+  ctx.font = `bold ${Math.round(CARD_W * 0.022)}px MeethaFont`;
+  ctx.fillStyle = GOLD;
+  ctx.textAlign = "left";
+  ctx.fillText("YOUR IDENTITY BRIEF", PAD, y);
+  y += 18;
+
+  // Thin gold rule
+  ctx.strokeStyle = GOLD;
+  ctx.globalAlpha = 0.35;
+  ctx.lineWidth = 0.8;
+  ctx.beginPath();
+  ctx.moveTo(PAD, y);
+  ctx.lineTo(CARD_W - PAD, y);
+  ctx.stroke();
+  ctx.globalAlpha = 1;
+  y += ROW_PAD;
+
+  const LABEL_FONT = Math.round(CARD_W * 0.018);
+  const BODY_FONT = Math.round(CARD_W * 0.022);
+  const LABEL_W_PX = 140;
+  const TEXT_X = PAD + LABEL_W_PX + 16;
+  const TEXT_MAX_W = CARD_W - TEXT_X - PAD;
+  const LINE_H = BODY_FONT * 1.55;
+
+  function drawRow(label: string, text: string) {
+    // Label
+    ctx.font = `bold ${LABEL_FONT}px MeethaFont`;
+    ctx.fillStyle = GOLD;
+    ctx.globalAlpha = 0.85;
+    ctx.textAlign = "left";
+    ctx.fillText(label, PAD, y);
+    ctx.globalAlpha = 1;
+
+    // Body text (wrapped)
+    ctx.font = `${BODY_FONT}px MeethaFont`;
+    ctx.fillStyle = WARM_GREY;
+    ctx.textAlign = "left";
+    const lines = wrapTextCanvas(ctx, sanitizeText(text), TEXT_MAX_W);
+    lines.forEach((line, i) => {
+      ctx.fillText(line, TEXT_X, y + i * LINE_H);
+    });
+
+    const rowH = Math.max(BODY_FONT * 1.4, lines.length * LINE_H);
+    y += rowH + ROW_PAD;
+
+    // Separator
+    ctx.strokeStyle = CHARCOAL;
+    ctx.globalAlpha = 0.08;
+    ctx.lineWidth = 0.7;
+    ctx.beginPath();
+    ctx.moveTo(PAD, y - ROW_PAD / 2);
+    ctx.lineTo(CARD_W - PAD, y - ROW_PAD / 2);
+    ctx.stroke();
+    ctx.globalAlpha = 1;
   }
 
-  // BEFORE / AFTER labels
-  const LABEL_W = 120;
-  const LABEL_H = 36;
-  const beforeLabelBuf = renderLabel("BEFORE", LABEL_W, LABEL_H);
-  const afterLabelBuf = renderLabel("AFTER", LABEL_W, LABEL_H);
+  // ── Color Palette row with swatches ──
+  ctx.font = `bold ${LABEL_FONT}px MeethaFont`;
+  ctx.fillStyle = GOLD;
+  ctx.globalAlpha = 0.85;
+  ctx.textAlign = "left";
+  ctx.fillText("Palette", PAD, y);
+  ctx.globalAlpha = 1;
 
-  const beforeWithLabel = await sharp(beforeResized)
-    .composite([{ input: beforeLabelBuf, top: 20, left: 20 }])
-    .jpeg({ quality: 90 })
-    .toBuffer();
-  const afterWithLabel = await sharp(afterResized)
-    .composite([{ input: afterLabelBuf, top: 20, left: 20 }])
-    .jpeg({ quality: 90 })
-    .toBuffer();
+  // Draw swatches inline
+  const swatches = params.brief.colorPalette.swatches.slice(0, 5);
+  const swatchR = 10;
+  const swatchSpacing = swatchR * 2 + 6;
+  const swatchStartX = TEXT_X;
+  swatches.forEach((hex, i) => {
+    ctx.beginPath();
+    ctx.arc(swatchStartX + i * swatchSpacing + swatchR, y - swatchR + 2, swatchR, 0, Math.PI * 2);
+    ctx.fillStyle = hex;
+    ctx.fill();
+  });
 
-  // Side-by-side photo panel
-  const photoPanelBuf = await sharp({
-    create: { width: CARD_W, height: PHOTO_H, channels: 3, background: BG_DARK },
-  })
-    .composite([
-      { input: beforeWithLabel, top: 0, left: 0 },
-      { input: afterWithLabel, top: 0, left: HALF_W + GAP / 2 },
-    ])
-    .jpeg({ quality: 90 })
-    .toBuffer();
+  // Palette description below swatches
+  const swatchRowH = swatchR * 2 + 8;
+  ctx.font = `${BODY_FONT}px MeethaFont`;
+  ctx.fillStyle = WARM_GREY;
+  const paletteLines = wrapTextCanvas(ctx, sanitizeText(params.brief.colorPalette.description), TEXT_MAX_W);
+  paletteLines.forEach((line, i) => {
+    ctx.fillText(line, TEXT_X, y + swatchRowH / 2 + i * LINE_H);
+  });
+  y += swatchRowH + Math.max(0, (paletteLines.length - 1) * LINE_H) + ROW_PAD;
 
-  // ── 3. Footer ──────────────────────────────────────────────────────────────
-  const footerBuf = renderFooter(CARD_W, FOOTER_H, params.brief);
+  // Separator
+  ctx.strokeStyle = CHARCOAL;
+  ctx.globalAlpha = 0.08;
+  ctx.lineWidth = 0.7;
+  ctx.beginPath();
+  ctx.moveTo(PAD, y - ROW_PAD / 2);
+  ctx.lineTo(CARD_W - PAD, y - ROW_PAD / 2);
+  ctx.stroke();
+  ctx.globalAlpha = 1;
 
-  // ── 4. Assemble full card ──────────────────────────────────────────────────
+  // ── Remaining rows ──
+  drawRow("Metals", params.brief.jewelryDirection.description);
+  drawRow("Makeup", params.brief.makeupEnergy.description);
+  drawRow("Style", params.brief.styleDirection.description);
+  drawRow("Presence", params.brief.yourEnergy.description);
+
+  // ── Wordmark ──
+  const wmFontSize = Math.round(CARD_W * 0.018);
+  ctx.font = `${wmFontSize}px MeethaFont`;
+  ctx.fillStyle = GOLD;
+  ctx.globalAlpha = 0.45;
+  ctx.textAlign = "right";
+  ctx.fillText("styled by Meetha", CARD_W - PAD, BRIEF_H - 20);
+  ctx.globalAlpha = 1;
+
+  const briefBuf = canvas.toBuffer("image/png") as Buffer;
+
+  // ── 4. Assemble ─────────────────────────────────────────────────────────────
   const card = await sharp({
-    create: { width: CARD_W, height: CARD_H, channels: 3, background: BG_DARK },
+    create: { width: CARD_W, height: CARD_H, channels: 3, background: BG_CREAM },
   })
     .composite([
-      { input: headerBuf, top: 0, left: 0 },
-      { input: photoPanelBuf, top: HEADER_H, left: 0 },
-      { input: footerBuf, top: HEADER_H + PHOTO_H, left: 0 },
+      { input: imageWithGradient, top: 0, left: 0 },
+      { input: briefBuf, top: IMAGE_H, left: 0 },
     ])
     .jpeg({ quality: 92 })
     .toBuffer();
