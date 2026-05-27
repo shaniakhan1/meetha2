@@ -244,7 +244,6 @@ export default function Home() {
             className="font-serif font-light text-charcoal mb-8 animate-fade-up opacity-0 delay-200"
             style={{ lineHeight: 1.0, fontSize: "clamp(2.8rem, 10vw, 4.5rem)" }}
           >
-            Upload your photos.<br />
             See yourself<br />
             the way a stylist<br />
             would.
