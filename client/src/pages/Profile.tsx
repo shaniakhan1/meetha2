@@ -236,7 +236,7 @@ export default function Profile() {
         {profile?.transformation_card_url && (
           <div>
             <p className="font-sans text-xs tracking-[0.18em] uppercase text-charcoal-soft/50 mb-4">Your Visual Identity</p>
-            <div className="border border-sand bg-warm-white/60 overflow-hidden">
+            <div className="max-w-sm border border-sand bg-warm-white/60 overflow-hidden">
               <img
                 src={profile!.transformation_card_url!}
                 alt="Your style card"
@@ -282,7 +282,7 @@ export default function Profile() {
             <div className="space-y-4">
               {profile?.identity_brief_card_url ? (
                 /* Generated PNG card */
-                <div className="space-y-3">
+                <div className="max-w-sm space-y-3">
                   <img
                     src={profile.identity_brief_card_url}
                     alt="Your Identity Brief"

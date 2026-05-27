@@ -693,12 +693,12 @@
 - [x] Vitest: 23 tests passing
 
 ## V107 -- LoRA Training Lifecycle + Identity Brief Card Preview
-- [ ] Audit DB: check Anum's profile for lora_request_id, photo count, training status
-- [ ] Audit server: verify loraUpload triggers Fal, loraPoller updates status correctly
-- [ ] Schema migration: add lora_status column (not_started | training | ready | failed) if missing
-- [ ] Server: set lora_status=training immediately after Fal training starts
-- [ ] Server: set lora_status=ready when poller confirms completion
-- [ ] Server: set lora_status=failed on Fal error
+- [x] Audit DB: check Anum's profile for lora_request_id, photo count, training status
+- [x] Audit server: verify loraUpload triggers Fal, loraPoller updates status correctly
+- [x] Schema migration: add lora_status column (not_started | training | ready | failed) if missing
+- [x] Server: set lora_status=training immediately after Fal training starts
+- [x] Server: set lora_status=ready when poller confirms completion
+- [x] Server: set lora_status=failed on Fal error
 - [x] Dashboard UI: show "Your Visual Identity is Training" card when lora_status=training
 - [x] Dashboard UI: disable Generate Content button when lora_status=training
 - [x] Profile UI: show training state in Visual Identity Model section
@@ -711,3 +711,12 @@
 - [x] Dashboard: add refetchInterval (60s) to profileQuery so UI auto-updates on training complete
 - [x] Profile: upgrade Visual Identity Model training state to pulsing indicator with more prominent messaging
 - [x] Generate test Identity Brief card PNG to verify visual quality
+
+## Card Display Architecture Fix
+- [ ] Fix Profile card width: constrain transformation_card_url image to max-w-sm on desktop
+- [ ] Clear legacy transformation_card_url for owner (old "YOUR VISUAL TRANSFORMATION" format)
+- [ ] Add identity_brief_card_url column to Supabase (ALTER TABLE migration)
+- [ ] Update db.ts DbProfile type to include identity_brief_card_url
+- [ ] Fix Gen 1 save flow: updateTransformationCardUrl called after every generation
+- [ ] Fix Gen 2 save flow: updateIdentityBriefCardUrl called after Gen 2 identity brief card render
+- [ ] TypeScript: 0 errors, Vitest: all passing, checkpoint

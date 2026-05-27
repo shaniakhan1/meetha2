@@ -34,6 +34,7 @@ import {
   updateLoraProfile,
   updateGenerationCardUrl,
   updateIdentityBriefCardUrl,
+  updateTransformationCardUrl,
 } from "./db";
 import { generateAndSaveStyleCard } from "./styleCard";
 import { renderIdentityBriefCard } from "./identityBriefCard";
@@ -816,6 +817,21 @@ export const appRouter = router({
     get: protectedProcedure.query(async ({ ctx }) => {
       return (await getProfile(ctx.user.id)) ?? null;
     }),
+    /**
+     * Backfill: copies the latest generation's card_url to profile.transformation_card_url.
+     * Used to fix existing users whose Gen 1 card was never persisted to the profile.
+     */
+    backfillStyleCard: protectedProcedure.mutation(async ({ ctx }) => {
+      const profile = await getProfile(ctx.user.id);
+      // Only backfill if profile doesn't already have a transformation_card_url
+      if (profile?.transformation_card_url) return { skipped: true };
+      const generations = await getUserGenerations(ctx.user.id, { limit: 50 });
+      // Find the most recent generation that has a card_url
+      const withCard = generations.find((g) => g.card_url);
+      if (!withCard?.card_url) return { skipped: true };
+      await updateTransformationCardUrl(ctx.user.id, withCard.card_url);
+      return { backfilled: true, cardUrl: withCard.card_url };
+    }),
 
     upsert: protectedProcedure
       .input(
@@ -1594,6 +1610,9 @@ Respond in this exact JSON format:
               cardUrl,
               cardKey,
             });
+            // Persist the latest style card URL to the profile so it
+            // shows permanently in Profile > "Your Visual Identity"
+            await updateTransformationCardUrl(ctx.user.id, cardUrl);
           } catch (err) {
             console.error("[styleCard] background generation failed:", err);
           }
@@ -2042,6 +2061,7 @@ Return JSON with:
               hook: hooks[0] ?? null,
             });
             await updateGenerationCardUrl({ generationId: gen.id, cardUrl, cardKey });
+            await updateTransformationCardUrl(ctx.user.id, cardUrl);
           } catch (err) {
             console.error("[createStudio] style card generation failed:", err);
           }
@@ -2688,7 +2708,7 @@ Be hyper-specific and visual. No generic phrases. This paragraph will be used wo
         const diagContent = diagRes.choices?.[0]?.message?.content;
         const diag = JSON.parse(typeof diagContent === "string" ? diagContent : JSON.stringify(diagContent)) as Record<string, string>;
         // Step 2: editorial
-        const editPrompt = `You are a Vogue creative director. Translate this color diagnostic into elegant editorial styling language. Short, direct, no wellness language. No satin.\n\nDiagnostic: ${JSON.stringify(diag)}\n\nReturn JSON: { color_palette, metals, fabrics, makeup, lighting, hair }`;
+        const editPrompt = `You are a Vogue creative director. Translate this color diagnostic into elegant editorial styling language. Short, direct, no wellness language. No satin. Never use em dashes (\u2014) or en dashes (\u2013). Use periods instead.\n\nDiagnostic: ${JSON.stringify(diag)}\n\nReturn JSON: { color_palette, metals, fabrics, makeup, lighting, hair }`;
         const editRes = await invokeLLMOpenAI({
           messages: [{ role: "user", content: editPrompt }],
           response_format: { type: "json_schema", json_schema: { name: "brief", strict: true, schema: { type: "object", properties: { color_palette: { type: "string" }, metals: { type: "string" }, fabrics: { type: "string" }, makeup: { type: "string" }, lighting: { type: "string" }, hair: { type: "string" } }, required: ["color_palette", "metals", "fabrics", "makeup", "lighting", "hair"], additionalProperties: false } } },
