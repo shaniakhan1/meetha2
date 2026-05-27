@@ -14,6 +14,32 @@ import {
 import CinematicPreview from "@/components/CinematicPreview";
 import { getPreviewTier } from "./Preview";
 
+const SCENE_DESCRIPTIONS: Record<string, string> = {
+  morning_routine: "Soft light. Quiet intention.",
+  travel_day: "Ease in movement. Arriving.",
+  quiet_luxury: "Soft luxury. Understated confidence.",
+  founder_energy: "Focused. Polished. In control.",
+  date_night: "The shift. Dressed for the night.",
+  paparazzi_flash: "Flash. Confidence. No warning.",
+  digital_diary: "Private softness. Editorial intimacy.",
+  bill_please: "Power at the table. Presence.",
+  silk_robe_room_service: "Silk and stillness. Morning ritual.",
+  irish_goodbye: "Last look. Effortless exit.",
+  cleopatra_principle: "Commanding. Unhurried. Undeniable.",
+  silk_robe_retaliation: "Chose herself. No explanation.",
+  motion_blur: "Movement. Mystery. Night energy.",
+};
+
+const SCENE_PREVIEW_IMAGES: Record<string, string> = {
+  paparazzi_flash: "/manus-storage/template-paparazzi-flash_24688a24.jpg",
+  digital_diary: "/manus-storage/template-digital-diary_11ffb1d8.jpg",
+  bill_please: "/manus-storage/template-bill-please_7eacca04.jpg",
+  silk_robe_room_service: "/manus-storage/template-silk-robe_705e049a.jpg",
+  irish_goodbye: "https://d2xsxph8kpxj0f.cloudfront.net/310519663380647277/W9hp3oxSnRYx5WHCSun39U/template-irish-goodbye-ktzNEA3LBpMXoScC2CgPoj.webp",
+  cleopatra_principle: "https://d2xsxph8kpxj0f.cloudfront.net/310519663380647277/W9hp3oxSnRYx5WHCSun39U/template-cleopatra-RNkWpwxV5GeWZwStmYqiQx.webp",
+  silk_robe_retaliation: "https://d2xsxph8kpxj0f.cloudfront.net/310519663380647277/W9hp3oxSnRYx5WHCSun39U/template-silk-robe-retaliation-MJXwGjfHhTjt3ENoPKdG8s.webp",
+};
+
 type GenStep = "select" | "template_preview" | "recording" | "transcribing" | "generating" | "hooks" | "preview";
 
 // Credit costs - keep in sync with server/routers.ts
@@ -839,7 +865,7 @@ export default function Generate() {
               onClick={() => setStep("select")}
               className="w-full py-3 font-sans text-xs tracking-widest uppercase text-charcoal-soft hover:text-charcoal border border-sand hover:border-charcoal/40 transition-all duration-200"
             >
-              Customize options
+              Refine My Look
             </button>
           </div>
         </div>
@@ -886,7 +912,7 @@ export default function Generate() {
               className="w-full flex items-center justify-between py-3 px-4 border border-sand/60 bg-warm-white/40 hover:border-gold/40 transition-all duration-200"
             >
               <span className="font-sans text-xs tracking-[0.1em] uppercase text-charcoal-soft">
-                {showCustomize ? "Hide options" : "Customize"}
+                {showCustomize ? "Hide" : "Refine My Look"}
               </span>
               <span className="font-sans text-xs text-charcoal-soft/60">
                 {showCustomize ? "\u2212" : "+"}
@@ -1031,11 +1057,29 @@ export default function Generate() {
             </div>
           </div>
 
-          {/* Scene */}
+          {/* World preview image - shown when a world is selected */}
+          {sceneCategory && SCENE_PREVIEW_IMAGES[sceneCategory] && (
+            <div className="mb-6 relative overflow-hidden" style={{ height: "180px", borderRadius: "2px" }}>
+              <img
+                src={SCENE_PREVIEW_IMAGES[sceneCategory]}
+                alt={SCENE_LABELS[sceneCategory]}
+                className="w-full h-full object-cover transition-all duration-500"
+                style={{ objectPosition: "center top" }}
+              />
+              <div
+                className="absolute inset-0 flex flex-col justify-end p-4"
+                style={{ background: "linear-gradient(to bottom, transparent 40%, rgba(26,15,9,0.7) 100%)" }}
+              >
+                <p className="font-serif text-lg text-cream leading-tight">{SCENE_LABELS[sceneCategory]}</p>
+                <p className="font-sans text-xs text-cream/70 mt-0.5">{SCENE_DESCRIPTIONS[sceneCategory]}</p>
+              </div>
+            </div>
+          )}
+          {/* Choose Your World */}
           <div className="mb-10">
             <div className="flex items-center justify-between mb-4">
               <p className="font-sans text-sm font-semibold text-charcoal">
-                Scene
+                Choose Your World
               </p>
               <p className="font-sans text-xs text-charcoal-soft">Optional</p>
             </div>
@@ -1060,9 +1104,8 @@ export default function Generate() {
                       : "border-sand/60 bg-warm-white/60 text-charcoal hover:border-gold/40"
                   }`}
                 >
-                  <p className="font-sans text-xs tracking-[0.1em] uppercase">
-                    {SCENE_LABELS[s]}
-                  </p>
+                  <p className="font-sans text-xs tracking-[0.1em] uppercase">{SCENE_LABELS[s]}</p>
+                  <p className="font-sans text-[11px] text-charcoal-soft/60 mt-0.5 leading-snug">{SCENE_DESCRIPTIONS[s]}</p>
                 </button>
               ))}
             </div>
@@ -1073,7 +1116,7 @@ export default function Generate() {
             onClick={handleGenerate}
             className="btn-luxury w-full"
           >
-            Generate with Custom Settings
+            Generate This Look
           </button>
 
           </div>

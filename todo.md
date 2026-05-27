@@ -597,3 +597,13 @@
 - [x] Update aestheticRead LLM prompt for richer output fields
 - [x] Update AestheticBrief type in db.ts for new fields
 - [x] Update Profile.tsx AestheticBriefSection to display new fields
+
+## Generate Flow World Selection (V80)
+- [x] Add SCENE_DESCRIPTIONS constant with short editorial micro-descriptions for each world
+- [x] Add SCENE_PREVIEW_IMAGES constant with cinematic preview image URLs for each world
+- [x] Rename "Scene" section header to "Choose Your World"
+- [x] Update scene cards to show micro-description below world name with muted secondary styling
+- [x] Add selectedWorld preview image display above the generate CTA (cinematic, full-width)
+- [x] Rename "Generate with Custom Settings" CTA to "Refine My Look"
+- [x] Rename "Scene" label inside customize panel to "World"
+- [x] Reframe "Customize options" button to "Refine My Look"
