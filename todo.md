@@ -534,9 +534,9 @@
 - [x] Vitest: 13 tests passing
 
 ## V58 -- Card Fix + Motion Blur + Photo Swap
-- [ ] Revert transformation card to dark BEFORE/AFTER format (2x2 grid below, dark bg, gold labels)
-- [ ] Fix Save & Share Card to download/share the actual card image not the raw photo
-- [ ] Add motion blur as a scene option in regular generation (not just templates)
-- [ ] Replace woman in black on homepage with new editorial photo
-- [ ] TypeScript: zero errors
-- [ ] Vitest: 13 tests passing
+- [x] Revert transformation card to dark BEFORE/AFTER format (2x2 grid below, dark bg, gold labels)
+- [x] Fix Save & Share Card to download/share the actual card image not the raw photo
+- [x] Add motion blur as a scene option in regular generation (not just templates) — "The Blur"
+- [x] Replace car-dark gallery image on homepage with meetha-17.jpg (car window portrait)
+- [x] TypeScript: zero errors
+- [x] Vitest: 13 tests passing

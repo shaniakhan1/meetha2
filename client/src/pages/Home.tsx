@@ -255,7 +255,7 @@ export default function Home() {
             {/* Hero portrait */}
             <div className="w-full aspect-[3/4] overflow-hidden mb-1">
               <img
-                src="/manus-storage/meetha-59_1803b502.jpg"
+                src="/manus-storage/meetha-59-v2_acb77051.jpg"
                 alt="Meetha styling result"
                 className="w-full h-full object-cover object-center"
               />
