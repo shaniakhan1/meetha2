@@ -10,6 +10,8 @@ const TEMPLATES = [
     number: "No. 01",
     title: "Caught Looking\nExpensive",
     fantasy: "She was seen.",
+    focalPoint: "center 30%",
+    cardHeight: "68vh",
     subtitle:
       "Flash photography. Blurry background. Someone caught her mid-moment looking effortlessly stunning.",
     hooks: [
@@ -27,6 +29,7 @@ const TEMPLATES = [
       ["Candid energy", "She looks incredible without posing. Her friends repost it."],
     ],
     sampleImage: "/manus-storage/template-paparazzi-flash_24688a24.jpg",
+    overlayGradient: "linear-gradient(to bottom, rgba(26,15,9,0.30) 0%, rgba(26,15,9,0.05) 30%, rgba(26,15,9,0.75) 100%)",
     gradient:
       "radial-gradient(ellipse at 30% 40%, rgba(255,255,255,0.08) 0%, transparent 60%), linear-gradient(160deg, #2C1810 0%, #1a0f09 60%, #2C1810 100%)",
     hasFlash: true,
@@ -36,6 +39,8 @@ const TEMPLATES = [
     number: "No. 02",
     title: "Digital Diary",
     fantasy: "She keeps parts of herself private.",
+    focalPoint: "center 25%",
+    cardHeight: "65vh",
     subtitle:
       "Taped polaroid. Handwritten note. Dried flower. Analog layering that feels like a page from a real woman's private journal.",
     hooks: [
@@ -52,6 +57,7 @@ const TEMPLATES = [
       ["Feels private", "The intimacy of a personal journal makes people want to share it."],
     ],
     sampleImage: "/manus-storage/template-digital-diary_11ffb1d8.jpg",
+    overlayGradient: "linear-gradient(to bottom, rgba(26,15,9,0.40) 0%, rgba(26,15,9,0.10) 35%, rgba(26,15,9,0.78) 100%)",
     gradient: "linear-gradient(160deg, #2C1810 0%, #1a0f09 60%, #2C1810 100%)",
     hasFlash: false,
   },
@@ -60,6 +66,8 @@ const TEMPLATES = [
     number: "No. 03",
     title: "Bill, Please",
     fantasy: "She paid and left.",
+    focalPoint: "center 40%",
+    cardHeight: "65vh",
     subtitle:
       "She reaches for the check. Calm, unbothered, final. The gesture says everything the caption does not.",
     hooks: [
@@ -76,6 +84,7 @@ const TEMPLATES = [
       ["Detached and devastating", "The hook lands because it says nothing and everything at once."],
     ],
     sampleImage: "/manus-storage/template-bill-please_7eacca04.jpg",
+    overlayGradient: "linear-gradient(to bottom, rgba(26,15,9,0.35) 0%, rgba(26,15,9,0.08) 40%, rgba(26,15,9,0.80) 100%)",
     gradient: "linear-gradient(160deg, #1a0a06 0%, #2C1810 50%, #1a0a06 100%)",
     hasFlash: false,
   },
@@ -84,6 +93,8 @@ const TEMPLATES = [
     number: "No. 04",
     title: "Silk Robe\nRoom Service",
     fantasy: "She ordered for one.",
+    focalPoint: "center 35%",
+    cardHeight: "65vh",
     subtitle:
       "Hotel suite. Silk robe. Morning light. Room service tray. The luxury of an unhurried morning that belongs entirely to her.",
     hooks: [
@@ -100,6 +111,7 @@ const TEMPLATES = [
       ["Most saved aesthetic", "Warm tones and soft light. Pinterest and Stories save this forever."],
     ],
     sampleImage: "/manus-storage/template-silk-robe_705e049a.jpg",
+    overlayGradient: "linear-gradient(to bottom, rgba(44,24,16,0.30) 0%, rgba(44,24,16,0.05) 40%, rgba(44,24,16,0.82) 100%)",
     gradient: "linear-gradient(160deg, #2C1810 0%, #3d1f0e 50%, #2C1810 100%)",
     hasFlash: false,
   },
@@ -108,6 +120,8 @@ const TEMPLATES = [
     number: "No. 05",
     title: "The\nGoodbye",
     fantasy: "She left without explaining herself.",
+    focalPoint: "center 65%",
+    cardHeight: "72vh",
     subtitle:
       "Seen from behind. Mid-stride. Not looking back. The crowd is blurred. She is already somewhere else in her head.",
     hooks: [
@@ -123,6 +137,7 @@ const TEMPLATES = [
       ["Cinematic without trying", "Motion blur, night light, a woman in motion. It looks like a movie still."],
     ],
     sampleImage: "https://d2xsxph8kpxj0f.cloudfront.net/310519663380647277/W9hp3oxSnRYx5WHCSun39U/template-irish-goodbye-ktzNEA3LBpMXoScC2CgPoj.webp",
+    overlayGradient: "linear-gradient(to bottom, rgba(26,15,9,0.55) 0%, rgba(26,15,9,0.20) 40%, rgba(26,15,9,0.85) 100%)",
     gradient: "linear-gradient(160deg, #1a0f09 0%, #2C1810 50%, #1a0f09 100%)",
     hasFlash: false,
   },
@@ -131,6 +146,8 @@ const TEMPLATES = [
     number: "No. 06",
     title: "The Cleopatra\nPrinciple",
     fantasy: "She already decided.",
+    focalPoint: "center 35%",
+    cardHeight: "68vh",
     subtitle:
       "Velvet chaise. Direct eye contact. No smile, no performance. The stillness of someone who has already decided everything.",
     hooks: [
@@ -146,6 +163,7 @@ const TEMPLATES = [
       ["The gaze does the work", "Direct eye contact into the lens. The most commanding shot in editorial photography."],
     ],
     sampleImage: "https://d2xsxph8kpxj0f.cloudfront.net/310519663380647277/W9hp3oxSnRYx5WHCSun39U/template-cleopatra-RNkWpwxV5GeWZwStmYqiQx.webp",
+    overlayGradient: "linear-gradient(to bottom, rgba(26,10,6,0.40) 0%, rgba(26,10,6,0.08) 35%, rgba(26,10,6,0.82) 100%)",
     gradient: "linear-gradient(160deg, #1a0a06 0%, #2C1810 50%, #1a0a06 100%)",
     hasFlash: false,
   },
@@ -154,6 +172,8 @@ const TEMPLATES = [
     number: "No. 07",
     title: "The Robe\nReset",
     fantasy: "She chose herself. Again.",
+    focalPoint: "center 40%",
+    cardHeight: "68vh",
     subtitle:
       "Floor-to-ceiling windows. Silk robe. Golden hour. Seen from behind. The energy of someone who does not need to explain her peace.",
     hooks: [
@@ -169,6 +189,7 @@ const TEMPLATES = [
       ["The retaliation is the peace", "She is not angry. She is not sad. She just chose this."],
     ],
     sampleImage: "https://d2xsxph8kpxj0f.cloudfront.net/310519663380647277/W9hp3oxSnRYx5WHCSun39U/template-silk-robe-retaliation-MJXwGjfHhTjt3ENoPKdG8s.webp",
+    overlayGradient: "linear-gradient(to bottom, rgba(44,24,16,0.35) 0%, rgba(44,24,16,0.05) 40%, rgba(44,24,16,0.82) 100%)",
     gradient: "linear-gradient(160deg, #2C1810 0%, #3d1f0e 50%, #2C1810 100%)",
     hasFlash: false,
   },
@@ -177,6 +198,8 @@ const TEMPLATES = [
     number: "No. 08",
     title: "The\nBlur",
     fantasy: "She became the moment.",
+    focalPoint: "center 50%",
+    cardHeight: "72vh",
     subtitle:
       "Photographed through taxi glass at night. City light reflections. Her silhouette barely visible. The image feels accidentally captured mid-life.",
     hooks: [
@@ -192,6 +215,7 @@ const TEMPLATES = [
       ["Night energy", "Neon, amber, wet glass. The most cinematic template in the collection."],
     ],
     sampleImage: null,
+    overlayGradient: "linear-gradient(to bottom, rgba(13,13,26,0.60) 0%, rgba(13,13,26,0.25) 40%, rgba(13,13,26,0.88) 100%)",
     gradient: "linear-gradient(160deg, #0d0d1a 0%, #1a1a2e 50%, #0d0d1a 100%)",
     hasFlash: false,
   },
@@ -282,7 +306,7 @@ export default function Templates() {
             className={idx > 0 ? "border-t border-sand" : ""}
           >
             {/* Hero card */}
-            <div className="relative" style={{ minHeight: "65vh" }}>
+            <div className="relative" style={{ minHeight: template.cardHeight || "65vh" }}>
               {/* Sample image or gradient fallback */}
               {template.sampleImage && !imgErrors[template.slug] ? (
                 <img
@@ -290,7 +314,7 @@ export default function Templates() {
                   alt={template.title.replace("\n", " ")}
                   loading="lazy"
                   className="absolute inset-0 w-full h-full object-cover"
-                  style={{ objectPosition: "center top" }}
+                  style={{ objectPosition: template.focalPoint || "center 30%" }}
                   onError={() => setImgErrors((prev) => ({ ...prev, [template.slug]: true }))}
                 />
               ) : (
@@ -304,7 +328,7 @@ export default function Templates() {
               <div
                 className="absolute inset-0"
                 style={{
-                  background:
+                  background: template.overlayGradient ||
                     "linear-gradient(to bottom, rgba(26,15,9,0.45) 0%, rgba(26,15,9,0.15) 35%, rgba(26,15,9,0.80) 100%)",
                 }}
               />
@@ -337,7 +361,7 @@ export default function Templates() {
               {/* Content */}
               <div
                 className="relative z-10 flex flex-col items-center justify-end px-6 pb-12 pt-16 text-center"
-                style={{ minHeight: "65vh" }}
+                style={{ minHeight: template.cardHeight || "65vh" }}
               >
                 <p className="font-sans text-xs tracking-[0.25em] uppercase text-gold/70 mb-3">
                   {template.number}
