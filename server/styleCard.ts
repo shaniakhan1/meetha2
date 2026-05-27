@@ -223,6 +223,8 @@ function wrapText(ctx: CanvasCtx, text: string, maxWidth: number): string[] {
 export async function buildStyleCard(params: {
   imageUrl: string;
   brief: IdentityBrief;
+  /** Optional hook text to overlay on the image area */
+  hook?: string | null;
 }): Promise<Buffer> {
   ensureFonts();
 
@@ -265,6 +267,31 @@ export async function buildStyleCard(params: {
     grad.addColorStop(1, "rgba(253,250,245,0.12)");
     ctx.fillStyle = grad;
     ctx.fillRect(0, IMAGE_H - 60, CARD_W, 60);
+
+    // Hook text overlay (bottom-center, above watermark)
+    if (params.hook) {
+      const hook = sanitizeText(params.hook);
+      // Gradient scrim for legibility
+      const hookScrim = ctx.createLinearGradient(0, IMAGE_H - 220, 0, IMAGE_H);
+      hookScrim.addColorStop(0, "rgba(13,10,7,0)");
+      hookScrim.addColorStop(1, "rgba(13,10,7,0.72)");
+      ctx.fillStyle = hookScrim;
+      ctx.fillRect(0, IMAGE_H - 220, CARD_W, 220);
+
+      // Hook text — serif italic, centered, wrapping
+      const HOOK_FONT_SIZE = 44;
+      ctx.font = `italic ${HOOK_FONT_SIZE}px MeethaFont`;
+      ctx.fillStyle = "rgba(253,250,245,0.96)";
+      ctx.textAlign = "center";
+      const hookLines = wrapText(ctx, hook, CARD_W - 120);
+      const hookLineH = HOOK_FONT_SIZE * 1.35;
+      const totalHookH = hookLines.length * hookLineH;
+      let hookY = IMAGE_H - 60 - totalHookH + HOOK_FONT_SIZE;
+      for (const line of hookLines.slice(0, 3)) {
+        ctx.fillText(line, CARD_W / 2, hookY);
+        hookY += hookLineH;
+      }
+    }
 
     // "styled by Meetha" watermark on image (bottom-right, subtle)
     ctx.font = `bold 20px MeethaFont`;
@@ -384,6 +411,8 @@ export async function generateAndSaveStyleCard(params: {
   sceneCategory?: string | null;
   aestheticDescriptors?: string | null;
   niche?: string | null;
+  /** First hook from generation — used as overlay text on the card image */
+  hook?: string | null;
 }): Promise<{ cardUrl: string; cardKey: string }> {
   // 1. Generate scene-specific identity brief
   const brief = await generateIdentityBrief({
@@ -398,6 +427,7 @@ export async function generateAndSaveStyleCard(params: {
   const cardBuffer = await buildStyleCard({
     imageUrl: params.imageUrl,
     brief,
+    hook: params.hook ?? null,
   });
 
   // 3. Upload to S3

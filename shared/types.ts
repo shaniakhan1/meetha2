@@ -198,3 +198,18 @@ export const SCENE_LABELS: Record<SceneCategory, string> = {
   silk_robe_retaliation: "The Robe Reset",
   motion_blur: "The Blur",
 };
+
+// ─── Plan Limits ─────────────────────────────────────────────────────────────
+
+/**
+ * Canonical credit limits per plan tier.
+ * generationNumber (from backend) decides what output mode to show.
+ * creditsRemaining decides whether the user can keep generating.
+ */
+export const PLAN_GENERATION_LIMITS = {
+  free: 1,
+  starter: 25,
+  pro: 25,
+} as const;
+
+export type PlanTier = keyof typeof PLAN_GENERATION_LIMITS;

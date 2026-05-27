@@ -56,9 +56,9 @@ export default function Preview() {
   };
 
   const tiers: { value: Tier; label: string; description: string }[] = [
-    { value: "free", label: "Free", description: "5 credits, stills only, upgrade gate visible" },
-    { value: "starter", label: "Starter ($19)", description: "10 credits, animated preview unlocked" },
-    { value: "pro", label: "Pro ($39)", description: "25 credits, real video generation unlocked" },
+    { value: "free", label: "Free", description: "1 generation, stills only, upgrade gate visible" },
+    { value: "starter", label: "Starter ($19)", description: "25 credits/month, animated preview unlocked" },
+    { value: "pro", label: "Pro ($39)", description: "25 credits/month, real video generation unlocked" },
   ];
 
   const destinations: { value: typeof destination; label: string }[] = [

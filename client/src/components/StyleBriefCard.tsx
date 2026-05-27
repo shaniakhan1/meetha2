@@ -24,8 +24,7 @@ export type StyleBriefCardProps = {
  *   - MEETHA wordmark
  *   - Cream identity brief panel (Palette / Metals / Makeup / Lighting / Presence)
  *
- * IMPORTANT: All colors use rgb/rgba/hex only — NO Tailwind CSS variables,
- * NO oklch — so html2canvas can capture this component without color errors.
+ * IMPORTANT: All colors use rgb/rgba/hex only — NO Tailwind CSS variables, NO oklch.
  */
 const StyleBriefCard = forwardRef<HTMLDivElement, StyleBriefCardProps>(
   function StyleBriefCard({ imageUrl, brief }, ref) {

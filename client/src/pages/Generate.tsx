@@ -20,8 +20,7 @@ import {
 import CinematicPreview from "@/components/CinematicPreview";
 import StyleBriefCard from "@/components/StyleBriefCard";
 import { getPreviewTier } from "./Preview";
-import { downloadRawImage } from "@/lib/storyCardExport";
-import html2canvas from "html2canvas";
+// html2canvas removed — export uses server-side /api/style-card/:id and /api/download/:id
 
 const SCENE_PREVIEW_IMAGES: Record<string, string> = {
   paparazzi_flash: "/manus-storage/template-paparazzi-flash_24688a24.jpg",
@@ -50,6 +49,7 @@ interface GenerationResult {
     mood: string;
     [key: string]: unknown;
   };
+  generationNumber: number;
   hooks: string[];
   caption: string;
   hashtags: string[];
@@ -109,6 +109,12 @@ export default function Generate() {
   const [exportLoading, setExportLoading] = useState<"share" | "download" | "raw" | null>(null);
   const cardRef = useRef<HTMLDivElement>(null);
   const styleCardRef = useRef<HTMLDivElement>(null);
+
+  /** Determine display mode from generationNumber */
+  const genMode = !result ? null
+    : result.generationNumber === 1 ? "style_card"
+    : result.generationNumber === 2 ? "identity_brief"
+    : "image_only";
   // Track whether the last generation came from a template (shows hook) or Create Studio (no hook)
   const [generationSource, setGenerationSource] = useState<"template" | "studio">("template");
 
@@ -235,7 +241,7 @@ export default function Generate() {
   const credits = creditsQuery.data;
   const normalizedCredits = credits ? { ...credits, creditsRemaining: credits.credits_remaining } : null;
   const effectiveCredits = previewTier
-    ? { creditsRemaining: previewTier === "free" ? 3 : previewTier === "starter" ? 28 : 73, tier: previewTier }
+    ? { creditsRemaining: previewTier === "free" ? 1 : previewTier === "starter" ? 25 : 25, tier: previewTier }
     : normalizedCredits;
 
   const startGenerating = (fn: () => Promise<any>) => {
@@ -286,68 +292,50 @@ export default function Generate() {
     }
   }, [cardPollQuery.data?.cardUrl]);
 
-  /** Capture the rendered StyleBriefCard DOM node as a PNG blob via html2canvas */
-  const captureStyleCardBlob = async (): Promise<Blob | null> => {
-    const node = styleCardRef.current;
-    if (!node) return null;
-    try {
-      const canvas = await html2canvas(node, {
-        scale: 2,
-        useCORS: true,
-        backgroundColor: "#fbf8f1",
-        logging: false,
-        ignoreElements: (el) => el.tagName === "VIDEO",
-      });
-      return await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/png", 1.0));
-    } catch (e) {
-      console.error("[captureStyleCard] html2canvas failed", e);
-      return null;
+  /**
+   * Fetch a server-rendered blob from a URL (with credentials).
+   * Used for both /api/style-card/:id and /api/download/:id.
+   */
+  const fetchServerBlob = async (url: string): Promise<Blob> => {
+    const res = await fetch(url, { credentials: "include" });
+    if (!res.ok) throw new Error(`Server fetch failed: ${res.status}`);
+    return res.blob();
+  };
+
+  /** Share or download a blob as a file */
+  const shareBlobFile = async (blob: Blob, filename: string, shareText?: string) => {
+    const file = new File([blob], filename, { type: blob.type });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      await navigator.share({ files: [file], title: "Meetha", text: shareText ?? "Styled by Meetha." });
+    } else {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a"); a.href = url; a.download = filename;
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 10000);
     }
   };
 
-  /** Save & Share Style Card — captures the StyleBriefCard DOM node */
+  /** Gen 1: Save & Share Style Card — server-rendered via /api/style-card/:id */
   const handleSaveShareStyleCard = async () => {
     if (!result?.generation?.id) return;
     setExportLoading("share");
     try {
-      const blob = await captureStyleCardBlob();
-      if (!blob) { toast.error("Could not capture card. Try downloading instead."); return; }
-      const filename = `meetha-style-card-${result.generation.id}.png`;
-      const file = new File([blob], filename, { type: "image/png" });
-      if (navigator.canShare && navigator.canShare({ files: [file] })) {
-        await navigator.share({ files: [file], title: "Meetha", text: selectedHook ?? "Styled by Meetha." });
-      } else {
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a"); a.href = url; a.download = filename;
-        document.body.appendChild(a); a.click(); document.body.removeChild(a);
-        setTimeout(() => URL.revokeObjectURL(url), 10000);
-      }
+      const blob = await fetchServerBlob(`/api/style-card/${result.generation.id}`);
+      await shareBlobFile(blob, `meetha-style-card-${result.generation.id}.jpg`, selectedHook ?? "Styled by Meetha.");
     } catch (e: unknown) {
-      if (e instanceof Error && e.name !== "AbortError") toast.error("Could not share. Try downloading instead.");
+      if (e instanceof Error && e.name !== "AbortError") toast.error("Could not share. Please try again.");
     } finally {
       setExportLoading(null);
     }
   };
 
-  /** Save & Share Image — shares/downloads the raw generation image */
+  /** Gen 3+: Save & Share Image — server-rendered via /api/download/:id */
   const handleSaveShareImage = async () => {
     if (!result?.generation?.id) return;
     setExportLoading("raw");
     try {
-      const imageUrl = result.generation.image_url as string;
-      const response = await fetch(imageUrl, { credentials: "include" });
-      if (!response.ok) throw new Error(`Fetch failed: ${response.status}`);
-      const blob = await response.blob();
-      const filename = `meetha-${result.generation.id}.png`;
-      const file = new File([blob], filename, { type: "image/png" });
-      if (navigator.canShare && navigator.canShare({ files: [file] })) {
-        await navigator.share({ files: [file], title: "Meetha", text: "Styled by Meetha." });
-      } else {
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a"); a.href = url; a.download = filename;
-        document.body.appendChild(a); a.click(); document.body.removeChild(a);
-        setTimeout(() => URL.revokeObjectURL(url), 10000);
-      }
+      const blob = await fetchServerBlob(`/api/download/${result.generation.id}`);
+      await shareBlobFile(blob, `meetha-${result.generation.id}.jpg`, selectedHook ?? "Styled by Meetha.");
     } catch (e: unknown) {
       if (e instanceof Error && e.name !== "AbortError") toast.error("Download failed. Please try again.");
     } finally {
@@ -386,11 +374,10 @@ export default function Generate() {
             <button onClick={() => setShowTopUp(false)} className="absolute top-4 right-5 font-sans text-xs text-charcoal-soft hover:text-charcoal tracking-widest uppercase">Close</button>
             <p className="font-sans text-xs tracking-[0.15em] uppercase text-charcoal-soft mb-1">Credits</p>
             <h2 className="font-serif text-2xl text-charcoal mb-2">You have used all your generations.</h2>
-            <p className="font-sans font-light text-xs text-charcoal-soft leading-relaxed mb-6">Upgrade to keep creating. Starter and Pro unlock more credits every month, animated video, and Animate Me.</p>
+            <p className="font-sans font-light text-xs text-charcoal-soft leading-relaxed mb-6">Membership unlocks 25 generations per month so you can keep building your aesthetic.</p>
             <div className="space-y-3">
-              <a href={import.meta.env.VITE_STRIPE_STARTER_LINK || "#"} target="_blank" rel="noopener noreferrer" className="btn-luxury btn-gold w-full text-center block">Starter - $19 / month</a>
-              <a href={import.meta.env.VITE_STRIPE_PRO_LINK || "#"} target="_blank" rel="noopener noreferrer" className="btn-luxury btn-luxury-outline w-full text-center block">Pro - $35 / month</a>
-              <a href={import.meta.env.VITE_STRIPE_STARTER_ANNUAL_LINK || "#"} target="_blank" rel="noopener noreferrer" className="w-full py-3 font-sans text-xs tracking-widest uppercase text-charcoal-soft/60 hover:text-charcoal-soft transition-colors text-center block">Annual plans (save up to 40%)</a>
+              <a href={import.meta.env.VITE_STRIPE_STARTER_LINK || "#"} target="_blank" rel="noopener noreferrer" className="btn-luxury btn-gold w-full text-center block">Membership — $19 / month</a>
+              <a href={import.meta.env.VITE_STRIPE_STARTER_ANNUAL_LINK || "#"} target="_blank" rel="noopener noreferrer" className="w-full py-3 font-sans text-xs tracking-widest uppercase text-charcoal-soft/60 hover:text-charcoal-soft transition-colors text-center block">Annual plan (save 20%)</a>
             </div>
           </div>
         </div>
@@ -404,11 +391,10 @@ export default function Generate() {
             <button onClick={() => setShowLoraPaywall(false)} className="absolute top-4 right-5 font-sans text-xs text-charcoal-soft hover:text-charcoal tracking-widest uppercase">Close</button>
             <p className="font-sans text-xs tracking-[0.15em] uppercase text-gold mb-1">Your Look</p>
             <h2 className="font-serif text-2xl text-charcoal mb-2">Your first look was on us.</h2>
-            <p className="font-sans font-light text-xs text-charcoal-soft leading-relaxed mb-6">You have trained your personal model and seen what Meetha can do with your face. Unlock unlimited generations with your look on Starter or Pro.</p>
+            <p className="font-sans font-light text-xs text-charcoal-soft leading-relaxed mb-6">You have seen what Meetha can do with your face. Membership unlocks 25 generations per month so you can keep creating with your look.</p>
             <div className="space-y-3">
-              <a href={import.meta.env.VITE_STRIPE_STARTER_LINK || "#"} target="_blank" rel="noopener noreferrer" className="btn-luxury btn-gold w-full text-center block">Starter - $19 / month</a>
-              <a href={import.meta.env.VITE_STRIPE_PRO_LINK || "#"} target="_blank" rel="noopener noreferrer" className="btn-luxury btn-luxury-outline w-full text-center block">Pro - $35 / month</a>
-              <a href={import.meta.env.VITE_STRIPE_STARTER_ANNUAL_LINK || "#"} target="_blank" rel="noopener noreferrer" className="w-full py-3 font-sans text-xs tracking-widest uppercase text-charcoal-soft/60 hover:text-charcoal-soft transition-colors text-center block">Annual plans (save up to 40%)</a>
+              <a href={import.meta.env.VITE_STRIPE_STARTER_LINK || "#"} target="_blank" rel="noopener noreferrer" className="btn-luxury btn-gold w-full text-center block">Membership — $19 / month</a>
+              <a href={import.meta.env.VITE_STRIPE_STARTER_ANNUAL_LINK || "#"} target="_blank" rel="noopener noreferrer" className="w-full py-3 font-sans text-xs tracking-widest uppercase text-charcoal-soft/60 hover:text-charcoal-soft transition-colors text-center block">Annual plan (save 20%)</a>
             </div>
           </div>
         </div>
@@ -652,68 +638,158 @@ export default function Generate() {
       {/* ── Step: Preview ── */}
       {step === "preview" && result && (
         <div className="flex-1 flex flex-col px-6 py-8 animate-fade-up opacity-0">
-          <div className="mb-6">
-            <p className="font-sans text-xs tracking-[0.2em] uppercase text-gold mb-2">Your Generation</p>
-            <h3 className="font-serif font-light text-charcoal">Styled by Meetha.</h3>
-          </div>
 
-          {/* Style Card — the shareable artifact */}
-          <div className="mb-6">
-            <StyleBriefCard
-              ref={styleCardRef}
-              imageUrl={result.generation.image_url as string}
-              brief={{
-                // Template generations show the curated hook; Create Studio shows no hook
-                hook: generationSource === "template" ? (selectedHook ?? null) : null,
-                title: "Your Identity Brief",
-                palette: aestheticRead?.color_palette,
-                metals: aestheticRead?.metals,
-                makeup: aestheticRead?.makeup,
-                lighting: aestheticRead?.lighting,
-                presence: aestheticRead?.hair ?? undefined,
-              }}
-            />
-            {aestheticReadMutation.isPending && (
-              <div className="flex items-center gap-2 mt-3 px-1">
-                <div className="w-3 h-3 border border-gold/40 border-t-gold animate-spin rounded-full shrink-0" />
-                <p className="font-sans text-xs text-charcoal-soft/60">Building your identity brief...</p>
+          {/* ── MODE 1: Gen 1 — Viral Style Card ── */}
+          {genMode === "style_card" && (
+            <>
+              <div className="mb-6">
+                <p className="font-sans text-xs tracking-[0.2em] uppercase text-gold mb-2">Your First Look</p>
+                <h3 className="font-serif font-light text-charcoal">Your style card is ready.</h3>
+                <p className="font-sans text-xs text-charcoal-soft/60 mt-1">Save it. Share it. This is your aesthetic.</p>
               </div>
-            )}
-          </div>
 
-          {/* Actions — two primary buttons */}
-          <div className="space-y-3">
-            <button
-              onClick={handleSaveShareStyleCard}
-              disabled={exportLoading !== null}
-              className="btn-luxury w-full min-h-[52px] flex items-center justify-center gap-2"
-            >
-              {exportLoading === "share" ? (
-                <><div className="w-4 h-4 border border-cream/40 border-t-cream animate-spin rounded-full" /> Preparing card...</>
-              ) : (
-                "Save & Share Style Card"
-              )}
-            </button>
+              <div className="mb-6">
+                <StyleBriefCard
+                  ref={styleCardRef}
+                  imageUrl={result.generation.image_url as string}
+                  brief={{
+                    hook: selectedHook ?? null,
+                    title: "Your Identity Brief",
+                    palette: aestheticRead?.color_palette,
+                    metals: aestheticRead?.metals,
+                    makeup: aestheticRead?.makeup,
+                    lighting: aestheticRead?.lighting,
+                    presence: aestheticRead?.hair ?? undefined,
+                  }}
+                />
+                {aestheticReadMutation.isPending && (
+                  <div className="flex items-center gap-2 mt-3 px-1">
+                    <div className="w-3 h-3 border border-gold/40 border-t-gold animate-spin rounded-full shrink-0" />
+                    <p className="font-sans text-xs text-charcoal-soft/60">Building your identity brief...</p>
+                  </div>
+                )}
+              </div>
 
-            <button
-              onClick={handleSaveShareImage}
-              disabled={exportLoading !== null}
-              className="btn-luxury btn-luxury-outline w-full min-h-[52px] flex items-center justify-center gap-2"
-            >
-              {exportLoading === "raw" ? (
-                <><div className="w-3.5 h-3.5 border border-charcoal/40 border-t-charcoal animate-spin rounded-full" /> Preparing...</>
-              ) : (
-                "Save & Share Image"
-              )}
-            </button>
+              <div className="space-y-3">
+                <button
+                  onClick={handleSaveShareStyleCard}
+                  disabled={exportLoading !== null}
+                  className="btn-luxury w-full min-h-[52px] flex items-center justify-center gap-2"
+                >
+                  {exportLoading === "share" ? (
+                    <><div className="w-4 h-4 border border-cream/40 border-t-cream animate-spin rounded-full" /> Preparing card...</>
+                  ) : (
+                    "Save & Share Style Card"
+                  )}
+                </button>
+                <button onClick={() => navigate("/dashboard")} className="w-full py-3 font-sans text-xs tracking-widest uppercase text-charcoal-soft/40 hover:text-charcoal-soft transition-colors">
+                  Done. Back to Dashboard
+                </button>
+              </div>
+            </>
+          )}
 
-            <button onClick={handleRegenerate} className="w-full py-3 font-sans text-xs tracking-widest uppercase text-charcoal-soft hover:text-charcoal border border-sand hover:border-charcoal/40 transition-all duration-200">
-              Start Over
-            </button>
-            <button onClick={() => navigate("/dashboard")} className="w-full py-3 font-sans text-xs tracking-widest uppercase text-charcoal-soft/40 hover:text-charcoal-soft transition-colors">
-              Done. Back to Dashboard
-            </button>
-          </div>
+          {/* ── MODE 2: Gen 2 — Identity Brief (saved to profile) ── */}
+          {genMode === "identity_brief" && (
+            <>
+              <div className="mb-6">
+                <p className="font-sans text-xs tracking-[0.2em] uppercase text-gold mb-2">Your Identity Brief</p>
+                <h3 className="font-serif font-light text-charcoal">Saved to your profile.</h3>
+                <p className="font-sans text-xs text-charcoal-soft/60 mt-1">Your deeper color and styling analysis. It lives on your profile forever.</p>
+              </div>
+
+              <div className="mb-6">
+                <StyleBriefCard
+                  ref={styleCardRef}
+                  imageUrl={result.generation.image_url as string}
+                  brief={{
+                    hook: selectedHook ?? null,
+                    title: "Your Identity Brief",
+                    palette: aestheticRead?.color_palette,
+                    metals: aestheticRead?.metals,
+                    makeup: aestheticRead?.makeup,
+                    lighting: aestheticRead?.lighting,
+                    presence: aestheticRead?.hair ?? undefined,
+                  }}
+                />
+                {aestheticReadMutation.isPending && (
+                  <div className="flex items-center gap-2 mt-3 px-1">
+                    <div className="w-3 h-3 border border-gold/40 border-t-gold animate-spin rounded-full shrink-0" />
+                    <p className="font-sans text-xs text-charcoal-soft/60">Building your identity brief...</p>
+                  </div>
+                )}
+              </div>
+
+              <div className="space-y-3">
+                <button
+                  onClick={handleSaveShareStyleCard}
+                  disabled={exportLoading !== null}
+                  className="btn-luxury w-full min-h-[52px] flex items-center justify-center gap-2"
+                >
+                  {exportLoading === "share" ? (
+                    <><div className="w-4 h-4 border border-cream/40 border-t-cream animate-spin rounded-full" /> Saving...</>
+                  ) : (
+                    "Save & Share Identity Brief"
+                  )}
+                </button>
+                <button
+                  onClick={handleSaveShareImage}
+                  disabled={exportLoading !== null}
+                  className="btn-luxury btn-luxury-outline w-full min-h-[52px] flex items-center justify-center gap-2"
+                >
+                  {exportLoading === "raw" ? (
+                    <><div className="w-3.5 h-3.5 border border-charcoal/40 border-t-charcoal animate-spin rounded-full" /> Preparing...</>
+                  ) : (
+                    "Save Image Only"
+                  )}
+                </button>
+                <button onClick={() => navigate("/dashboard")} className="w-full py-3 font-sans text-xs tracking-widest uppercase text-charcoal-soft/40 hover:text-charcoal-soft transition-colors">
+                  Done. Back to Dashboard
+                </button>
+              </div>
+            </>
+          )}
+
+          {/* ── MODE 3: Gen 3+ — Image Only ── */}
+          {genMode === "image_only" && (
+            <>
+              <div className="mb-6">
+                <p className="font-sans text-xs tracking-[0.2em] uppercase text-gold mb-2">Your Generation</p>
+                <h3 className="font-serif font-light text-charcoal">Styled by Meetha.</h3>
+              </div>
+
+              <div className="mb-6">
+                <CinematicPreview
+                  imageUrl={result.generation.image_url as string}
+                  hook={generationSource === "template" ? (selectedHook ?? null) : null}
+                  animated={false}
+                  size="full"
+                  platform={result.generation.platform as string | undefined}
+                />
+              </div>
+
+              <div className="space-y-3">
+                <button
+                  onClick={handleSaveShareImage}
+                  disabled={exportLoading !== null}
+                  className="btn-luxury w-full min-h-[52px] flex items-center justify-center gap-2"
+                >
+                  {exportLoading === "raw" ? (
+                    <><div className="w-4 h-4 border border-cream/40 border-t-cream animate-spin rounded-full" /> Preparing...</>
+                  ) : (
+                    "Save & Share Image"
+                  )}
+                </button>
+                <button onClick={handleRegenerate} className="w-full py-3 font-sans text-xs tracking-widest uppercase text-charcoal-soft hover:text-charcoal border border-sand hover:border-charcoal/40 transition-all duration-200">
+                  Generate Another
+                </button>
+                <button onClick={() => navigate("/dashboard")} className="w-full py-3 font-sans text-xs tracking-widest uppercase text-charcoal-soft/40 hover:text-charcoal-soft transition-colors">
+                  Done. Back to Dashboard
+                </button>
+              </div>
+            </>
+          )}
+
         </div>
       )}
 

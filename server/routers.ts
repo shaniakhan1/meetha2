@@ -1530,7 +1530,10 @@ Respond in this exact JSON format:
           caption,
         });
 
-        const updatedCredits = await getCredits(ctx.user.id);
+        const [updatedCredits, generationNumber] = await Promise.all([
+          getCredits(ctx.user.id),
+          countUserGenerations(ctx.user.id),
+        ]);
 
         // Generate style card in background for every generation
         // Does not block the response -- card_url is stored on the generation record
@@ -1546,6 +1549,7 @@ Respond in this exact JSON format:
               sceneCategory: input.sceneCategory ?? null,
               aestheticDescriptors: profile?.aesthetic_descriptors ?? null,
               niche: profile?.niche ?? null,
+              hook: hooks[0] ?? null,
             });
             await updateGenerationCardUrl({
               generationId: generation.id,
@@ -1559,6 +1563,7 @@ Respond in this exact JSON format:
 
         return {
           generation,
+          generationNumber,
           hooks,
           caption,
           hashtags,
@@ -1814,10 +1819,14 @@ Return JSON with:
           caption,
         });
 
-        const updatedCredits = await getCredits(ctx.user.id);
+        const [updatedCredits, generationNumber] = await Promise.all([
+          getCredits(ctx.user.id),
+          countUserGenerations(ctx.user.id),
+        ]);
 
         return {
           generation,
+          generationNumber,
           hooks,
           caption,
           hashtags,
@@ -1975,7 +1984,10 @@ Return JSON with:
           caption,
         });
 
-        const updatedCredits = await getCredits(ctx.user.id);
+        const [updatedCredits, generationNumber] = await Promise.all([
+          getCredits(ctx.user.id),
+          countUserGenerations(ctx.user.id),
+        ]);
 
         // Generate style card in background
         void (async () => {
@@ -1989,6 +2001,7 @@ Return JSON with:
               sceneCategory: `studio_${input.occasion}_${input.energy}`,
               aestheticDescriptors: profile?.aesthetic_descriptors ?? null,
               niche: profile?.niche ?? null,
+              hook: hooks[0] ?? null,
             });
             await updateGenerationCardUrl({ generationId: gen.id, cardUrl, cardKey });
           } catch (err) {
@@ -1998,6 +2011,7 @@ Return JSON with:
 
         return {
           generation: gen,
+          generationNumber,
           hooks,
           caption,
           hashtags,

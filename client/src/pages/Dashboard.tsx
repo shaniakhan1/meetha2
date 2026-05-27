@@ -19,7 +19,7 @@ import {
   PLATFORM_LABELS,
   SCENE_LABELS,
 } from "@shared/types";
-import { shareStoryCard, downloadRawImage } from "@/lib/storyCardExport";
+// storyCardExport removed — export uses server-side /api/style-card/:id and /api/download/:id
 
 type GenerationItem = {
   id: number;
@@ -164,28 +164,49 @@ export default function Dashboard() {
       const ok = document.execCommand("copy"); document.body.removeChild(ta); return ok;
     } catch { return false; }
   };
-  /** Share the full 1080×1920 story card — PRIMARY action */
-  const handleDownload = async (id: number, hook?: string | null, imageUrl?: string) => {
+  /** Fetch a server-rendered blob from our own API (session cookie required) */
+  const fetchServerBlob = async (url: string): Promise<Blob> => {
+    const res = await fetch(url, { credentials: "include" });
+    if (!res.ok) throw new Error(`Server fetch failed: ${res.status}`);
+    return res.blob();
+  };
+
+  /** Share or download a blob as a file */
+  const shareBlobFile = async (blob: Blob, filename: string, shareText?: string) => {
+    const file = new File([blob], filename, { type: blob.type });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      await navigator.share({ files: [file], title: "Meetha", text: shareText ?? "Styled by Meetha." });
+    } else {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a"); a.href = url; a.download = filename;
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 10000);
+    }
+  };
+
+  /** Share style card — server-rendered via /api/style-card/:id (uses selected_hook from DB) */
+  const handleDownload = async (id: number, hook?: string | null) => {
     if (downloadingId === id) return;
-    if (!imageUrl) return;
     setDownloadingId(id);
     try {
-      const outcome = await shareStoryCard({ imageUrl, hook: hook ?? null }, id);
-      if (outcome === "error") toast.error("Could not share. Try downloading instead.");
+      const blob = await fetchServerBlob(`/api/style-card/${id}`);
+      await shareBlobFile(blob, `meetha-style-card-${id}.jpg`, hook ?? "Styled by Meetha.");
+    } catch (e: unknown) {
+      if (e instanceof Error && e.name !== "AbortError") toast.error("Could not share. Please try again.");
     } finally {
       setDownloadingId(null);
     }
   };
 
-  /** Download the clean raw image — secondary action */
-  const handleShareStyleCard = async (id: number, _hook?: string | null, _cardUrl?: string | null, imageUrl?: string) => {
+  /** Download clean image — server-rendered via /api/download/:id */
+  const handleShareStyleCard = async (id: number, hook?: string | null) => {
     if (sharingCardId === id) return;
-    if (!imageUrl) return;
     setSharingCardId(id);
     try {
-      await downloadRawImage(imageUrl, id);
-    } catch {
-      toast.error("Could not download image. Please try again.");
+      const blob = await fetchServerBlob(`/api/download/${id}`);
+      await shareBlobFile(blob, `meetha-${id}.jpg`, hook ?? "Styled by Meetha.");
+    } catch (e: unknown) {
+      if (e instanceof Error && e.name !== "AbortError") toast.error("Could not download image. Please try again.");
     } finally {
       setSharingCardId(null);
     }
@@ -327,7 +348,7 @@ export default function Dashboard() {
                   <div
                     className="absolute left-0 top-0 h-full bg-gold transition-all duration-700"
                     style={{
-                      width: `${Math.min(100, ((credits.credits_remaining ?? 0) / (credits.tier === "pro" ? 25 : credits.tier === "starter" ? 10 : 1)) * 100)}%`,
+                      width: `${Math.min(100, ((credits.credits_remaining ?? 0) / (credits.tier === "pro" ? 25 : credits.tier === "starter" ? 25 : 1)) * 100)}%`,
                     }}
                   />
                 </div>
@@ -648,7 +669,7 @@ export default function Dashboard() {
                   {/* Actions */}
                   <div className="shrink-0 px-6 pb-safe pb-8 pt-4 space-y-2">
                     <button
-                      onClick={() => handleDownload(gen.id, gen.selected_hook, gen.image_url)}
+                      onClick={() => handleDownload(gen.id, gen.selected_hook)}
                       disabled={isDownloading}
                       className="w-full font-sans text-xs tracking-widest uppercase text-charcoal bg-cream py-4 hover:bg-cream/90 transition-colors active:scale-[0.98] disabled:opacity-50 min-h-[52px]"
                       style={{ borderRadius: "1px" }}
@@ -669,7 +690,7 @@ export default function Dashboard() {
                       {copiedId === gen.id ? "Copied!" : "Copy Caption"}
                     </button>
                     <button
-                      onClick={() => handleShareStyleCard(gen.id, gen.selected_hook, gen.card_url, gen.image_url)}
+                      onClick={() => handleShareStyleCard(gen.id, gen.selected_hook)}
                       disabled={sharingCardId === gen.id}
                       className="w-full font-sans text-xs tracking-widest uppercase text-cream/40 hover:text-cream/70 transition-colors py-2 min-h-[36px] disabled:opacity-40"
                     >

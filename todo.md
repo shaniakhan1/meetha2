@@ -616,3 +616,19 @@
 - [x] Remove Signature Scene cards from Generate.tsx
 - [x] Replace showCustomize panel with 4-step Create Studio flow (Occasion → Energy → Refinements → Generate)
 - [x] Update Quick Generate button to remain as-is
+
+## V100 -- Three-Mode Generation Display + Server-Side Export
+- [x] Gen 1 (total_used === 1): Show StyleBriefCard with brief panel + "Save & Share Style Card" using server-rendered card_url
+- [x] Gen 2 (total_used === 2): Show StyleBriefCard with brief panel + "Save to Profile" button (aestheticRead already saves to profile, just confirm + show success)
+- [x] Gen 3+ (total_used >= 3): Show CinematicPreview image-only (hook overlay for templates, null for studio) + "Save & Share" via /api/download/:id
+- [x] generationNumber returned from backend (countUserGenerations) used to determine mode
+- [x] Remove html2canvas dependency from Generate.tsx and Dashboard.tsx (server endpoints only)
+- [x] Update Dashboard modal: "Share Story Card" uses /api/style-card/:id, "Download Clean Image" uses /api/download/:id
+- [x] TypeScript: zero errors
+- [x] Vitest: all tests passing (23 tests)
+
+## V101 -- Credit Limit Correction
+- [x] Update free tier credit limit from 5 to 1 in all server-side credit initialization (ensureCredits in db.ts)
+- [x] Update preview tier values in Generate.tsx from (free=3, starter=28, pro=73) to (free=1, starter=25, pro=25)
+- [x] Add PLAN_GENERATION_LIMITS constant to shared/types.ts: { free: 1, starter: 25, pro: 25 }
+- [x] Paywall copy updated to single Membership tier ($19/month, 25 generations)
