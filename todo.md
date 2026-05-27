@@ -524,3 +524,11 @@
 - [x] Redesign actual generated styling card: vertical 800x1200, after image on top, cream panel with gold "YOUR IDENTITY BRIEF" header, stacked Palette/Metals/Makeup/Style/Presence rows, readable text
 - [x] TypeScript: zero errors
 - [x] Vitest: 13 tests passing
+
+## V57 -- Brief Unlock Bug + Admin LoRA Reset
+- [x] Fix Styling Brief unlock bug: brief now auto-generates after every successful image generation (not gated behind hook selection)
+- [x] Add "Regenerate Brief" button to Profile page for existing users who never triggered the hook flow
+- [x] Add admin router: listUsers, resetLora, adjustCredits, regenerateBrief (all adminProcedure protected)
+- [x] Build /admin page: user table with LoRA status, credit controls, brief regeneration, stats row
+- [x] TypeScript: zero errors
+- [x] Vitest: 13 tests passing

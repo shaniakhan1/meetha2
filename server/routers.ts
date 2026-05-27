@@ -6,7 +6,7 @@ import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { TRPCError } from "@trpc/server";
-import { protectedProcedure, publicProcedure, router } from "./_core/trpc";
+import { protectedProcedure, publicProcedure, adminProcedure, router } from "./_core/trpc";
 import { invokeLLMOpenAI } from "./_core/openaiLLM";
 import { generateImageFal } from "./_core/falImageGeneration";
 import { generateImageWithLora } from "./_core/falLoraTraining";
@@ -32,6 +32,7 @@ import {
   deleteUserAccount,
   updateAestheticBrief,
   updateTransformationCardUrl,
+  updateLoraProfile,
 } from "./db";
 import { generateAndSaveTransformationCard } from "./transformationCard";
 import { sendTransformationCardReadyEmail } from "./_core/email";
@@ -2130,6 +2131,109 @@ Be hyper-specific and visual. No generic phrases. This paragraph will be used wo
         return { success: true };
       }),
   }),
+
+  // ─── Admin ────────────────────────────────────────────────────────────────
+
+  admin: router({
+    /**
+     * List all users with their LoRA status, credit balance, and generation count.
+     * Admin only.
+     */
+    listUsers: adminProcedure.query(async () => {
+      const sb = getSupabase() as any;
+      const { data: users } = await sb
+        .from("users")
+        .select("id, email, name, created_at, role")
+        .order("created_at", { ascending: false })
+        .limit(200);
+      if (!users) return [];
+      const results = await Promise.all(
+        users.map(async (u: any) => {
+          const profile = await getProfile(u.id);
+          const credits = await getCredits(u.id);
+          const genCount = await countUserGenerations(u.id);
+          return {
+            id: u.id as number,
+            email: u.email as string,
+            name: (u.name ?? "") as string,
+            role: (u.role ?? "user") as string,
+            createdAt: u.created_at as string,
+            loraStatus: (profile?.lora_status ?? null) as string | null,
+            loraWeightsUrl: (profile?.lora_weights_url ?? null) as string | null,
+            creditsRemaining: (credits?.credits_remaining ?? 0) as number,
+            generationCount: genCount as number,
+            archetype: (profile?.archetype ?? null) as string | null,
+            mood: (profile?.mood ?? null) as string | null,
+          };
+        })
+      );
+      return results;
+    }),
+
+    /**
+     * Reset a user's LoRA status to null so they can retrain from scratch.
+     * Also clears the weights URL and request ID.
+     */
+    resetLora: adminProcedure
+      .input(z.object({ userId: z.number() }))
+      .mutation(async ({ input }) => {
+        await updateLoraProfile(input.userId, {
+          loraStatus: null,
+          loraWeightsUrl: null,
+          loraTriggerPhrase: null,
+          loraTrainingRequestId: null,
+          loraPhysicalDescriptors: null,
+        });
+        return { success: true };
+      }),
+
+    /**
+     * Adjust a user's credit balance by a delta (positive = add, negative = deduct).
+     */
+    adjustCredits: adminProcedure
+      .input(z.object({ userId: z.number(), delta: z.number() }))
+      .mutation(async ({ input }) => {
+        const sb = getSupabase() as any;
+        const credits = await getCredits(input.userId);
+        const current = credits?.credits_remaining ?? 0;
+        const newBalance = Math.max(0, current + input.delta);
+        await sb
+          .from("credits")
+          .update({ credits_remaining: newBalance, updated_at: new Date().toISOString() })
+          .eq("user_id", input.userId);
+        return { success: true, newBalance };
+      }),
+
+    /**
+     * Force-regenerate the styling brief for a specific user.
+     */
+    regenerateBrief: adminProcedure
+      .input(z.object({ userId: z.number() }))
+      .mutation(async ({ input }) => {
+        const profile = await getProfile(input.userId);
+        if (!profile) throw new TRPCError({ code: "NOT_FOUND", message: "User profile not found" });
+        const archetypeVisual = ARCHETYPE_VISUAL[profile.archetype ?? "luxury_minimal"] ?? "";
+        const moodVisual = MOOD_VISUAL[profile.mood ?? "soft"] ?? "";
+        const prompt = `You are a personal creative director. Write a concise styling brief for a woman with archetype: ${profile.archetype ?? "luxury_minimal"} (${archetypeVisual}) and energy: ${profile.mood ?? "soft"} (${moodVisual}). Return JSON with keys: color_palette, metals, fabrics, makeup, lighting, hair. Each value 1-2 short specific sentences.`;
+        const response = await invokeLLMOpenAI({
+          messages: [{ role: "user", content: prompt }],
+          response_format: { type: "json_schema", json_schema: { name: "brief", strict: true, schema: { type: "object", properties: { color_palette: { type: "string" }, metals: { type: "string" }, fabrics: { type: "string" }, makeup: { type: "string" }, lighting: { type: "string" }, hair: { type: "string" } }, required: ["color_palette", "metals", "fabrics", "makeup", "lighting", "hair"], additionalProperties: false } } },
+        });
+        const content = response.choices?.[0]?.message?.content;
+        const parsed = JSON.parse(typeof content === "string" ? content : JSON.stringify(content));
+        await updateAestheticBrief(input.userId, {
+          palette: parsed.color_palette,
+          metals: parsed.metals,
+          fabrics: parsed.fabrics,
+          makeup: parsed.makeup,
+          lighting: parsed.lighting,
+          hair: parsed.hair,
+          generatedAt: new Date().toISOString(),
+        });
+        return { success: true };
+      }),
+  }),
 });
 
 export type AppRouter = typeof appRouter;
+

@@ -1108,15 +1108,44 @@ function TransformationCardSection() {
 
 function AestheticBriefSection() {
   const briefQuery = trpc.profile.getAestheticBrief.useQuery();
+  const profileQuery = trpc.profile.get.useQuery();
   const brief = briefQuery.data;
+  const utils = trpc.useUtils();
+
+  const regenerateBriefMutation = trpc.generations.aestheticRead.useMutation({
+    onSuccess: () => {
+      utils.profile.getAestheticBrief.invalidate();
+      toast.success("Styling brief updated.");
+    },
+    onError: () => toast.error("Could not regenerate brief. Try again."),
+  });
+
+  const handleRegenerateBrief = () => {
+    const prof = profileQuery.data as any;
+    regenerateBriefMutation.mutate({
+      archetype: prof?.archetype ?? "luxury_minimal",
+      mood: prof?.mood ?? "soft",
+      aestheticDescriptors: prof?.aesthetic_descriptors ?? undefined,
+      loraPhysicalDescriptors: prof?.lora_physical_descriptors ?? undefined,
+    });
+  };
 
   if (!brief) {
     return (
       <div>
-        <p className="font-sans text-sm font-semibold text-charcoal mb-4">Your Styling Brief</p>
+        <div className="flex items-center justify-between mb-4">
+          <p className="font-sans text-sm font-semibold text-charcoal">Your Styling Brief</p>
+          <button
+            onClick={handleRegenerateBrief}
+            disabled={regenerateBriefMutation.isPending}
+            className="font-sans text-xs text-gold underline underline-offset-2 disabled:opacity-50"
+          >
+            {regenerateBriefMutation.isPending ? "Generating..." : "Generate now"}
+          </button>
+        </div>
         <div className="p-4 border border-sand bg-warm-white/60">
           <p className="font-sans text-xs text-charcoal-soft leading-relaxed">
-            Generate your first image to unlock your personal styling brief: your color palette, metals, fabrics, makeup direction, and lighting guide.
+            Your personal styling brief unlocks after your first generation. If you have already generated, tap "Generate now" above.
           </p>
         </div>
       </div>
@@ -1136,11 +1165,20 @@ function AestheticBriefSection() {
     <div>
       <div className="flex items-center justify-between mb-4">
         <p className="font-sans text-sm font-semibold text-charcoal">Your Styling Brief</p>
-        {brief.generatedAt && (
-          <p className="font-sans text-xs text-charcoal-soft/50">
-            {new Date(brief.generatedAt).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
-          </p>
-        )}
+        <div className="flex items-center gap-3">
+          {brief.generatedAt && (
+            <p className="font-sans text-xs text-charcoal-soft/50">
+              {new Date(brief.generatedAt).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
+            </p>
+          )}
+          <button
+            onClick={handleRegenerateBrief}
+            disabled={regenerateBriefMutation.isPending}
+            className="font-sans text-xs text-gold underline underline-offset-2 disabled:opacity-50"
+          >
+            {regenerateBriefMutation.isPending ? "Updating..." : "Refresh"}
+          </button>
+        </div>
       </div>
       <div className="border border-sand bg-warm-white/60 divide-y divide-sand/60">
         {rows.map((row) => (

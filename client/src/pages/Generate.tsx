@@ -130,12 +130,24 @@ export default function Generate() {
 
   const generateMutation = trpc.generate.content.useMutation({
     onSuccess: (data) => {
-      setResult(data as GenerationResult);
+      const genData = data as GenerationResult;
+      setResult(genData);
       setStep("hooks");
       utils.credits.get.invalidate();
       utils.generations.list.invalidate();
       // Invalidate profile so auto-triggered transformation card appears on Profile page
       utils.profile.get.invalidate();
+      // Auto-trigger aesthetic brief immediately after every generation so Profile always shows it
+      if (genData?.generation) {
+        const prof = profileQuery.data as any;
+        aestheticReadMutation.mutate({
+          archetype: (genData.generation.archetype as string) ?? prof?.archetype ?? "luxury_minimal",
+          mood: (genData.generation.mood as string) ?? prof?.mood ?? "soft",
+          sceneCategory: (genData.generation.scene_category as string | null | undefined) ?? undefined,
+          aestheticDescriptors: (prof?.aesthetic_descriptors as string | null | undefined) ?? undefined,
+          loraPhysicalDescriptors: (prof?.lora_physical_descriptors as string | null | undefined) ?? undefined,
+        });
+      }
     },
     onError: (err) => {
       if (err.message === "LORA_PAYWALL") {
