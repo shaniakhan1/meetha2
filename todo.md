@@ -508,3 +508,13 @@
 - [x] BeforeAfterSlider component: touch + mouse drag, labels, handle, clips before image to left of divider
 - [x] TypeScript: zero errors
 - [x] Vitest: 13 tests passing
+
+## V55 -- Editorial Homepage Rebuild + UX Fixes
+
+- [x] Generate 6 new editorial images (diverse skin tones, body types, distinct scenes)
+- [x] Rebuild homepage into dynamic editorial layout: full-bleed portraits, 3-col grid, text breaks, scattered sizes
+- [x] Add training status banner to Profile page top (immediately visible, no scrolling required)
+- [x] Clarify frequency picker: added italic visual hint per archetype and mood ("Images will be: ...")
+- [x] Anum: delete and retrain (poller bug fixed, new job will complete correctly)
+- [x] TypeScript: zero errors
+- [x] Vitest: 13 tests passing

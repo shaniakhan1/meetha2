@@ -630,84 +630,139 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ── Gallery ── */}
-      <section className="py-16 px-6 bg-charcoal overflow-hidden">
-        <div className="max-w-sm mx-auto">
-          <div className="text-center mb-8">
-            <p className="font-sans text-xs tracking-[0.2em] uppercase text-gold mb-4">
-              Real results
-            </p>
-            <h2 className="font-serif font-light text-cream mb-3" style={{ lineHeight: 1.1 }}>
-              Your features, styled<br />with intention.
-            </h2>
-            <div className="divider-editorial" />
-            <p className="font-sans font-light text-sm text-cream/60 leading-relaxed mt-4">
-              Every image preserves who you are. Meetha reveals your visual language, it does not replace it.
-            </p>
-          </div>
-
-          {/* Masonry-style grid */}
-          <div className="grid grid-cols-2 gap-1.5">
-            {/* Row 1: tall left, short right */}
-            <div className="row-span-2 aspect-[3/5] overflow-hidden">
-              <img
-                src="/manus-storage/meetha-gallery-car-dark_f8bb64d1.webp"
-                alt="Meetha styling — cinematic dark"
-                className="w-full h-full object-cover object-center"
-              />
-            </div>
-            <div className="aspect-square overflow-hidden">
-              <img
-                src="/manus-storage/meetha-gallery-restaurant_33c494d6.webp"
-                alt="Meetha styling — restaurant"
-                className="w-full h-full object-cover object-center"
-              />
-            </div>
-            <div className="aspect-square overflow-hidden">
-              <img
-                src="/manus-storage/meetha-gallery-hands-coffee_2b4e9461.webp"
-                alt="Meetha styling — hands coffee"
-                className="w-full h-full object-cover object-center"
-              />
-            </div>
-
-            {/* Row 2: full width */}
-            <div className="col-span-2 aspect-[16/9] overflow-hidden">
-              <img
-                src="/manus-storage/meetha-gallery-street-back_d0e260dd.webp"
-                alt="Meetha styling — street back"
-                className="w-full h-full object-cover object-center"
-              />
-            </div>
-
-            {/* Row 3: short left, tall right */}
-            <div className="aspect-square overflow-hidden">
-              <img
-                src="/manus-storage/meetha-gallery-polaroid_2d1d8320.webp"
-                alt="Meetha styling — polaroid"
-                className="w-full h-full object-cover object-top"
-              />
-            </div>
-            <div className="row-span-2 aspect-[3/5] overflow-hidden">
-              <img
-                src="/manus-storage/meetha-gallery-sofa_84cbf7ec.webp"
-                alt="Meetha styling — sofa"
-                className="w-full h-full object-cover object-center"
-              />
-            </div>
-            <div className="aspect-square overflow-hidden">
-              <img
-                src="/manus-storage/meetha-gallery-car-window_beac299e.webp"
-                alt="Meetha styling — car window"
-                className="w-full h-full object-cover object-center"
-              />
-            </div>
-          </div>
-
-          <p className="font-sans text-xs text-cream/30 text-center mt-6 tracking-wide">
-            undefined &rarr; aligned
+      {/* ── Editorial Gallery ── */}
+      {/* Row A: full-bleed cinematic header */}
+      <section className="bg-charcoal overflow-hidden">
+        <div className="text-center pt-16 pb-8 px-6">
+          <p className="font-sans text-xs tracking-[0.2em] uppercase text-gold mb-4">Every identity is different</p>
+          <h2 className="font-serif font-light text-cream mb-3" style={{ lineHeight: 1.1 }}>
+            Your features, styled<br />with intention.
+          </h2>
+          <div className="divider-editorial" />
+          <p className="font-sans font-light text-sm text-cream/60 leading-relaxed mt-4 max-w-xs mx-auto">
+            Meetha reveals your visual language. It does not replace it.
           </p>
         </div>
+
+        {/* Full-bleed portrait — Black woman, window light */}
+        <div className="w-full aspect-[3/4] overflow-hidden">
+          <img
+            src="https://d2xsxph8kpxj0f.cloudfront.net/310519663380647277/W9hp3oxSnRYx5WHCSun39U/editorial-01-window-4Ex7ySDHERfgQxSGrLgiqH.webp"
+            alt="Editorial portrait — window light"
+            className="w-full h-full object-cover object-top"
+          />
+        </div>
+
+        {/* Two-column: existing gallery + new full-body */}
+        <div className="grid grid-cols-2 gap-0.5">
+          <div className="aspect-[3/4] overflow-hidden">
+            <img
+              src="/manus-storage/meetha-gallery-car-dark_f8bb64d1.webp"
+              alt="Meetha styling — cinematic dark"
+              className="w-full h-full object-cover object-center"
+            />
+          </div>
+          <div className="aspect-[3/4] overflow-hidden">
+            <img
+              src="https://d2xsxph8kpxj0f.cloudfront.net/310519663380647277/W9hp3oxSnRYx5WHCSun39U/editorial-02-fullbody-cRGwTXz2gHjynX9ahHDVXB.webp"
+              alt="Editorial — full body golden hour"
+              className="w-full h-full object-cover object-top"
+            />
+          </div>
+        </div>
+
+        {/* Offset text break */}
+        <div className="px-6 py-10 flex items-end justify-between gap-4">
+          <p className="font-serif font-light text-cream/40" style={{ fontSize: "clamp(2.5rem, 10vw, 4rem)", lineHeight: 1.0 }}>
+            every<br />body.
+          </p>
+          <p className="font-sans text-xs text-cream/40 text-right leading-relaxed max-w-[140px]">
+            Different skin tones.<br />Different shapes.<br />One visual language.
+          </p>
+        </div>
+
+        {/* Wide cinematic strip */}
+        <div className="w-full aspect-[16/9] overflow-hidden">
+          <img
+            src="/manus-storage/meetha-gallery-street-back_d0e260dd.webp"
+            alt="Meetha styling — street"
+            className="w-full h-full object-cover object-center"
+          />
+        </div>
+
+        {/* Three-column tight grid */}
+        <div className="grid grid-cols-3 gap-0.5 mt-0.5">
+          <div className="aspect-[3/4] overflow-hidden">
+            <img
+              src="/manus-storage/meetha-gallery-restaurant_33c494d6.webp"
+              alt="Meetha styling — restaurant"
+              className="w-full h-full object-cover object-center"
+            />
+          </div>
+          <div className="aspect-[3/4] overflow-hidden">
+            <img
+              src="https://d2xsxph8kpxj0f.cloudfront.net/310519663380647277/W9hp3oxSnRYx5WHCSun39U/editorial-03-restaurant-JxCbUv26xaboJFEWHABv6g.webp"
+              alt="Editorial — candlelit restaurant"
+              className="w-full h-full object-cover object-top"
+            />
+          </div>
+          <div className="aspect-[3/4] overflow-hidden">
+            <img
+              src="/manus-storage/meetha-gallery-sofa_84cbf7ec.webp"
+              alt="Meetha styling — sofa"
+              className="w-full h-full object-cover object-center"
+            />
+          </div>
+        </div>
+
+        {/* Jewelry close-up — full bleed */}
+        <div className="w-full aspect-[3/4] overflow-hidden mt-0.5">
+          <img
+            src="https://d2xsxph8kpxj0f.cloudfront.net/310519663380647277/W9hp3oxSnRYx5WHCSun39U/editorial-05-jewelry-E7PHF69YfVpDeTTDRyXXDd.webp"
+            alt="Editorial — gold jewelry close-up"
+            className="w-full h-full object-cover object-center"
+          />
+        </div>
+
+        {/* Two-column: motion + soft light */}
+        <div className="grid grid-cols-2 gap-0.5 mt-0.5">
+          <div className="aspect-[3/4] overflow-hidden">
+            <img
+              src="https://d2xsxph8kpxj0f.cloudfront.net/310519663380647277/W9hp3oxSnRYx5WHCSun39U/editorial-04-motion-PdCsKveuYL5VJ73Dzk4AZe.webp"
+              alt="Editorial — motion street"
+              className="w-full h-full object-cover object-top"
+            />
+          </div>
+          <div className="aspect-[3/4] overflow-hidden">
+            <img
+              src="https://d2xsxph8kpxj0f.cloudfront.net/310519663380647277/W9hp3oxSnRYx5WHCSun39U/editorial-06-softlight-X9utC7yPfkFCBqUYhBXkqQ.webp"
+              alt="Editorial — soft morning light"
+              className="w-full h-full object-cover object-top"
+            />
+          </div>
+        </div>
+
+        {/* Existing gallery images — hands coffee + car window */}
+        <div className="grid grid-cols-2 gap-0.5 mt-0.5">
+          <div className="aspect-square overflow-hidden">
+            <img
+              src="/manus-storage/meetha-gallery-hands-coffee_2b4e9461.webp"
+              alt="Meetha styling — hands coffee"
+              className="w-full h-full object-cover object-center"
+            />
+          </div>
+          <div className="aspect-square overflow-hidden">
+            <img
+              src="/manus-storage/meetha-gallery-car-window_beac299e.webp"
+              alt="Meetha styling — car window"
+              className="w-full h-full object-cover object-center"
+            />
+          </div>
+        </div>
+
+        <p className="font-sans text-xs text-cream/25 text-center py-8 tracking-[0.2em] uppercase">
+          undefined &rarr; aligned
+        </p>
       </section>
 
       {/* ── Pricing ── */}

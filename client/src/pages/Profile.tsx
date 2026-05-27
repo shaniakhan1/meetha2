@@ -223,6 +223,21 @@ export default function Profile() {
         <div className="w-10" />
       </div>
 
+      {/* ── Training status banner — shown immediately below header ── */}
+      {loraStatus === "training" && (
+        <div className="px-4 pt-4">
+          <div className="border border-gold/40 bg-gold/8 p-4 flex items-start gap-3">
+            <span className="w-4 h-4 border border-gold border-t-transparent rounded-full animate-spin flex-shrink-0 mt-0.5" />
+            <div>
+              <p className="font-sans text-sm font-semibold text-charcoal">Your personal model is training.</p>
+              <p className="font-sans text-xs text-charcoal-soft mt-1 leading-relaxed">
+                This takes about 20 minutes. We'll email you when it's ready — you can close this page and come back later.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="flex-1 px-4 py-6 space-y-8">
 
         {/* ── Account ── */}

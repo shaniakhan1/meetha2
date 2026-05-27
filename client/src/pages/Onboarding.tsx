@@ -21,11 +21,28 @@ const ARCHETYPE_SYMBOL: Record<Archetype, string> = {
   ethereal: "○",
 };
 
+// What images actually look like for each frequency
+const ARCHETYPE_VISUAL_HINT: Record<Archetype, string> = {
+  luxury_minimal: "Images will be: cream tones, empty space, one deliberate object, architectural stillness.",
+  elegant_chaos: "Images will be: layered textures, silk against stone, bold shadow and warm light in tension.",
+  soft_power: "Images will be: warm amber light, soft intimate framing, close and emotional, the feeling of being seen.",
+  dark_feminine: "Images will be: deep shadows, jewel tones, dramatic candlelit moods, mystery without explanation.",
+  ethereal: "Images will be: gossamer light, translucent fabric, soft lens flare, dreamlike and luminous.",
+};
+
 const MOOD_SYMBOL: Record<Mood, string> = {
   soft: "◌",
   magnetic: "✦",
   grounded: "◼",
   untamed: "〜",
+};
+
+// What the energy actually does to images
+const MOOD_VISUAL_HINT: Record<Mood, string> = {
+  soft: "Gentle bokeh, warm amber light, intimate close framing.",
+  magnetic: "Strong centered framing, rich saturation, commanding eye contact.",
+  grounded: "Earthy tones, stable compositions, linen and wood textures, unhurried.",
+  untamed: "Dynamic movement, windswept textures, raw beauty with editorial restraint.",
 };
 
 export default function Onboarding() {
@@ -189,6 +206,9 @@ export default function Onboarding() {
                     <p className="font-sans text-xs text-charcoal-soft leading-relaxed">
                       {ARCHETYPE_DESCRIPTIONS[archetype]}
                     </p>
+                    <p className="font-sans text-[10px] text-gold/70 leading-relaxed mt-1.5 italic">
+                      {ARCHETYPE_VISUAL_HINT[archetype]}
+                    </p>
                   </div>
                   <span className="text-gold text-xl mt-0.5 flex-shrink-0 opacity-40 group-hover:opacity-100 transition-opacity">
                     {ARCHETYPE_SYMBOL[archetype]}
@@ -232,6 +252,9 @@ export default function Onboarding() {
                   </p>
                   <p className="font-sans text-xs text-charcoal-soft leading-relaxed">
                     {MOOD_DESCRIPTIONS[mood]}
+                  </p>
+                  <p className="font-sans text-[10px] text-gold/70 leading-relaxed mt-1.5 italic">
+                    {MOOD_VISUAL_HINT[mood]}
                   </p>
                 </div>
               </button>
