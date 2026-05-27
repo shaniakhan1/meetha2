@@ -75,6 +75,19 @@ export default function Dashboard() {
   const referralQuery = trpc.referral.getLink.useQuery();
   const briefQuery = trpc.profile.getAestheticBrief.useQuery();
 
+  const subscriptionCheckoutMutation = trpc.profile.createSubscriptionCheckout.useMutation({
+    onSuccess: ({ url }) => { window.open(url, "_blank"); },
+    onError: (err) => { toast.error("Could not start checkout: " + err.message); },
+  });
+  const handleMembershipMonthly = () => {
+    subscriptionCheckoutMutation.mutate({ origin: window.location.origin, priceId: "price_1TafvrPMV5P3vLteuAss2HQB" });
+    toast.info("Opening secure checkout...");
+  };
+  const handleMembershipAnnual = () => {
+    subscriptionCheckoutMutation.mutate({ origin: window.location.origin, priceId: "price_1TbNCKPMV5P3vLterPzZXdJ6" });
+    toast.info("Opening secure checkout...");
+  };
+
   const profile = profileQuery.data;
   const credits = creditsQuery.data;
   const generationsPage = generationsQuery.data;
@@ -442,22 +455,20 @@ export default function Dashboard() {
         </button>
         {credits?.credits_remaining === 0 && (
           <div className="text-center -mt-6 mb-8 space-y-1">
-            <a
-              href={import.meta.env.VITE_STRIPE_STARTER_LINK || "#"}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="font-sans text-xs text-gold hover:text-charcoal transition-colors tracking-wide block"
+            <button
+              onClick={handleMembershipMonthly}
+              disabled={subscriptionCheckoutMutation.isPending}
+              className="font-sans text-xs text-gold hover:text-charcoal transition-colors tracking-wide block w-full disabled:opacity-60"
             >
-              Get more generations ($19 / month)
-            </a>
-            <a
-              href={import.meta.env.VITE_STRIPE_STARTER_ANNUAL_LINK || "#"}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="font-sans text-xs text-charcoal-soft/50 hover:text-charcoal-soft transition-colors tracking-wide block"
+              {subscriptionCheckoutMutation.isPending ? "Opening..." : "Get more generations ($19 / month)"}
+            </button>
+            <button
+              onClick={handleMembershipAnnual}
+              disabled={subscriptionCheckoutMutation.isPending}
+              className="font-sans text-xs text-charcoal-soft/50 hover:text-charcoal-soft transition-colors tracking-wide block w-full disabled:opacity-60"
             >
               Annual plans (save up to 40%)
-            </a>
+            </button>
           </div>
         )}
 

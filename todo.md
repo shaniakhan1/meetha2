@@ -641,3 +641,18 @@
 - [x] "Share Story Card": fetch blob → downloadFile() first → then navigator.share({ files }) if supported
 - [x] "Download Clean Image": fetch blob from /api/download/:id → downloadFile() only
 - [x] Apply same CTA logic to Dashboard.tsx modal
+
+## V104 -- Stripe Membership Webhook Wiring
+- [x] Add stripe_customer_id column to credits table (Supabase migration applied)
+- [x] Update DbCredits type in db.ts to include stripe_customer_id
+- [x] Rewrite stripeWebhook.ts to handle checkout.session.completed (mode=subscription) and invoice.paid
+- [x] Add PRICE_TO_TIER mapping for all Membership and Pro price IDs
+- [x] Add activateSubscription() helper: sets tier=starter/pro, tops up credits to 25
+- [x] Add deactivateSubscription() helper: downgrades to free on subscription.deleted
+- [x] Add getUserIdByStripeCustomer() and saveStripeCustomerId() helpers
+- [x] Add createSubscriptionCheckoutSession() with user_id in metadata
+- [x] Add createSubscriptionCheckout tRPC procedure to routers.ts
+- [x] Replace direct Stripe payment links in Generate.tsx paywall modals with server-side checkout mutation
+- [x] Replace direct Stripe payment links in Dashboard.tsx zero-credits section with server-side checkout mutation
+- [x] TypeScript: zero errors
+- [x] Vitest: 23 tests passing

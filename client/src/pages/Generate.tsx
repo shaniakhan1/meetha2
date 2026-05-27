@@ -132,6 +132,20 @@ export default function Generate() {
 
   const previewTier = getPreviewTier();
 
+  // Membership checkout — creates a server-side Stripe session with user_id in metadata
+  const subscriptionCheckoutMutation = trpc.profile.createSubscriptionCheckout.useMutation({
+    onSuccess: ({ url }) => { window.open(url, "_blank"); },
+    onError: (err) => { toast.error("Could not start checkout: " + err.message); },
+  });
+  const handleMembershipMonthly = () => {
+    subscriptionCheckoutMutation.mutate({ origin: window.location.origin, priceId: "price_1TafvrPMV5P3vLteuAss2HQB" });
+    toast.info("Opening secure checkout...");
+  };
+  const handleMembershipAnnual = () => {
+    subscriptionCheckoutMutation.mutate({ origin: window.location.origin, priceId: "price_1TbNCKPMV5P3vLterPzZXdJ6" });
+    toast.info("Opening secure checkout...");
+  };
+
   // Queries — declared early so useEffects below can reference them
   const profileQuery = trpc.profile.get.useQuery();
   const creditsQuery = trpc.credits.get.useQuery();
@@ -364,8 +378,8 @@ export default function Generate() {
             <h2 className="font-serif text-2xl text-charcoal mb-2">You have used all your generations.</h2>
             <p className="font-sans font-light text-xs text-charcoal-soft leading-relaxed mb-6">Membership unlocks 25 generations per month so you can keep building your aesthetic.</p>
             <div className="space-y-3">
-              <a href={import.meta.env.VITE_STRIPE_STARTER_LINK || "#"} target="_blank" rel="noopener noreferrer" className="btn-luxury btn-gold w-full text-center block">Membership — $19 / month</a>
-              <a href={import.meta.env.VITE_STRIPE_STARTER_ANNUAL_LINK || "#"} target="_blank" rel="noopener noreferrer" className="w-full py-3 font-sans text-xs tracking-widest uppercase text-charcoal-soft/60 hover:text-charcoal-soft transition-colors text-center block">Annual plan (save 20%)</a>
+              <button onClick={handleMembershipMonthly} disabled={subscriptionCheckoutMutation.isPending} className="btn-luxury btn-gold w-full text-center block disabled:opacity-60">{subscriptionCheckoutMutation.isPending ? "Opening..." : "Membership — $19 / month"}</button>
+              <button onClick={handleMembershipAnnual} disabled={subscriptionCheckoutMutation.isPending} className="w-full py-3 font-sans text-xs tracking-widest uppercase text-charcoal-soft/60 hover:text-charcoal-soft transition-colors text-center block disabled:opacity-60">Annual plan (save 20%)</button>
             </div>
           </div>
         </div>
@@ -381,8 +395,8 @@ export default function Generate() {
             <h2 className="font-serif text-2xl text-charcoal mb-2">Your first look was on us.</h2>
             <p className="font-sans font-light text-xs text-charcoal-soft leading-relaxed mb-6">You have seen what Meetha can do with your face. Membership unlocks 25 generations per month so you can keep creating with your look.</p>
             <div className="space-y-3">
-              <a href={import.meta.env.VITE_STRIPE_STARTER_LINK || "#"} target="_blank" rel="noopener noreferrer" className="btn-luxury btn-gold w-full text-center block">Membership — $19 / month</a>
-              <a href={import.meta.env.VITE_STRIPE_STARTER_ANNUAL_LINK || "#"} target="_blank" rel="noopener noreferrer" className="w-full py-3 font-sans text-xs tracking-widest uppercase text-charcoal-soft/60 hover:text-charcoal-soft transition-colors text-center block">Annual plan (save 20%)</a>
+              <button onClick={handleMembershipMonthly} disabled={subscriptionCheckoutMutation.isPending} className="btn-luxury btn-gold w-full text-center block disabled:opacity-60">{subscriptionCheckoutMutation.isPending ? "Opening..." : "Membership — $19 / month"}</button>
+              <button onClick={handleMembershipAnnual} disabled={subscriptionCheckoutMutation.isPending} className="w-full py-3 font-sans text-xs tracking-widest uppercase text-charcoal-soft/60 hover:text-charcoal-soft transition-colors text-center block disabled:opacity-60">Annual plan (save 20%)</button>
             </div>
           </div>
         </div>

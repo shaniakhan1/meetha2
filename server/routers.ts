@@ -864,6 +864,24 @@ export const appRouter = router({
       }),
 
     /**
+     * Create a Stripe Checkout Session for a Membership subscription.
+     * priceId: Stripe price ID for monthly or annual plan.
+     */
+    createSubscriptionCheckout: protectedProcedure
+      .input(z.object({ origin: z.string(), priceId: z.string() }))
+      .mutation(async ({ ctx, input }) => {
+        const { createSubscriptionCheckoutSession } = await import("./stripeWebhook");
+        const url = await createSubscriptionCheckoutSession({
+          userId: ctx.user.id,
+          userEmail: ctx.user.email,
+          userName: ctx.user.name,
+          priceId: input.priceId,
+          origin: input.origin,
+        });
+        return { url };
+      }),
+
+    /**
      * Check if the current user has an unused retrain purchase.
      */
     retrainStatus: protectedProcedure.query(async ({ ctx }) => {
