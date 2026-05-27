@@ -156,11 +156,19 @@ export default function Generate() {
   };
 
   const onGenerationSuccess = (data: GenerationResult) => {
+    // Guard: if generation is missing the response shape is wrong — surface a real error
+    if (!data?.generation?.image_url) {
+      console.error("[onGenerationSuccess] Unexpected response shape:", data);
+      toast.error("Generation failed — unexpected response. Please try again.");
+      setStep("select");
+      return;
+    }
     setResult(data);
-    if (data.hooks && data.hooks.length > 0) {
-      setSelectedHook(data.hooks[0]);
+    const firstHook = data.hooks?.[0] ?? null;
+    if (firstHook) {
+      setSelectedHook(firstHook);
       if (data.generation?.id) {
-        selectHookMutation.mutate({ generationId: data.generation.id, selectedHook: data.hooks[0] });
+        selectHookMutation.mutate({ generationId: data.generation.id, selectedHook: firstHook });
       }
     }
     setStep("preview");
@@ -452,18 +460,6 @@ export default function Generate() {
               </h2>
               <p className="font-sans font-light text-sm text-charcoal-soft mt-1">
                 {MOOD_LABELS[profile.mood as keyof typeof MOOD_LABELS] ?? profile.mood}
-              </p>
-            </div>
-          )}
-
-          {/* Quick Generate */}
-          {effectiveCredits && effectiveCredits.creditsRemaining > 0 && (
-            <div className="mb-6">
-              <button onClick={handleQuickGenerate} className="w-full py-5 bg-[#2C1810] hover:bg-[#3a2015] active:scale-[0.98] transition-all duration-150 text-cream font-sans text-sm tracking-[0.15em] uppercase">
-                Generate My Look
-              </button>
-              <p className="mt-2 text-center font-sans text-xs text-charcoal-soft/60">
-                Uses your saved aesthetic. {STILL_COST} credit.
               </p>
             </div>
           )}

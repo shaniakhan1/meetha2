@@ -1921,11 +1921,47 @@ Return JSON with:
           imageKey = falResult.key;
         }
 
-        const sb = getSupabase() as any;
-        await sb
-          .from("user_credits")
-          .update({ credits_remaining: userCredits.credits_remaining - STILL_COST })
-          .eq("user_id", ctx.user.id);
+        // Generate copy (hooks + caption + hashtags) — same pipeline as generate.content
+        // so the frontend onGenerationSuccess handler receives the same shape.
+        const studioSceneLabel = `${input.occasion.replace(/_/g, " ")} ${input.energy.replace(/_/g, " ")}`;
+        const studioCopyPrompt = buildCopyPrompt(archetype, mood, "reels", profile?.aesthetic_descriptors ?? null, profile?.niche ?? null, profile?.audience ?? null, profile?.voice_style ?? null, studioSceneLabel);
+        let hooks: string[] = [];
+        let caption = "";
+        let hashtags: string[] = [];
+        try {
+          const copyResponse = await invokeLLMOpenAI({
+            messages: [{ role: "user", content: studioCopyPrompt }],
+            response_format: {
+              type: "json_schema",
+              json_schema: {
+                name: "content_copy",
+                strict: true,
+                schema: {
+                  type: "object",
+                  properties: {
+                    hooks: { type: "array", items: { type: "string" }, description: "Exactly 3 editorial hook options" },
+                    caption: { type: "string", description: "One caption 2-3 sentences" },
+                    hashtags: { type: "array", items: { type: "string" }, description: "Exactly 5 hashtags without # symbol" },
+                  },
+                  required: ["hooks", "caption", "hashtags"],
+                  additionalProperties: false,
+                },
+              },
+            },
+          });
+          const content = copyResponse.choices?.[0]?.message?.content;
+          const parsed = JSON.parse(typeof content === "string" ? content : JSON.stringify(content));
+          hooks = parsed.hooks?.slice(0, 3) ?? [];
+          caption = parsed.caption ?? "";
+          hashtags = parsed.hashtags?.slice(0, 5) ?? [];
+        } catch {
+          hooks = ["calm women move differently", "she already knew", "out past my bedtime"];
+          caption = "She got quieter. Everything else got louder.";
+          hashtags = ["quietluxury", "softpower", "editoriallife", "luxurylifestyle", "cinematic"];
+        }
+
+        // Deduct credit
+        await decrementCredit(ctx.user.id, STILL_COST);
 
         const gen = await createGeneration({
           userId: ctx.user.id,
@@ -1935,14 +1971,36 @@ Return JSON with:
           mood,
           platform: "reels",
           sceneCategory: `studio_${input.occasion}_${input.energy}`,
-          hooks: JSON.stringify([]),
-          caption: "",
+          hooks: JSON.stringify(hooks),
+          caption,
         });
 
         const updatedCredits = await getCredits(ctx.user.id);
+
+        // Generate style card in background
+        void (async () => {
+          try {
+            const { cardUrl, cardKey } = await generateAndSaveStyleCard({
+              generationId: gen.id,
+              userId: ctx.user.id,
+              imageUrl,
+              archetype,
+              mood,
+              sceneCategory: `studio_${input.occasion}_${input.energy}`,
+              aestheticDescriptors: profile?.aesthetic_descriptors ?? null,
+              niche: profile?.niche ?? null,
+            });
+            await updateGenerationCardUrl({ generationId: gen.id, cardUrl, cardKey });
+          } catch (err) {
+            console.error("[createStudio] style card generation failed:", err);
+          }
+        })();
+
         return {
           generation: gen,
-          imageUrl,
+          hooks,
+          caption,
+          hashtags,
           creditsRemaining: updatedCredits?.credits_remaining ?? 0,
         };
       }),
