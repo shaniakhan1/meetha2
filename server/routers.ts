@@ -297,6 +297,55 @@ function buildPhysicalAnchor(rawDescriptors: string | null | undefined): string 
   return `preserve subject's natural complexion and undertones, maintain authentic facial structure, ${anchored},`;
 }
 
+/**
+ * Keywords in physical_descriptors that indicate a fuller or curvier body type.
+ * When any of these are detected, strong body preservation is injected automatically
+ * even if the user has not explicitly set a body_preference.
+ */
+const FULLER_BODY_KEYWORDS = [
+  "full", "curvy", "plus", "round", "wide", "broad", "thick", "heavy",
+  "large", "ample", "voluptuous", "wide-hipped", "soft body", "fuller",
+  "bigger", "rounder", "substantial",
+];
+
+function detectFullerBody(physicalDescriptors: string | null | undefined): boolean {
+  if (!physicalDescriptors) return false;
+  const lower = physicalDescriptors.toLowerCase();
+  return FULLER_BODY_KEYWORDS.some((kw) => lower.includes(kw));
+}
+
+/**
+ * System-level body preservation modifier.
+ *
+ * Injected at the FRONT of every image generation prompt (before scene, archetype,
+ * aesthetic layers) so it carries maximum weight in the diffusion model's attention.
+ *
+ * Three tiers:
+ * 1. Explicit body_type saved by user: use their exact preference text verbatim.
+ * 2. Auto-detect fuller/curvier body from physical_descriptors: inject full preservation block.
+ * 3. No body data at all: inject a minimal baseline anchor to resist the model's default slim bias.
+ *
+ * This is NOT about making anyone thinner or larger -- it is about making the
+ * generated person recognizable as the same person who uploaded the training photos.
+ */
+function buildBodyPreservationModifier(
+  bodyType: string | null | undefined,
+  physicalDescriptors: string | null | undefined
+): string {
+  // Tier 1: user has an explicit body preference -- use it verbatim as the primary anchor
+  if (bodyType && bodyType.trim().length > 0) {
+    return `IDENTITY PRESERVATION: ${bodyType}. Preserve her exact natural body proportions, weight distribution, silhouette, frame width, arm fullness, bust and waist relationship, facial fullness, and physical presence. Do not slim, elongate, editorialize, or alter her natural body composition in any way.`;
+  }
+
+  // Tier 2: physical descriptors indicate a fuller or curvier body -- auto-inject full preservation
+  if (detectFullerBody(physicalDescriptors)) {
+    return `IDENTITY PRESERVATION: Preserve her exact natural body proportions, frame width, arm fullness, bust and waist relationship, facial fullness, and physical presence. Do not slim, elongate, editorialize, or alter her natural body composition. The subject has a fuller natural frame -- preserve it completely.`;
+  }
+
+  // Tier 3: no body data -- inject minimal baseline to resist model's default editorial-slim bias
+  return `IDENTITY PRESERVATION: Preserve her natural body proportions and physical presence. Do not slim, elongate, or alter her natural body composition.`;
+}
+
 // Template scenes that define their own complete, self-contained prompts.
 // These must NOT have the standard no-face/no-body/wardrobe suffix appended.
 const SELF_CONTAINED_SCENES = new Set([
@@ -327,7 +376,9 @@ function buildImagePrompt(
   // Template scenes are complete prompts -- return them as-is with cinematic quality suffix
   // Deliberately avoid "high resolution" and "photorealistic" to prevent beauty-portrait collapse
   if (sceneCategory && SELF_CONTAINED_SCENES.has(sceneCategory) && SCENE_PROMPTS[sceneCategory]) {
-    return `${scene}, documentary realism, film grain, analog texture, imperfect focus, mood over sharpness, no beauty retouching, no over-sharpened faces, no sterile AI polish, no studio lighting, no clean background`;
+    // Still inject body preservation into template scenes -- they show full bodies
+    const bodyPreservation = buildBodyPreservationModifier(bodyType, physicalDescriptors);
+    return `${bodyPreservation} ${scene}, documentary realism, film grain, analog texture, imperfect focus, mood over sharpness, no beauty retouching, no over-sharpened faces, no sterile AI polish, no studio lighting, no clean background`;
   }
 
   const archetypeStyle = ARCHETYPE_VISUAL[archetype] || "";
@@ -337,11 +388,11 @@ function buildImagePrompt(
     : "warm honey skin tones where hands are visible, gold jewelry details,";
 
   const nicheLayer = niche ? `visual world of a ${niche} creator,` : "";
-  // Body type is used as a preservation anchor, not a descriptor -- we name it to preserve it, not to change it
-  const bodyLayer = bodyType ? `maintain natural ${bodyType} proportions,` : "";
-  // Physical anchor from vision-extracted descriptors (base model path only)
+  // Body preservation modifier injected at the front -- strongest signal for identity accuracy
+  const bodyPreservationModifier = buildBodyPreservationModifier(bodyType, physicalDescriptors);
+  // Physical anchor from vision-extracted descriptors (complexion, facial structure)
   const physicalAnchorLayer = buildPhysicalAnchor(physicalDescriptors);
-  return `${scene}, ${archetypeStyle}, ${moodStyle}, ${aestheticLayer} ${nicheLayer} ${bodyLayer} ${physicalAnchorLayer} editorial female-gaze aesthetic, focus on wardrobe styling, fabric texture, jewelry detail, and atmospheric lighting -- not body shape, cinematic lighting, subtle film grain, realistic textures, warm amber tones, atmospheric depth, no faces, no full bodies, hands only when naturally holding an object, vertical 9:16 framing, social-media-ready, photorealistic, high resolution`;
+  return `${bodyPreservationModifier} ${scene}, ${archetypeStyle}, ${moodStyle}, ${aestheticLayer} ${nicheLayer} ${physicalAnchorLayer} editorial female-gaze aesthetic, focus on wardrobe styling, fabric texture, jewelry detail, and atmospheric lighting, cinematic lighting, subtle film grain, realistic textures, warm amber tones, atmospheric depth, no faces, no full bodies, hands only when naturally holding an object, vertical 9:16 framing, social-media-ready, photorealistic, high resolution`;
 }
 
 const PLATFORM_TONE: Record<string, string> = {
@@ -1772,11 +1823,12 @@ Return JSON with:
             ? `calibrated to this specific aesthetic: ${profile.aesthetic_descriptors},`
             : "warm honey skin tones where hands are visible, gold jewelry details,";
           const nicheLayer = profile?.niche ? `visual world of a ${profile.niche} creator,` : "";
-          // Voice scene is the primary directive - archetype/mood are the filter
-          const bodyLayerVoice = profile?.body_type ? `${profile.body_type},` : "";
-          imagePrompt = `${keyDetails.join(", ")}, ${archetypeStyle}, ${moodStyle}, ${aestheticLayer} ${nicheLayer} ${bodyLayerVoice} editorial female-gaze luxury aesthetic, cinematic lighting, subtle film grain, realistic textures, warm amber tones, atmospheric depth, no faces, no full bodies, hands only when naturally holding an object, vertical 9:16 framing, social-media-ready, photorealistic, high resolution`;
+          // Body preservation modifier injected at the front -- strongest signal for identity accuracy
+          const bodyPreservationVoice = buildBodyPreservationModifier(profile?.body_type, profile?.lora_physical_descriptors);
+          const physicalAnchorVoice = buildPhysicalAnchor(profile?.lora_physical_descriptors ?? null);
+          imagePrompt = `${bodyPreservationVoice} ${keyDetails.join(", ")}, ${archetypeStyle}, ${moodStyle}, ${aestheticLayer} ${nicheLayer} ${physicalAnchorVoice} editorial female-gaze luxury aesthetic, cinematic lighting, subtle film grain, realistic textures, warm amber tones, atmospheric depth, no faces, no full bodies, hands only when naturally holding an object, vertical 9:16 framing, social-media-ready, photorealistic, high resolution`;
         } else {
-          imagePrompt = buildImagePrompt(archetype, mood, effectiveScene, profile?.aesthetic_descriptors ?? null, profile?.niche ?? null, profile?.audience ?? null, profile?.body_type ?? null);
+          imagePrompt = buildImagePrompt(archetype, mood, effectiveScene, profile?.aesthetic_descriptors ?? null, profile?.niche ?? null, profile?.audience ?? null, profile?.body_type ?? null, profile?.lora_physical_descriptors ?? null);
         }
         // Use LoRA generation if user has a trained model, otherwise fall back to FLUX Ultra
         let imageUrl: string;

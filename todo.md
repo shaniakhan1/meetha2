@@ -720,3 +720,12 @@
 - [x] Fix Gen 1 save flow: updateTransformationCardUrl called after every generation
 - [x] Fix Gen 2 save flow: updateIdentityBriefCardUrl called after Gen 2 identity brief card render
 - [x] TypeScript: 0 errors, Vitest: all passing, checkpoint
+
+## V28 -- Body Preservation Modifier
+
+- [x] Build buildBodyPreservationModifier() helper: inject from body_preference + auto-detect fuller/curvier body from physical_descriptors keywords
+- [x] Inject body preservation modifier into Gen 1 prompt (generate procedure in routers.ts)
+- [x] Inject body preservation modifier into Gen 2 prompt (generate procedure, second generation path)
+- [x] Inject body preservation modifier into createStudio prompt
+- [x] Auto-detect fuller/curvier body from physical_descriptors (keywords: full, curvy, plus, round, wide, broad, thick, heavy, large, ample, voluptuous)
+- [x] TypeScript check, vitest run, save checkpoint

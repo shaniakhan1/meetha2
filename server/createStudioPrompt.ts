@@ -1,5 +1,39 @@
 import type { CreateOccasion, CreateEnergy, CreateRefinements } from "../shared/types";
 
+/**
+ * Keywords in physical_descriptors that indicate a fuller or curvier body type.
+ * When any of these are detected, strong body preservation is injected automatically
+ * even if the user has not explicitly set a body_preference.
+ */
+const FULLER_BODY_KEYWORDS_STUDIO = [
+  "full", "curvy", "plus", "round", "wide", "broad", "thick", "heavy",
+  "large", "ample", "voluptuous", "wide-hipped", "soft body", "fuller",
+  "bigger", "rounder", "substantial",
+];
+
+function detectFullerBodyStudio(physicalDescriptors: string | null | undefined): boolean {
+  if (!physicalDescriptors) return false;
+  const lower = physicalDescriptors.toLowerCase();
+  return FULLER_BODY_KEYWORDS_STUDIO.some((kw) => lower.includes(kw));
+}
+
+/**
+ * System-level body preservation modifier for Create Studio.
+ * Injected at the FRONT of every prompt for maximum weight.
+ */
+function buildBodyPreservationModifier(
+  bodyType: string | null | undefined,
+  physicalDescriptors: string | null | undefined
+): string {
+  if (bodyType && bodyType.trim().length > 0) {
+    return `IDENTITY PRESERVATION: ${bodyType}. Preserve her exact natural body proportions, weight distribution, silhouette, frame width, arm fullness, bust and waist relationship, facial fullness, and physical presence. Do not slim, elongate, editorialize, or alter her natural body composition in any way.`;
+  }
+  if (detectFullerBodyStudio(physicalDescriptors)) {
+    return `IDENTITY PRESERVATION: Preserve her exact natural body proportions, frame width, arm fullness, bust and waist relationship, facial fullness, and physical presence. Do not slim, elongate, editorialize, or alter her natural body composition. The subject has a fuller natural frame -- preserve it completely.`;
+  }
+  return `IDENTITY PRESERVATION: Preserve her natural body proportions and physical presence. Do not slim, elongate, or alter her natural body composition.`;
+}
+
 // ─── Occasion scene environments ─────────────────────────────────────────────
 const OCCASION_SCENE: Record<CreateOccasion, string> = {
   rooftop_dinner:
@@ -104,10 +138,12 @@ export function buildCreateStudioPrompt(
   const aestheticLayer = aestheticDescriptors
     ? `calibrated to this specific aesthetic: ${aestheticDescriptors},`
     : "";
-  const bodyLayer = bodyType ? `maintain natural ${bodyType} proportions,` : "";
+
+  // System-level body preservation modifier -- injected at the front for maximum weight
+  const bodyPreservationModifier = buildBodyPreservationModifier(bodyType, physicalDescriptors);
   const physicalLayer = physicalDescriptors
     ? `preserve subject's natural complexion and undertones, maintain authentic facial structure, ${physicalDescriptors},`
     : "";
 
-  return `${scene}, ${energyLayer}, ${refinementLayer} ${aestheticLayer} ${bodyLayer} ${physicalLayer} editorial female-gaze aesthetic, focus on wardrobe styling, fabric texture, jewelry detail, and atmospheric lighting, cinematic lighting, subtle film grain, analog texture, imperfect focus, mood over sharpness, no beauty retouching, realistic textures, atmospheric depth, no faces, no full bodies, hands only when naturally holding an object, vertical 9:16 framing, photorealistic`;
+  return `${bodyPreservationModifier} ${scene}, ${energyLayer}, ${refinementLayer} ${aestheticLayer} ${physicalLayer} editorial female-gaze aesthetic, focus on wardrobe styling, fabric texture, jewelry detail, and atmospheric lighting, cinematic lighting, subtle film grain, analog texture, imperfect focus, mood over sharpness, no beauty retouching, realistic textures, atmospheric depth, no faces, no full bodies, hands only when naturally holding an object, vertical 9:16 framing, photorealistic`;
 }
