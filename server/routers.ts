@@ -35,6 +35,7 @@ import {
   updateGenerationCardUrl,
 } from "./db";
 import { generateAndSaveStyleCard } from "./styleCard";
+import { buildCreateStudioPrompt } from "./createStudioPrompt";
 import {
   ARCHETYPE_DESCRIPTIONS,
   MOOD_DESCRIPTIONS,
@@ -1779,6 +1780,127 @@ Return JSON with:
           hashtags,
           creditsRemaining: updatedCredits?.credits_remaining ?? 0,
           transcript, // Return transcript so UI can show what was captured
+        };
+      }),
+  }),
+
+  // ─── Create Studio ──────────────────────────────────────────────────────────
+
+  createStudio: router({
+    /**
+     * Generate a cinematic styling image from occasion + energy + refinements.
+     * Architecturally separate from generate.content (template flow).
+     */
+    generate: protectedProcedure
+      .input(
+        z.object({
+          occasion: z.enum([
+            "rooftop_dinner",
+            "private_reservation",
+            "airport_lounge",
+            "international_arrival",
+            "mediterranean_morning",
+            "hotel_balcony",
+            "beach_club_arrival",
+            "coffee_meeting",
+            "birthday_dinner",
+            "luxury_casual",
+            "nyc_winter",
+            "pilates_morning",
+          ]),
+          energy: z.enum([
+            "quiet_luxury",
+            "soft_power",
+            "editorial",
+            "magnetic",
+            "old_money",
+            "minimalist",
+            "cinematic",
+            "femme_fatale",
+            "rich_grandma",
+          ]),
+          refinements: z.object({
+            warmCool: z.enum(["warm", "cool"]).nullable().default(null),
+            metalTone: z.enum(["gold", "silver"]).nullable().default(null),
+            motionStyle: z.enum(["motion", "static"]).nullable().default(null),
+            shootStyle: z.enum(["candid", "editorial"]).nullable().default(null),
+            makeupLevel: z.enum(["glam", "natural"]).nullable().default(null),
+          }).default(() => ({ warmCool: null, metalTone: null, motionStyle: null, shootStyle: null, makeupLevel: null })),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        const STILL_COST = 1;
+        const userCredits = await ensureCredits(ctx.user.id);
+        if (!userCredits || userCredits.credits_remaining < STILL_COST) {
+          throw new Error("No credits remaining. Please upgrade to continue.");
+        }
+        const profile = await getProfile(ctx.user.id);
+        const archetype = profile?.archetype ?? "luxury_minimal";
+        const mood = profile?.mood ?? "soft";
+
+        const imagePrompt = buildCreateStudioPrompt(
+          input.occasion,
+          input.energy,
+          input.refinements as any,
+          archetype,
+          mood,
+          profile?.aesthetic_descriptors ?? null,
+          profile?.body_type ?? null,
+          profile?.lora_physical_descriptors ?? null
+        );
+
+        let imageUrl: string;
+        let imageKey: string;
+        if (profile?.lora_status === "ready" && profile.lora_weights_url && profile.lora_trigger_phrase) {
+          try {
+            const loraResult = await generateImageWithLora({
+              prompt: imagePrompt,
+              loraWeightsUrl: profile.lora_weights_url,
+              triggerPhrase: profile.lora_trigger_phrase,
+              physicalDescriptors: profile.lora_physical_descriptors ?? null,
+            });
+            const imageResponse = await fetch(loraResult.url);
+            if (!imageResponse.ok) throw new Error(`LoRA image fetch failed: ${imageResponse.status}`);
+            const imageBuffer = Buffer.from(await imageResponse.arrayBuffer());
+            const { storagePut: sp } = await import("./storage");
+            const saved = await sp(`generated/${Date.now()}.jpg`, imageBuffer, "image/jpeg");
+            imageUrl = saved.url;
+            imageKey = saved.key;
+          } catch (loraErr) {
+            console.warn("[createStudio] LoRA failed, falling back to FLUX Ultra:", loraErr instanceof Error ? loraErr.message : String(loraErr));
+            const falResult = await generateImageFal({ prompt: imagePrompt });
+            imageUrl = falResult.url;
+            imageKey = falResult.key;
+          }
+        } else {
+          const falResult = await generateImageFal({ prompt: imagePrompt });
+          imageUrl = falResult.url;
+          imageKey = falResult.key;
+        }
+
+        const sb = getSupabase() as any;
+        await sb
+          .from("user_credits")
+          .update({ credits_remaining: userCredits.credits_remaining - STILL_COST })
+          .eq("user_id", ctx.user.id);
+
+        const gen = await createGeneration({
+          userId: ctx.user.id,
+          imageUrl,
+          imageKey,
+          archetype,
+          mood,
+          platform: "reels",
+          sceneCategory: `studio_${input.occasion}_${input.energy}`,
+          hooks: JSON.stringify([]),
+          caption: "",
+        });
+
+        const updatedCredits = await getCredits(ctx.user.id);
+        return {
+          generation: gen,
+          imageUrl,
+          creditsRemaining: updatedCredits?.credits_remaining ?? 0,
         };
       }),
   }),

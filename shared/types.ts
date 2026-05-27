@@ -95,6 +95,94 @@ export const PLATFORM_DESCRIPTIONS: Record<Platform, string> = {
   stories: "9:16 full screen",
 };
 
+// ─── Create Studio Types ────────────────────────────────────────────────────
+export type CreateOccasion =
+  | "rooftop_dinner"
+  | "private_reservation"
+  | "airport_lounge"
+  | "international_arrival"
+  | "mediterranean_morning"
+  | "hotel_balcony"
+  | "beach_club_arrival"
+  | "coffee_meeting"
+  | "birthday_dinner"
+  | "luxury_casual"
+  | "nyc_winter"
+  | "pilates_morning";
+
+export type CreateEnergy =
+  | "quiet_luxury"
+  | "soft_power"
+  | "editorial"
+  | "magnetic"
+  | "old_money"
+  | "minimalist"
+  | "cinematic"
+  | "femme_fatale"
+  | "rich_grandma";
+
+export interface CreateRefinements {
+  warmCool: "warm" | "cool" | null;
+  metalTone: "gold" | "silver" | null;
+  motionStyle: "motion" | "static" | null;
+  shootStyle: "candid" | "editorial" | null;
+  makeupLevel: "glam" | "natural" | null;
+}
+
+export const CREATE_OCCASION_LABELS: Record<CreateOccasion, string> = {
+  rooftop_dinner: "Rooftop Dinner",
+  private_reservation: "Private Reservation",
+  airport_lounge: "Airport Lounge",
+  international_arrival: "International Arrival",
+  mediterranean_morning: "Mediterranean Morning",
+  hotel_balcony: "Hotel Balcony",
+  beach_club_arrival: "Beach Club Arrival",
+  coffee_meeting: "Coffee Meeting",
+  birthday_dinner: "Birthday Dinner",
+  luxury_casual: "Luxury Casual",
+  nyc_winter: "NYC Winter",
+  pilates_morning: "Pilates Morning",
+};
+
+export const CREATE_OCCASION_DESCRIPTIONS: Record<CreateOccasion, string> = {
+  rooftop_dinner: "City lights. Warm evening air.",
+  private_reservation: "The table was already set for her.",
+  airport_lounge: "Off-duty. Quietly expensive.",
+  international_arrival: "She just landed. Still perfect.",
+  mediterranean_morning: "Slow light. Warm stone. No plans.",
+  hotel_balcony: "Private view. Unhurried morning.",
+  beach_club_arrival: "She walked in and the energy shifted.",
+  coffee_meeting: "Sharp. Present. Dressed with intention.",
+  birthday_dinner: "Her night. No explanation needed.",
+  luxury_casual: "Effortless. Expensive. Off-duty.",
+  nyc_winter: "Coat season. City energy. Moving.",
+  pilates_morning: "Before the city woke up.",
+};
+
+export const CREATE_ENERGY_LABELS: Record<CreateEnergy, string> = {
+  quiet_luxury: "Quiet Luxury",
+  soft_power: "Soft Power",
+  editorial: "Editorial",
+  magnetic: "Magnetic",
+  old_money: "Old Money",
+  minimalist: "Minimalist",
+  cinematic: "Cinematic",
+  femme_fatale: "Femme Fatale",
+  rich_grandma: "Rich Grandma",
+};
+
+export const CREATE_ENERGY_DESCRIPTIONS: Record<CreateEnergy, string> = {
+  quiet_luxury: "Understated. Precise. Nothing unnecessary.",
+  soft_power: "Warm authority. Knows without announcing.",
+  editorial: "Framing over beauty. The image tells a story.",
+  magnetic: "She pulls focus without trying.",
+  old_money: "Inherited ease. Unhurried confidence.",
+  minimalist: "One thing. Done perfectly.",
+  cinematic: "Every frame could be a still.",
+  femme_fatale: "Deliberate. Low. Unhurried.",
+  rich_grandma: "Silk. Pearls. Absolutely unbothered.",
+};
+
 export const SCENE_LABELS: Record<SceneCategory, string> = {
   morning_routine: "Morning Ritual",
   travel_day: "In Motion",

@@ -607,3 +607,12 @@
 - [x] Rename "Generate with Custom Settings" CTA to "Refine My Look"
 - [x] Rename "Scene" label inside customize panel to "World"
 - [x] Reframe "Customize options" button to "Refine My Look"
+
+## Create Studio (V90)
+- [x] Add CreateOccasion, CreateEnergy, CreateRefinements types to shared/types.ts
+- [ ] Build buildCreateStudioPrompt() in routers.ts with cinematic scene-first prompts per occasion
+- [ ] Add generate.createStudio procedure to routers.ts (separate from generate.content)
+- [ ] Remove voice/microphone section from Generate.tsx
+- [ ] Remove Signature Scene cards from Generate.tsx
+- [ ] Replace showCustomize panel with 4-step Create Studio flow (Occasion → Energy → Refinements → Generate)
+- [ ] Update Quick Generate button to remain as-is
