@@ -72,7 +72,7 @@ const SCENE_PROMPTS: Record<string, string> = {
   silk_robe_retaliation:
     "woman in a white silk robe standing at floor-to-ceiling hotel windows, seen from behind, looking out over a city skyline or treetops at golden hour, one hand resting on the glass, the robe catching the warm amber light, her posture is completely still and certain, the energy of someone who chose herself and does not need to explain it to anyone, no face visible, deep focus on the silhouette and the light, film grain, 35mm analog warmth, vertical 9:16 framing",
   motion_blur:
-    "intentional motion blur street photography, a woman mid-stride through a city at night, she is the only sharp element in the frame, background streaked with light trails and neon reflections, warm amber and electric blue light streaks, her silhouette is crisp and deliberate against the blurred world, the energy of someone always somewhere interesting, film grain, 35mm analog street photography, no face visible, editorial female-gaze, vertical 9:16 framing",
+    "cinematic paparazzi realism, woman photographed through taxi window glass at night, city light reflections streaking across the wet glass, her silhouette partially obscured by the window frame and reflections, side profile barely visible through the blur, neon and amber light trails in the background, the image feels accidentally captured mid-life not mid-photoshoot, partial obstruction by foreground elements, shallow depth of field, heavy film grain, 35mm analog street photography, lens bloom on streetlights, wet pavement reflections, the energy of someone who became the moment without trying, no full face visible, editorial female-gaze, vertical 9:16 framing",
 };
 
 // Digital Diary: overlay hook options
@@ -277,9 +277,10 @@ function buildImagePrompt(
     ? SCENE_PROMPTS[sceneCategory] || (ARCHETYPE_DEFAULT_SCENE[archetype] ?? ARCHETYPE_DEFAULT_SCENE.soft_power)
     : (ARCHETYPE_DEFAULT_SCENE[archetype] ?? ARCHETYPE_DEFAULT_SCENE.soft_power);
 
-  // Template scenes are complete prompts -- return them as-is with only minimal quality suffix
+  // Template scenes are complete prompts -- return them as-is with cinematic quality suffix
+  // Deliberately avoid "high resolution" and "photorealistic" to prevent beauty-portrait collapse
   if (sceneCategory && SELF_CONTAINED_SCENES.has(sceneCategory) && SCENE_PROMPTS[sceneCategory]) {
-    return `${scene}, photorealistic, high resolution, social-media-ready`;
+    return `${scene}, film grain, analog texture, imperfect focus, mood over sharpness, no beauty retouching, no over-sharpened faces, no sterile AI polish, photorealistic`;
   }
 
   const archetypeStyle = ARCHETYPE_VISUAL[archetype] || "";

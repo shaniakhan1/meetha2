@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useLocation } from "wouter";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { getLoginUrl } from "@/const";
@@ -7,10 +7,11 @@ import { trpc } from "@/lib/trpc";
 const TEMPLATES = [
   {
     slug: "paparazzi_flash",
-    number: "Template No. 01",
+    number: "No. 01",
     title: "Caught Looking\nExpensive",
+    fantasy: "She was seen.",
     subtitle:
-      "Flash photography. Blurry background. Someone caught you mid-moment looking effortlessly stunning. The image looks real. Your friends repost it.",
+      "Flash photography. Blurry background. Someone caught her mid-moment looking effortlessly stunning.",
     hooks: [
       "vanished softly",
       "peace changed my face",
@@ -21,21 +22,10 @@ const TEMPLATES = [
       "she already knew",
       "calm women move differently",
     ],
-    hooksLabel: "Caption overlays",
     whyItSpreads: [
       ["Hides the AI", "Harsh flash and film grain read as paparazzi motion, not AI artifacts."],
-      ["Flatters without trying", "Candid energy. She looks incredible without posing."],
-      ["Creates the moment", "Her friends see it. The guy she likes sees it. She posts it."],
+      ["Candid energy", "She looks incredible without posing. Her friends repost it."],
     ],
-    locations: [
-      "blurry restaurant exit",
-      "back seat of a taxi",
-      "hotel elevator mirror",
-      "late-night diner booth",
-      "airport terminal gate",
-      "convenience store exit",
-    ],
-    locationsLabel: "Where she was seen",
     sampleImage: "/manus-storage/template-paparazzi-flash_24688a24.jpg",
     gradient:
       "radial-gradient(ellipse at 30% 40%, rgba(255,255,255,0.08) 0%, transparent 60%), linear-gradient(160deg, #2C1810 0%, #1a0f09 60%, #2C1810 100%)",
@@ -43,8 +33,9 @@ const TEMPLATES = [
   },
   {
     slug: "digital_diary",
-    number: "Template No. 02",
+    number: "No. 02",
     title: "Digital Diary",
+    fantasy: "She keeps parts of herself private.",
     subtitle:
       "Taped polaroid. Handwritten note. Dried flower. Analog layering that feels like a page from a real woman's private journal.",
     hooks: [
@@ -56,24 +47,21 @@ const TEMPLATES = [
       "she remembered",
       "tucked away",
     ],
-    hooksLabel: "Caption overlays",
     whyItSpreads: [
       ["Highly saveable", "Pinterest, TikTok, Stories. Analog layering reads as intentional, not AI."],
       ["Feels private", "The intimacy of a personal journal makes people want to share it."],
-      ["Different aesthetic", "Warm and tactile where Caught Looking Expensive is dark and electric."],
     ],
-    locations: null,
-    locationsLabel: null,
     sampleImage: "/manus-storage/template-digital-diary_11ffb1d8.jpg",
     gradient: "linear-gradient(160deg, #2C1810 0%, #1a0f09 60%, #2C1810 100%)",
     hasFlash: false,
   },
   {
     slug: "bill_please",
-    number: "Template No. 03",
+    number: "No. 03",
     title: "Bill, Please",
+    fantasy: "She paid and left.",
     subtitle:
-      "She reaches for the check. Calm, unbothered, final. No argument. No waiting. The gesture says everything the caption does not.",
+      "She reaches for the check. Calm, unbothered, final. The gesture says everything the caption does not.",
     hooks: [
       "i stopped arguing",
       "the bill was cheaper than the lesson",
@@ -83,31 +71,21 @@ const TEMPLATES = [
       "i leave quietly now",
       "the table was hers",
     ],
-    hooksLabel: "Caption overlays",
     whyItSpreads: [
       ["Emotionally loaded", "Paying the check is a power move. Everyone who has been there knows it."],
       ["Detached and devastating", "The hook lands because it says nothing and everything at once."],
-      ["Universally relatable", "Every woman has had this moment. That is why it spreads."],
     ],
-    locations: [
-      "candlelit fine dining",
-      "rooftop restaurant",
-      "hotel bar",
-      "private dining room",
-      "wine bar counter",
-      "business lunch table",
-    ],
-    locationsLabel: "Where she was sitting",
     sampleImage: "/manus-storage/template-bill-please_7eacca04.jpg",
     gradient: "linear-gradient(160deg, #1a0a06 0%, #2C1810 50%, #1a0a06 100%)",
     hasFlash: false,
   },
   {
     slug: "silk_robe_room_service",
-    number: "Template No. 04",
+    number: "No. 04",
     title: "Silk Robe\nRoom Service",
+    fantasy: "She ordered for one.",
     subtitle:
-      "Hotel suite. Silk robe. Morning light. Room service tray. Ordered for one. The luxury of an unhurried morning that belongs entirely to her.",
+      "Hotel suite. Silk robe. Morning light. Room service tray. The luxury of an unhurried morning that belongs entirely to her.",
     hooks: [
       "ordered for one",
       "room service and silence",
@@ -117,31 +95,21 @@ const TEMPLATES = [
       "room to herself",
       "the good kind of alone",
     ],
-    hooksLabel: "Caption overlays",
     whyItSpreads: [
       ["Rich Grandma Energy", "Quiet luxury, no performance. The fantasy of solitude as the ultimate flex."],
-      ["Aspirational and intimate", "Hotel suite morning light hits different. Everyone wants to be her."],
-      ["Saves and reposts", "Warm tones and soft light are the most saved aesthetic on Pinterest and Stories."],
+      ["Most saved aesthetic", "Warm tones and soft light. Pinterest and Stories save this forever."],
     ],
-    locations: [
-      "luxury hotel suite",
-      "boutique hotel window",
-      "penthouse morning",
-      "resort balcony",
-      "villa bedroom",
-      "city view suite",
-    ],
-    locationsLabel: "Where she woke up",
     sampleImage: "/manus-storage/template-silk-robe_705e049a.jpg",
     gradient: "linear-gradient(160deg, #2C1810 0%, #3d1f0e 50%, #2C1810 100%)",
     hasFlash: false,
   },
   {
     slug: "irish_goodbye",
-    number: "Template No. 05",
+    number: "No. 05",
     title: "The\nGoodbye",
+    fantasy: "She left without explaining herself.",
     subtitle:
-      "She is walking away from the party. Seen from behind. Mid-stride. Not looking back. The crowd is blurred. She is already somewhere else in her head.",
+      "Seen from behind. Mid-stride. Not looking back. The crowd is blurred. She is already somewhere else in her head.",
     hooks: [
       "she left without saying goodbye",
       "i stopped explaining my exits",
@@ -150,29 +118,19 @@ const TEMPLATES = [
       "she was already gone",
       "the door closed quietly",
     ],
-    hooksLabel: "Caption overlays",
     whyItSpreads: [
-      ["The exit is the statement", "Walking away without explaining yourself is the most powerful thing a woman can do. The image proves it."],
-      ["Everyone has been there", "The Irish Goodbye is a universal experience. Women who have done it will save and repost."],
-      ["Cinematic without trying", "Motion blur, night light, and a woman in motion. It looks like a movie still."],
+      ["The exit is the statement", "Walking away without explaining yourself is the most powerful thing a woman can do."],
+      ["Cinematic without trying", "Motion blur, night light, a woman in motion. It looks like a movie still."],
     ],
-    locations: [
-      "crowded party exit",
-      "restaurant mid-evening",
-      "event venue lobby",
-      "hotel corridor",
-      "night street",
-      "gallery opening",
-    ],
-    locationsLabel: "Where she was last seen",
     sampleImage: "https://d2xsxph8kpxj0f.cloudfront.net/310519663380647277/W9hp3oxSnRYx5WHCSun39U/template-irish-goodbye-ktzNEA3LBpMXoScC2CgPoj.webp",
     gradient: "linear-gradient(160deg, #1a0f09 0%, #2C1810 50%, #1a0f09 100%)",
     hasFlash: false,
   },
   {
     slug: "cleopatra_principle",
-    number: "Template No. 06",
+    number: "No. 06",
     title: "The Cleopatra\nPrinciple",
+    fantasy: "She already decided.",
     subtitle:
       "Velvet chaise. Direct eye contact. No smile, no performance. The stillness of someone who has already decided everything.",
     hooks: [
@@ -183,31 +141,21 @@ const TEMPLATES = [
       "calm is a power move",
       "the decision was already made",
     ],
-    hooksLabel: "Caption overlays",
     whyItSpreads: [
       ["Presence without performance", "No smile, no pose. Just a woman who knows. That stillness is more powerful than any caption."],
-      ["The gaze does the work", "Direct eye contact into the lens is the most commanding shot in editorial photography."],
-      ["Rich Grandma Engine", "Quiet power, velvet, afternoon light. The fantasy of a woman who has nothing left to prove."],
+      ["The gaze does the work", "Direct eye contact into the lens. The most commanding shot in editorial photography."],
     ],
-    locations: [
-      "velvet chaise longue",
-      "wide linen sofa",
-      "ornate armchair",
-      "window seat afternoon",
-      "library reading chair",
-      "hotel suite sitting room",
-    ],
-    locationsLabel: "Where she was sitting",
     sampleImage: "https://d2xsxph8kpxj0f.cloudfront.net/310519663380647277/W9hp3oxSnRYx5WHCSun39U/template-cleopatra-RNkWpwxV5GeWZwStmYqiQx.webp",
     gradient: "linear-gradient(160deg, #1a0a06 0%, #2C1810 50%, #1a0a06 100%)",
     hasFlash: false,
   },
   {
     slug: "silk_robe_retaliation",
-    number: "Template No. 07",
+    number: "No. 07",
     title: "The Robe\nReset",
+    fantasy: "She chose herself. Again.",
     subtitle:
-      "Floor-to-ceiling windows. Silk robe. Golden hour. Seen from behind. The energy of someone who chose herself and does not need to explain it to anyone.",
+      "Floor-to-ceiling windows. Silk robe. Golden hour. Seen from behind. The energy of someone who does not need to explain her peace.",
     hooks: [
       "my isolation is a luxury maintenance ritual",
       "she chose herself again",
@@ -216,33 +164,60 @@ const TEMPLATES = [
       "no one earned access to this morning",
       "the robe stays on",
     ],
-    hooksLabel: "Caption overlays",
     whyItSpreads: [
-      ["Rich Grandma Energy", "This is the original. Silk robe, room service, no one else in the frame. The fantasy of choosing yourself completely."],
-      ["The retaliation is the peace", "She is not angry. She is not sad. She just chose this. That is more powerful than any revenge."],
-      ["Saves and reposts forever", "Warm cream tones, morning light, and a woman at peace. The most saved aesthetic on Pinterest and Stories."],
+      ["Rich Grandma Energy", "Silk robe, no one else in the frame. The fantasy of choosing yourself completely."],
+      ["The retaliation is the peace", "She is not angry. She is not sad. She just chose this."],
     ],
-    locations: [
-      "luxury hotel suite",
-      "boutique hotel window",
-      "penthouse morning",
-      "resort villa",
-      "city view suite",
-      "countryside estate",
-    ],
-    locationsLabel: "Where she woke up alone",
     sampleImage: "https://d2xsxph8kpxj0f.cloudfront.net/310519663380647277/W9hp3oxSnRYx5WHCSun39U/template-silk-robe-retaliation-MJXwGjfHhTjt3ENoPKdG8s.webp",
     gradient: "linear-gradient(160deg, #2C1810 0%, #3d1f0e 50%, #2C1810 100%)",
     hasFlash: false,
   },
+  {
+    slug: "motion_blur",
+    number: "No. 08",
+    title: "The\nBlur",
+    fantasy: "She became the moment.",
+    subtitle:
+      "Photographed through taxi glass at night. City light reflections. Her silhouette barely visible. The image feels accidentally captured mid-life.",
+    hooks: [
+      "she was always somewhere interesting",
+      "the world blurred around her",
+      "in motion",
+      "she never stood still long enough to be ordinary",
+      "the blur is the point",
+      "she was already gone",
+    ],
+    whyItSpreads: [
+      ["Accidentally beautiful", "It looks like a real photo taken through a taxi window. The blur is the aesthetic."],
+      ["Night energy", "Neon, amber, wet glass. The most cinematic template in the collection."],
+    ],
+    sampleImage: null,
+    gradient: "linear-gradient(160deg, #0d0d1a 0%, #1a1a2e 50%, #0d0d1a 100%)",
+    hasFlash: false,
+  },
 ];
+
+// Short nav labels for horizontal pill navigation
+const NAV_LABELS: Record<string, string> = {
+  paparazzi_flash: "Caught",
+  digital_diary: "Diary",
+  bill_please: "Bill",
+  silk_robe_room_service: "Room Service",
+  irish_goodbye: "Goodbye",
+  cleopatra_principle: "Cleopatra",
+  silk_robe_retaliation: "Robe Reset",
+  motion_blur: "The Blur",
+};
 
 export default function Templates() {
   const [, navigate] = useLocation();
   const { user } = useAuth();
   const [hoveredHooks, setHoveredHooks] = useState<Record<string, string | null>>({});
+  const [imgErrors, setImgErrors] = useState<Record<string, boolean>>({});
+  const cardRefs = useRef<Record<string, HTMLDivElement | null>>({});
+
   const { data: templateCounts } = trpc.generations.templateCounts.useQuery(undefined, {
-    staleTime: 5 * 60 * 1000, // cache for 5 minutes
+    staleTime: 5 * 60 * 1000,
   });
 
   const handleMakeMine = (slug: string) => {
@@ -251,6 +226,13 @@ export default function Templates() {
       return;
     }
     navigate(`/generate?template=${slug}`);
+  };
+
+  const scrollToTemplate = (slug: string) => {
+    const el = cardRefs.current[slug];
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
   };
 
   return (
@@ -263,7 +245,7 @@ export default function Templates() {
         >
           {user ? "Dashboard" : "Back"}
         </button>
-        <span className="font-serif text-base tracking-widest text-charcoal">Templates</span>
+        <span className="font-serif text-base tracking-widest text-charcoal">Styling Worlds</span>
         {!user ? (
           <a
             href={getLoginUrl()}
@@ -276,36 +258,67 @@ export default function Templates() {
         )}
       </div>
 
+      {/* Horizontal pill navigation */}
+      <div className="sticky top-0 z-20 bg-cream/95 backdrop-blur-sm border-b border-sand">
+        <div className="flex overflow-x-auto gap-0 scrollbar-hide">
+          {TEMPLATES.map((t) => (
+            <button
+              key={t.slug}
+              onClick={() => scrollToTemplate(t.slug)}
+              className="flex-shrink-0 px-5 py-3.5 font-sans text-xs tracking-[0.15em] uppercase text-charcoal-soft hover:text-charcoal hover:bg-sand/40 transition-all duration-150 whitespace-nowrap border-r border-sand last:border-r-0"
+            >
+              {NAV_LABELS[t.slug]}
+            </button>
+          ))}
+        </div>
+      </div>
+
       {/* Template cards */}
       <div className="flex-1 flex flex-col">
         {TEMPLATES.map((template, idx) => (
-          <div key={template.slug} className={idx > 0 ? "border-t border-sand" : ""}>
+          <div
+            key={template.slug}
+            ref={(el) => { cardRefs.current[template.slug] = el; }}
+            className={idx > 0 ? "border-t border-sand" : ""}
+          >
             {/* Hero card */}
-            <div className="relative" style={{ minHeight: "60vh" }}>
-              {/* Sample image */}
-              <img
-                src={template.sampleImage}
-                alt={template.title.replace("\n", " ")}
-                className="absolute inset-0 w-full h-full object-cover"
-                style={{ objectPosition: "center top", position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }}
-              />
+            <div className="relative" style={{ minHeight: "65vh" }}>
+              {/* Sample image or gradient fallback */}
+              {template.sampleImage && !imgErrors[template.slug] ? (
+                <img
+                  src={template.sampleImage}
+                  alt={template.title.replace("\n", " ")}
+                  loading="lazy"
+                  className="absolute inset-0 w-full h-full object-cover"
+                  style={{ objectPosition: "center top" }}
+                  onError={() => setImgErrors((prev) => ({ ...prev, [template.slug]: true }))}
+                />
+              ) : (
+                <div
+                  className="absolute inset-0"
+                  style={{ background: template.gradient }}
+                />
+              )}
+
               {/* Dark overlay for text legibility */}
               <div
                 className="absolute inset-0"
                 style={{
                   background:
-                    "linear-gradient(to bottom, rgba(26,15,9,0.55) 0%, rgba(26,15,9,0.25) 40%, rgba(26,15,9,0.75) 100%)",
+                    "linear-gradient(to bottom, rgba(26,15,9,0.45) 0%, rgba(26,15,9,0.15) 35%, rgba(26,15,9,0.80) 100%)",
                 }}
               />
+
               {/* Grain overlay */}
               <div
-                className="absolute inset-0 opacity-20"
+                className="absolute inset-0 opacity-[0.18]"
                 style={{
                   backgroundImage:
                     "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.4'/%3E%3C/svg%3E\")",
                   backgroundSize: "128px 128px",
                 }}
               />
+
               {template.hasFlash && (
                 <div
                   className="absolute"
@@ -322,22 +335,26 @@ export default function Templates() {
               )}
 
               {/* Content */}
-              <div className="relative z-10 flex flex-col items-center justify-end px-6 pb-12 pt-16 text-center" style={{ minHeight: "60vh" }}>
-                <p className="font-sans text-xs tracking-[0.25em] uppercase text-gold/80 mb-4">
+              <div
+                className="relative z-10 flex flex-col items-center justify-end px-6 pb-12 pt-16 text-center"
+                style={{ minHeight: "65vh" }}
+              >
+                <p className="font-sans text-xs tracking-[0.25em] uppercase text-gold/70 mb-3">
                   {template.number}
                 </p>
-                <h2 className="font-serif text-4xl font-light text-cream leading-tight mb-4 whitespace-pre-line">
+                <h2 className="font-serif text-4xl font-light text-cream leading-tight mb-3 whitespace-pre-line">
                   {template.title}
                 </h2>
-                <p className="font-sans font-light text-sm text-cream/70 leading-relaxed max-w-xs mb-8">
+                {/* Emotional fantasy — the one-line hook */}
+                <p className="font-serif text-sm italic text-gold/90 mb-4 tracking-wide">
+                  {template.fantasy}
+                </p>
+                <p className="font-sans font-light text-xs text-cream/60 leading-relaxed max-w-xs mb-8">
                   {template.subtitle}
                 </p>
 
                 {/* Hook chips */}
                 <div className="mb-8 w-full max-w-xs">
-                  <p className="font-sans text-xs tracking-[0.15em] uppercase text-cream/30 mb-3">
-                    {template.hooksLabel}
-                  </p>
                   <div className="flex flex-wrap gap-2 justify-center">
                     {template.hooks.map((hook) => (
                       <span
@@ -351,7 +368,7 @@ export default function Templates() {
                         className={`font-serif text-xs px-3 py-1.5 border transition-all duration-200 cursor-default ${
                           hoveredHooks[template.slug] === hook
                             ? "border-gold/60 text-gold bg-gold/5"
-                            : "border-cream/20 text-cream/50"
+                            : "border-cream/20 text-cream/40"
                         }`}
                       >
                         {hook}
@@ -366,53 +383,34 @@ export default function Templates() {
                 >
                   Make Mine
                 </button>
-                <p className="mt-3 font-sans text-xs text-cream/40">
-                  {user ? "1 credit" : "Free to try. No credit card."}
-                </p>
-                {templateCounts && (templateCounts[template.slug] ?? 0) > 0 && (
-                  <p className="mt-1 font-sans text-xs text-gold/50">
-                    {templateCounts[template.slug]} {templateCounts[template.slug] === 1 ? "generation" : "generations"} this week
+                {!user && (
+                  <p className="mt-3 font-sans text-xs text-cream/35">
+                    Free to try. No credit card.
                   </p>
                 )}
               </div>
             </div>
 
-            {/* Locations */}
-            {template.locations && (
-              <div className="px-6 py-10 border-t border-sand">
-                <p className="font-sans text-xs tracking-[0.2em] uppercase text-charcoal-soft mb-5 text-center">
-                  {template.locationsLabel}
-                </p>
-                <div className="grid grid-cols-2 gap-2 max-w-xs mx-auto">
-                  {template.locations.map((loc) => (
-                    <div key={loc} className="px-3 py-2 border border-sand text-center">
-                      <p className="font-sans text-xs text-charcoal-soft">{loc}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
             {/* Why it spreads */}
-            <div className="px-6 py-10 border-t border-sand max-w-sm mx-auto w-full">
-              <p className="font-sans text-xs tracking-[0.2em] uppercase text-charcoal-soft mb-6 text-center">
+            <div className="px-6 py-8 border-t border-sand max-w-sm mx-auto w-full">
+              <p className="font-sans text-xs tracking-[0.2em] uppercase text-charcoal-soft mb-5 text-center">
                 Why it spreads
               </p>
-              <div className="space-y-4">
+              <div className="space-y-3">
                 {template.whyItSpreads.map(([title, desc]) => (
                   <div key={title} className="flex gap-3">
-                    <div className="w-1 h-1 rounded-full bg-gold mt-2 flex-shrink-0" />
-                    <div>
-                      <p className="font-sans text-xs text-charcoal mb-0.5">{title}</p>
-                      <p className="font-sans text-xs text-charcoal-soft leading-relaxed">{desc}</p>
-                    </div>
+                    <div className="w-1 h-1 rounded-full bg-gold mt-[7px] flex-shrink-0" />
+                    <p className="font-sans text-xs text-charcoal-soft leading-relaxed">
+                      <span className="text-charcoal font-medium">{title}. </span>
+                      {desc}
+                    </p>
                   </div>
                 ))}
               </div>
             </div>
 
             {/* Bottom CTA */}
-            <div className="px-6 pb-12 pt-4 max-w-xs mx-auto w-full">
+            <div className="px-6 pb-10 pt-2 max-w-xs mx-auto w-full">
               <button
                 onClick={() => handleMakeMine(template.slug)}
                 className="w-full py-4 bg-cream text-charcoal font-sans text-xs tracking-[0.2em] uppercase hover:bg-gold hover:text-charcoal transition-all duration-200 active:scale-[0.97]"
