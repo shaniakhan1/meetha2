@@ -202,7 +202,10 @@ export default function Generate() {
     utils.generations.list.invalidate();
     utils.profile.get.invalidate();
     const prof = profileQuery.data as any;
-    if (data.generation) triggerAestheticRead(data.generation, prof);
+    // Only run aestheticRead on Gen 2+ (member reveal). Gen 1 is the emotional hook only.
+    if (data.generation && data.generationNumber >= 2) {
+      triggerAestheticRead(data.generation, prof);
+    }
   };
 
   const generateMutation = trpc.generate.content.useMutation({

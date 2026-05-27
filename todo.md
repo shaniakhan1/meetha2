@@ -656,3 +656,26 @@
 - [x] Replace direct Stripe payment links in Dashboard.tsx zero-credits section with server-side checkout mutation
 - [x] TypeScript: zero errors
 - [x] Vitest: 23 tests passing
+
+## V105 -- Generation Flow + Profile Restructure
+
+### Generation pipeline
+- [x] Gen 1 (free): do NOT trigger aestheticRead / color analysis after generation
+- [x] Gen 2 (member): trigger aestheticRead, save full Identity Brief to profile permanently
+- [x] Gen 2 Generate.tsx display: show Identity Brief card (palette, metals, makeup, fabrics, lighting, presence, shopping direction) -- luxury editorial language, 1-2 lines per category, no diagnostic tables
+- [x] Gen 3+ Generate.tsx display: image only (unchanged)
+
+### Profile page rebuild (luxury styling passport)
+- [x] Remove: Diagnostic table (UNDERTONE, CONTRAST, LEAD FEATURE, etc.)
+- [x] Remove: Styling Guide section (duplicate of Identity Brief)
+- [x] Remove: Starter/Pro upgrade buttons (keep only Membership)
+- [x] Remove: redundant AI explanation text
+- [x] Add: locked Identity Brief teaser for free users (YOUR IDENTITY BRIEF -- Unlock after second generation)
+- [x] Add: real Identity Brief display for members (palette/metals/makeup/fabrics/lighting/presence/shopping -- editorial, minimal)
+- [x] Keep: Membership status, Visual Identity status, Retrain button, Body Preference editor
+- [x] Profile sections order: Membership -> Visual Identity -> Identity Brief -> LoRA Model -> Body Preference -> Account
+
+### Body Preference in onboarding
+- [x] Body Preference confirmed already in onboarding (before LoRA training) -- no changes needed
+- [x] Body preference injected into generation prompts from first generation onward
+- [x] Body Preference kept as editable field in profile (no intro framing)
