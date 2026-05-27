@@ -632,3 +632,12 @@
 - [x] Update preview tier values in Generate.tsx from (free=3, starter=28, pro=73) to (free=1, starter=25, pro=25)
 - [x] Add PLAN_GENERATION_LIMITS constant to shared/types.ts: { free: 1, starter: 25, pro: 25 }
 - [x] Paywall copy updated to single Membership tier ($19/month, 25 generations)
+
+## V103 -- Export UX Fix
+- [x] Fix generationNumber condition: style card panel only for Gen 1 and Gen 2, image-only for Gen 3+
+- [x] Remove "Copy Caption" button from Generate.tsx preview step
+- [x] Remove "Copy Caption" button from Dashboard.tsx modal
+- [x] Consolidate CTAs to: "Share Story Card" + "Download Clean Image" + "Remove"
+- [x] "Share Story Card": fetch blob → downloadFile() first → then navigator.share({ files }) if supported
+- [x] "Download Clean Image": fetch blob from /api/download/:id → downloadFile() only
+- [x] Apply same CTA logic to Dashboard.tsx modal

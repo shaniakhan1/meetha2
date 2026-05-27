@@ -64,7 +64,6 @@ export default function Dashboard() {
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
   const [sharingCardId, setSharingCardId] = useState<number | null>(null);
-  const [copiedId, setCopiedId] = useState<number | null>(null);
   const [showLoraReady, setShowLoraReady] = useState(false);
   const [trainingBannerDismissed, setTrainingBannerDismissed] = useState(false);
   const prevLoraStatus = useRef<string | null | undefined>(undefined);
@@ -153,17 +152,6 @@ export default function Dashboard() {
     }
   };
 
-  const copyTextToClipboard = async (text: string): Promise<boolean> => {
-    if (navigator.clipboard && window.isSecureContext) {
-      try { await navigator.clipboard.writeText(text); return true; } catch { /* fall through */ }
-    }
-    try {
-      const ta = document.createElement("textarea");
-      ta.value = text; ta.style.cssText = "position:fixed;top:-9999px;left:-9999px;opacity:0";
-      document.body.appendChild(ta); ta.focus(); ta.select();
-      const ok = document.execCommand("copy"); document.body.removeChild(ta); return ok;
-    } catch { return false; }
-  };
   /** Fetch a server-rendered blob from our own API (session cookie required) */
   const fetchServerBlob = async (url: string): Promise<Blob> => {
     const res = await fetch(url, { credentials: "include" });
@@ -676,19 +664,7 @@ export default function Dashboard() {
                     >
                       {isDownloading ? "Preparing…" : "Share Story Card"}
                     </button>
-                    <button
-                      onClick={async () => {
-                        const sceneLabel = gen.scene_category ? SCENE_LABELS[gen.scene_category as keyof typeof SCENE_LABELS] : "Meetha";
-                        const text = `${gen.selected_hook ?? ""} \n\nStyled by Meetha. ${sceneLabel}.`;
-                        const ok = await copyTextToClipboard(text.trim());
-                        if (ok) { setCopiedId(gen.id); setTimeout(() => setCopiedId(null), 2000); }
-                        else { toast.info(text.trim(), { duration: 8000 }); }
-                      }}
-                      className="w-full font-sans text-xs tracking-widest uppercase text-cream border border-cream/30 py-3 hover:bg-cream/10 transition-colors active:scale-[0.98] min-h-[44px]"
-                      style={{ borderRadius: "1px" }}
-                    >
-                      {copiedId === gen.id ? "Copied!" : "Copy Caption"}
-                    </button>
+
                     <button
                       onClick={() => handleShareStyleCard(gen.id, gen.selected_hook)}
                       disabled={sharingCardId === gen.id}

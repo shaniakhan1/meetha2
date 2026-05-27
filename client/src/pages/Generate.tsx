@@ -84,7 +84,6 @@ export default function Generate() {
   const [sceneCategory, setSceneCategory] = useState<SceneCategory | null>(null);
   const [result, setResult] = useState<GenerationResult | null>(null);
   const [selectedHook, setSelectedHook] = useState<string | null>(null);
-  const [captionCopied, setCaptionCopied] = useState(false);
   const [phraseIndex, setPhraseIndex] = useState(0);
   const [showTopUp, setShowTopUp] = useState(false);
   const [showLoraPaywall, setShowLoraPaywall] = useState(false);
@@ -343,17 +342,6 @@ export default function Generate() {
     }
   };
 
-  const copyTextToClipboard = async (text: string): Promise<boolean> => {
-    if (navigator.clipboard && window.isSecureContext) {
-      try { await navigator.clipboard.writeText(text); return true; } catch {}
-    }
-    try {
-      const ta = document.createElement("textarea"); ta.value = text;
-      ta.style.cssText = "position:fixed;top:-9999px;left:-9999px;opacity:0";
-      document.body.appendChild(ta); ta.focus(); ta.select();
-      const ok = document.execCommand("copy"); document.body.removeChild(ta); return ok;
-    } catch { return false; }
-  };
 
   const handleRegenerate = () => {
     setResult(null); setSelectedHook(null); setAestheticRead(null); setAestheticReadOpen(false);
