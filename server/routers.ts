@@ -31,11 +31,10 @@ import {
   getReferralsByUser,
   deleteUserAccount,
   updateAestheticBrief,
-  updateTransformationCardUrl,
   updateLoraProfile,
+  updateGenerationCardUrl,
 } from "./db";
-import { generateAndSaveTransformationCard } from "./transformationCard";
-import { sendTransformationCardReadyEmail } from "./_core/email";
+import { generateAndSaveStyleCard } from "./styleCard";
 import {
   ARCHETYPE_DESCRIPTIONS,
   MOOD_DESCRIPTIONS,
@@ -251,6 +250,19 @@ function buildPhysicalAnchor(rawDescriptors: string | null | undefined): string 
   return `preserve subject's natural complexion and undertones, maintain authentic facial structure, ${anchored},`;
 }
 
+// Template scenes that define their own complete, self-contained prompts.
+// These must NOT have the standard no-face/no-body/wardrobe suffix appended.
+const SELF_CONTAINED_SCENES = new Set([
+  "paparazzi_flash",
+  "digital_diary",
+  "bill_please",
+  "silk_robe_room_service",
+  "irish_goodbye",
+  "cleopatra_principle",
+  "silk_robe_retaliation",
+  "motion_blur",
+]);
+
 function buildImagePrompt(
   archetype: string,
   mood: string,
@@ -264,6 +276,12 @@ function buildImagePrompt(
   const scene = sceneCategory
     ? SCENE_PROMPTS[sceneCategory] || (ARCHETYPE_DEFAULT_SCENE[archetype] ?? ARCHETYPE_DEFAULT_SCENE.soft_power)
     : (ARCHETYPE_DEFAULT_SCENE[archetype] ?? ARCHETYPE_DEFAULT_SCENE.soft_power);
+
+  // Template scenes are complete prompts -- return them as-is with only minimal quality suffix
+  if (sceneCategory && SELF_CONTAINED_SCENES.has(sceneCategory) && SCENE_PROMPTS[sceneCategory]) {
+    return `${scene}, photorealistic, high resolution, social-media-ready`;
+  }
+
   const archetypeStyle = ARCHETYPE_VISUAL[archetype] || "";
   const moodStyle = MOOD_VISUAL[mood] || "";
   const aestheticLayer = aestheticDescriptors
@@ -271,11 +289,11 @@ function buildImagePrompt(
     : "warm honey skin tones where hands are visible, gold jewelry details,";
 
   const nicheLayer = niche ? `visual world of a ${niche} creator,` : "";
-  // Body type is used as a preservation anchor, not a descriptor — we name it to preserve it, not to change it
+  // Body type is used as a preservation anchor, not a descriptor -- we name it to preserve it, not to change it
   const bodyLayer = bodyType ? `maintain natural ${bodyType} proportions,` : "";
   // Physical anchor from vision-extracted descriptors (base model path only)
   const physicalAnchorLayer = buildPhysicalAnchor(physicalDescriptors);
-  return `${scene}, ${archetypeStyle}, ${moodStyle}, ${aestheticLayer} ${nicheLayer} ${bodyLayer} ${physicalAnchorLayer} editorial female-gaze aesthetic, focus on wardrobe styling, fabric texture, jewelry detail, and atmospheric lighting — not body shape, cinematic lighting, subtle film grain, realistic textures, warm amber tones, atmospheric depth, no faces, no full bodies, hands only when naturally holding an object, vertical 9:16 framing, social-media-ready, photorealistic, high resolution`;
+  return `${scene}, ${archetypeStyle}, ${moodStyle}, ${aestheticLayer} ${nicheLayer} ${bodyLayer} ${physicalAnchorLayer} editorial female-gaze aesthetic, focus on wardrobe styling, fabric texture, jewelry detail, and atmospheric lighting -- not body shape, cinematic lighting, subtle film grain, realistic textures, warm amber tones, atmospheric depth, no faces, no full bodies, hands only when naturally holding an object, vertical 9:16 framing, social-media-ready, photorealistic, high resolution`;
 }
 
 const PLATFORM_TONE: Record<string, string> = {
@@ -847,49 +865,6 @@ export const appRouter = router({
       return profile?.aesthetic_brief ?? null;
     }),
 
-    /**
-     * Manually trigger transformation card generation (paid users only).
-     * Returns the card URL once generated.
-     */
-    generateTransformationCard: protectedProcedure
-      .input(z.object({
-        // Accept both absolute URLs (https://...) and relative paths (/manus-storage/...)
-        afterImageUrl: z.string().min(1),
-        beforeImageUrl: z.string().min(1).optional().nullable(),
-        forceRegenerate: z.boolean().optional().default(false),
-      }))
-      .mutation(async ({ ctx, input }) => {
-        const [profile, credits] = await Promise.all([
-          getProfile(ctx.user.id),
-          getCredits(ctx.user.id),
-        ]);
-        if (!credits || credits.tier === "free") {
-          throw new TRPCError({ code: "FORBIDDEN", message: "Upgrade to Starter or Pro to unlock your Visual Transformation Card." });
-        }
-        if (profile?.transformation_card_url && !input.forceRegenerate) {
-          return { url: profile.transformation_card_url };
-        }
-        const cardUrl = await generateAndSaveTransformationCard({
-          userId: ctx.user.id,
-          beforeImageUrl: input.beforeImageUrl ?? null,
-          afterImageUrl: input.afterImageUrl,
-          archetype: profile?.archetype ?? "luxury_minimal",
-          mood: profile?.mood ?? "soft",
-          aestheticDescriptors: profile?.aesthetic_descriptors ?? null,
-          niche: profile?.niche ?? null,
-          audience: profile?.audience ?? null,
-        });
-        // Send completion email non-blocking
-        if (ctx.user.email) {
-          const profileUrl = `${ctx.req.headers.origin ?? "https://meetha.studio"}/profile`;
-          sendTransformationCardReadyEmail({
-            to: ctx.user.email,
-            name: ctx.user.name ?? null,
-            profileUrl,
-          }).catch((err) => console.error("[TransformationCard] Email error:", err));
-        }
-        return { url: cardUrl };
-      }),
   }),
 
   // ─── Credits ──────────────────────────────────────────────────────────────
@@ -930,6 +905,24 @@ export const appRouter = router({
       .mutation(async ({ input }) => {
         await updateGenerationHook({ generationId: input.generationId, selectedHook: input.selectedHook });
         return { success: true };
+      }),
+
+    /** Poll for the style card URL once background generation completes. */
+    getCardUrl: protectedProcedure
+      .input(z.object({ generationId: z.number() }))
+      .query(async ({ ctx, input }) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const sb = getSupabase() as any;
+        const { data } = await sb
+          .from("generations")
+          .select("id, user_id, card_url, card_key")
+          .eq("id", input.generationId)
+          .eq("user_id", ctx.user.id)
+          .maybeSingle();
+        return {
+          cardUrl: (data?.card_url as string | null) ?? null,
+          cardKey: (data?.card_key as string | null) ?? null,
+        };
       }),
 
     /**
@@ -1353,36 +1346,28 @@ Respond in this exact JSON format:
 
         const updatedCredits = await getCredits(ctx.user.id);
 
-        // Auto-trigger transformation card for paid users after threshold
-        // Starter: after 2nd generation, Pro: after 1st generation
-        // Run in background so it doesn't block the response
+        // Generate style card in background for every generation
+        // Does not block the response -- card_url is stored on the generation record
         void (async () => {
           try {
-            const [profile, credits, genCount] = await Promise.all([
-              getProfile(ctx.user.id),
-              getCredits(ctx.user.id),
-              countUserGenerations(ctx.user.id),
-            ]);
-            if (!profile || !credits) return;
-            if (profile.transformation_card_url) return; // already generated
-            const tier = credits.tier;
-            const threshold = tier === "pro" ? 1 : tier === "starter" ? 2 : null;
-            if (threshold === null) return; // free tier: no card
-            if (genCount < threshold) return; // not enough generations yet
-            // Use first calibration photo as "before" if available
-            const beforeUrl = (profile as any).reference_image_urls?.[0] ?? null;
-            await generateAndSaveTransformationCard({
+            const profile = await getProfile(ctx.user.id);
+            const { cardUrl, cardKey } = await generateAndSaveStyleCard({
+              generationId: generation.id,
               userId: ctx.user.id,
-              beforeImageUrl: beforeUrl,
-              afterImageUrl: imageUrl,
+              imageUrl,
               archetype,
               mood,
-              aestheticDescriptors: profile.aesthetic_descriptors,
-              niche: profile.niche,
-              audience: profile.audience,
+              sceneCategory: input.sceneCategory ?? null,
+              aestheticDescriptors: profile?.aesthetic_descriptors ?? null,
+              niche: profile?.niche ?? null,
+            });
+            await updateGenerationCardUrl({
+              generationId: generation.id,
+              cardUrl,
+              cardKey,
             });
           } catch (err) {
-            console.error("[transformationCard] background generation failed:", err);
+            console.error("[styleCard] background generation failed:", err);
           }
         })();
 

@@ -57,6 +57,20 @@
       "when": 1779834789308,
       "tag": "0007_early_squadron_sinister",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "5",
+      "when": 1779859529393,
+      "tag": "0008_equal_blazing_skull",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "5",
+      "when": 1779859604928,
+      "tag": "0009_jazzy_grandmaster",
+      "breakpoints": true
     }
   ]
 }

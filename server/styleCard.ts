@@ -1,27 +1,26 @@
 /**
- * GET /api/style-card/:generationId
+ * Style Card Generator -- per-generation cream editorial portrait
  *
- * Generates a shareable branded style card JPEG:
- * - The generation image fills the top of the card
- * - A "styled by Meetha" watermark rendered via @napi-rs/canvas
- * - The user's saved aesthetic_brief is fetched directly from the DB and
- *   rendered as a brief panel below the image (no frontend query params needed)
- * - Returned as image/jpeg for direct sharing / saving
+ * Produces a 1080x1350 (4:5 Instagram-optimized) JPEG:
+ *   - Top ~61%: AI-generated styled image, edge-to-edge
+ *   - Thin gold rule separator
+ *   - Bottom ~39%: cream panel with "YOUR IDENTITY BRIEF" header
+ *     and 5 rows: Palette / Metals / Makeup / Lighting / Presence
+ *   - Footer: "meetha.studio" wordmark
  *
- * Architecture: server owns all data. Frontend just requests the card by ID.
- * Font approach: uses @napi-rs/canvas with GlobalFonts.registerFromPath().
- * Font files live in server/fonts/ and are bundled with the deployment.
+ * The 5-field brief is generated fresh by the LLM for each scene/archetype/mood.
+ * Natural fibers only (no satin). No em dashes.
  */
+
 import path from "path";
 import { fileURLToPath } from "url";
-import type { Request, Response } from "express";
 import sharp from "sharp";
-import { createCanvas, GlobalFonts } from "@napi-rs/canvas";
-import { authenticateRequest } from "./_core/auth";
-import { getSupabase } from "./_core/supabase";
+import { createCanvas, GlobalFonts, loadImage } from "@napi-rs/canvas";
+import { invokeLLM } from "./_core/llm";
+import { storagePut } from "./storage";
 import { storageGetSignedUrl } from "./storage";
 
-// ESM-safe __dirname: works in both tsx (dev) and esbuild ESM (production)
+// ESM-safe __dirname
 const _thisDir = (() => {
   try {
     return path.dirname(fileURLToPath(import.meta.url));
@@ -30,7 +29,7 @@ const _thisDir = (() => {
   }
 })();
 
-// Register fonts once at module load time
+// Register fonts once
 let _fontsRegistered = false;
 function ensureFonts() {
   if (_fontsRegistered) return;
@@ -40,281 +39,370 @@ function ensureFonts() {
   _fontsRegistered = true;
 }
 
-interface AestheticBrief {
-  palette?: string;
-  metals?: string;
-  fabrics?: string;
-  makeup?: string;
-  lighting?: string;
-  hair?: string;
+// ─── Types ────────────────────────────────────────────────────────────────────
+
+export type IdentityBrief = {
+  palette: string;   // e.g. "Warm ivory, deep camel, amber gold. No cool tones."
+  metals: string;    // e.g. "Warm yellow gold only. Stack it."
+  makeup: string;    // e.g. "Bold lip, strong brow, minimal eye."
+  lighting: string;  // e.g. "Late afternoon window, light source left or right."
+  presence: string;  // e.g. "Your presence sharpens through contrast and restraint."
+};
+
+// ─── Scene / Archetype / Mood Labels ─────────────────────────────────────────
+
+const SCENE_LABELS: Record<string, string> = {
+  morning_ritual: "Morning Ritual",
+  in_motion: "In Motion",
+  soft_power_meeting: "Soft Power Meeting",
+  golden_hour: "Golden Hour",
+  night_out: "Night Out",
+  travel_editorial: "Travel Editorial",
+  home_sanctuary: "Home Sanctuary",
+  paparazzi_flash: "Paparazzi Flash",
+  digital_diary: "Digital Diary",
+  bill_please: "Bill Please",
+  silk_robe_room_service: "Silk Robe Room Service",
+  irish_goodbye: "Irish Goodbye",
+  cleopatra_principle: "Cleopatra Principle",
+  silk_robe_retaliation: "Silk Robe Retaliation",
+  motion_blur: "The Blur",
+};
+
+const ARCHETYPE_LABELS: Record<string, string> = {
+  luxury_minimal: "Luxury Minimal",
+  elegant_chaos: "Elegant Chaos",
+  soft_power: "Soft Power",
+  dark_feminine: "Dark Feminine",
+  ethereal: "Ethereal",
+};
+
+const MOOD_LABELS: Record<string, string> = {
+  soft: "Soft",
+  magnetic: "Magnetic",
+  grounded: "Grounded",
+  untamed: "Untamed",
+};
+
+// ─── LLM Brief Generation ────────────────────────────────────────────────────
+
+export async function generateIdentityBrief(params: {
+  archetype: string;
+  mood: string;
+  sceneCategory?: string | null;
+  aestheticDescriptors?: string | null;
+  niche?: string | null;
+}): Promise<IdentityBrief> {
+  const archetypeLabel = ARCHETYPE_LABELS[params.archetype] ?? params.archetype;
+  const moodLabel = MOOD_LABELS[params.mood] ?? params.mood;
+  const sceneLabel = params.sceneCategory ? (SCENE_LABELS[params.sceneCategory] ?? params.sceneCategory) : null;
+
+  const systemPrompt = `You are a luxury personal stylist writing a concise identity brief for a woman's shareable style card. Your language is direct, specific, and editorial. No wellness clichés, no em dashes, no satin (natural fibers only: silk, linen, cashmere, cotton, wool, leather, suede, denim). Each field is 1-2 short sentences maximum. Be specific and scene-appropriate, not generic.`;
+
+  const userPrompt = `Write a 5-field identity brief for a style card with this context:
+- Archetype: ${archetypeLabel}
+- Energy: ${moodLabel}
+${sceneLabel ? `- Scene: ${sceneLabel}` : ""}
+${params.aestheticDescriptors ? `- Aesthetic: ${params.aestheticDescriptors}` : ""}
+${params.niche ? `- Niche: ${params.niche}` : ""}
+
+Return JSON with exactly these fields:
+{
+  "palette": "Color story in 1 sentence. Specific tones, no generic neutrals.",
+  "metals": "Metal direction in 1 sentence. Specific weight and style.",
+  "makeup": "Makeup direction in 1-2 sentences. Specific techniques and focal point.",
+  "lighting": "Lighting direction in 1 sentence. Specific time of day and angle.",
+  "presence": "Her presence in 1 sentence. What the camera feels, not her personality."
 }
 
-/**
- * Render the brief panel using @napi-rs/canvas.
- * Returns a PNG buffer of the panel.
- */
-function renderBriefPanel(
-  rows: { label: string; value: string }[],
-  imgWidth: number
-): Buffer {
-  ensureFonts();
+Rules:
+- No satin. Natural fibers only if mentioning fabric: silk, linen, cashmere, cotton, wool, leather, suede, denim.
+- No em dashes. Use commas or periods instead.
+- Be scene-specific. A night-out brief must feel different from a morning ritual brief.
+- No generic advice. Every sentence must be specific enough to act on.`;
 
-  // Stacked layout: label line + value line(s) per row
-  // This ensures value text is never truncated regardless of image width
-  const padX = Math.round(imgWidth * 0.06);
-  const availW = imgWidth - padX * 2;
-  const labelFontSize = Math.round(imgWidth * 0.020);
-  const valueFontSize = Math.round(imgWidth * 0.026);
-  const labelGap = Math.round(imgWidth * 0.012);  // gap between label and value
-  const rowGap = Math.round(imgWidth * 0.022);    // gap between rows
-  const topPad = Math.round(imgWidth * 0.045);
-  const bottomPad = Math.round(imgWidth * 0.04);
-
-  // Pre-measure to calculate total panel height
-  const measureCanvas = createCanvas(imgWidth, 100);
-  const mctx = measureCanvas.getContext("2d");
-
-  function wrapValue(text: string, ctx2: ReturnType<ReturnType<typeof createCanvas>["getContext"]>, maxW: number, fSize: number): string[] {
-    ctx2.font = `${fSize}px MeethaFont`;
-    const words = text.split(" ");
-    const lines: string[] = [];
-    let current = "";
-    for (const word of words) {
-      const test = current ? current + " " + word : word;
-      if (ctx2.measureText(test).width > maxW && current) {
-        lines.push(current);
-        current = word;
-      } else {
-        current = test;
-      }
-    }
-    if (current) lines.push(current);
-    return lines;
-  }
-
-  // Calculate row heights
-  const rowData = rows.map((row) => {
-    const lines = wrapValue(row.value, mctx, availW, valueFontSize);
-    const rowH = labelFontSize + labelGap + lines.length * (valueFontSize * 1.35);
-    return { ...row, lines, rowH };
+  const response = await invokeLLM({
+    messages: [
+      { role: "system", content: systemPrompt },
+      { role: "user", content: userPrompt },
+    ],
+    response_format: {
+      type: "json_schema",
+      json_schema: {
+        name: "identity_brief",
+        strict: true,
+        schema: {
+          type: "object",
+          properties: {
+            palette: { type: "string" },
+            metals: { type: "string" },
+            makeup: { type: "string" },
+            lighting: { type: "string" },
+            presence: { type: "string" },
+          },
+          required: ["palette", "metals", "makeup", "lighting", "presence"],
+          additionalProperties: false,
+        },
+      },
+    },
   });
 
-  const totalContentH = rowData.reduce((sum, r) => sum + r.rowH + rowGap, 0) - rowGap;
-  const panelH = topPad + totalContentH + bottomPad;
+  const content = response.choices[0].message.content;
+  const parsed = JSON.parse(typeof content === "string" ? content : JSON.stringify(content)) as IdentityBrief;
 
-  const canvas = createCanvas(imgWidth, panelH);
+  // Strip em dashes just in case LLM ignores the rule
+  for (const key of Object.keys(parsed) as (keyof IdentityBrief)[]) {
+    parsed[key] = parsed[key].replace(/\u2013|\u2014/g, ",");
+  }
+
+  return parsed;
+}
+
+// ─── Image Fetching ───────────────────────────────────────────────────────────
+
+async function fetchImageBuffer(url: string): Promise<Buffer> {
+  let fetchUrl = url;
+  if (fetchUrl.startsWith("/manus-storage/")) {
+    const key = fetchUrl.replace("/manus-storage/", "");
+    fetchUrl = await storageGetSignedUrl(key);
+  }
+  const res = await fetch(fetchUrl);
+  if (!res.ok) throw new Error(`Image fetch failed: ${res.status} ${fetchUrl}`);
+  return Buffer.from(await res.arrayBuffer());
+}
+
+// ─── Text Helpers ─────────────────────────────────────────────────────────────
+
+function sanitizeText(text: string): string {
+  return text
+    .replace(/[\u2018\u2019\u201A\u201B]/g, "'")
+    .replace(/[\u201C\u201D\u201E\u201F]/g, '"')
+    .replace(/[\u2013\u2014\u2015]/g, ",")
+    .replace(/\u2026/g, "...")
+    .replace(/[\u2022\u2023\u25E6\u2043]/g, "-")
+    .replace(/[^\x00-\x7F]/g, (ch) => {
+      const map: Record<string, string> = {
+        "\u00E9": "e", "\u00E8": "e", "\u00EA": "e", "\u00EB": "e",
+        "\u00E0": "a", "\u00E1": "a", "\u00E2": "a", "\u00E4": "a",
+        "\u00F6": "o", "\u00F3": "o", "\u00F4": "o",
+        "\u00FC": "u", "\u00FA": "u", "\u00FB": "u",
+        "\u00F1": "n", "\u00E7": "c",
+      };
+      return map[ch] ?? "";
+    });
+}
+
+type CanvasCtx = ReturnType<ReturnType<typeof createCanvas>["getContext"]>;
+
+function wrapText(ctx: CanvasCtx, text: string, maxWidth: number): string[] {
+  const words = text.split(" ");
+  const lines: string[] = [];
+  let current = "";
+  for (const word of words) {
+    const test = current ? current + " " + word : word;
+    if (ctx.measureText(test).width > maxWidth && current) {
+      lines.push(current);
+      current = word;
+    } else {
+      current = test;
+    }
+  }
+  if (current) lines.push(current);
+  return lines;
+}
+
+// ─── Card Builder ─────────────────────────────────────────────────────────────
+
+/**
+ * Builds the cream editorial style card (1080x1350):
+ *   - Top image panel (AI styled image, edge-to-edge, ~61%)
+ *   - Thin gold rule
+ *   - Cream brief panel: "YOUR IDENTITY BRIEF" + 5 rows (~39%)
+ *   - Footer wordmark
+ */
+export async function buildStyleCard(params: {
+  imageUrl: string;
+  brief: IdentityBrief;
+}): Promise<Buffer> {
+  ensureFonts();
+
+  // ── Dimensions ──
+  const CARD_W = 1080;
+  const CARD_H = 1350;
+  const IMAGE_H = 820;      // ~61% of card height
+  const RULE_H = 2;
+  const BRIEF_H = CARD_H - IMAGE_H - RULE_H;  // 528px
+
+  // ── Colors ──
+  const WARM_WHITE = "#FDFAF5";
+  const GOLD = "#B8935A";
+  const CHARCOAL_SOFT = "#5C4F45";
+  const RULE_COLOR = "#D4B896";
+
+  // ── Canvas ──
+  const canvas = createCanvas(CARD_W, CARD_H);
   const ctx = canvas.getContext("2d");
 
-  // Background
-  ctx.fillStyle = "#1A0F09";
-  ctx.fillRect(0, 0, imgWidth, panelH);
+  // Fill cream background
+  ctx.fillStyle = WARM_WHITE;
+  ctx.fillRect(0, 0, CARD_W, CARD_H);
 
-  // Top border line
-  ctx.strokeStyle = "rgba(200, 169, 110, 0.5)";
-  ctx.lineWidth = 1;
+  // ════════════════════════════════════════════════════════════
+  // SECTION 1: AI IMAGE (top, edge-to-edge)
+  // ════════════════════════════════════════════════════════════
+  {
+    const rawBuf = await fetchImageBuffer(params.imageUrl);
+    const imgBuf = await sharp(rawBuf)
+      .resize(CARD_W, IMAGE_H, { fit: "cover", position: "top" })
+      .jpeg({ quality: 92 })
+      .toBuffer();
+    const img = await loadImage(imgBuf);
+    ctx.drawImage(img, 0, 0, CARD_W, IMAGE_H);
+
+    // Subtle gradient at bottom of image to soften the cut
+    const grad = ctx.createLinearGradient(0, IMAGE_H - 60, 0, IMAGE_H);
+    grad.addColorStop(0, "rgba(253,250,245,0)");
+    grad.addColorStop(1, "rgba(253,250,245,0.12)");
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, IMAGE_H - 60, CARD_W, 60);
+
+    // "styled by Meetha" watermark on image (bottom-right, subtle)
+    ctx.font = `bold 20px MeethaFont`;
+    ctx.fillStyle = "rgba(255,255,255,0.50)";
+    ctx.textAlign = "right";
+    ctx.fillText("styled by Meetha", CARD_W - 32, IMAGE_H - 24);
+  }
+
+  // ════════════════════════════════════════════════════════════
+  // SECTION 2: GOLD RULE SEPARATOR
+  // ════════════════════════════════════════════════════════════
+  ctx.fillStyle = RULE_COLOR;
+  ctx.globalAlpha = 0.55;
+  ctx.fillRect(0, IMAGE_H, CARD_W, RULE_H);
+  ctx.globalAlpha = 1;
+
+  // ════════════════════════════════════════════════════════════
+  // SECTION 3: CREAM BRIEF PANEL
+  // ════════════════════════════════════════════════════════════
+  const PANEL_TOP = IMAGE_H + RULE_H;
+  const PAD_X = 60;
+  const PAD_Y = 34;
+  const LABEL_COL_W = 118;
+  const TEXT_COL_X = PAD_X + LABEL_COL_W;
+  const TEXT_MAX_W = CARD_W - TEXT_COL_X - PAD_X;
+  const ROW_GAP = 12;
+  const LABEL_FONT_SIZE = 17;
+  const VALUE_FONT_SIZE = 19;
+  const LINE_H = VALUE_FONT_SIZE * 1.5;
+
+  let y = PANEL_TOP + PAD_Y;
+
+  // Header: "YOUR IDENTITY BRIEF"
+  ctx.font = `bold 13px MeethaFont`;
+  ctx.fillStyle = GOLD;
+  ctx.globalAlpha = 0.85;
+  ctx.textAlign = "left";
+  ctx.fillText("YOUR IDENTITY BRIEF", PAD_X, y + 13);
+  ctx.globalAlpha = 1;
+  y += 13 + 20;
+
+  // Thin gold rule under header
+  ctx.strokeStyle = RULE_COLOR;
+  ctx.globalAlpha = 0.35;
+  ctx.lineWidth = 0.8;
   ctx.beginPath();
-  ctx.moveTo(padX, 1);
-  ctx.lineTo(imgWidth - padX, 1);
+  ctx.moveTo(PAD_X, y - 6);
+  ctx.lineTo(CARD_W - PAD_X, y - 6);
   ctx.stroke();
+  ctx.globalAlpha = 1;
 
-  let cursorY = topPad;
+  // Brief rows
+  const rows: [string, string][] = [
+    ["Palette", params.brief.palette],
+    ["Metals", params.brief.metals],
+    ["Makeup", params.brief.makeup],
+    ["Lighting", params.brief.lighting],
+    ["Presence", params.brief.presence],
+  ];
 
-  rowData.forEach((row, i) => {
-    // Divider line between rows
-    if (i > 0) {
-      ctx.strokeStyle = "rgba(200, 169, 110, 0.18)";
-      ctx.lineWidth = 0.5;
-      ctx.beginPath();
-      ctx.moveTo(padX, cursorY - rowGap / 2);
-      ctx.lineTo(imgWidth - padX, cursorY - rowGap / 2);
-      ctx.stroke();
-    }
+  for (const [label, value] of rows) {
+    const rowStartY = y;
 
-    // Label (gold, bold, small caps style via uppercase)
-    ctx.fillStyle = "rgba(200, 169, 110, 0.85)";
-    ctx.font = `bold ${labelFontSize}px MeethaFont`;
+    // Label (gold, bold)
+    ctx.font = `bold ${LABEL_FONT_SIZE}px MeethaFont`;
+    ctx.fillStyle = GOLD;
+    ctx.globalAlpha = 0.72;
     ctx.textAlign = "left";
-    ctx.fillText(row.label, padX, cursorY + labelFontSize);
+    ctx.fillText(sanitizeText(label), PAD_X, rowStartY + LABEL_FONT_SIZE);
+    ctx.globalAlpha = 1;
 
-    // Value lines (cream white, wrapping)
-    ctx.fillStyle = "rgba(245, 240, 232, 0.95)";
-    ctx.font = `${valueFontSize}px MeethaFont`;
-    const lineH = valueFontSize * 1.35;
-    row.lines.forEach((line, li) => {
-      ctx.fillText(line, padX, cursorY + labelFontSize + labelGap + valueFontSize + li * lineH);
+    // Value (wrapped, charcoal soft)
+    ctx.font = `${VALUE_FONT_SIZE}px MeethaFont`;
+    ctx.fillStyle = CHARCOAL_SOFT;
+    ctx.textAlign = "left";
+    const lines = wrapText(ctx, sanitizeText(value), TEXT_MAX_W);
+    lines.slice(0, 3).forEach((line, i) => {
+      ctx.fillText(line, TEXT_COL_X, rowStartY + i * LINE_H + VALUE_FONT_SIZE);
     });
 
-    cursorY += row.rowH + rowGap;
+    const rowH = Math.max(LABEL_FONT_SIZE, lines.length * LINE_H);
+    y += rowH + ROW_GAP;
+  }
+
+  // ════════════════════════════════════════════════════════════
+  // SECTION 4: FOOTER WORDMARK
+  // ════════════════════════════════════════════════════════════
+  const FOOTER_Y = CARD_H - 26;
+
+  ctx.strokeStyle = RULE_COLOR;
+  ctx.globalAlpha = 0.25;
+  ctx.lineWidth = 0.6;
+  ctx.beginPath();
+  ctx.moveTo(PAD_X, FOOTER_Y - 14);
+  ctx.lineTo(CARD_W - PAD_X, FOOTER_Y - 14);
+  ctx.stroke();
+  ctx.globalAlpha = 1;
+
+  ctx.font = `bold 14px MeethaFont`;
+  ctx.fillStyle = GOLD;
+  ctx.globalAlpha = 0.45;
+  ctx.textAlign = "center";
+  ctx.fillText("meetha.studio", CARD_W / 2, FOOTER_Y);
+  ctx.globalAlpha = 1;
+
+  return canvas.toBuffer("image/jpeg", 92) as Buffer;
+}
+
+// ─── Main Entry Point ─────────────────────────────────────────────────────────
+
+export async function generateAndSaveStyleCard(params: {
+  generationId: number;
+  userId: number;
+  imageUrl: string;
+  archetype: string;
+  mood: string;
+  sceneCategory?: string | null;
+  aestheticDescriptors?: string | null;
+  niche?: string | null;
+}): Promise<{ cardUrl: string; cardKey: string }> {
+  // 1. Generate scene-specific identity brief
+  const brief = await generateIdentityBrief({
+    archetype: params.archetype,
+    mood: params.mood,
+    sceneCategory: params.sceneCategory,
+    aestheticDescriptors: params.aestheticDescriptors,
+    niche: params.niche,
   });
 
-  // Bottom border line
-  ctx.strokeStyle = "rgba(200, 169, 110, 0.2)";
-  ctx.lineWidth = 0.5;
-  ctx.beginPath();
-  ctx.moveTo(padX, panelH - 1);
-  ctx.lineTo(imgWidth - padX, panelH - 1);
-  ctx.stroke();
+  // 2. Build the card image
+  const cardBuffer = await buildStyleCard({
+    imageUrl: params.imageUrl,
+    brief,
+  });
 
-  return canvas.toBuffer("image/png") as Buffer;
-}
+  // 3. Upload to S3
+  const key = `style-cards/user-${params.userId}-gen-${params.generationId}-${Date.now()}.jpg`;
+  const { url } = await storagePut(key, cardBuffer, "image/jpeg");
 
-/**
- * Render the "styled by Meetha" watermark using @napi-rs/canvas.
- * Returns a PNG buffer the same size as the image (transparent background).
- */
-function renderWatermark(imgWidth: number, imgHeight: number): Buffer {
-  ensureFonts();
-
-  const canvas = createCanvas(imgWidth, imgHeight);
-  const ctx = canvas.getContext("2d");
-
-  // Transparent background
-  ctx.clearRect(0, 0, imgWidth, imgHeight);
-
-  const fontSize = Math.round(imgWidth * 0.028);
-  const pad = Math.round(imgWidth * 0.04);
-
-  ctx.font = `${fontSize}px MeethaFont`;
-  ctx.fillStyle = "rgba(255, 255, 255, 0.30)";
-  ctx.textAlign = "right";
-  ctx.fillText("styled by Meetha", imgWidth - pad, imgHeight - pad);
-
-  return canvas.toBuffer("image/png") as Buffer;
-}
-
-/** Truncate text to fit within maxWidth pixels */
-function truncateToWidth(ctx: ReturnType<ReturnType<typeof createCanvas>["getContext"]>, text: string, maxWidth: number): string {
-  if (ctx.measureText(text).width <= maxWidth) return text;
-  let truncated = text;
-  while (truncated.length > 0 && ctx.measureText(truncated + "...").width > maxWidth) {
-    truncated = truncated.slice(0, -1);
-  }
-  return truncated + "...";
-}
-
-export async function handleStyleCard(req: Request, res: Response) {
-  const { generationId } = req.params;
-
-  if (!generationId || isNaN(Number(generationId))) {
-    return res.status(400).json({ error: "Invalid generation ID" });
-  }
-
-  const user = await authenticateRequest(req);
-  if (!user) {
-    return res.status(401).json({ error: "Unauthorized" });
-  }
-
-  // Fetch generation
-  const genResult = await getSupabase()
-    .from("generations")
-    .select("id, user_id, image_url")
-    .eq("id", Number(generationId))
-    .single();
-  const generation = genResult.data as { id: number; user_id: number; image_url: string } | null;
-  if (!generation || generation.user_id !== user.id) {
-    return res.status(404).json({ error: "Generation not found" });
-  }
-
-  // Fetch the user's aesthetic brief directly from DB (server owns the data)
-  const profileResult = await getSupabase()
-    .from("profiles")
-    .select("aesthetic_brief")
-    .eq("user_id", user.id)
-    .maybeSingle();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const savedBrief = (profileResult.data as any)?.aesthetic_brief as AestheticBrief | null | undefined;
-
-  // Also accept query params as override (for backward compat and live aestheticRead)
-  const qp = req.query;
-  const brief: AestheticBrief = {
-    palette: (qp.color_palette as string) || savedBrief?.palette || undefined,
-    metals: (qp.metals as string) || savedBrief?.metals || undefined,
-    fabrics: (qp.fabrics as string) || savedBrief?.fabrics || undefined,
-    makeup: (qp.makeup as string) || savedBrief?.makeup || undefined,
-    lighting: (qp.lighting as string) || savedBrief?.lighting || undefined,
-    hair: (qp.hair as string) || savedBrief?.hair || undefined,
-  };
-  const hasBrief = Object.values(brief).some((v) => v && (v as string).trim());
-
-  // Fetch image bytes
-  let imageBuffer: Buffer;
-  try {
-    let fetchUrl = generation.image_url as string;
-    if (fetchUrl.startsWith("/manus-storage/")) {
-      const key = fetchUrl.replace("/manus-storage/", "");
-      fetchUrl = await storageGetSignedUrl(key);
-    }
-    const imageRes = await fetch(fetchUrl);
-    if (!imageRes.ok) throw new Error(`Image fetch failed: ${imageRes.status}`);
-    imageBuffer = Buffer.from(await imageRes.arrayBuffer());
-  } catch (err) {
-    console.error("[StyleCard] Image fetch error:", err);
-    return res.status(502).json({ error: "Failed to fetch image" });
-  }
-
-  try {
-    const image = sharp(imageBuffer);
-    const meta = await image.metadata();
-    const imgWidth = meta.width ?? 1080;
-    const imgHeight = meta.height ?? 1350;
-
-    // Watermark overlay on the photo
-    const wmBuffer = renderWatermark(imgWidth, imgHeight);
-    const photoWithWatermark = await sharp(imageBuffer)
-      .composite([{ input: wmBuffer, top: 0, left: 0 }])
-      .png()
-      .toBuffer();
-
-    // Brief panel
-    let briefPanelBuffer: Buffer | null = null;
-    let briefPanelH = 0;
-
-    if (hasBrief) {
-      const rows: { label: string; value: string }[] = [
-        { label: "COLOR PALETTE", value: brief.palette ?? "" },
-        { label: "METALS", value: brief.metals ?? "" },
-        { label: "FABRICS", value: brief.fabrics ?? "" },
-        { label: "MAKEUP", value: brief.makeup ?? "" },
-        { label: "LIGHTING", value: brief.lighting ?? "" },
-        { label: "HAIR", value: brief.hair ?? "" },
-      ].filter((r) => r.value.trim());
-
-      if (rows.length > 0) {
-        briefPanelBuffer = renderBriefPanel(rows, imgWidth);
-        const panelMeta = await sharp(briefPanelBuffer).metadata();
-        briefPanelH = panelMeta.height ?? 0;
-      }
-    }
-
-    // Assemble final card
-    const totalH = imgHeight + briefPanelH;
-    const composites: sharp.OverlayOptions[] = [
-      { input: photoWithWatermark, top: 0, left: 0 },
-    ];
-    if (briefPanelBuffer) {
-      composites.push({ input: briefPanelBuffer, top: imgHeight, left: 0 });
-    }
-
-    const card = await sharp({
-      create: {
-        width: imgWidth,
-        height: totalH,
-        channels: 3,
-        background: { r: 26, g: 15, b: 9 },
-      },
-    })
-      .composite(composites)
-      .jpeg({ quality: 90 })
-      .toBuffer();
-
-    res.setHeader("Content-Type", "image/jpeg");
-    res.setHeader(
-      "Content-Disposition",
-      `attachment; filename="meetha-style-card-${generationId}.jpg"`
-    );
-    return res.send(card);
-  } catch (err) {
-    console.error("[StyleCard] Compositing error:", err);
-    return res.status(500).json({ error: "Failed to generate style card" });
-  }
+  return { cardUrl: url, cardKey: key };
 }

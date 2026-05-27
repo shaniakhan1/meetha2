@@ -5,7 +5,6 @@ import net from "net";
 import { createExpressMiddleware } from "@trpc/server/adapters/express";
 import { handleMagicLink, handleSetSession, handleLogout, handleMe, handlePreviewAuth } from "./auth";
 import { handleDownload } from "../download";
-import { handleStyleCard } from "../styleCard";
 import { handleLoraCheck } from "../loraEmailCron";
 import { handleArchiveGenerations } from "../archiveCron";
 import { handleWelcomeEmail } from "../welcomeEmailCron";
@@ -55,7 +54,6 @@ async function startServer() {
   app.get("/api/auth/me", handleMe);
   app.get("/api/auth/preview", handlePreviewAuth);
   app.get("/api/download/:generationId", handleDownload);
-  app.get("/api/style-card/:generationId", handleStyleCard);
   app.post("/api/lora/upload", loraUploadMiddleware, handleLoraUpload);
   app.post("/api/upload-before-photo", beforePhotoUploadMiddleware, handleBeforePhotoUpload);
   app.get("/api/lora/status", handleLoraStatus);

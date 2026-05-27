@@ -23,6 +23,8 @@ interface GenerationResult {
   generation: {
     id: number;
     image_url: string;
+    card_url?: string | null;
+    card_key?: string | null;
     caption: string;
     archetype: string;
     mood: string;
@@ -268,29 +270,34 @@ export default function Generate() {
     setStep("preview");
   };
 
+  // Poll for card_url if it's not ready yet (generated in background)
+  const [cardPollCount, setCardPollCount] = useState(0);
+  const cardPollQuery = trpc.generations.getCardUrl.useQuery(
+    { generationId: result?.generation?.id ?? 0 },
+    {
+      enabled: !!result?.generation?.id && !result?.generation?.card_url && cardPollCount < 12,
+      refetchInterval: 5000,
+      refetchIntervalInBackground: false,
+    }
+  );
+  // Merge polled card_url into result
+  useEffect(() => {
+    if (cardPollQuery.data?.cardUrl && result && !result.generation.card_url) {
+      setResult({ ...result, generation: { ...result.generation, card_url: cardPollQuery.data.cardUrl } });
+      setCardPollCount(12); // stop polling
+    }
+  }, [cardPollQuery.data?.cardUrl]);
+
   const handleSaveStyleCard = async () => {
     if (!result?.generation?.id) return;
-    const params = new URLSearchParams();
-    // Use live aestheticRead if available, otherwise fall back to saved brief from profile
-    const briefSource = aestheticRead ?? aestheticBriefQuery.data ?? null;
-    if (briefSource) {
-      const cp = (aestheticRead ? aestheticRead.color_palette : aestheticBriefQuery.data?.palette) ?? "";
-      const metals = briefSource.metals ?? "";
-      const fabrics = briefSource.fabrics ?? "";
-      const makeup = briefSource.makeup ?? "";
-      const lighting = briefSource.lighting ?? "";
-      const hair = briefSource.hair ?? "";
-      if (cp) params.set("color_palette", cp);
-      if (metals) params.set("metals", metals);
-      if (fabrics) params.set("fabrics", fabrics);
-      if (makeup) params.set("makeup", makeup);
-      if (lighting) params.set("lighting", lighting);
-      if (hair) params.set("hair", hair);
+    const cardUrl = result.generation.card_url as string | null | undefined;
+    if (!cardUrl) {
+      toast.error("Style card is still being prepared. Try again in a moment.");
+      return;
     }
-    const qs = params.toString() ? `?${params.toString()}` : "";
     try {
-      const response = await fetch(`/api/style-card/${result.generation.id}${qs}`, { credentials: "include" });
-      if (!response.ok) throw new Error(`Style card failed: ${response.status}`);
+      const response = await fetch(cardUrl, { credentials: "include" });
+      if (!response.ok) throw new Error(`Card fetch failed: ${response.status}`);
       const blob = await response.blob();
       const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
       if (isMobile && navigator.canShare) {
@@ -313,7 +320,7 @@ export default function Generate() {
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
     } catch {
-      toast.error("Could not generate style card. Please try again.");
+      toast.error("Could not save style card. Please try again.");
     }
   };
 

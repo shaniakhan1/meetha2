@@ -80,6 +80,8 @@ export type DbGeneration = {
   created_at: string;
   archived: boolean;
   archived_at: string | null;
+  card_url: string | null;
+  card_key: string | null;
 };
 
 // ─── Users ────────────────────────────────────────────────────────────────────
@@ -479,6 +481,19 @@ export async function archiveGeneration(generationId: number, userId: number): P
     .update({ archived: true, archived_at: new Date().toISOString() })
     .eq("id", generationId)
     .eq("user_id", userId);
+}
+
+export async function updateGenerationCardUrl(data: {
+  generationId: number;
+  cardUrl: string;
+  cardKey: string;
+}): Promise<void> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const sb = getSupabase() as any;
+  await sb
+    .from("generations")
+    .update({ card_url: data.cardUrl, card_key: data.cardKey })
+    .eq("id", data.generationId);
 }
 
 export async function updateGenerationHook(data: {

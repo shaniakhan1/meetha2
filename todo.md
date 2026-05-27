@@ -540,3 +540,15 @@
 - [x] Replace car-dark gallery image on homepage with meetha-17.jpg (car window portrait)
 - [x] TypeScript: zero errors
 - [x] Vitest: 13 tests passing
+
+## V59 -- Per-Generation Style Card (Cream Editorial)
+- [x] Kill transformation card section from Profile
+- [x] Rewrite styleCard.ts as cream editorial 1080x1350 per-generation card
+- [x] Add card_url/card_key columns to generations table (migration applied)
+- [x] Generate style card in background after every image generation
+- [x] Add getCardUrl polling procedure to generations router
+- [x] Update Generate.tsx: poll for card_url, share/download uses card_url
+- [x] Update Dashboard.tsx: share style card uses stored card_url
+- [x] Natural fibers only in brief prompts (no satin)
+- [x] TypeScript: zero errors
+- [x] Vitest: 13 tests passing

@@ -35,6 +35,8 @@ type GenerationItem = {
   created_at: string;
   archived: boolean;
   archived_at: string | null;
+  card_url: string | null;
+  card_key: string | null;
 };
 
 const PAGE_SIZE = 20;
@@ -182,22 +184,16 @@ export default function Dashboard() {
     }
   };
 
-  const handleShareStyleCard = async (id: number, hook?: string | null) => {
+  const handleShareStyleCard = async (id: number, hook?: string | null, cardUrl?: string | null) => {
     if (sharingCardId === id) return;
+    if (!cardUrl) {
+      toast.error("Style card is still being prepared. Try again in a moment.");
+      return;
+    }
     setSharingCardId(id);
     try {
-      // Build query string from saved aesthetic brief so the server renders the brief panel
-      const brief = briefQuery.data;
-      const params = new URLSearchParams();
-      if (brief?.palette) params.set("color_palette", brief.palette);
-      if (brief?.metals) params.set("metals", brief.metals);
-      if (brief?.fabrics) params.set("fabrics", brief.fabrics);
-      if (brief?.makeup) params.set("makeup", brief.makeup);
-      if (brief?.lighting) params.set("lighting", brief.lighting);
-      if (brief?.hair) params.set("hair", brief.hair);
-      const qs = params.toString();
-      const response = await fetch(`/api/style-card/${id}${qs ? `?${qs}` : ""}`, { credentials: "include" });
-      if (!response.ok) throw new Error(`Style card failed: ${response.status}`);
+      const response = await fetch(cardUrl, { credentials: "include" });
+      if (!response.ok) throw new Error(`Card fetch failed: ${response.status}`);
       const blob = await response.blob();
       const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
       if (isMobile && navigator.canShare) {
@@ -225,7 +221,7 @@ export default function Dashboard() {
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
     } catch {
-      toast.error("Could not generate style card. Please try again.");
+      toast.error("Could not save style card. Please try again.");
     } finally {
       setSharingCardId(null);
     }
@@ -646,7 +642,7 @@ export default function Dashboard() {
                           {isDownloading ? "Saving..." : "Save & Share"}
                         </button>
                         <button
-                          onClick={(e) => { e.stopPropagation(); handleShareStyleCard(gen.id, gen.selected_hook); }}
+                          onClick={(e) => { e.stopPropagation(); handleShareStyleCard(gen.id, gen.selected_hook, gen.card_url); }}
                           disabled={sharingCardId === gen.id}
                           className="font-sans text-[10px] tracking-widest uppercase text-gold/70 hover:text-gold transition-colors mt-1 min-h-[36px] disabled:opacity-40 w-full"
                         >

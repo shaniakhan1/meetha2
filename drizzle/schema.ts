@@ -67,6 +67,8 @@ export const generations = mysqlTable("generations", {
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   archived: boolean("archived").default(false).notNull(),
   archivedAt: timestamp("archivedAt"),
+  cardUrl: text("card_url"), // URL of the composited cream editorial style card
+  cardKey: text("card_key"), // S3 key for the style card
 });
 
 export type Generation = typeof generations.$inferSelect;
