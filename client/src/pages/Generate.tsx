@@ -19,6 +19,7 @@ import {
 } from "@shared/types";
 import CinematicPreview from "@/components/CinematicPreview";
 import { getPreviewTier } from "./Preview";
+import { shareStoryCard, downloadStoryCard, downloadRawImage } from "@/lib/storyCardExport";
 
 const SCENE_PREVIEW_IMAGES: Record<string, string> = {
   paparazzi_flash: "/manus-storage/template-paparazzi-flash_24688a24.jpg",
@@ -103,6 +104,7 @@ export default function Generate() {
     hair: string;
   } | null>(null);
   const [aestheticReadOpen, setAestheticReadOpen] = useState(false);
+  const [exportLoading, setExportLoading] = useState<"share" | "download" | "raw" | null>(null);
 
   // Create Studio state
   const [showStudio, setShowStudio] = useState(false);
@@ -244,47 +246,48 @@ export default function Generate() {
     }
   }, [cardPollQuery.data?.cardUrl]);
 
-  const handleSaveStyleCard = async () => {
+  /** PRIMARY CTA — share the full 1080×1920 story card */
+  const handleShareCard = async () => {
     if (!result?.generation?.id) return;
-    const cardUrl = result.generation.card_url as string | null | undefined;
-    if (!cardUrl) { toast.error("Style card is still being prepared. Try again in a moment."); return; }
+    setExportLoading("share");
     try {
-      const response = await fetch(cardUrl, { credentials: "include" });
-      if (!response.ok) throw new Error(`Card fetch failed: ${response.status}`);
-      const blob = await response.blob();
-      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-      if (isMobile && navigator.canShare) {
-        const file = new File([blob], `meetha-style-card-${result.generation.id}.jpg`, { type: "image/jpeg" });
-        if (navigator.canShare({ files: [file] })) {
-          try { await navigator.share({ files: [file], title: "Meetha styled me", text: selectedHook ?? "Meetha styled me" }); return; }
-          catch (e: unknown) { if (e instanceof Error && e.name === "AbortError") return; }
-        }
-      }
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a"); a.href = url; a.download = `meetha-style-card-${result.generation.id}.jpg`;
-      document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
-    } catch { toast.error("Could not save style card. Please try again."); }
+      const outcome = await shareStoryCard(
+        { imageUrl: result.generation.image_url as string, hook: selectedHook },
+        result.generation.id
+      );
+      if (outcome === "error") toast.error("Could not share. Try downloading instead.");
+    } finally {
+      setExportLoading(null);
+    }
   };
 
-  const handleDownload = async () => {
+  /** Download the full branded story card as PNG */
+  const handleDownloadCard = async () => {
     if (!result?.generation?.id) return;
+    setExportLoading("download");
     try {
-      const response = await fetch(`/api/download/${result.generation.id}`, { credentials: "include" });
-      if (!response.ok) throw new Error(`Download failed: ${response.status}`);
-      const blob = await response.blob();
-      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-      if (isMobile && navigator.canShare) {
-        const file = new File([blob], `meetha-${result.generation.id}.jpg`, { type: "image/jpeg" });
-        if (navigator.canShare({ files: [file] })) {
-          try { await navigator.share({ files: [file], title: "Meetha styled me", text: selectedHook ?? "Meetha styled me" }); navigate("/dashboard"); return; }
-          catch (e: unknown) { if (e instanceof Error && e.name === "AbortError") return; }
-        }
-      }
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a"); a.href = url; a.download = `meetha-${result.generation.id}.jpg`;
-      document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
-      navigate("/dashboard");
-    } catch { toast.error("Download failed. Please try again."); }
+      await downloadStoryCard(
+        { imageUrl: result.generation.image_url as string, hook: selectedHook },
+        result.generation.id
+      );
+    } catch {
+      toast.error("Download failed. Please try again.");
+    } finally {
+      setExportLoading(null);
+    }
+  };
+
+  /** Download the clean raw generation image (no overlays) */
+  const handleDownloadRaw = async () => {
+    if (!result?.generation?.id) return;
+    setExportLoading("raw");
+    try {
+      await downloadRawImage(result.generation.image_url as string, result.generation.id);
+    } catch {
+      toast.error("Download failed. Please try again.");
+    } finally {
+      setExportLoading(null);
+    }
   };
 
   const copyTextToClipboard = async (text: string): Promise<boolean> => {
@@ -689,10 +692,33 @@ export default function Generate() {
 
           {/* Actions */}
           <div className="space-y-3">
-            <button onClick={handleDownload} className="btn-luxury w-full min-h-[52px]">Save Image</button>
-            {aestheticRead && (
-              <button onClick={handleSaveStyleCard} className="btn-luxury btn-luxury-outline w-full">Save Style Card</button>
-            )}
+            {/* PRIMARY: Share Story Card */}
+            <button
+              onClick={handleShareCard}
+              disabled={exportLoading !== null}
+              className="btn-luxury w-full min-h-[52px] flex items-center justify-center gap-2"
+            >
+              {exportLoading === "share" ? (
+                <><div className="w-4 h-4 border border-cream/40 border-t-cream animate-spin rounded-full" /> Preparing card…</>
+              ) : (
+                <>Share Story Card</>
+              )}
+            </button>
+
+            {/* SECONDARY: Download Story Card */}
+            <button
+              onClick={handleDownloadCard}
+              disabled={exportLoading !== null}
+              className="btn-luxury btn-luxury-outline w-full flex items-center justify-center gap-2"
+            >
+              {exportLoading === "download" ? (
+                <><div className="w-3.5 h-3.5 border border-charcoal/40 border-t-charcoal animate-spin rounded-full" /> Preparing…</>
+              ) : (
+                "Download Story Card"
+              )}
+            </button>
+
+            {/* TERTIARY: Copy text */}
             <button
               onClick={async () => {
                 const sceneLabel = sceneCategory ? (SCENE_LABELS[sceneCategory] ?? "Meetha") : "Meetha";
@@ -705,10 +731,20 @@ export default function Generate() {
             >
               {captionCopied ? "Copied!" : "Copy Text"}
             </button>
+
+            {/* MINIMAL: Download clean image */}
+            <button
+              onClick={handleDownloadRaw}
+              disabled={exportLoading !== null}
+              className="w-full py-3 font-sans text-xs tracking-widest uppercase text-charcoal-soft/60 hover:text-charcoal-soft transition-colors"
+            >
+              {exportLoading === "raw" ? "Downloading…" : "Download Clean Image"}
+            </button>
+
             <button onClick={handleRegenerate} className="w-full py-3 font-sans text-xs tracking-widest uppercase text-charcoal-soft hover:text-charcoal border border-sand hover:border-charcoal/40 transition-all duration-200">
               Start Over
             </button>
-            <button onClick={() => navigate("/dashboard")} className="w-full py-3 font-sans text-xs tracking-widest uppercase text-charcoal-soft/60 hover:text-charcoal-soft transition-colors">
+            <button onClick={() => navigate("/dashboard")} className="w-full py-3 font-sans text-xs tracking-widest uppercase text-charcoal-soft/40 hover:text-charcoal-soft transition-colors">
               Done. Back to Dashboard
             </button>
           </div>

@@ -19,6 +19,7 @@ import {
   PLATFORM_LABELS,
   SCENE_LABELS,
 } from "@shared/types";
+import { shareStoryCard, downloadRawImage } from "@/lib/storyCardExport";
 
 type GenerationItem = {
   id: number;
@@ -163,78 +164,28 @@ export default function Dashboard() {
       const ok = document.execCommand("copy"); document.body.removeChild(ta); return ok;
     } catch { return false; }
   };
-  const handleDownload = async (id: number, hook?: string | null) => {
+  /** Share the full 1080×1920 story card — PRIMARY action */
+  const handleDownload = async (id: number, hook?: string | null, imageUrl?: string) => {
     if (downloadingId === id) return;
+    if (!imageUrl) return;
     setDownloadingId(id);
     try {
-      const response = await fetch(`/api/download/${id}`, { credentials: "include" });
-      if (!response.ok) throw new Error(`Download failed: ${response.status}`);
-      const blob = await response.blob();
-      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-      if (isMobile && navigator.canShare) {
-        const file = new File([blob], `meetha-${id}.jpg`, { type: "image/jpeg" });
-        if (navigator.canShare({ files: [file] })) {
-          try {
-            await navigator.share({ files: [file], title: "Meetha styled me", text: hook ?? "Meetha styled me" });
-            return;
-          } catch (shareErr: unknown) {
-            if (shareErr instanceof Error && shareErr.name === "AbortError") return;
-          }
-        }
-      }
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `meetha-${id}.jpg`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    } catch {
-      toast.error("Download failed. Please try again.");
+      const outcome = await shareStoryCard({ imageUrl, hook: hook ?? null }, id);
+      if (outcome === "error") toast.error("Could not share. Try downloading instead.");
     } finally {
       setDownloadingId(null);
     }
   };
 
-  const handleShareStyleCard = async (id: number, hook?: string | null, cardUrl?: string | null) => {
+  /** Download the clean raw image — secondary action */
+  const handleShareStyleCard = async (id: number, _hook?: string | null, _cardUrl?: string | null, imageUrl?: string) => {
     if (sharingCardId === id) return;
-    if (!cardUrl) {
-      toast.error("Style card is still being prepared. Try again in a moment.");
-      return;
-    }
+    if (!imageUrl) return;
     setSharingCardId(id);
     try {
-      const response = await fetch(cardUrl, { credentials: "include" });
-      if (!response.ok) throw new Error(`Card fetch failed: ${response.status}`);
-      const blob = await response.blob();
-      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-      if (isMobile && navigator.canShare) {
-        const file = new File([blob], `meetha-style-card-${id}.jpg`, { type: "image/jpeg" });
-        if (navigator.canShare({ files: [file] })) {
-          try {
-            await navigator.share({
-              files: [file],
-              title: "Meetha styled me",
-              text: hook ?? "Meetha styled me",
-            });
-            return;
-          } catch (shareErr: unknown) {
-            if (shareErr instanceof Error && shareErr.name === "AbortError") return;
-          }
-        }
-      }
-      // Desktop fallback: download the card
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `meetha-style-card-${id}.jpg`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
+      await downloadRawImage(imageUrl, id);
     } catch {
-      toast.error("Could not save style card. Please try again.");
+      toast.error("Could not download image. Please try again.");
     } finally {
       setSharingCardId(null);
     }
@@ -658,18 +609,18 @@ export default function Dashboard() {
                           {copiedId === gen.id ? "Copied!" : "Copy Text"}
                         </button>
                         <button
-                          onClick={(e) => { e.stopPropagation(); handleDownload(gen.id, gen.selected_hook); }}
+                          onClick={(e) => { e.stopPropagation(); handleDownload(gen.id, gen.selected_hook, gen.image_url); }}
                           disabled={isDownloading}
                           className="font-sans text-xs tracking-widest uppercase text-cream border border-cream/40 px-6 py-3 hover:bg-cream/10 transition-colors active:scale-[0.97] disabled:opacity-50 min-h-[44px] w-full"
                         >
-                          {isDownloading ? "Saving..." : "Save & Share"}
+                          {isDownloading ? "Preparing card…" : "Share Story Card"}
                         </button>
                         <button
-                          onClick={(e) => { e.stopPropagation(); handleShareStyleCard(gen.id, gen.selected_hook, gen.card_url); }}
+                          onClick={(e) => { e.stopPropagation(); handleShareStyleCard(gen.id, gen.selected_hook, gen.card_url, gen.image_url); }}
                           disabled={sharingCardId === gen.id}
                           className="font-sans text-[10px] tracking-widest uppercase text-gold/70 hover:text-gold transition-colors mt-1 min-h-[36px] disabled:opacity-40 w-full"
                         >
-                          {sharingCardId === gen.id ? "Creating card..." : "Share Style Card"}
+                          {sharingCardId === gen.id ? "Downloading…" : "Download Clean Image"}
                         </button>
                         <button
                           onClick={(e) => { e.stopPropagation(); setConfirmDeleteId(gen.id); }}
