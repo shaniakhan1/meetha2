@@ -71,10 +71,10 @@ export default function Dashboard() {
 
   const utils = trpc.useUtils();
   const profileQuery = trpc.profile.get.useQuery(undefined, {
-    // Auto-refresh every 60s while training so the UI updates without a page reload
+    // Poll every 15s while training so the UI auto-transitions when ready
     refetchInterval: (query) => {
       const data = query.state.data;
-      return data?.lora_status === "training" ? 60_000 : false;
+      return data?.lora_status === "training" ? 15_000 : false;
     },
   });
   const creditsQuery = trpc.credits.get.useQuery();

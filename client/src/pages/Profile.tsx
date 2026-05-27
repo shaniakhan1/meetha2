@@ -28,7 +28,14 @@ export default function Profile() {
   const loraInputRef = useRef<HTMLInputElement>(null);
   const loraPollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const profileQuery = trpc.profile.get.useQuery();
+  // Derive training status from server first, fall back to local state
+  const profileQuery = trpc.profile.get.useQuery(undefined, {
+    // Poll every 15s while training so the UI auto-transitions when ready
+    refetchInterval: (query) => {
+      const status = query.state.data?.lora_status;
+      return status === "training" ? 15000 : false;
+    },
+  });
   const creditsQuery = trpc.credits.get.useQuery();
   const briefQuery = trpc.profile.getAestheticBrief.useQuery();
   const retrainStatusQuery = trpc.profile.retrainStatus.useQuery();
@@ -43,10 +50,15 @@ export default function Profile() {
   const generationsUsed = credits ? (credits.total_used ?? 0) : 0;
   const generationsAllowed = isFree ? 1 : 25;
 
-  // Sync LoRA status from profile
+  // Sync LoRA status from profile — server is source of truth
   useEffect(() => {
     if (profileQuery.data !== undefined) {
-      setLoraStatus((profileQuery.data?.lora_status as "training" | "ready" | "failed" | null) ?? null);
+      const serverStatus = (profileQuery.data?.lora_status as "training" | "ready" | "failed" | null) ?? null;
+      setLoraStatus((prev) => {
+        // If local state says training but server says null, keep local (server may be slightly behind)
+        if (prev === "training" && serverStatus === null) return prev;
+        return serverStatus;
+      });
     }
   }, [profileQuery.data?.lora_status, profileQuery.data]);
 
@@ -118,6 +130,8 @@ export default function Profile() {
       setLoraStatus("training");
       setLoraPhotos([]);
       setLoraPreviews([]);
+      // Invalidate profile so server lora_status is refreshed immediately
+      utils.profile.get.invalidate();
       toast.success("Your look is being learned. We'll email you when it's ready (~20 min).");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Upload failed. Please try again.");
