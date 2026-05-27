@@ -33,8 +33,10 @@ import {
   updateAestheticBrief,
   updateLoraProfile,
   updateGenerationCardUrl,
+  updateIdentityBriefCardUrl,
 } from "./db";
 import { generateAndSaveStyleCard } from "./styleCard";
+import { renderIdentityBriefCard } from "./identityBriefCard";
 import { buildCreateStudioPrompt } from "./createStudioPrompt";
 import {
   ARCHETYPE_DESCRIPTIONS,
@@ -1236,7 +1238,7 @@ Respond in this exact JSON format:
           };
 
           // Save full brief (diagnostic + editorial) to profile
-          await updateAestheticBrief(ctx.user.id, {
+          const briefData = {
             undertone: diagnostic.undertone,
             contrast_level: diagnostic.contrast_level,
             best_metals: diagnostic.best_metals,
@@ -1258,7 +1260,25 @@ Respond in this exact JSON format:
             lighting: editorial.lighting,
             hair: editorial.hair,
             generatedAt: new Date().toISOString(),
-          }).catch(() => { /* non-fatal */ });
+          };
+
+          await updateAestheticBrief(ctx.user.id, briefData).catch(() => { /* non-fatal */ });
+
+          // Generate Identity Brief card (async, non-blocking)
+          (async () => {
+            try {
+              const { getUserGenerations: getGens } = await import("./db");
+              const gens = await getGens(ctx.user.id, { limit: 1 });
+              const heroUrl = gens[0]?.image_url ?? null;
+              const cardBuffer = await renderIdentityBriefCard(briefData, heroUrl);
+              const key = `identity-brief/${ctx.user.id}-${Date.now()}.png`;
+              const { url } = await storagePut(key, cardBuffer, "image/png");
+              await updateIdentityBriefCardUrl(ctx.user.id, url);
+              console.log(`[aestheticRead] Identity Brief card saved: ${url}`);
+            } catch (e) {
+              console.error("[aestheticRead] Identity Brief card generation failed:", e);
+            }
+          })();
 
           // Return combined result for immediate display
           return {

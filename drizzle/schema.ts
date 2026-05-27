@@ -42,7 +42,8 @@ export const profiles = mysqlTable("profiles", {
   bodyType: text("body_type"),
   shareBadgeEnabled: boolean("share_badge_enabled").default(false),
   aestheticBrief: json("aesthetic_brief"),
-  transformationCardUrl: text("transformation_card_url"),
+  transformationCardUrl: text('transformation_card_url'),
+  identityBriefCardUrl: text('identity_brief_card_url'),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });

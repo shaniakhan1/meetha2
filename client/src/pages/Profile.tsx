@@ -278,24 +278,64 @@ export default function Profile() {
           <p className="font-sans text-xs tracking-[0.18em] uppercase text-charcoal-soft/50 mb-4">Identity Brief</p>
 
           {brief ? (
-            /* Unlocked — editorial card */
-            <div className="border border-sand bg-warm-white/60 divide-y divide-sand/40">
-              {([
-                { label: "Palette", value: brief.palette },
-                { label: "Metals", value: brief.metals },
-                { label: "Makeup", value: brief.makeup },
-                { label: "Fabrics", value: brief.fabrics },
-                { label: "Lighting", value: brief.lighting },
-                { label: "Presence", value: brief.hair },
-                (brief as Record<string, unknown>).shopping_notes
-                  ? { label: "Shopping", value: (brief as Record<string, unknown>).shopping_notes as string }
-                  : null,
-              ] as Array<{ label: string; value: string } | null>).filter((r): r is { label: string; value: string } => r !== null).map((row) => (
-                <div key={row.label} className="px-4 py-3">
-                  <p className="font-sans text-[10px] tracking-[0.18em] uppercase text-gold/70 mb-1">{row.label}</p>
-                  <p className="font-sans text-sm text-charcoal leading-relaxed">{row.value}</p>
+            /* Unlocked — show generated card image if available, else editorial text card */
+            <div className="space-y-4">
+              {profile?.identity_brief_card_url ? (
+                /* Generated PNG card */
+                <div className="space-y-3">
+                  <img
+                    src={profile.identity_brief_card_url}
+                    alt="Your Identity Brief"
+                    className="w-full rounded-none border border-sand/60"
+                  />
+                  <div className="flex gap-3">
+                    <button
+                      onClick={async () => {
+                        try {
+                          const res = await fetch(profile.identity_brief_card_url!);
+                          const blob = await res.blob();
+                          const file = new File([blob], 'meetha-identity-brief.png', { type: 'image/png' });
+                          const url = URL.createObjectURL(blob);
+                          const a = document.createElement('a');
+                          a.href = url;
+                          a.download = 'meetha-identity-brief.png';
+                          a.click();
+                          URL.revokeObjectURL(url);
+                          if (navigator.canShare?.({ files: [file] })) {
+                            await navigator.share({ files: [file], title: 'My Meetha Identity Brief' });
+                          }
+                        } catch { /* ignore share cancel */ }
+                      }}
+                      className="btn-luxury btn-gold flex-1"
+                    >
+                      Save &amp; Share
+                    </button>
+                  </div>
                 </div>
-              ))}
+              ) : (
+                /* Fallback text card while image is being generated */
+                <div className="border border-sand bg-warm-white/60 divide-y divide-sand/40">
+                  {([  
+                    { label: "Palette", value: brief.palette },
+                    { label: "Metals", value: brief.metals },
+                    { label: "Makeup", value: brief.makeup },
+                    { label: "Fabrics", value: brief.fabrics },
+                    { label: "Lighting", value: brief.lighting },
+                    { label: "Presence", value: brief.hair },
+                    (brief as Record<string, unknown>).shopping_notes
+                      ? { label: "Shopping", value: (brief as Record<string, unknown>).shopping_notes as string }
+                      : null,
+                  ] as Array<{ label: string; value: string } | null>).filter((r): r is { label: string; value: string } => r !== null).map((row) => (
+                    <div key={row.label} className="px-4 py-3">
+                      <p className="font-sans text-[10px] tracking-[0.18em] uppercase text-gold/70 mb-1">{row.label}</p>
+                      <p className="font-sans text-sm text-charcoal leading-relaxed">{row.value}</p>
+                    </div>
+                  ))}
+                  <div className="px-4 py-3">
+                    <p className="font-sans text-[10px] text-charcoal-soft/50">Your Identity Brief card is being generated...</p>
+                  </div>
+                </div>
+              )}
             </div>
           ) : (
             /* Locked teaser */

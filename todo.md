@@ -679,3 +679,15 @@
 - [x] Body Preference confirmed already in onboarding (before LoRA training) -- no changes needed
 - [x] Body preference injected into generation prompts from first generation onward
 - [x] Body Preference kept as editable field in profile (no intro framing)
+
+## V106 -- Identity Brief Card + Onboarding Body Preference
+- [x] Add identity_brief_card_url column to profiles table (migration)
+- [x] Update DbProfile type in db.ts to include identity_brief_card_url
+- [x] Install canvas (node-canvas) dependency
+- [x] Build server/identityBriefCard.ts: server-side canvas renderer for the 10-section Identity Brief PNG
+- [x] Wire renderer to aestheticRead procedure: after saving brief, generate card, save to S3, store identity_brief_card_url
+- [x] Update Profile.tsx Identity Brief section: show card image if identity_brief_card_url exists, else show locked teaser
+- [x] Body Preference confirmed already in Onboarding.tsx (before LoRA training) -- no changes needed
+- [x] body_type injected into generation prompts as lightweight modifier (confirmed existing)
+- [x] TypeScript: zero errors
+- [x] Vitest: 23 tests passing

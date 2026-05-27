@@ -41,6 +41,7 @@ export type DbProfile = {
   body_type: string | null;
   aesthetic_brief: AestheticBrief | null;
   transformation_card_url: string | null;
+  identity_brief_card_url: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -350,6 +351,19 @@ export async function updateTransformationCardUrl(
   await sb
     .from("profiles")
     .update({ transformation_card_url: url, updated_at: now })
+    .eq("user_id", userId);
+}
+
+export async function updateIdentityBriefCardUrl(
+  userId: number,
+  url: string
+): Promise<void> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const sb = getSupabase() as any;
+  const now = new Date().toISOString();
+  await sb
+    .from("profiles")
+    .update({ identity_brief_card_url: url, updated_at: now })
     .eq("user_id", userId);
 }
 
