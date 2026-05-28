@@ -24,6 +24,16 @@ import App from "./App";
 import { getLoginUrl } from "./const";
 import "./index.css";
 
+function SentryFallback({ error }: { error: Error }) {
+  return (
+    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: "100dvh", padding: "2rem", fontFamily: "sans-serif", background: "#F7F3EC", color: "#2C2C2C" }}>
+      <p style={{ fontSize: "0.75rem", letterSpacing: "0.2em", textTransform: "uppercase", marginBottom: "1rem", color: "#B8956A" }}>Something went wrong</p>
+      <p style={{ fontSize: "0.875rem", marginBottom: "1.5rem", opacity: 0.6, maxWidth: "320px", textAlign: "center" }}>{error.message}</p>
+      <button onClick={() => window.location.reload()} style={{ padding: "0.5rem 1.5rem", border: "1px solid #B8956A", background: "transparent", cursor: "pointer", fontSize: "0.75rem", letterSpacing: "0.15em", textTransform: "uppercase" }}>Reload</button>
+    </div>
+  );
+}
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -87,9 +97,11 @@ if ("serviceWorker" in navigator) {
 }
 
 createRoot(document.getElementById("root")!).render(
-  <trpc.Provider client={trpcClient} queryClient={queryClient}>
-    <QueryClientProvider client={queryClient}>
-      <App />
-    </QueryClientProvider>
-  </trpc.Provider>
+  <Sentry.ErrorBoundary fallback={({ error }) => <SentryFallback error={error as Error} />}>
+    <trpc.Provider client={trpcClient} queryClient={queryClient}>
+      <QueryClientProvider client={queryClient}>
+        <App />
+      </QueryClientProvider>
+    </trpc.Provider>
+  </Sentry.ErrorBoundary>
 );

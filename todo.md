@@ -791,3 +791,9 @@
 - [x] Write scripts/merge-duplicate-users.sql: idempotent PL/pgSQL script to merge all existing duplicate rows (keep lowest id, reassign profiles/credits/generations/postability_feedback/referrals FKs, sum credits, delete orphans)
 - [x] Write scripts/add-users-email-unique.sql: normalize emails + add partial UNIQUE index on LOWER(email) WHERE email IS NOT NULL
 - [x] TypeScript: zero errors. Vitest: 23/23 passing.
+
+## V37 -- Sentry User Context + Error Boundary
+- [x] Add Sentry.setUser({ id, email }) in useAuth.ts after /api/auth/me resolves with a user
+- [x] Add Sentry.setUser(null) on logout in useAuth.ts
+- [x] Wrap <App /> in <Sentry.ErrorBoundary> in main.tsx with branded fallback screen (cream/gold, Reload button)
+- [x] TypeScript: zero errors

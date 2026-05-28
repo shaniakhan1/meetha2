@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { useLocation } from "wouter";
+import * as Sentry from "@sentry/react";
 
 export type AuthUser = {
   id: number;
@@ -66,6 +67,12 @@ export function useAuth(options?: { requireAuth?: boolean }) {
         const data = await res.json();
         _cachedUser = data.user ?? null;
         _fetched = true;
+        // Attach user identity to all subsequent Sentry reports
+        if (_cachedUser) {
+          Sentry.setUser({ id: String(_cachedUser.id), email: _cachedUser.email ?? undefined });
+        } else {
+          Sentry.setUser(null);
+        }
         setState({
           user: _cachedUser,
           loading: false,
@@ -95,6 +102,7 @@ export function useAuth(options?: { requireAuth?: boolean }) {
     } finally {
       _cachedUser = null;
       _fetched = false;
+      Sentry.setUser(null);
       setState({ user: null, loading: false, error: null, isAuthenticated: false });
       navigate("/");
     }
