@@ -50,17 +50,23 @@ export default function Profile() {
   const generationsUsed = credits ? (credits.total_used ?? 0) : 0;
   const generationsAllowed = isFree ? 1 : 25;
 
-  // Sync LoRA status from profile — server is source of truth
+  // Sync LoRA status from profile — server is source of truth.
+  // KEY RULE: uploaded_photo_count > 0 is a permanent signal.
+  // Once photos are uploaded, we NEVER show the upload UI again.
+  // If lora_status is null but uploaded_photo_count > 0, treat as 'training' (server is catching up).
   useEffect(() => {
     if (profileQuery.data !== undefined) {
       const serverStatus = (profileQuery.data?.lora_status as "training" | "ready" | "failed" | null) ?? null;
+      const photoCount = profileQuery.data?.uploaded_photo_count ?? 0;
       setLoraStatus((prev) => {
+        // If photos were uploaded but status is null, keep as training (permanent fallback)
+        if (photoCount > 0 && serverStatus === null) return "training";
         // If local state says training but server says null, keep local (server may be slightly behind)
         if (prev === "training" && serverStatus === null) return prev;
         return serverStatus;
       });
     }
-  }, [profileQuery.data?.lora_status, profileQuery.data]);
+  }, [profileQuery.data?.lora_status, profileQuery.data?.uploaded_photo_count, profileQuery.data]);
 
   // Sync body pref from profile
   useEffect(() => {

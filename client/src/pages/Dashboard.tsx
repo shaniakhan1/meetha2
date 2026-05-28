@@ -71,10 +71,13 @@ export default function Dashboard() {
 
   const utils = trpc.useUtils();
   const profileQuery = trpc.profile.get.useQuery(undefined, {
-    // Poll every 15s while training so the UI auto-transitions when ready
+    // Poll every 15s while training so the UI auto-transitions when ready.
+    // Also poll when uploaded_photo_count > 0 but lora_status is null (server may be catching up).
     refetchInterval: (query) => {
       const data = query.state.data;
-      return data?.lora_status === "training" ? 15_000 : false;
+      if (data?.lora_status === "training") return 15_000;
+      if ((data?.uploaded_photo_count ?? 0) > 0 && !data?.lora_status) return 15_000;
+      return false;
     },
   });
   const creditsQuery = trpc.credits.get.useQuery();
@@ -361,8 +364,9 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Training card — replaces the "Add Photos" step card while training is in progress */}
-      {profile?.lora_status === "training" && (
+      {/* Training card — replaces the "Add Photos" step card while training is in progress.
+           Also shows when uploaded_photo_count > 0 but lora_status is null (server catching up). */}
+      {profile && (profile.lora_status === "training" || (profile.uploaded_photo_count > 0 && !profile.lora_status)) && (
         <div
           className="w-full"
           style={{ background: "linear-gradient(135deg, #2C1810 0%, #1a0f09 100%)" }}
@@ -396,7 +400,7 @@ export default function Dashboard() {
           <style>{`@keyframes shimmerProgress { from { width: 20%; opacity: 0.5; } to { width: 70%; opacity: 1; } }`}</style>
         </div>
       )}
-      {profile && (!profile.lora_status || profile.lora_status === "failed") && (
+      {profile && ((profile.uploaded_photo_count === 0 && !profile.lora_status) || profile.lora_status === "failed") && (
         <button
           onClick={() => navigate("/profile")}
           className="w-full text-left active:scale-[0.99] transition-transform duration-150"

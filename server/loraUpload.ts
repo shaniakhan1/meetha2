@@ -149,12 +149,14 @@ export async function handleLoraUpload(req: Request, res: Response) {
       firstFile.mimetype
     );
 
-    // Save training state to profile immediately (don't wait for vision analysis)
+    // Save training state + photo count to profile immediately (don't wait for vision analysis).
+    // uploaded_photo_count is the permanent fallback: once > 0, the upload UI is NEVER shown again.
     await updateLoraProfile(userId, {
       loraTrainingRequestId: requestId,
       loraTriggerPhrase: triggerPhrase,
       loraStatus: "training",
       loraWeightsUrl: null,
+      uploadedPhotoCount: images.length,
     });
 
     // Save physical descriptors once vision analysis completes (fire and forget)
