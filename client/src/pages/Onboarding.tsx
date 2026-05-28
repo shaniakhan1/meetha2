@@ -65,11 +65,11 @@ export default function Onboarding() {
   const profileQuery = trpc.profile.get.useQuery(undefined, {
     retry: 3,
     retryDelay: 500,
-    // Poll every 8s while on the training step
+    // Poll every 8s while lora_status is 'training' — sole source of truth.
     refetchInterval: (query) => {
       const d = query.state.data;
       if (!d) return false;
-      if (d.lora_status === "training" || ((d.uploaded_photo_count ?? 0) > 0 && d.lora_status !== "ready")) return 8_000;
+      if (d.lora_status === "training") return 8_000;
       return false;
     },
   });
@@ -88,9 +88,8 @@ export default function Onboarding() {
     // Only initialize step once — never reset it after the user has progressed
     if (!stepInitialized.current) {
       stepInitialized.current = true;
-      const isTraining = d.lora_status === "training";
-      const hasPhotos = (d.uploaded_photo_count ?? 0) > 0;
-      if (isTraining || (hasPhotos && d.lora_status !== "ready")) {
+      // lora_status is the sole source of truth — do not use uploaded_photo_count.
+      if (d.lora_status === "training") {
         setStep("training");
       }
     }

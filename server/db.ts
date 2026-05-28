@@ -700,7 +700,11 @@ export async function updateLoraProfile(userId: number, data: {
       { onConflict: "user_id", ignoreDuplicates: false }
     );
   if (error) {
-    console.error(`[updateLoraProfile] Upsert failed for user ${userId}:`, error.message);
+    // Throw so callers (loraPoller, loraEmailCron, loraUpload) know the write failed.
+    // Previously this was silent — that's why training completion emails fired but
+    // lora_status was never saved (archetype NOT NULL constraint violation).
+    console.error(`[updateLoraProfile] Upsert failed for user ${userId}:`, error.code, error.message);
+    throw new Error(`[updateLoraProfile] DB write failed for user ${userId}: ${error.message}`);
   }
 }
 

@@ -72,6 +72,9 @@ export default function Dashboard() {
 
   const utils = trpc.useUtils();
   const profileQuery = trpc.profile.get.useQuery(undefined, {
+    // Always refetch on mount so returning from email CTA (even on iOS Safari)
+    // gets current lora_status immediately instead of stale cached data.
+    refetchOnMount: "always",
     // Poll every 15s while training so the UI auto-transitions when ready.
     // lora_status is the single source of truth — no photo-count fallback.
     refetchInterval: (query) => {
