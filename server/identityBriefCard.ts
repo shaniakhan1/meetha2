@@ -539,16 +539,16 @@ function renderFooter(ctx: SKRSContext2D, y: number, W: number): number {
 
 export async function renderIdentityBriefCard(
   brief: AestheticBrief,
-  heroImageUrl?: string | null
+  heroImageSource?: string | Buffer | null
 ): Promise<Buffer> {
   const W = 900;
   const PAD = 52;
 
-  // Load hero image if available
+  // Load hero image if available (accepts URL string or raw Buffer)
   let heroImage: import("@napi-rs/canvas").Image | null = null;
-  if (heroImageUrl) {
+  if (heroImageSource) {
     try {
-      heroImage = await loadImage(heroImageUrl);
+      heroImage = await loadImage(heroImageSource as Parameters<typeof loadImage>[0]);
     } catch (e) {
       console.warn("[identityBriefCard] Could not load hero image:", e);
     }
