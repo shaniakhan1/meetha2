@@ -115,13 +115,39 @@ export default function Profile() {
     e.target.value = "";
   };
 
+  /** Compress a single image File to a JPEG Blob at max 1200px, quality 0.85. */
+  const compressImage = (file: File): Promise<Blob> =>
+    new Promise((resolve) => {
+      const MAX = 1200;
+      const img = new Image();
+      const url = URL.createObjectURL(file);
+      img.onload = () => {
+        URL.revokeObjectURL(url);
+        let { width, height } = img;
+        if (width > MAX || height > MAX) {
+          if (width > height) { height = Math.round((height * MAX) / width); width = MAX; }
+          else { width = Math.round((width * MAX) / height); height = MAX; }
+        }
+        const canvas = document.createElement("canvas");
+        canvas.width = width; canvas.height = height;
+        const ctx = canvas.getContext("2d")!;
+        ctx.drawImage(img, 0, 0, width, height);
+        canvas.toBlob((blob) => resolve(blob!), "image/jpeg", 0.85);
+      };
+      img.onerror = () => { URL.revokeObjectURL(url); resolve(file); };
+      img.src = url;
+    });
+
   const handleSubmitLoraTraining = async () => {
     if (!loraConsent) { toast.error("Please confirm the consent statement before training."); return; }
     if (loraPhotos.length < 10) { toast.error("Please upload at least 10 photos for best results."); return; }
     setIsSubmittingLora(true);
     try {
+      // Compress all photos client-side before upload (max 1200px, JPEG 85%)
+      // This keeps 10-20 iPhone photos well under the 32MB Cloud Run request limit
+      const compressed = await Promise.all(loraPhotos.map((f) => compressImage(f)));
       const formData = new FormData();
-      loraPhotos.forEach((f) => formData.append("photos", f));
+      compressed.forEach((blob, i) => formData.append("photos", blob, `photo_${i + 1}.jpg`));
       const res = await fetch("/api/lora/upload", { method: "POST", body: formData, credentials: "include" });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Upload failed");
