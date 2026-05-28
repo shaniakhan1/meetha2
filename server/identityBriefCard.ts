@@ -242,11 +242,11 @@ function renderHero(
 
   // meetha.studio wordmark — top left
   ctx.save();
-  ctx.font = sans(16, "700");
-  ctx.fillStyle = "rgba(255,255,255,0.5)";
+  ctx.font = sans(19, "700");
+  ctx.fillStyle = "rgba(255,248,235,0.65)";
   ctx.globalAlpha = 1;
   ctx.textAlign = "left";
-  ctx.fillText("meetha.studio", PAD, 52);
+  ctx.fillText("meetha.studio", PAD, 60);
   ctx.restore();
 
   // Headline — bottom of hero
@@ -530,18 +530,18 @@ function renderFooter(ctx: SKRSContext2D, y: number, W: number): number {
   y += 28;
   // meetha.studio wordmark
   ctx.save();
-  ctx.font = sans(18, "700");
-  ctx.fillStyle = GOLD;
-  ctx.globalAlpha = 0.6;
+  ctx.font = sans(22, "700");
+  ctx.fillStyle = GOLD_LIGHT;
+  ctx.globalAlpha = 0.78;
   ctx.textAlign = "center";
   ctx.fillText("meetha.studio", W / 2, y);
   ctx.restore();
   y += 16;
   // Tagline
   ctx.save();
-  ctx.font = sans(13, "400");
+  ctx.font = sans(15, "400");
   ctx.fillStyle = CHARCOAL_MID;
-  ctx.globalAlpha = 0.45;
+  ctx.globalAlpha = 0.58;
   ctx.textAlign = "center";
   ctx.fillText("styled by meetha.studio", W / 2, y);
   ctx.restore();

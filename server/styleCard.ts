@@ -294,10 +294,10 @@ export async function buildStyleCard(params: {
     }
 
     // "styled by Meetha" watermark on image (bottom-right, subtle)
-    ctx.font = `bold 28px MeethaFont`;
-    ctx.fillStyle = "rgba(255,255,255,0.65)";
+    ctx.font = `bold 34px MeethaFont`;
+    ctx.fillStyle = "rgba(255,248,230,0.75)";
     ctx.textAlign = "right";
-    ctx.fillText("styled by meetha.studio", CARD_W - 32, IMAGE_H - 28);
+    ctx.fillText("styled by meetha.studio", CARD_W - 48, IMAGE_H - 40);
   }
 
   // ════════════════════════════════════════════════════════════
@@ -390,9 +390,9 @@ export async function buildStyleCard(params: {
   ctx.stroke();
   ctx.globalAlpha = 1;
 
-  ctx.font = `bold 22px MeethaFont`;
+  ctx.font = `bold 27px MeethaFont`;
   ctx.fillStyle = GOLD;
-  ctx.globalAlpha = 0.6;
+  ctx.globalAlpha = 0.78;
   ctx.textAlign = "center";
   ctx.fillText("meetha.studio", CARD_W / 2, FOOTER_Y);
   ctx.globalAlpha = 1;
