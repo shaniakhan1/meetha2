@@ -4,6 +4,7 @@ import { useLocation } from "wouter";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
+import * as Sentry from "@sentry/react";
 
 export default function Profile() {
   const [, navigate] = useLocation();
@@ -174,6 +175,9 @@ export default function Profile() {
       utils.profile.get.invalidate();
       toast.success("Your look is being learned. We'll email you when it's ready (~20 min).");
     } catch (err) {
+      Sentry.captureException(err instanceof Error ? err : new Error("Profile upload failed"), {
+        tags: { flow: "profile_upload" },
+      });
       toast.error(err instanceof Error ? err.message : "Upload failed. Please try again.");
     } finally {
       setIsSubmittingLora(false);

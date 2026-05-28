@@ -1,5 +1,16 @@
 import "dotenv/config";
+import * as Sentry from "@sentry/node";
 import express from "express";
+
+// Initialize Sentry before anything else — errors only, no performance tracing
+if (process.env.SENTRY_DSN) {
+  Sentry.init({
+    dsn: process.env.SENTRY_DSN,
+    environment: process.env.NODE_ENV ?? "development",
+    tracesSampleRate: 0,
+    integrations: [],
+  });
+}
 import { createServer } from "http";
 import net from "net";
 import { createExpressMiddleware } from "@trpc/server/adapters/express";
@@ -81,6 +92,11 @@ async function startServer() {
     await setupVite(app, server);
   } else {
     serveStatic(app);
+  }
+
+  // Sentry error handler MUST be after all routes and before any other error middleware
+  if (process.env.SENTRY_DSN) {
+    Sentry.setupExpressErrorHandler(app);
   }
 
   const preferredPort = parseInt(process.env.PORT || "3000");

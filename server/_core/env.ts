@@ -14,4 +14,5 @@ export const ENV = {
   supabaseAnonKey: process.env.SUPABASE_ANON_KEY ?? "",
   supabaseServiceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY ?? "",
   resendApiKey: process.env.RESEND_API_KEY ?? "",
+  sentryDsn: process.env.SENTRY_DSN ?? "",
 };

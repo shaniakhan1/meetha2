@@ -1,3 +1,4 @@
+import * as Sentry from "@sentry/node";
 import { z } from "zod";
 import { transcribeAudio } from "./_core/voiceTranscription";
 import { storagePut, storageGetSignedUrl } from "./storage";
@@ -1580,6 +1581,7 @@ Respond in this exact JSON format:
             usedLora = true;
           } catch (loraErr) {
             // LoRA URL may have expired or changed format -- fall back to FLUX Ultra gracefully
+            Sentry.captureException(loraErr instanceof Error ? loraErr : new Error(String(loraErr)), { tags: { flow: "generation", type: "lora_fallback" } });
             console.warn("[generate.content] LoRA generation failed, falling back to FLUX Ultra:", loraErr instanceof Error ? loraErr.message : String(loraErr));
             // Rebuild prompt with physical anchor for base model fallback
             const fallbackPrompt = buildImagePrompt(archetype, mood, input.sceneCategory, profile?.aesthetic_descriptors ?? null, profile?.niche ?? null, profile?.audience ?? null, profile?.body_type ?? null, profile?.lora_physical_descriptors ?? null, profile?.body_descriptor ?? null);
@@ -1729,6 +1731,7 @@ Respond in this exact JSON format:
             // shows permanently in Profile > "Your Visual Identity"
             await updateTransformationCardUrl(ctx.user.id, cardUrl);
           } catch (err) {
+            Sentry.captureException(err instanceof Error ? err : new Error(String(err)), { tags: { flow: "generation", type: "style_card" } });
             console.error("[styleCard] background generation failed:", err);
           }
         })();
@@ -1908,6 +1911,7 @@ Return JSON with:
             imageKey = saved.key;
           } catch (loraErr) {
             // LoRA URL may have expired or changed format -- fall back to FLUX Ultra gracefully
+            Sentry.captureException(loraErr instanceof Error ? loraErr : new Error(String(loraErr)), { tags: { flow: "generation", type: "voice_lora_fallback" } });
             console.warn("[generate.voice] LoRA generation failed, falling back to FLUX Ultra:", loraErr instanceof Error ? loraErr.message : String(loraErr));
             const falResult = await generateImageFal({ prompt: imagePrompt });
             imageUrl = falResult.url;
@@ -2180,6 +2184,7 @@ Return JSON with:
             await updateGenerationCardUrl({ generationId: gen.id, cardUrl, cardKey });
             await updateTransformationCardUrl(ctx.user.id, cardUrl);
           } catch (err) {
+            Sentry.captureException(err instanceof Error ? err : new Error(String(err)), { tags: { flow: "generation", type: "studio_style_card" } });
             console.error("[createStudio] style card generation failed:", err);
           }
         })();

@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
+import * as Sentry from "@sentry/react";
 import {
   ARCHETYPE_LABELS,
   ARCHETYPE_DESCRIPTIONS,
@@ -202,6 +203,9 @@ export default function Onboarding() {
         } else if (raw) {
           userMsg = `Upload failed: ${raw.slice(0, 120)}`;
         }
+        Sentry.captureException(new Error(`Upload HTTP error: ${raw.slice(0, 200)}`), {
+          tags: { flow: "onboarding_upload" },
+        });
         toast.error(userMsg, { duration: 7000 });
       setLoraUploading(false);
       setUploadPhase(null);
@@ -213,6 +217,9 @@ export default function Onboarding() {
       setStep("training");
     } catch (err) {
       const msg = err instanceof Error ? err.message : "";
+      Sentry.captureException(err instanceof Error ? err : new Error(msg || "Unknown upload error"), {
+        tags: { flow: "onboarding_upload" },
+      });
       toast.error(msg || "Something went wrong uploading your photos. Please try again.", { duration: 7000 });
     } finally {
       setLoraUploading(false);

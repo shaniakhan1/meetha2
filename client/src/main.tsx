@@ -1,5 +1,21 @@
+import * as Sentry from "@sentry/react";
 import { trpc } from "@/lib/trpc";
 import { UNAUTHED_ERR_MSG } from '@shared/const';
+
+// Initialize Sentry — errors only, no performance tracing or session replay
+if (import.meta.env.VITE_SENTRY_DSN) {
+  Sentry.init({
+    dsn: import.meta.env.VITE_SENTRY_DSN,
+    environment: import.meta.env.MODE,
+    // Disable all performance/tracing features
+    tracesSampleRate: 0,
+    // Disable session replay
+    replaysSessionSampleRate: 0,
+    replaysOnErrorSampleRate: 0,
+    // Only capture errors, not performance data
+    integrations: [],
+  });
+}
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { httpBatchLink, TRPCClientError } from "@trpc/client";
 import { createRoot } from "react-dom/client";
