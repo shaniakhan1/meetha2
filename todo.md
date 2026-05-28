@@ -797,3 +797,9 @@
 - [x] Add Sentry.setUser(null) on logout in useAuth.ts
 - [x] Wrap <App /> in <Sentry.ErrorBoundary> in main.tsx with branded fallback screen (cream/gold, Reload button)
 - [x] TypeScript: zero errors
+
+## V38 -- Founder Section
+- [x] Add founder section to Home.tsx between Pricing and Final CTA
+- [x] Asymmetric two-column layout: photo 45% left, text right on desktop; stacked on mobile
+- [x] Upload founder photo to static storage (/manus-storage/founder-photo_b6c41300.webp)
+- [x] Final copy with "what you believe you deserve" closing line

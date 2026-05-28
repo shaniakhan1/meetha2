@@ -724,6 +724,47 @@ export default function Home() {
       {/* ── Pricing ── */}
       <PricingSection handleCTA={handleCTA} />
 
+      {/* ── Founder ── */}
+      <section className="py-20 px-6 bg-cream">
+        <div className="max-w-4xl mx-auto">
+          {/* Label */}
+          <p className="font-sans text-xs tracking-[0.25em] uppercase text-gold/70 mb-10 text-center">From the Founder</p>
+
+          <div className="flex flex-col md:flex-row gap-12 md:gap-16 items-start">
+            {/* Photo — 45% width on desktop, full width on mobile */}
+            <div className="w-full md:w-[45%] flex-shrink-0">
+              <img
+                src="/manus-storage/founder-photo_b6c41300.webp"
+                alt="Meetha founder"
+                className="w-full object-cover"
+                style={{ aspectRatio: '3/4', objectPosition: 'center top' }}
+              />
+            </div>
+
+            {/* Text */}
+            <div className="flex-1 flex flex-col justify-center md:pt-4">
+              <div className="divider-editorial mb-8" />
+              <p className="font-serif font-light text-charcoal leading-relaxed mb-6" style={{ fontSize: 'clamp(1rem, 2.5vw, 1.125rem)' }}>
+                I built Meetha because most women have never actually seen themselves through the eyes of a stylist, photographer, or creative director.
+              </p>
+              <p className="font-sans font-light text-sm text-charcoal-soft/70 leading-relaxed mb-6">
+                Not the rushed version. Not the insecure one. Not the version shaped by survival mode.
+              </p>
+              <p className="font-serif font-light text-charcoal text-base leading-relaxed mb-6 italic">
+                The aligned version.
+              </p>
+              <p className="font-sans font-light text-sm text-charcoal-soft/70 leading-relaxed mb-8">
+                When you start seeing yourself differently, everything else follows — how you dress, how you carry yourself, what you believe you deserve.
+              </p>
+              <p className="font-sans font-light text-sm text-charcoal-soft/70 leading-relaxed mb-10">
+                Meetha was never meant to be another AI photo app. It&apos;s a way to visualize the version of yourself you&apos;re already becoming.
+              </p>
+              <div className="divider-editorial" />
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* ── Final CTA ── */}
       <section
         className="relative px-6 py-24 text-center overflow-hidden"
