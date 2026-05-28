@@ -94,7 +94,7 @@ export async function handleLoraCheck(req: Request, res: Response) {
               await sendLoraFailedEmail({
                 to: email,
                 name,
-                retryUrl: `${BASE_URL}/profile`,
+                retryUrl: `${BASE_URL}/dashboard`,
               });
             } catch (emailErr) {
               console.error("[LoRA Cron] Failed to send failure email to", email, emailErr);
@@ -114,7 +114,7 @@ export async function handleLoraCheck(req: Request, res: Response) {
               await sendLoraReadyEmail({
                 to: email,
                 name,
-                generateUrl: `${BASE_URL}/generate`,
+                generateUrl: `${BASE_URL}/dashboard`,
               });
             } catch (emailErr) {
               console.error("[LoRA Cron] Failed to send ready email to", email, emailErr);

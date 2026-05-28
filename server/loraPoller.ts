@@ -132,13 +132,13 @@ async function sendEmailSafe(userId: number, type: "ready" | "failed"): Promise<
       await sendLoraReadyEmail({
         to: user.email,
         name: user.name ?? null,
-        generateUrl: `${BASE_URL}/generate`,
+        generateUrl: `${BASE_URL}/dashboard`,
       });
     } else {
       await sendLoraFailedEmail({
         to: user.email,
         name: user.name ?? null,
-        retryUrl: `${BASE_URL}/profile`,
+        retryUrl: `${BASE_URL}/dashboard`,
       });
     }
     console.log(`[LoraPoller] Sent ${type} email to user ${userId}`);
