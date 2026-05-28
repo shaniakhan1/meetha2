@@ -98,7 +98,7 @@ export default function SignIn() {
         >
           Back
         </button>
-        <span className="font-serif text-lg tracking-widest text-charcoal">MEETHA</span>
+        <a href="/" className="font-serif text-lg tracking-widest text-charcoal hover:opacity-70 transition-opacity">MEETHA</a>
         <div className="w-10" />
       </div>
 

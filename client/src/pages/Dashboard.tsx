@@ -332,7 +332,7 @@ export default function Dashboard() {
       >
         {/* Top bar */}
         <div className="flex items-center justify-between px-5 pt-5 pb-0">
-          <span className="font-serif text-base tracking-[0.2em] text-cream/90">MEETHA</span>
+          <span className="font-serif text-base tracking-[0.2em] text-cream/90 cursor-pointer" onClick={() => navigate("/dashboard")}>MEETHA</span>
           <button
             onClick={() => navigate("/profile")}
             className="font-sans text-xs tracking-widest uppercase text-cream/70 hover:text-cream transition-colors min-h-[44px] flex items-center"

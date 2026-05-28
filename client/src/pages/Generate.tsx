@@ -384,7 +384,7 @@ export default function Generate() {
       {/* Header */}
       <div className="flex items-center justify-between px-6 py-5 border-b border-sand/40">
         <button onClick={() => navigate("/dashboard")} className="font-sans text-xs tracking-widest uppercase text-charcoal-soft hover:text-charcoal transition-colors">Back</button>
-        <span className="font-serif text-lg tracking-widest text-charcoal">MEETHA</span>
+        <span className="font-serif text-lg tracking-widest text-charcoal cursor-pointer" onClick={() => navigate("/dashboard")}>MEETHA</span>
         <div className="text-right">
           <p className="font-sans text-xs text-gold">{effectiveCredits?.creditsRemaining ?? "."} left</p>
           {effectiveCredits?.tier === "free" && (
