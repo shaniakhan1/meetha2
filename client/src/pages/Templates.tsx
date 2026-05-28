@@ -221,6 +221,8 @@ const TEMPLATES = [
   },
 ];
 
+type TemplateEntry = (typeof TEMPLATES)[number];
+
 // Short nav labels for horizontal pill navigation
 const NAV_LABELS: Record<string, string> = {
   paparazzi_flash: "Caught",
@@ -239,6 +241,7 @@ export default function Templates() {
   const [hoveredHooks, setHoveredHooks] = useState<Record<string, string | null>>({});
   const [imgErrors, setImgErrors] = useState<Record<string, boolean>>({});
   const cardRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  const [pendingTemplate, setPendingTemplate] = useState<TemplateEntry | null>(null);
 
   const { data: templateCounts } = trpc.generations.templateCounts.useQuery(undefined, {
     staleTime: 5 * 60 * 1000,
@@ -249,7 +252,15 @@ export default function Templates() {
       window.location.href = getLoginUrl();
       return;
     }
-    navigate(`/generate?template=${slug}`);
+    const template = TEMPLATES.find((t) => t.slug === slug);
+    if (template) setPendingTemplate(template);
+  };
+
+  const handleConfirmGenerate = () => {
+    if (pendingTemplate) {
+      navigate(`/generate?template=${pendingTemplate.slug}`);
+      setPendingTemplate(null);
+    }
   };
 
   const scrollToTemplate = (slug: string) => {
@@ -445,6 +456,51 @@ export default function Templates() {
           </div>
         ))}
       </div>
+
+      {/* ── Confirmation sheet ── */}
+      {pendingTemplate && (
+        <>
+          {/* Backdrop */}
+          <div
+            className="fixed inset-0 bg-charcoal/60 z-40"
+            onClick={() => setPendingTemplate(null)}
+          />
+          {/* Sheet */}
+          <div
+            className="fixed bottom-0 left-0 right-0 z-50 bg-cream rounded-t-2xl px-6 pt-8"
+            style={{ paddingBottom: "max(2.5rem, env(safe-area-inset-bottom))" }}
+          >
+            {/* Drag handle */}
+            <div className="w-10 h-1 bg-sand rounded-full mx-auto mb-6" />
+            {/* Template identity */}
+            <p className="font-sans text-xs tracking-[0.2em] uppercase text-gold mb-1">
+              {pendingTemplate.number}
+            </p>
+            <h3
+              className="font-serif font-light text-charcoal mb-2 whitespace-pre-line"
+              style={{ fontSize: "1.5rem", lineHeight: 1.1 }}
+            >
+              {pendingTemplate.title}
+            </h3>
+            <p className="font-sans font-light text-xs text-charcoal-soft leading-relaxed mb-8">
+              {pendingTemplate.subtitle}
+            </p>
+            {/* Actions */}
+            <button
+              onClick={handleConfirmGenerate}
+              className="w-full py-4 bg-charcoal text-cream font-sans text-xs tracking-[0.2em] uppercase mb-3 active:scale-[0.97] transition-transform"
+            >
+              Generate this look
+            </button>
+            <button
+              onClick={() => setPendingTemplate(null)}
+              className="w-full py-3 font-sans text-xs tracking-[0.15em] uppercase text-charcoal-soft hover:text-charcoal transition-colors"
+            >
+              Keep browsing
+            </button>
+          </div>
+        </>
+      )}
     </div>
   );
 }
