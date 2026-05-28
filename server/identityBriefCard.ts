@@ -246,7 +246,7 @@ function renderHero(
   ctx.fillStyle = "rgba(255,255,255,0.5)";
   ctx.globalAlpha = 1;
   ctx.textAlign = "left";
-  ctx.fillText("MEETHA", PAD, 52);
+  ctx.fillText("meetha.studio", PAD, 52);
   ctx.restore();
 
   // Headline — bottom of hero
@@ -534,7 +534,7 @@ function renderFooter(ctx: SKRSContext2D, y: number, W: number): number {
   ctx.fillStyle = GOLD;
   ctx.globalAlpha = 0.6;
   ctx.textAlign = "center";
-  ctx.fillText("MEETHA", W / 2, y);
+  ctx.fillText("meetha.studio", W / 2, y);
   ctx.restore();
   y += 16;
   // Tagline
@@ -543,7 +543,7 @@ function renderFooter(ctx: SKRSContext2D, y: number, W: number): number {
   ctx.fillStyle = CHARCOAL_MID;
   ctx.globalAlpha = 0.35;
   ctx.textAlign = "center";
-  ctx.fillText("THIS IS YOUR AESTHETIC BLUEPRINT.", W / 2, y);
+  ctx.fillText("styled by meetha.studio", W / 2, y);
   ctx.restore();
   return y + 48;
 }

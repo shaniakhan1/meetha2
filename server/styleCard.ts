@@ -297,7 +297,7 @@ export async function buildStyleCard(params: {
     ctx.font = `bold 20px MeethaFont`;
     ctx.fillStyle = "rgba(255,255,255,0.50)";
     ctx.textAlign = "right";
-    ctx.fillText("styled by Meetha", CARD_W - 32, IMAGE_H - 24);
+    ctx.fillText("styled by meetha.studio", CARD_W - 32, IMAGE_H - 24);
   }
 
   // ════════════════════════════════════════════════════════════
