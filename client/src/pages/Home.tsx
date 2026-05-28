@@ -197,7 +197,7 @@ export default function Home() {
           }}
         />
 
-        <div className="relative z-10 max-w-sm mx-auto w-full">
+        <div className="relative z-10 w-full" style={{ maxWidth: "480px" }}>
           <p className="font-sans text-xs tracking-[0.25em] uppercase text-gold mb-6 animate-fade-up opacity-0 delay-100">
             The art of becoming visually unforgettable.
           </p>
@@ -369,7 +369,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ── Output Example ── */}
+      {/* ── Output Example — Real Style Cards ── */}
       <section className="py-16 px-6 bg-cream">
         <div className="max-w-sm mx-auto text-center mb-8">
           <p className="font-sans text-xs tracking-[0.2em] uppercase text-gold mb-4">
@@ -379,37 +379,32 @@ export default function Home() {
             A campaign brief for your future self.
           </h2>
           <div className="divider-editorial" />
+          <p className="font-sans font-light text-sm text-charcoal-soft leading-relaxed mt-4">
+            Every card is a real output from Meetha. Real faces. Real identities.
+          </p>
         </div>
 
-        <div className="max-w-sm mx-auto">
+        {/* Card 1 — peace changed my face */}
+        <div className="max-w-sm mx-auto mb-6">
           <div className="border border-sand bg-warm-white overflow-hidden">
-            <div className="relative w-full overflow-hidden" style={{ height: "320px" }}>
+            <div className="relative w-full overflow-hidden" style={{ height: "340px" }}>
               <img
-                src="/manus-storage/meetha-car-laughing_257c6ff8.jpg"
-                alt="Content example"
-                className="w-full h-full object-cover object-center"
+                src="/manus-storage/meetha-style-card-134_08616de7.jpg"
+                alt="Meetha style card — peace changed my face"
+                className="w-full h-full object-cover object-top"
               />
-              <div className="absolute bottom-0 left-0 right-0 p-5" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.75) 0%, transparent 100%)" }}>
-                <p className="font-serif text-lg text-white leading-snug">
-                  peace changed my face
-                </p>
-                <p className="font-sans text-xs tracking-widest uppercase text-white/50 mt-1">
-                  meetha
-                </p>
-              </div>
             </div>
-
             <div className="p-5 space-y-3">
               <p className="font-sans text-xs tracking-[0.15em] uppercase text-gold">
                 Your Identity Brief
               </p>
               <div className="space-y-2">
                 {[
-                  ["Palette", "Warm ivory, deep camel, amber gold. No cool tones."],
-                  ["Metals", "Warm yellow gold only. Stack it."],
-                  ["Makeup", "Bold lip, strong brow, minimal eye. The mouth is your focal point."],
-                  ["Lighting", "Late afternoon window, light source left or right. Never straight on."],
-                  ["Presence", "Your presence sharpens through contrast, softness, and restraint."],
+                  ["Palette", "Deep noir, oxblood, and midnight blue dominate, punctuated by flashes of molten gold or stark ivory."],
+                  ["Metals", "Heavy, sculptural gold and blackened silver pieces, often layered, command attention with their raw, untamed finish."],
+                  ["Makeup", "A sharp, smoked-out cat eye or a deep, matte berry lip creates a singular focal point."],
+                  ["Lighting", "Harsh, direct flash from multiple angles captures every glint and shadow, emphasizing dramatic contours."],
+                  ["Presence", "She is a magnetic force, her raw allure amplified by the sudden, intrusive glare of the cameras."],
                 ].map(([label, value]) => (
                   <div key={label} className="flex gap-3">
                     <span className="font-sans text-xs text-gold/70 w-16 flex-shrink-0">{label}</span>
@@ -419,7 +414,38 @@ export default function Home() {
               </div>
             </div>
           </div>
+        </div>
 
+        {/* Card 2 — warm light and gold */}
+        <div className="max-w-sm mx-auto">
+          <div className="border border-sand bg-warm-white overflow-hidden">
+            <div className="relative w-full overflow-hidden" style={{ height: "340px" }}>
+              <img
+                src="/manus-storage/meetha-style-card-133_9a86196c.jpg"
+                alt="Meetha style card — warm light and gold"
+                className="w-full h-full object-cover object-top"
+              />
+            </div>
+            <div className="p-5 space-y-3">
+              <p className="font-sans text-xs tracking-[0.15em] uppercase text-gold">
+                Your Identity Brief
+              </p>
+              <div className="space-y-2">
+                {[
+                  ["Palette", "Warm earth tones, creamy ivories, and rich browns define her color story, enhanced by soft shadows."],
+                  ["Metals", "Layered gold bracelets and rings, substantial in weight, highlight warm metal hardware."],
+                  ["Makeup", "A deep, precise lip is the focal point, complemented by a warm, sculpted eye and glowing skin."],
+                  ["Lighting", "Golden hour light transitions to intimate candlelight, casting long, dramatic shadows."],
+                  ["Presence", "She commands the frame with a grounded poise, her gaze direct and captivating."],
+                ].map(([label, value]) => (
+                  <div key={label} className="flex gap-3">
+                    <span className="font-sans text-xs text-gold/70 w-16 flex-shrink-0">{label}</span>
+                    <span className="font-sans font-light text-xs text-charcoal-soft leading-relaxed">{value}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
           <p className="font-sans text-xs text-charcoal-soft text-center mt-4 tracking-wide">
             Generated in under 30 seconds. Styled to you.
           </p>
@@ -504,121 +530,126 @@ export default function Home() {
           </p>
         </div>
 
-        {/* Full-bleed portrait — Black woman, window light */}
-        <div className="w-full aspect-[3/4] overflow-hidden">
-          <img
-            src="https://d2xsxph8kpxj0f.cloudfront.net/310519663380647277/W9hp3oxSnRYx5WHCSun39U/editorial-01-window-4Ex7ySDHERfgQxSGrLgiqH.webp"
-            alt="Editorial portrait — window light"
-            className="w-full h-full object-cover object-top"
-          />
-        </div>
+        {/* Gallery container — capped at 520px on desktop so images don't go wall-to-wall */}
+        <div className="mx-auto w-full" style={{ maxWidth: "520px" }}>
 
-        {/* Two-column: existing gallery + new full-body */}
-        <div className="grid grid-cols-2 gap-0.5">
-          <div className="aspect-[3/4] overflow-hidden">
+          {/* Full portrait */}
+          <div className="w-full aspect-[3/4] overflow-hidden">
             <img
-              src="/manus-storage/meetha-17_05094910.jpg"
-              alt="Meetha styling — car window portrait"
-              className="w-full h-full object-cover object-center"
-            />
-          </div>
-          <div className="aspect-[3/4] overflow-hidden">
-            <img
-              src="https://d2xsxph8kpxj0f.cloudfront.net/310519663380647277/W9hp3oxSnRYx5WHCSun39U/editorial-02-fullbody-cRGwTXz2gHjynX9ahHDVXB.webp"
-              alt="Editorial — full body golden hour"
+              src="https://d2xsxph8kpxj0f.cloudfront.net/310519663380647277/W9hp3oxSnRYx5WHCSun39U/editorial-01-window-4Ex7ySDHERfgQxSGrLgiqH.webp"
+              alt="Editorial portrait — window light"
               className="w-full h-full object-cover object-top"
             />
           </div>
-        </div>
 
-        {/* Offset text break */}
-        <div className="px-6 py-10 flex items-end justify-between gap-4">
-          <p className="font-serif font-light text-cream/40" style={{ fontSize: "clamp(2.5rem, 10vw, 4rem)", lineHeight: 1.0 }}>
-            every<br />body.
-          </p>
-          <p className="font-sans text-xs text-cream/40 text-right leading-relaxed max-w-[140px]">
-            Different skin tones.<br />Different shapes.<br />One visual language.
-          </p>
-        </div>
+          {/* Two-column: existing gallery + new full-body */}
+          <div className="grid grid-cols-2 gap-0.5 mt-0.5">
+            <div className="aspect-[3/4] overflow-hidden">
+              <img
+                src="/manus-storage/meetha-17_05094910.jpg"
+                alt="Meetha styling — car window portrait"
+                className="w-full h-full object-cover object-center"
+              />
+            </div>
+            <div className="aspect-[3/4] overflow-hidden">
+              <img
+                src="https://d2xsxph8kpxj0f.cloudfront.net/310519663380647277/W9hp3oxSnRYx5WHCSun39U/editorial-02-fullbody-cRGwTXz2gHjynX9ahHDVXB.webp"
+                alt="Editorial — full body golden hour"
+                className="w-full h-full object-cover object-top"
+              />
+            </div>
+          </div>
 
-        {/* Wide cinematic strip */}
-        <div className="w-full aspect-[16/9] overflow-hidden">
-          <img
-            src="/manus-storage/meetha-gallery-street-back_d0e260dd.webp"
-            alt="Meetha styling — street"
-            className="w-full h-full object-cover object-center"
-          />
-        </div>
+          {/* Offset text break */}
+          <div className="px-6 py-10 flex items-end justify-between gap-4">
+            <p className="font-serif font-light text-cream/40" style={{ fontSize: "clamp(2.5rem, 10vw, 4rem)", lineHeight: 1.0 }}>
+              every<br />body.
+            </p>
+            <p className="font-sans text-xs text-cream/40 text-right leading-relaxed max-w-[140px]">
+              Different skin tones.<br />Different shapes.<br />One visual language.
+            </p>
+          </div>
 
-        {/* Three-column tight grid */}
-        <div className="grid grid-cols-3 gap-0.5 mt-0.5">
-          <div className="aspect-[3/4] overflow-hidden">
+          {/* Wide cinematic strip — 16:9 keeps it compact */}
+          <div className="w-full aspect-[16/9] overflow-hidden">
             <img
-              src="/manus-storage/meetha-gallery-restaurant_33c494d6.webp"
-              alt="Meetha styling — restaurant"
+              src="/manus-storage/meetha-gallery-street-back_d0e260dd.webp"
+              alt="Meetha styling — street"
               className="w-full h-full object-cover object-center"
             />
           </div>
-          <div className="aspect-[3/4] overflow-hidden">
-            <img
-              src="https://d2xsxph8kpxj0f.cloudfront.net/310519663380647277/W9hp3oxSnRYx5WHCSun39U/editorial-03-restaurant-JxCbUv26xaboJFEWHABv6g.webp"
-              alt="Editorial — candlelit restaurant"
-              className="w-full h-full object-cover object-top"
-            />
+
+          {/* Three-column tight grid */}
+          <div className="grid grid-cols-3 gap-0.5 mt-0.5">
+            <div className="aspect-[3/4] overflow-hidden">
+              <img
+                src="/manus-storage/meetha-gallery-restaurant_33c494d6.webp"
+                alt="Meetha styling — restaurant"
+                className="w-full h-full object-cover object-center"
+              />
+            </div>
+            <div className="aspect-[3/4] overflow-hidden">
+              <img
+                src="https://d2xsxph8kpxj0f.cloudfront.net/310519663380647277/W9hp3oxSnRYx5WHCSun39U/editorial-03-restaurant-JxCbUv26xaboJFEWHABv6g.webp"
+                alt="Editorial — candlelit restaurant"
+                className="w-full h-full object-cover object-top"
+              />
+            </div>
+            <div className="aspect-[3/4] overflow-hidden">
+              <img
+                src="/manus-storage/meetha-gallery-sofa_84cbf7ec.webp"
+                alt="Meetha styling — sofa"
+                className="w-full h-full object-cover object-center"
+              />
+            </div>
           </div>
-          <div className="aspect-[3/4] overflow-hidden">
+
+          {/* Jewelry close-up — changed to 16:9 so it doesn't tower */}
+          <div className="w-full aspect-[4/3] overflow-hidden mt-0.5">
             <img
-              src="/manus-storage/meetha-gallery-sofa_84cbf7ec.webp"
-              alt="Meetha styling — sofa"
+              src="https://d2xsxph8kpxj0f.cloudfront.net/310519663380647277/W9hp3oxSnRYx5WHCSun39U/editorial-05-jewelry-E7PHF69YfVpDeTTDRyXXDd.webp"
+              alt="Editorial — gold jewelry close-up"
               className="w-full h-full object-cover object-center"
             />
           </div>
-        </div>
 
-        {/* Jewelry close-up — full bleed */}
-        <div className="w-full aspect-[3/4] overflow-hidden mt-0.5">
-          <img
-            src="https://d2xsxph8kpxj0f.cloudfront.net/310519663380647277/W9hp3oxSnRYx5WHCSun39U/editorial-05-jewelry-E7PHF69YfVpDeTTDRyXXDd.webp"
-            alt="Editorial — gold jewelry close-up"
-            className="w-full h-full object-cover object-center"
-          />
-        </div>
+          {/* Two-column: motion + soft light */}
+          <div className="grid grid-cols-2 gap-0.5 mt-0.5">
+            <div className="aspect-[3/4] overflow-hidden">
+              <img
+                src="https://d2xsxph8kpxj0f.cloudfront.net/310519663380647277/W9hp3oxSnRYx5WHCSun39U/editorial-04-motion-PdCsKveuYL5VJ73Dzk4AZe.webp"
+                alt="Editorial — motion street"
+                className="w-full h-full object-cover object-top"
+              />
+            </div>
+            <div className="aspect-[3/4] overflow-hidden">
+              <img
+                src="https://d2xsxph8kpxj0f.cloudfront.net/310519663380647277/W9hp3oxSnRYx5WHCSun39U/editorial-06-softlight-X9utC7yPfkFCBqUYhBXkqQ.webp"
+                alt="Editorial — soft morning light"
+                className="w-full h-full object-cover object-top"
+              />
+            </div>
+          </div>
 
-        {/* Two-column: motion + soft light */}
-        <div className="grid grid-cols-2 gap-0.5 mt-0.5">
-          <div className="aspect-[3/4] overflow-hidden">
-            <img
-              src="https://d2xsxph8kpxj0f.cloudfront.net/310519663380647277/W9hp3oxSnRYx5WHCSun39U/editorial-04-motion-PdCsKveuYL5VJ73Dzk4AZe.webp"
-              alt="Editorial — motion street"
-              className="w-full h-full object-cover object-top"
-            />
+          {/* Existing gallery images — hands coffee + car window */}
+          <div className="grid grid-cols-2 gap-0.5 mt-0.5">
+            <div className="aspect-square overflow-hidden">
+              <img
+                src="/manus-storage/meetha-gallery-hands-coffee_2b4e9461.webp"
+                alt="Meetha styling — hands coffee"
+                className="w-full h-full object-cover object-center"
+              />
+            </div>
+            <div className="aspect-square overflow-hidden">
+              <img
+                src="/manus-storage/meetha-gallery-car-window_beac299e.webp"
+                alt="Meetha styling — car window"
+                className="w-full h-full object-cover object-center"
+              />
+            </div>
           </div>
-          <div className="aspect-[3/4] overflow-hidden">
-            <img
-              src="https://d2xsxph8kpxj0f.cloudfront.net/310519663380647277/W9hp3oxSnRYx5WHCSun39U/editorial-06-softlight-X9utC7yPfkFCBqUYhBXkqQ.webp"
-              alt="Editorial — soft morning light"
-              className="w-full h-full object-cover object-top"
-            />
-          </div>
-        </div>
 
-        {/* Existing gallery images — hands coffee + car window */}
-        <div className="grid grid-cols-2 gap-0.5 mt-0.5">
-          <div className="aspect-square overflow-hidden">
-            <img
-              src="/manus-storage/meetha-gallery-hands-coffee_2b4e9461.webp"
-              alt="Meetha styling — hands coffee"
-              className="w-full h-full object-cover object-center"
-            />
-          </div>
-          <div className="aspect-square overflow-hidden">
-            <img
-              src="/manus-storage/meetha-gallery-car-window_beac299e.webp"
-              alt="Meetha styling — car window"
-              className="w-full h-full object-cover object-center"
-            />
-          </div>
-        </div>
+        </div>{/* end gallery container */}
 
         <p className="font-sans text-xs text-cream/25 text-center py-8 tracking-[0.2em] uppercase">
           undefined &rarr; aligned
