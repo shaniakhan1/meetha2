@@ -531,7 +531,7 @@ export default function Onboarding() {
             Meetha is learning your face, your coloring, and your visual essence.
           </p>
           <p className="font-sans text-sm font-light text-charcoal-soft leading-relaxed mb-10 max-w-xs">
-            This usually takes 10–20 minutes. We'll notify you when it's ready.
+            This usually takes 10–20 minutes. We'll send you an email when it's ready.
           </p>
           <div className="flex flex-col items-center gap-3">
             <div className="w-6 h-6 border border-gold/40 border-t-gold rounded-full animate-spin" />
