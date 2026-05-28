@@ -759,7 +759,10 @@ export default function Home() {
               <p className="font-sans font-light text-sm text-charcoal-soft/70 leading-relaxed mb-10">
                 Meetha was never meant to be another AI photo app. It&apos;s a way to visualize the version of yourself you&apos;re already becoming.
               </p>
-              <div className="divider-editorial" />
+              <div className="divider-editorial mb-6" />
+              <p className="font-sans text-xs tracking-[0.2em] uppercase text-charcoal-soft/50">
+                &mdash;&nbsp;Shania Khan, Founder
+              </p>
             </div>
           </div>
         </div>
