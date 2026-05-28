@@ -40,6 +40,7 @@ export const profiles = mysqlTable("profiles", {
   mood: mysqlEnum("mood", ["soft", "magnetic", "grounded", "untamed"]),
   onboardingComplete: boolean("onboardingComplete").default(false).notNull(),
   bodyType: text("body_type"),
+  bodyDescriptor: text("body_descriptor"),
   shareBadgeEnabled: boolean("share_badge_enabled").default(false),
   aestheticBrief: json("aesthetic_brief"),
   transformationCardUrl: text('transformation_card_url'),

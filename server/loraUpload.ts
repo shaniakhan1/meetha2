@@ -74,6 +74,40 @@ async function extractPhysicalDescriptors(photoBuffer: Buffer, mimeType: string)
   }
 }
 
+/**
+ * Analyze a training photo to extract body frame and proportions.
+ * Returns an explicit body anchor string injected into every generation prompt
+ * to prevent the diffusion model from collapsing to its default slim bias.
+ */
+async function extractBodyDescriptor(photoBuffer: Buffer, mimeType: string): Promise<string | null> {
+  try {
+    const { url } = await storagePut(`lora-body-analysis/${Date.now()}.jpg`, photoBuffer, mimeType);
+    const absoluteUrl = url.startsWith("http") ? url : `https://meetha.studio${url}`;
+    const result = await invokeLLM({
+      messages: [
+        {
+          role: "system",
+          content: `You are a precise visual analyst for AI image generation. Describe the body frame and proportions of the person in the photo. Be factual and specific. Focus ONLY on: body size category (slim/average/curvy/plus-size/full-figured), face shape fullness (round/oval/full/defined), arm fullness (slender/average/full/thick), bust size (small/medium/large/full), waist-to-hip ratio (defined/moderate/soft), and overall silhouette (narrow/medium/wide frame). Output a single sentence starting with the subject's body description. Example: "Plus-size woman with a full round face, thick arms, large bust, soft waist, wide natural frame, and generous curves throughout." Do NOT include hair, skin tone, clothing, or background.`,
+        },
+        {
+          role: "user",
+          content: [
+            { type: "image_url", image_url: { url: absoluteUrl, detail: "low" } },
+            { type: "text", text: "Describe this person's body frame and proportions for use as an AI generation preservation anchor. One sentence only." },
+          ],
+        },
+      ],
+      maxTokens: 100,
+    });
+    const raw = result.choices?.[0]?.message?.content;
+    if (typeof raw !== "string" || !raw.trim()) return null;
+    return raw.trim().slice(0, 300);
+  } catch (err) {
+    console.warn("[LoRA] Body descriptor extraction failed (non-fatal):", err instanceof Error ? err.message : String(err));
+    return null;
+  }
+}
+
 // Memory storage - we only need the buffer, not disk persistence
 const ACCEPTED_EXTS = /\.(heic|heif|jpg|jpeg|png|webp|tiff?)$/i;
 
@@ -159,11 +193,23 @@ export async function handleLoraUpload(req: Request, res: Response) {
       uploadedPhotoCount: images.length,
     });
 
+    // Also run body descriptor analysis on a full-body photo if available (prefer 3rd photo for more body context)
+    const bodyAnalysisFile = files.length >= 3 ? files[2] : files[0];
+    const bodyDescriptorPromise = extractBodyDescriptor(bodyAnalysisFile.buffer, bodyAnalysisFile.mimetype);
+
     // Save physical descriptors once vision analysis completes (fire and forget)
     physicalDescriptorsPromise.then(async (descriptors) => {
       if (descriptors) {
         await updateLoraProfile(userId, { loraPhysicalDescriptors: descriptors });
         console.log(`[LoRA] Physical descriptors saved for user ${userId}: ${descriptors}`);
+      }
+    }).catch(() => { /* non-fatal */ });
+
+    // Save body descriptor once analysis completes (fire and forget)
+    bodyDescriptorPromise.then(async (descriptor) => {
+      if (descriptor) {
+        await updateLoraProfile(userId, { loraBodyDescriptor: descriptor });
+        console.log(`[LoRA] Body descriptor saved for user ${userId}: ${descriptor}`);
       }
     }).catch(() => { /* non-fatal */ });
 

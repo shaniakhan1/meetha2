@@ -23,8 +23,13 @@ function detectFullerBodyStudio(physicalDescriptors: string | null | undefined):
  */
 function buildBodyPreservationModifier(
   bodyType: string | null | undefined,
-  physicalDescriptors: string | null | undefined
+  physicalDescriptors: string | null | undefined,
+  bodyDescriptor?: string | null | undefined
 ): string {
+  // Tier 0: AI-extracted body descriptor from training photos -- most specific anchor
+  if (bodyDescriptor && bodyDescriptor.trim().length > 0) {
+    return `IDENTITY PRESERVATION: ${bodyDescriptor.trim()} Preserve her exact body proportions, frame width, arm fullness, bust and waist relationship, facial fullness, and physical presence exactly as described. Do not slim, elongate, editorialize, or alter her natural body composition in any way. This is non-negotiable.`;
+  }
   if (bodyType && bodyType.trim().length > 0) {
     return `IDENTITY PRESERVATION: ${bodyType}. Preserve her exact natural body proportions, weight distribution, silhouette, frame width, arm fullness, bust and waist relationship, facial fullness, and physical presence. Do not slim, elongate, editorialize, or alter her natural body composition in any way.`;
   }
@@ -121,7 +126,8 @@ export function buildCreateStudioPrompt(
   mood: string,
   aestheticDescriptors: string | null | undefined,
   bodyType: string | null | undefined,
-  physicalDescriptors: string | null | undefined
+  physicalDescriptors: string | null | undefined,
+  bodyDescriptor?: string | null | undefined
 ): string {
   const scene = OCCASION_SCENE[occasion];
   const energyLayer = ENERGY_VISUAL[energy];
@@ -140,7 +146,7 @@ export function buildCreateStudioPrompt(
     : "";
 
   // System-level body preservation modifier -- injected at the front for maximum weight
-  const bodyPreservationModifier = buildBodyPreservationModifier(bodyType, physicalDescriptors);
+  const bodyPreservationModifier = buildBodyPreservationModifier(bodyType, physicalDescriptors, bodyDescriptor);
   const physicalLayer = physicalDescriptors
     ? `preserve subject's natural complexion and undertones, maintain authentic facial structure, ${physicalDescriptors},`
     : "";

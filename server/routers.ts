@@ -331,8 +331,14 @@ function detectFullerBody(physicalDescriptors: string | null | undefined): boole
  */
 function buildBodyPreservationModifier(
   bodyType: string | null | undefined,
-  physicalDescriptors: string | null | undefined
+  physicalDescriptors: string | null | undefined,
+  bodyDescriptor?: string | null | undefined
 ): string {
+  // Tier 0: AI-extracted body descriptor from training photos -- most specific anchor available
+  if (bodyDescriptor && bodyDescriptor.trim().length > 0) {
+    return `IDENTITY PRESERVATION: ${bodyDescriptor.trim()} Preserve her exact body proportions, frame width, arm fullness, bust and waist relationship, facial fullness, and physical presence exactly as described. Do not slim, elongate, editorialize, or alter her natural body composition in any way. This is non-negotiable.`;
+  }
+
   // Tier 1: user has an explicit body preference -- use it verbatim as the primary anchor
   if (bodyType && bodyType.trim().length > 0) {
     return `IDENTITY PRESERVATION: ${bodyType}. Preserve her exact natural body proportions, weight distribution, silhouette, frame width, arm fullness, bust and waist relationship, facial fullness, and physical presence. Do not slim, elongate, editorialize, or alter her natural body composition in any way.`;
@@ -368,7 +374,8 @@ function buildImagePrompt(
   niche?: string | null,
   audience?: string | null,
   bodyType?: string | null,
-  physicalDescriptors?: string | null
+  physicalDescriptors?: string | null,
+  bodyDescriptor?: string | null
 ): string {
   const scene = sceneCategory
     ? SCENE_PROMPTS[sceneCategory] || (ARCHETYPE_DEFAULT_SCENE[archetype] ?? ARCHETYPE_DEFAULT_SCENE.soft_power)
@@ -378,7 +385,7 @@ function buildImagePrompt(
   // Deliberately avoid "high resolution" and "photorealistic" to prevent beauty-portrait collapse
   if (sceneCategory && SELF_CONTAINED_SCENES.has(sceneCategory) && SCENE_PROMPTS[sceneCategory]) {
     // Still inject body preservation into template scenes -- they show full bodies
-    const bodyPreservation = buildBodyPreservationModifier(bodyType, physicalDescriptors);
+    const bodyPreservation = buildBodyPreservationModifier(bodyType, physicalDescriptors, bodyDescriptor);
     return `${bodyPreservation} ${scene}, documentary realism, film grain, analog texture, imperfect focus, mood over sharpness, no beauty retouching, no over-sharpened faces, no sterile AI polish, no studio lighting, no clean background`;
   }
 
@@ -390,7 +397,7 @@ function buildImagePrompt(
 
   const nicheLayer = niche ? `visual world of a ${niche} creator,` : "";
   // Body preservation modifier injected at the front -- strongest signal for identity accuracy
-  const bodyPreservationModifier = buildBodyPreservationModifier(bodyType, physicalDescriptors);
+  const bodyPreservationModifier = buildBodyPreservationModifier(bodyType, physicalDescriptors, bodyDescriptor);
   // Physical anchor from vision-extracted descriptors (complexion, facial structure)
   const physicalAnchorLayer = buildPhysicalAnchor(physicalDescriptors);
   return `${bodyPreservationModifier} ${scene}, ${archetypeStyle}, ${moodStyle}, ${aestheticLayer} ${nicheLayer} ${physicalAnchorLayer} editorial female-gaze aesthetic, focus on wardrobe styling, fabric texture, jewelry detail, and atmospheric lighting, cinematic lighting, subtle film grain, realistic textures, warm amber tones, atmospheric depth, no faces, no full bodies, hands only when naturally holding an object, vertical 9:16 framing, social-media-ready, photorealistic, high resolution`;
@@ -1524,7 +1531,7 @@ Respond in this exact JSON format:
 
         // Generate image via Fal.ai FLUX 1.1 Pro Ultra
         // Pass physical descriptors for base-model path identity anchoring
-        const imagePrompt = buildImagePrompt(archetype, mood, input.sceneCategory, profile?.aesthetic_descriptors ?? null, profile?.niche ?? null, profile?.audience ?? null, profile?.body_type ?? null, profile?.lora_physical_descriptors ?? null);
+        const imagePrompt = buildImagePrompt(archetype, mood, input.sceneCategory, profile?.aesthetic_descriptors ?? null, profile?.niche ?? null, profile?.audience ?? null, profile?.body_type ?? null, profile?.lora_physical_descriptors ?? null, profile?.body_descriptor ?? null);
         // Map video format to Fal image_size
         const VIDEO_FORMAT_SIZE: Record<string, "portrait_4_3" | "portrait_16_9" | "square_hd" | "landscape_16_9"> = {
           tiktok_reels: "portrait_16_9",
@@ -1558,7 +1565,7 @@ Respond in this exact JSON format:
             // LoRA URL may have expired or changed format -- fall back to FLUX Ultra gracefully
             console.warn("[generate.content] LoRA generation failed, falling back to FLUX Ultra:", loraErr instanceof Error ? loraErr.message : String(loraErr));
             // Rebuild prompt with physical anchor for base model fallback
-            const fallbackPrompt = buildImagePrompt(archetype, mood, input.sceneCategory, profile?.aesthetic_descriptors ?? null, profile?.niche ?? null, profile?.audience ?? null, profile?.body_type ?? null, profile?.lora_physical_descriptors ?? null);
+            const fallbackPrompt = buildImagePrompt(archetype, mood, input.sceneCategory, profile?.aesthetic_descriptors ?? null, profile?.niche ?? null, profile?.audience ?? null, profile?.body_type ?? null, profile?.lora_physical_descriptors ?? null, profile?.body_descriptor ?? null);
             const falResult = await generateImageFal({ prompt: fallbackPrompt, imageSize });
             imageUrl = falResult.url;
             imageKey = falResult.key;
@@ -1855,11 +1862,11 @@ Return JSON with:
             : "warm honey skin tones where hands are visible, gold jewelry details,";
           const nicheLayer = profile?.niche ? `visual world of a ${profile.niche} creator,` : "";
           // Body preservation modifier injected at the front -- strongest signal for identity accuracy
-          const bodyPreservationVoice = buildBodyPreservationModifier(profile?.body_type, profile?.lora_physical_descriptors);
+          const bodyPreservationVoice = buildBodyPreservationModifier(profile?.body_type, profile?.lora_physical_descriptors, profile?.body_descriptor ?? null);
           const physicalAnchorVoice = buildPhysicalAnchor(profile?.lora_physical_descriptors ?? null);
           imagePrompt = `${bodyPreservationVoice} ${keyDetails.join(", ")}, ${archetypeStyle}, ${moodStyle}, ${aestheticLayer} ${nicheLayer} ${physicalAnchorVoice} editorial female-gaze luxury aesthetic, cinematic lighting, subtle film grain, realistic textures, warm amber tones, atmospheric depth, no faces, no full bodies, hands only when naturally holding an object, vertical 9:16 framing, social-media-ready, photorealistic, high resolution`;
         } else {
-          imagePrompt = buildImagePrompt(archetype, mood, effectiveScene, profile?.aesthetic_descriptors ?? null, profile?.niche ?? null, profile?.audience ?? null, profile?.body_type ?? null, profile?.lora_physical_descriptors ?? null);
+          imagePrompt = buildImagePrompt(archetype, mood, effectiveScene, profile?.aesthetic_descriptors ?? null, profile?.niche ?? null, profile?.audience ?? null, profile?.body_type ?? null, profile?.lora_physical_descriptors ?? null, profile?.body_descriptor ?? null);
         }
         // Use LoRA generation if user has a trained model, otherwise fall back to FLUX Ultra
         let imageUrl: string;
@@ -2044,7 +2051,8 @@ Return JSON with:
           mood,
           profile?.aesthetic_descriptors ?? null,
           profile?.body_type ?? null,
-          profile?.lora_physical_descriptors ?? null
+          profile?.lora_physical_descriptors ?? null,
+          profile?.body_descriptor ?? null
         );
 
         let imageUrl: string;

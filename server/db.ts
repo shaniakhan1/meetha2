@@ -40,6 +40,7 @@ export type DbProfile = {
   lora_physical_descriptors: string | null;
   uploaded_photo_count: number;
   body_type: string | null;
+  body_descriptor: string | null;
   aesthetic_brief: AestheticBrief | null;
   transformation_card_url: string | null;
   identity_brief_card_url: string | null;
@@ -675,6 +676,7 @@ export async function updateLoraProfile(userId: number, data: {
   loraTrainingRequestId?: string | null;
   loraStatus?: "training" | "ready" | "failed" | null;
   loraPhysicalDescriptors?: string | null;
+  loraBodyDescriptor?: string | null;
   uploadedPhotoCount?: number;
 }): Promise<void> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -686,6 +688,7 @@ export async function updateLoraProfile(userId: number, data: {
   if (data.loraTrainingRequestId !== undefined) patch.lora_training_request_id = data.loraTrainingRequestId;
   if (data.loraStatus !== undefined) patch.lora_status = data.loraStatus;
   if (data.loraPhysicalDescriptors !== undefined) patch.lora_physical_descriptors = data.loraPhysicalDescriptors;
+  if (data.loraBodyDescriptor !== undefined) patch.body_descriptor = data.loraBodyDescriptor;
   if (data.uploadedPhotoCount !== undefined) patch.uploaded_photo_count = data.uploadedPhotoCount;
   await sb.from("profiles").update(patch).eq("user_id", userId);
 }

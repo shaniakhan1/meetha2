@@ -470,7 +470,19 @@ export default function Profile() {
               /* Upload form */
               <>
                 <div className="space-y-1.5">
-                  {["Solo photos only. No group shots", "Face clearly visible. No sunglasses, hats, or heavy filters", "Good lighting. Natural or well-lit indoor shots", "Variety. Different angles, outfits, and settings"].map((tip) => (
+                  <div className="mb-3 p-3 border border-amber-200/60 bg-amber-50/40">
+                    <p className="font-sans text-xs text-amber-800/80 leading-relaxed">
+                      <strong>Important:</strong> Photos taken from a distance will not train your face correctly. Your face must fill at least 60% of the frame.
+                    </p>
+                  </div>
+                  {[
+                    "Close-up selfies only — your face fills most of the frame",
+                    "10–15 photos minimum for accurate results",
+                    "Face clearly visible from multiple angles: front, left, right, slightly above",
+                    "Include 1–2 photos from the side or back showing your hair",
+                    "No sunglasses, hats, heavy filters, or group shots",
+                    "Good natural or indoor lighting — no harsh flash directly on face",
+                  ].map((tip) => (
                     <div key={tip} className="flex items-start gap-2">
                       <span className="text-gold text-xs mt-0.5 flex-shrink-0">✓</span>
                       <p className="font-sans text-xs text-charcoal-soft leading-relaxed">{tip}</p>
