@@ -1235,8 +1235,8 @@ Respond in this exact JSON format:
   "shopping_notes": "2-3 specific shopping rules she can use immediately"
 }`;
 
-        // STEP 2: Editorial translation pass (luxury writing second)
-        const editorialPrompt = (diagnostic: Record<string, string>) => `You are a Vogue creative director. Translate the following color diagnostic into elegant, specific editorial styling language. Write like you are briefing a model before a shoot. Short, direct, no wellness language.
+        // STEP 2: Editorial translation pass — stylist's private notes, not poetry
+        const editorialPrompt = (diagnostic: Record<string, string>) => `You are a personal stylist writing private notes for a client before a shoot or a shopping trip. Every sentence must answer: what should she actually wear, buy, or photograph? Write like a stylist briefing a model — direct, specific, no fluff.
 
 Diagnostic data:
 - Undertone: ${diagnostic.undertone}
@@ -1247,25 +1247,33 @@ Diagnostic data:
 - Lighting: ${diagnostic.lighting_direction}
 - Dominant feature: ${diagnostic.dominant_feature}
 - Fabric weight: ${diagnostic.fabric_weight}
+- Avoid colors: ${diagnostic.avoid_colors}
+- Lipstick family: ${diagnostic.lipstick_family}
+- Jewelry guidance: ${diagnostic.jewelry_guidance}
+- Silhouette guidance: ${diagnostic.silhouette_guidance}
+- Contrast recommendation: ${diagnostic.contrast_recommendation}
 
 Scene context: ${sceneLabel}
 
 Rules:
-- BANNED WORDS: frequency, energy, essence, luminous, transcend, curated, intentional, authentic, elevate, radiate, exude, magic, effortless, serene, healing, sacred, mystical, divine, goddess, feminine, embody
-- No em dashes. No exclamation marks. No wellness-speak.
-- Be specific. Say "warm ivory and deep camel" not "neutral tones". Say "red or deep berry lip" not "bold lip".
-- Fabrics must name specific materials (silk, cashmere, linen, velvet, heavyweight jersey, crepe, organza). Never satin.
-- Metals: say exactly warm yellow gold, silver, or rose gold and how to wear it.
-- Lighting: describe a real setup she can recreate at home.
+- BANNED WORDS: frequency, energy, essence, luminous, transcend, curated, intentional, authentic, elevate, radiate, exude, magic, effortless, serene, healing, sacred, mystical, divine, goddess, feminine, embody, versatile, timeless, classic
+- No em dashes. No exclamation marks. No wellness-speak. No vague adjectives.
+- Every field must be immediately actionable. If someone reads it, they should know exactly what to buy or do.
+- color_palette: Start with "Build your wardrobe around:" then list 4-5 specific colors she can shop for. End with one sentence about why they photograph well on her.
+- metals: Don't just say which metal. Say how oversized vs delicate affects her features. Be specific about scale and finish.
+- fabrics: Start with "You look strongest in fabrics with" then describe the quality (weight, drape, structure). Name 4-5 specific materials she can shop for.
+- makeup: Give one complete makeup look with specific products or finishes. Name the lip color family, the eye approach, and the skin finish.
+- lighting: Start with what kills her on camera (the wrong light). Then describe exactly how to recreate the right light at home — lamp position, bulb warmth, distance.
+- hair: One specific direction. Say the structure, texture, and finish. Make it something she can ask a stylist for.
 
 Respond in this exact JSON format:
 {
-  "color_palette": "2-3 specific colors that belong in her frame",
-  "metals": "which metal and how to wear it",
-  "fabrics": "2-3 specific fabric types",
-  "makeup": "one specific makeup direction",
-  "lighting": "exact lighting setup she can recreate",
-  "hair": "one specific hair direction: structure, texture, finish"
+  "color_palette": "Build your wardrobe around: [list]. [One sentence on why they photograph well on her.]",
+  "metals": "[Specific guidance on scale and finish and how it affects her features.]",
+  "fabrics": "You look strongest in fabrics with [quality description]: [list 4-5 specific materials].",
+  "makeup": "[Complete makeup look with specific finishes and color families.]",
+  "lighting": "[What kills her on camera first. Then exact home lighting setup.]",
+  "hair": "[One specific direction: structure, texture, finish.]"
 }`;
 
         try {
@@ -1438,12 +1446,12 @@ Respond in this exact JSON format:
             silhouette_guidance: "Structured shoulders, clean lines, minimal volume.",
             contrast_recommendation: "High contrast works. Pair warm ivory with deep chocolate.",
             shopping_notes: "Always choose the warmer shade. Avoid cool grey undertones. Cashmere and silk over synthetic.",
-            color_palette: "Warm ivory, deep camel, amber gold.",
-            metals: "Warm yellow gold. Stack bangles or layer chains.",
-            fabrics: "Silk, heavyweight jersey, crepe.",
-            makeup: "Bold lip in red or deep berry. Strong brow. Minimal eye.",
-            lighting: "Late afternoon window, light source to your left or right. Hard directional, not diffused.",
-            hair: "Sleek and structured.",
+            color_palette: "Build your wardrobe around: espresso, warm ivory, deep camel, burnished gold, and dark olive. These tones create depth and warmth in camera without competing with your skin.",
+            metals: "Oversized warm yellow gold sharpens your features more than delicate silver pieces. Go for chunky hoops, stacked bangles, or a bold chain. Avoid fine silver — it disappears and reads cold.",
+            fabrics: "You look strongest in fabrics with weight, structure, and movement: leather, suede, heavyweight jersey, matte silk, and thick crepe. Avoid anything sheer or synthetic.",
+            makeup: "Smoky eye with a warm brick or berry lip. Keep skin dewy and luminous. Strong brow. Skip shimmer on the lid — matte shadow holds better on camera.",
+            lighting: "Cool overhead light flattens your features and washes out your undertone. Position a warm-bulb lamp (2700K or lower) at face height, 45 degrees to one side. Soft shadow on the opposite cheek gives you depth.",
+            hair: "Sleek blowout with a deep side part. Smooth finish, no flyaways. Ask for a gloss treatment to add weight and shine.",
           };
         }
       }),

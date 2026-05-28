@@ -431,10 +431,10 @@ async function renderYourWorldsAsync(
   PAD: number
 ): Promise<number> {
   const WORLD_URLS = [
-    { label: "Rooftop Diners",      url: "https://meetha.studio/manus-storage/rooftop-diners_ae57a63a.jpg" },
-    { label: "Candlelit Interiors", url: "https://meetha.studio/manus-storage/candlelit-interiors_7e5108b5.jpg" },
-    { label: "Luxury Hotels",       url: "https://meetha.studio/manus-storage/luxury-hotels_d7e83202.jpg" },
-    { label: "Black Car",           url: "https://meetha.studio/manus-storage/black-car_dddf2239.jpg" },
+    { label: "Rooftop Evenings",      url: "https://meetha.studio/manus-storage/rooftop-diners_ae57a63a.jpg" },
+    { label: "Candlelit Restaurants", url: "https://meetha.studio/manus-storage/candlelit-interiors_7e5108b5.jpg" },
+    { label: "Hotel Mirrors",         url: "https://meetha.studio/manus-storage/luxury-hotels_d7e83202.jpg" },
+    { label: "Black Car Flash",       url: "https://meetha.studio/manus-storage/black-car_dddf2239.jpg" },
   ];
 
   // Pre-fetch all world images as buffers in parallel to avoid canvas HTTP issues
