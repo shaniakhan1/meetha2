@@ -79,12 +79,15 @@ export default function Onboarding() {
     onError: (err) => toast.error(err.message),
   });
 
-  // Redirect if already onboarded, and initialize step from profile data exactly once
+  // Redirect if already onboarded OR if model is ready — lora_status=ready is the
+  // canonical signal that the user is done, regardless of onboarding_complete flag.
+  // onboarding_complete may be false for users who uploaded photos but never tapped
+  // the final "complete" button (e.g. Sarah), so we must check both conditions.
   useEffect(() => {
     if (profileQuery.isLoading) return;
     const d = profileQuery.data;
     if (!d) return;
-    if (d.onboarding_complete) { navigate("/dashboard"); return; }
+    if (d.onboarding_complete || d.lora_status === "ready") { navigate("/dashboard"); return; }
     // Only initialize step once — never reset it after the user has progressed
     if (!stepInitialized.current) {
       stepInitialized.current = true;

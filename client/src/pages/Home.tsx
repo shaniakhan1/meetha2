@@ -154,9 +154,13 @@ export default function Home() {
     if (loading) return;
     if (!isAuthenticated) return;
     if (profileQuery.isLoading || profileQuery.isFetching) return;
-    if (profileQuery.data?.onboarding_complete) {
+    const d = profileQuery.data;
+    // lora_status=ready is the canonical signal that the user is done with setup.
+    // onboarding_complete may be false for users who uploaded photos but never tapped
+    // the final "complete" button, so check both conditions before routing to onboarding.
+    if (d?.onboarding_complete || d?.lora_status === "ready") {
       navigate("/dashboard");
-    } else if (profileQuery.data !== undefined) {
+    } else if (d !== undefined) {
       navigate("/onboarding");
     }
   }, [isAuthenticated, loading, profileQuery.isLoading, profileQuery.isFetching, profileQuery.data, navigate]);
