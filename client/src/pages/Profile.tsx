@@ -150,7 +150,18 @@ export default function Profile() {
       compressed.forEach((blob, i) => formData.append("photos", blob, `photo_${i + 1}.jpg`));
       const res = await fetch("/api/lora/upload", { method: "POST", body: formData, credentials: "include" });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Upload failed");
+      if (!res.ok) {
+        const raw = data.error || "";
+        let userMsg = "Something went wrong uploading your photos. Please try again.";
+        if (raw.includes("413") || raw.includes("too large") || raw.includes("entity")) {
+          userMsg = "Your photos need a little optimization before training begins. Please try again.";
+        } else if (raw.includes("Unauthorized") || raw.includes("401")) {
+          userMsg = "Your session expired. Please refresh the page and try again.";
+        } else if (raw) {
+          userMsg = `Upload failed: ${raw.slice(0, 120)}`;
+        }
+        throw new Error(userMsg);
+      }
       setLoraStatus("training");
       setLoraPhotos([]);
       setLoraPreviews([]);

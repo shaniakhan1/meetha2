@@ -186,15 +186,28 @@ export default function Onboarding() {
         credentials: "include",
       });
       if (!res.ok) {
-        const err = await res.json().catch(() => ({ error: "Upload failed" }));
-        toast.error(err.error || "Upload failed. Please try again.");
+        const err = await res.json().catch(() => ({ error: "" }));
+        const raw = err.error || "";
+        // Surface a clear, specific message based on the error type
+        let userMsg = "Something went wrong uploading your photos. Please try again.";
+        if (raw.includes("413") || raw.includes("too large") || raw.includes("entity")) {
+          userMsg = "Your photos need a little optimization before training begins. Please try again — we'll compress them automatically.";
+        } else if (raw.includes("Unauthorized") || raw.includes("401")) {
+          userMsg = "Your session expired. Please refresh the page and try again.";
+        } else if (raw.includes("5 photos") || raw.includes("at least")) {
+          userMsg = raw;
+        } else if (raw) {
+          userMsg = `Upload failed: ${raw.slice(0, 120)}`;
+        }
+        toast.error(userMsg, { duration: 7000 });
         setLoraUploading(false);
         return;
       }
       // Upload succeeded — move to training waiting screen
       setStep("training");
-    } catch {
-      toast.error("Upload failed. Please try again.");
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "";
+      toast.error(msg || "Something went wrong uploading your photos. Please try again.", { duration: 7000 });
     } finally {
       setLoraUploading(false);
     }
