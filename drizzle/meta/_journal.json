@@ -71,6 +71,13 @@
       "when": 1779859604928,
       "tag": "0009_jazzy_grandmaster",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "5",
+      "when": 1779928019227,
+      "tag": "0010_tearful_dragon_lord",
+      "breakpoints": true
     }
   ]
 }

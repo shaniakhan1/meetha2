@@ -81,6 +81,7 @@ export type DbCredits = {
   total_used: number;
   tier: "free" | "starter" | "pro";
   free_lora_used: boolean;
+  free_retry_used: boolean;
   stripe_customer_id?: string | null;
   updated_at: string;
 };

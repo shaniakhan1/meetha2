@@ -84,6 +84,7 @@ export const credits = mysqlTable("credits", {
   totalUsed: int("totalUsed").default(0).notNull(),
   tier: mysqlEnum("tier", ["free", "starter", "pro"]).default("free").notNull(),
   freeLoraUsed: boolean("free_lora_used").default(false).notNull(),
+  freeRetryUsed: boolean("free_retry_used").default(false).notNull(),
   stripeCustomerId: varchar("stripe_customer_id", { length: 255 }),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });

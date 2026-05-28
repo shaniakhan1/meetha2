@@ -17,6 +17,7 @@ import {
   getUserGenerations,
   countUserGenerations,
   archiveOldGenerations,
+  archiveGeneration,
   createGeneration,
   updateGenerationHook,
   getCredits,
@@ -1005,6 +1006,36 @@ export const appRouter = router({
     get: protectedProcedure.query(async ({ ctx }) => {
       return (await ensureCredits(ctx.user.id)) ?? null;
     }),
+
+    /**
+     * Free-tier retry: restore 1 credit and archive the bad generation.
+     * Only works once per user (free_retry_used gate). Only available to free tier.
+     */
+    requestFreeRetry: protectedProcedure
+      .input(z.object({ generationId: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        const credits = await ensureCredits(ctx.user.id);
+        if (credits.tier !== "free") {
+          throw new TRPCError({ code: "BAD_REQUEST", message: "Only available on the free tier." });
+        }
+        if (credits.free_retry_used) {
+          throw new TRPCError({ code: "BAD_REQUEST", message: "Free retry already used." });
+        }
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const sb = getSupabase() as any;
+        // Archive the bad generation
+        await archiveGeneration(input.generationId, ctx.user.id);
+        // Restore 1 credit and mark retry as used
+        await sb
+          .from("credits")
+          .update({
+            credits_remaining: credits.credits_remaining + 1,
+            free_retry_used: true,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("user_id", ctx.user.id);
+        return { success: true };
+      }),
   }),
 
   // ─── Generations ──────────────────────────────────────────────────────────

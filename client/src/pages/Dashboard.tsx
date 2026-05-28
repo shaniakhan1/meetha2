@@ -67,6 +67,7 @@ export default function Dashboard() {
   const [sharingCardId, setSharingCardId] = useState<number | null>(null);
   const [showLoraReady, setShowLoraReady] = useState(false);
   const [trainingBannerDismissed, setTrainingBannerDismissed] = useState(false);
+  const [retryingId, setRetryingId] = useState<number | null>(null);
   const prevLoraStatus = useRef<string | null | undefined>(undefined);
 
   const utils = trpc.useUtils();
@@ -145,6 +146,28 @@ export default function Dashboard() {
   const handleDelete = (id: number) => {
     setDeletingId(id);
     archiveMutation.mutate({ id });
+  };
+
+  const freeRetryMutation = trpc.credits.requestFreeRetry.useMutation({
+    onSuccess: (_, variables) => {
+      // Remove the bad generation from the list
+      setAllGenerations((prev) => prev.filter((g) => g.id !== variables.generationId));
+      setExpandedId(null);
+      setRetryingId(null);
+      // Refresh credits so the restored credit shows immediately
+      utils.credits.get.invalidate();
+      utils.generations.list.invalidate();
+      toast.success("Credit restored. Try again with a different mood or archetype.");
+    },
+    onError: (err) => {
+      setRetryingId(null);
+      toast.error(err.message ?? "Could not restore credit. Please try again.");
+    },
+  });
+
+  const handleFreeRetry = (generationId: number) => {
+    setRetryingId(generationId);
+    freeRetryMutation.mutate({ generationId });
   };
 
   const referralUrl = referral?.code
@@ -701,6 +724,26 @@ export default function Dashboard() {
                     >
                       {deletingId === gen.id ? "Removing..." : "Remove"}
                     </button>
+
+                    {/* Free retry button — only for free tier, first generation, retry not yet used */}
+                    {credits?.tier === "free" && !credits?.free_retry_used && allGenerations[0]?.id === gen.id && (
+                      <button
+                        onClick={() => handleFreeRetry(gen.id)}
+                        disabled={retryingId === gen.id}
+                        className="w-full font-sans text-[10px] tracking-widest uppercase text-gold/40 hover:text-gold/70 transition-colors py-1 min-h-[32px] disabled:opacity-30 border-t border-cream/5 mt-1 pt-2"
+                      >
+                        {retryingId === gen.id ? "Restoring credit..." : "This didn't render right"}
+                      </button>
+                    )}
+                    {/* Upgrade prompt if retry already used */}
+                    {credits?.tier === "free" && credits?.free_retry_used && allGenerations[0]?.id === gen.id && (
+                      <button
+                        onClick={() => { setExpandedId(null); navigate("/profile"); }}
+                        className="w-full font-sans text-[10px] tracking-widest uppercase text-gold/30 hover:text-gold/60 transition-colors py-1 min-h-[32px] border-t border-cream/5 mt-1 pt-2"
+                      >
+                        Upgrade for unlimited generations
+                      </button>
+                    )}
                   </div>
                 </div>
               );

@@ -729,3 +729,10 @@
 - [x] Inject body preservation modifier into createStudio prompt
 - [x] Auto-detect fuller/curvier body from physical_descriptors (keywords: full, curvy, plus, round, wide, broad, thick, heavy, large, ample, voluptuous)
 - [x] TypeScript check, vitest run, save checkpoint
+
+## Free Retry System (V29)
+- [x] Add free_retry_used boolean column to credits table in Supabase
+- [x] Add requestFreeRetry tRPC procedure: restore credit to 1, set free_retry_used=true, archive the generation
+- [x] Add "This didn't render right" button to Dashboard generation card (free users only, first gen only, free_retry_used=false)
+- [x] Show upgrade prompt instead of retry button when free_retry_used=true
+- [x] TypeScript check, vitest run, save checkpoint
