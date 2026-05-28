@@ -708,6 +708,38 @@ export async function updateLoraProfile(userId: number, data: {
   }
 }
 
+// ─── LoRA Email Deduplication ───────────────────────────────────────────────
+
+/**
+ * Atomically claim the right to send a LoRA notification email.
+ * Returns true if this caller is the first to claim it (email should be sent).
+ * Returns false if another process already claimed it (skip sending).
+ *
+ * Uses a conditional UPDATE: only succeeds if the flag is currently false.
+ * This is race-condition-proof across loraPoller, loraEmailCron, and handleLoraStatus.
+ */
+export async function claimLoraEmailSlot(
+  userId: number,
+  type: "ready" | "failed"
+): Promise<boolean> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const sb = getSupabase() as any;
+  const column = type === "ready" ? "lora_ready_email_sent" : "lora_failed_email_sent";
+  const { data, error } = await sb
+    .from("profiles")
+    .update({ [column]: true, updated_at: new Date().toISOString() })
+    .eq("user_id", userId)
+    .eq(column, false)
+    .select("user_id");
+  if (error) {
+    console.warn(`[claimLoraEmailSlot] DB error for user ${userId} (${type}):`, error.message);
+    // On DB error, allow the email to send rather than silently dropping it
+    return true;
+  }
+  // If the update matched a row, we claimed the slot
+  return Array.isArray(data) && data.length > 0;
+}
+
 // ─── Postability Feedback ─────────────────────────────────────────────────────
 
 export async function savePostabilityFeedback(data: {

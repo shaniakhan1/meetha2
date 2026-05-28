@@ -22,6 +22,7 @@ export default function Profile() {
   const [loraPhotos, setLoraPhotos] = useState<File[]>([]);
   const [loraPreviews, setLoraPreviews] = useState<string[]>([]);
   const [isSubmittingLora, setIsSubmittingLora] = useState(false);
+  const [uploadPhase, setUploadPhase] = useState<"preparing" | "uploading" | "training" | null>(null);
   const [loraStatus, setLoraStatus] = useState<"training" | "ready" | "failed" | null>(null);
   const [showRetrainConfirm, setShowRetrainConfirm] = useState(false);
   const [loraConsent, setLoraConsent] = useState(false);
@@ -142,12 +143,14 @@ export default function Profile() {
     if (!loraConsent) { toast.error("Please confirm the consent statement before training."); return; }
     if (loraPhotos.length < 10) { toast.error("Please upload at least 10 photos for best results."); return; }
     setIsSubmittingLora(true);
+    setUploadPhase("preparing");
     try {
       // Compress all photos client-side before upload (max 1200px, JPEG 85%)
       // This keeps 10-20 iPhone photos well under the 32MB Cloud Run request limit
       const compressed = await Promise.all(loraPhotos.map((f) => compressImage(f)));
       const formData = new FormData();
       compressed.forEach((blob, i) => formData.append("photos", blob, `photo_${i + 1}.jpg`));
+      setUploadPhase("uploading");
       const res = await fetch("/api/lora/upload", { method: "POST", body: formData, credentials: "include" });
       const data = await res.json();
       if (!res.ok) {
@@ -162,6 +165,8 @@ export default function Profile() {
         }
         throw new Error(userMsg);
       }
+      setUploadPhase("training");
+      await new Promise((r) => setTimeout(r, 1200));
       setLoraStatus("training");
       setLoraPhotos([]);
       setLoraPreviews([]);
@@ -172,6 +177,7 @@ export default function Profile() {
       toast.error(err instanceof Error ? err.message : "Upload failed. Please try again.");
     } finally {
       setIsSubmittingLora(false);
+      setUploadPhase(null);
     }
   };
 
@@ -593,7 +599,16 @@ export default function Profile() {
                 )}
                 {loraPreviews.length >= 10 && (
                   <button onClick={handleSubmitLoraTraining} disabled={isSubmittingLora} className="btn-luxury w-full">
-                    {isSubmittingLora ? <span className="flex items-center justify-center gap-2"><span className="w-3 h-3 border border-cream border-t-transparent rounded-full animate-spin" />Uploading photos...</span> : "Train my look"}
+                    {isSubmittingLora ? (
+                      <span className="flex items-center justify-center gap-2">
+                        <span className="w-3 h-3 border border-cream border-t-transparent rounded-full animate-spin" />
+                        {uploadPhase === "preparing"
+                          ? "Preparing your photos..."
+                          : uploadPhase === "training"
+                          ? "Your model is being trained."
+                          : "Uploading your photos..."}
+                      </span>
+                    ) : "Train my look"}
                   </button>
                 )}
                 {loraPreviews.length > 0 && loraPreviews.length < 10 && (

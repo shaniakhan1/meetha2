@@ -9,6 +9,8 @@ import type { Request, Response } from "express";
 import Stripe from "stripe";
 import { getSupabase } from "./_core/supabase";
 import { PLAN_GENERATION_LIMITS } from "../shared/types";
+import { getUserById } from "./db";
+import { sendMembershipActivatedEmail } from "./_core/email";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: "2026-04-22.dahlia" });
 
@@ -145,6 +147,21 @@ export async function handleStripeRetrainWebhook(req: Request, res: Response) {
         }
         await activateSubscription(userId, tier);
         console.log(`[StripeWebhook] Subscription checkout completed for user ${userId}, tier=${tier}`);
+        // Send membership-activated email (fire and forget, non-blocking)
+        getUserById(userId).then(async (user) => {
+          if (user?.email) {
+            const origin = (session as any).success_url
+              ? new URL((session as any).success_url).origin
+              : "https://meetha.studio";
+            await sendMembershipActivatedEmail({
+              to: user.email,
+              name: user.name ?? null,
+              dashboardUrl: `${origin}/dashboard`,
+            }).catch((err) =>
+              console.warn("[StripeWebhook] Membership email send error (non-fatal):", err instanceof Error ? err.message : String(err))
+            );
+          }
+        }).catch(() => { /* non-fatal */ });
       } else if (session.mode === "payment") {
         // One-time retrain purchase
         const sb = getSupabase() as any;

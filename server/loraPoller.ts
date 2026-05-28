@@ -12,7 +12,7 @@
 import { fal } from "@fal-ai/client";
 import { createClient } from "@supabase/supabase-js";
 import { ENV } from "./_core/env";
-import { getUserById, updateLoraProfile } from "./db";
+import { getUserById, updateLoraProfile, claimLoraEmailSlot } from "./db";
 import { sendLoraReadyEmail, sendLoraFailedEmail } from "./_core/email";
 
 // ─── Config ──────────────────────────────────────────────────────────────────
@@ -125,9 +125,14 @@ function stopPolling(userId: number, timer: NodeJS.Timeout): void {
 
 async function sendEmailSafe(userId: number, type: "ready" | "failed"): Promise<void> {
   try {
+    // Atomically claim the email slot -- only one process sends the email
+    const claimed = await claimLoraEmailSlot(userId, type);
+    if (!claimed) {
+      console.log(`[LoraPoller] ${type} email already sent for user ${userId}, skipping duplicate`);
+      return;
+    }
     const user = await getUserById(userId);
     if (!user?.email) return;
-
     if (type === "ready") {
       await sendLoraReadyEmail({
         to: user.email,

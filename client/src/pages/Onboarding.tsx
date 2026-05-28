@@ -60,6 +60,7 @@ export default function Onboarding() {
   const [loraPreviews, setLoraPreviews] = useState<string[]>([]);
   const [loraConsent, setLoraConsent] = useState(false);
   const [loraUploading, setLoraUploading] = useState(false);
+  const [uploadPhase, setUploadPhase] = useState<"preparing" | "uploading" | "training" | null>(null);
   const loraFileInputRef = useRef<HTMLInputElement>(null);
 
   const profileQuery = trpc.profile.get.useQuery(undefined, {
@@ -174,12 +175,14 @@ export default function Onboarding() {
   const handlePhotosNext = async () => {
     if (loraFiles.length < 10 || !loraConsent) return;
     setLoraUploading(true);
+    setUploadPhase("preparing");
     try {
       // Compress all photos client-side before upload (max 800px, JPEG 75%)
       // This keeps 10-20 iPhone photos well under the 32MB proxy request limit
       const compressed = await Promise.all(loraFiles.map((f) => compressImage(f)));
       const formData = new FormData();
       compressed.forEach((blob, i) => formData.append("photos", blob, `photo_${i + 1}.jpg`));
+      setUploadPhase("uploading");
       const res = await fetch("/api/lora/upload", {
         method: "POST",
         body: formData,
@@ -200,16 +203,20 @@ export default function Onboarding() {
           userMsg = `Upload failed: ${raw.slice(0, 120)}`;
         }
         toast.error(userMsg, { duration: 7000 });
-        setLoraUploading(false);
-        return;
-      }
-      // Upload succeeded — move to training waiting screen
+      setLoraUploading(false);
+      setUploadPhase(null);
+      return;
+    }
+    // Upload succeeded — move to training waiting screen
+      setUploadPhase("training");
+      await new Promise((r) => setTimeout(r, 1200)); // brief pause so user sees the state
       setStep("training");
     } catch (err) {
       const msg = err instanceof Error ? err.message : "";
       toast.error(msg || "Something went wrong uploading your photos. Please try again.", { duration: 7000 });
     } finally {
       setLoraUploading(false);
+      setUploadPhase(null);
     }
   };
 
@@ -541,7 +548,11 @@ export default function Onboarding() {
               {loraUploading ? (
                 <span className="flex items-center justify-center gap-2">
                   <span className="w-3.5 h-3.5 border-2 border-cream border-t-transparent rounded-full animate-spin" />
-                  Uploading your photos...
+                  {uploadPhase === "preparing"
+                    ? "Preparing your photos..."
+                    : uploadPhase === "training"
+                    ? "Your model is being trained."
+                    : "Uploading your photos..."}
                 </span>
               ) : (
                 "Train my look and continue"

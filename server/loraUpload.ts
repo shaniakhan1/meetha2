@@ -21,7 +21,8 @@ import { submitLoraTraining, pollLoraTraining } from "./_core/falLoraTraining";
 import { authenticateRequest } from "./_core/auth";
 import { invokeLLM } from "./_core/llm";
 import { storagePut } from "./storage";
-import { sendLoraReadyEmail, sendLoraFailedEmail } from "./_core/email";
+import { sendLoraReadyEmail, sendLoraFailedEmail, sendLoraTrainingStartedEmail } from "./_core/email";
+import { claimLoraEmailSlot } from "./db";
 import { startPolling } from "./loraPoller";
 
 const BASE_URL =
@@ -193,6 +194,15 @@ export async function handleLoraUpload(req: Request, res: Response) {
       uploadedPhotoCount: images.length,
     });
 
+    // Send training-started confirmation email (fire and forget)
+    getUserById(userId).then(async (user) => {
+      if (user?.email) {
+        await sendLoraTrainingStartedEmail({ to: user.email, name: user.name ?? null }).catch((err) => {
+          console.warn("[LoRA] Training-started email send error (non-fatal):", err instanceof Error ? err.message : String(err));
+        });
+      }
+    }).catch(() => { /* non-fatal */ });
+
     // Also run body descriptor analysis on a full-body photo if available (prefer 3rd photo for more body context)
     const bodyAnalysisFile = files.length >= 3 ? files[2] : files[0];
     const bodyDescriptorPromise = extractBodyDescriptor(bodyAnalysisFile.buffer, bodyAnalysisFile.mimetype);
@@ -255,16 +265,21 @@ export async function handleLoraStatus(req: Request, res: Response) {
           loraWeightsUrl: result.loraWeightsUrl,
           loraStatus: "ready",
         });
-        // Fire ready email immediately (non-blocking)
+        // Fire ready email immediately (non-blocking) -- claim slot to prevent duplicates
         getUserById(userId).then(async (user) => {
           if (user?.email) {
-            await sendLoraReadyEmail({
-              to: user.email,
-              name: user.name ?? null,
-              generateUrl: `${BASE_URL}/generate`,
-            }).catch((err) =>
-              console.warn("[LoRA] Ready email failed (non-fatal):", err instanceof Error ? err.message : String(err))
-            );
+            const claimed = await claimLoraEmailSlot(userId, "ready").catch(() => true);
+            if (claimed) {
+              await sendLoraReadyEmail({
+                to: user.email,
+                name: user.name ?? null,
+                generateUrl: `${BASE_URL}/dashboard`,
+              }).catch((err) =>
+                console.warn("[LoRA] Ready email failed (non-fatal):", err instanceof Error ? err.message : String(err))
+              );
+            } else {
+              console.log(`[LoRA Status] Ready email already sent for user ${userId}, skipping`);
+            }
           }
         }).catch(() => { /* non-fatal */ });
         return res.json({ status: "ready", loraWeightsUrl: result.loraWeightsUrl });
@@ -273,16 +288,21 @@ export async function handleLoraStatus(req: Request, res: Response) {
       return res.json({ status: "training" });
     } catch {
       await updateLoraProfile(userId, { loraStatus: "failed" });
-      // Fire failed email immediately (non-blocking)
+      // Fire failed email immediately (non-blocking) -- claim slot to prevent duplicates
       getUserById(userId).then(async (user) => {
         if (user?.email) {
-          await sendLoraFailedEmail({
-            to: user.email,
-            name: user.name ?? null,
-            retryUrl: `${BASE_URL}/profile`,
-          }).catch((err) =>
-            console.warn("[LoRA] Failed email send error (non-fatal):", err instanceof Error ? err.message : String(err))
-          );
+          const claimed = await claimLoraEmailSlot(userId, "failed").catch(() => true);
+          if (claimed) {
+            await sendLoraFailedEmail({
+              to: user.email,
+              name: user.name ?? null,
+              retryUrl: `${BASE_URL}/dashboard`,
+            }).catch((err) =>
+              console.warn("[LoRA] Failed email send error (non-fatal):", err instanceof Error ? err.message : String(err))
+            );
+          } else {
+            console.log(`[LoRA Status] Failed email already sent for user ${userId}, skipping`);
+          }
         }
       }).catch(() => { /* non-fatal */ });
       return res.json({ status: "failed" });

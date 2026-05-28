@@ -13,7 +13,7 @@
 
 import { Request, Response } from "express";
 import { getSupabase } from "./_core/supabase";
-import { updateLoraProfile } from "./db";
+import { updateLoraProfile, claimLoraEmailSlot } from "./db";
 import { pollLoraTraining } from "./_core/falLoraTraining";
 import { sendLoraReadyEmail, sendLoraFailedEmail } from "./_core/email";
 import { sdk } from "./_core/sdk";
@@ -83,19 +83,23 @@ export async function handleLoraCheck(req: Request, res: Response) {
           pollFailed = true;
         }
 
-        if (pollFailed) {
+                if (pollFailed) {
           // Mark as failed in DB
           await updateLoraProfile(profile.user_id, { loraStatus: "failed" });
           failed++;
-
-          // Send failure email if we have an address
+          // Send failure email if we have an address -- claim slot first to prevent duplicates
           if (email) {
             try {
-              await sendLoraFailedEmail({
-                to: email,
-                name,
-                retryUrl: `${BASE_URL}/dashboard`,
-              });
+              const claimed = await claimLoraEmailSlot(profile.user_id, "failed");
+              if (claimed) {
+                await sendLoraFailedEmail({
+                  to: email,
+                  name,
+                  retryUrl: `${BASE_URL}/dashboard`,
+                });
+              } else {
+                console.log(`[LoRA Cron] Failed email already sent for user ${profile.user_id}, skipping`);
+              }
             } catch (emailErr) {
               console.error("[LoRA Cron] Failed to send failure email to", email, emailErr);
             }
@@ -107,15 +111,19 @@ export async function handleLoraCheck(req: Request, res: Response) {
             loraStatus: "ready",
           });
           completed++;
-
-          // Send success email
+          // Send success email -- claim slot first to prevent duplicates
           if (email) {
             try {
-              await sendLoraReadyEmail({
-                to: email,
-                name,
-                generateUrl: `${BASE_URL}/dashboard`,
-              });
+              const claimed = await claimLoraEmailSlot(profile.user_id, "ready");
+              if (claimed) {
+                await sendLoraReadyEmail({
+                  to: email,
+                  name,
+                  generateUrl: `${BASE_URL}/dashboard`,
+                });
+              } else {
+                console.log(`[LoRA Cron] Ready email already sent for user ${profile.user_id}, skipping`);
+              }
             } catch (emailErr) {
               console.error("[LoRA Cron] Failed to send ready email to", email, emailErr);
             }

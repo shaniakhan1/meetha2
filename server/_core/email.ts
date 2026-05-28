@@ -43,7 +43,7 @@ function emailWrapper(body: string): string {
           <tr>
             <td style="padding:24px 48px;border-top:1px solid #e8e0d5;text-align:center;">
               <p style="margin:0;font-size:11px;color:#b0a898;font-family:system-ui,sans-serif;letter-spacing:0.05em;">
-                Cinematic social content, without filming.
+                Visual identity. Cinematic portraits. Styling direction.
               </p>
             </td>
           </tr>
@@ -104,6 +104,56 @@ export async function sendMagicLinkEmail({
   if (error) throw new Error(`Resend error: ${error.message}`);
 }
 
+// ─── LoRA Training Started ────────────────────────────────────────────────────
+
+export async function sendLoraTrainingStartedEmail({
+  to,
+  name,
+}: {
+  to: string;
+  name: string | null;
+}): Promise<void> {
+  const resend = getResend();
+  const firstName = name?.split(" ")[0] ?? null;
+
+  const body = `
+    <p style="margin:0 0 6px;font-size:11px;letter-spacing:0.2em;color:#8b7355;text-transform:uppercase;font-family:system-ui,sans-serif;">
+      In progress
+    </p>
+    <p style="margin:0 0 24px;font-size:24px;color:#2c2c2c;font-weight:400;line-height:1.25;">
+      Your model is being trained.
+    </p>
+    <p style="margin:0 0 16px;font-size:14px;color:#6b6b6b;line-height:1.7;font-family:system-ui,sans-serif;">
+      We're building your visual identity now using the photos you uploaded.
+    </p>
+    <p style="margin:0 0 16px;font-size:14px;color:#6b6b6b;line-height:1.7;font-family:system-ui,sans-serif;">
+      This usually takes around 15 to 20 minutes.
+    </p>
+    <p style="margin:0 0 16px;font-size:14px;color:#6b6b6b;line-height:1.7;font-family:system-ui,sans-serif;">
+      Once ready, you'll be able to generate cinematic portraits, explore your styling direction, and unlock your first style card.
+    </p>
+    <p style="margin:0 0 40px;font-size:14px;color:#6b6b6b;line-height:1.7;font-family:system-ui,sans-serif;">
+      No need to stay on the page. We'll email you as soon as everything is ready.
+    </p>
+    <p style="margin:0;font-size:14px;color:#8b7355;line-height:1.7;font-family:system-ui,sans-serif;">
+      — Meetha
+    </p>`;
+
+  const greeting = firstName ? `${firstName}, your` : "Your";
+  const text = `Your model is being trained.\n\nWe're building your visual identity now using the photos you uploaded.\n\nThis usually takes around 15 to 20 minutes.\n\nOnce ready, you'll be able to generate cinematic portraits, explore your styling direction, and unlock your first style card.\n\nNo need to stay on the page. We'll email you as soon as everything is ready.\n\n— Meetha`;
+  void greeting; // used only for plain text greeting variant if needed
+
+  const { error } = await resend.emails.send({
+    from: `${FROM_NAME} <${FROM_ADDRESS}>`,
+    to,
+    subject: "Your model is being trained",
+    html: emailWrapper(body),
+    text,
+  });
+
+  if (error) throw new Error(`Resend error: ${error.message}`);
+}
+
 // ─── LoRA Training Ready ──────────────────────────────────────────────────────
 
 export async function sendLoraReadyEmail({
@@ -123,17 +173,20 @@ export async function sendLoraReadyEmail({
       Your look is ready
     </p>
     <p style="margin:0 0 24px;font-size:24px;color:#2c2c2c;font-weight:400;line-height:1.25;">
-      ${greeting}, your personal model just finished training.
+      ${greeting}, your visual identity is ready.
     </p>
     <p style="margin:0 0 32px;font-size:14px;color:#6b6b6b;line-height:1.7;font-family:system-ui,sans-serif;">
-      Meetha has learned your colors, your light, your warmth. Every generation from here is calibrated to you specifically. Go make something worth posting.
+      Your personal model has finished training. Every generation from here is calibrated to you specifically — your features, your light, your presence.
     </p>
-    ${ctaButton(generateUrl, "Generate my first image")}
+    <p style="margin:0 0 32px;font-size:14px;color:#6b6b6b;line-height:1.7;font-family:system-ui,sans-serif;">
+      Your first look is waiting.
+    </p>
+    ${ctaButton(generateUrl, "Generate Your First Look")}
     <p style="margin:0;font-size:12px;color:#9b9b9b;line-height:1.6;font-family:system-ui,sans-serif;">
       Your model is saved to your profile. You can retrain anytime from Profile settings.
     </p>`;
 
-  const text = `${greeting}, your personal Meetha model just finished training.\n\nEvery generation from here is calibrated to you. Go make something worth posting.\n\n${generateUrl}`;
+  const text = `${greeting}, your visual identity is ready.\n\nYour personal model has finished training. Every generation from here is calibrated to you specifically.\n\nYour first look is waiting.\n\n${generateUrl}`;
 
   const { error } = await resend.emails.send({
     from: `${FROM_NAME} <${FROM_ADDRESS}>`,
@@ -168,7 +221,7 @@ export async function sendLoraFailedEmail({
       ${greeting}, your model training did not complete.
     </p>
     <p style="margin:0 0 32px;font-size:14px;color:#6b6b6b;line-height:1.7;font-family:system-ui,sans-serif;">
-      This can happen if the photos were too similar or the connection timed out. The fix is usually just uploading a fresh set with more variety in lighting and angles. It only takes a minute.
+      This can happen if the photos were too similar or the upload timed out. Uploading a fresh set with more variety in lighting and angles usually resolves it.
     </p>
     ${ctaButton(retryUrl, "Try again")}
     <p style="margin:0;font-size:12px;color:#9b9b9b;line-height:1.6;font-family:system-ui,sans-serif;">
@@ -204,25 +257,25 @@ export async function sendLoraOnboardingNudgeEmail({
 
   const body = `
     <p style="margin:0 0 6px;font-size:11px;letter-spacing:0.2em;color:#8b7355;text-transform:uppercase;font-family:system-ui,sans-serif;">
-      One thing left
+      Your visual identity is waiting
     </p>
     <p style="margin:0 0 24px;font-size:24px;color:#2c2c2c;font-weight:400;line-height:1.25;">
-      ${greeting}, your look is not trained yet.
+      ${greeting}, you haven't seen your first look yet.
     </p>
     <p style="margin:0 0 32px;font-size:14px;color:#6b6b6b;line-height:1.7;font-family:system-ui,sans-serif;">
-      Meetha generates better images when it knows your colors, your skin tone, your light. Upload 5 to 10 photos and your personal model trains in about 20 minutes. Every generation after that is calibrated to you, not a generic template.
+      Upload 5 to 10 photos and Meetha will build a personal model around your features, your light, and your presence. Training takes about 20 minutes.
     </p>
-    ${ctaButton(profileUrl, "Train my look")}
-    <p style="margin:0;font-size:12px;color:#9b9b9b;line-height:1.6;font-family:system-ui,sans-serif;">
-      You can skip this and generate without a personal model anytime. This just makes results better.
-    </p>`;
+    <p style="margin:0 0 32px;font-size:14px;color:#6b6b6b;line-height:1.7;font-family:system-ui,sans-serif;">
+      Your visual identity is waiting.
+    </p>
+    ${ctaButton(profileUrl, "Upload Your Photos")}`;
 
-  const text = `${greeting}, your Meetha look is not trained yet.\n\nUpload 5 to 10 photos and your personal model trains in about 20 minutes. Every generation after that is calibrated to you.\n\n${profileUrl}`;
+  const text = `${greeting}, you haven't seen your first look yet.\n\nUpload 5 to 10 photos and Meetha will build a personal model around your features, your light, and your presence. Training takes about 20 minutes.\n\nYour visual identity is waiting.\n\n${profileUrl}`;
 
   const { error } = await resend.emails.send({
     from: `${FROM_NAME} <${FROM_ADDRESS}>`,
     to,
-    subject: "Your Meetha look is not trained yet",
+    subject: "Your visual identity is waiting",
     html: emailWrapper(body),
     text,
   });
@@ -310,11 +363,11 @@ export async function sendTransformationCardReadyEmail({
       ${firstName}, your Transformation Card is ready.
     </p>
     <p style="margin:0 0 32px;font-size:14px;color:#6b6b6b;line-height:1.7;font-family:system-ui,sans-serif;">
-      Meetha has created a personalized style card that captures your aesthetic, your colors, and your elevated look. It is yours to save and share.
+      Meetha has created a personalized style card that captures your styling direction, your visual identity, and the version of you that feels most visually aligned. It is yours to save and share.
     </p>
     ${ctaButton(profileUrl, "View my Transformation Card")}
     <p style="margin:0;font-size:12px;color:#9b9b9b;line-height:1.6;font-family:system-ui,sans-serif;">
-      You can download and share your card from the Profile page. Add a before photo to complete the transformation story.
+      You can download and share your card from the Profile page.
     </p>`;
 
   const text = `${firstName}, your Meetha Transformation Card is ready.\n\nView and download it from your profile: ${profileUrl}`;
@@ -323,6 +376,53 @@ export async function sendTransformationCardReadyEmail({
     from: `${FROM_NAME} <${FROM_ADDRESS}>`,
     to,
     subject: `Your Transformation Card is ready, ${firstName}`,
+    html: emailWrapper(body),
+    text,
+  });
+
+  if (error) throw new Error(`Resend error: ${error.message}`);
+}
+
+// ─── Membership Activated ─────────────────────────────────────────────────────
+
+export async function sendMembershipActivatedEmail({
+  to,
+  name,
+  dashboardUrl,
+}: {
+  to: string;
+  name: string | null;
+  dashboardUrl: string;
+}): Promise<void> {
+  const resend = getResend();
+  const firstName = name?.split(" ")[0] ?? null;
+  const greeting = firstName ? `${firstName}, welcome` : "Welcome";
+
+  const body = `
+    <p style="margin:0 0 6px;font-size:11px;letter-spacing:0.2em;color:#8b7355;text-transform:uppercase;font-family:system-ui,sans-serif;">
+      Membership active
+    </p>
+    <p style="margin:0 0 24px;font-size:24px;color:#2c2c2c;font-weight:400;line-height:1.25;">
+      ${greeting} to Meetha membership.
+    </p>
+    <p style="margin:0 0 4px;font-size:14px;color:#6b6b6b;line-height:1.7;font-family:system-ui,sans-serif;">Your access is now active. Inside, you'll find:</p>
+    <ul style="margin:0 0 32px;padding-left:20px;font-size:14px;color:#6b6b6b;line-height:2;font-family:system-ui,sans-serif;">
+      <li>expanded cinematic portrait generations</li>
+      <li>premium styling direction</li>
+      <li>your Identity Brief</li>
+      <li>elevated aesthetic references</li>
+    </ul>
+    <p style="margin:0 0 32px;font-size:14px;color:#6b6b6b;line-height:1.7;font-family:system-ui,sans-serif;">
+      Your visual identity experience is now fully unlocked.
+    </p>
+    ${ctaButton(dashboardUrl, "Enter Membership")}`;
+
+  const text = `${greeting} to Meetha membership.\n\nYour access is now active. Inside, you'll find:\n- expanded cinematic portrait generations\n- premium styling direction\n- your Identity Brief\n- elevated aesthetic references\n\nYour visual identity experience is now fully unlocked.\n\n${dashboardUrl}`;
+
+  const { error } = await resend.emails.send({
+    from: `${FROM_NAME} <${FROM_ADDRESS}>`,
+    to,
+    subject: "Your Meetha membership is active",
     html: emailWrapper(body),
     text,
   });
