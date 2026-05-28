@@ -146,6 +146,34 @@ export default function Profile() {
     }
   };
 
+  const [isRegeneratingBrief, setIsRegeneratingBrief] = useState(false);
+
+  const regenerateBriefMutation = trpc.generations.aestheticRead.useMutation({
+    onSuccess: () => {
+      // Brief and card are regenerated server-side — invalidate both queries
+      utils.profile.getAestheticBrief.invalidate();
+      utils.profile.get.invalidate();
+      toast.success("Your Identity Brief is being updated. Refresh in a moment.");
+      setIsRegeneratingBrief(false);
+    },
+    onError: () => {
+      toast.error("Could not regenerate brief. Please try again.");
+      setIsRegeneratingBrief(false);
+    },
+  });
+
+  const handleRegenerateBrief = () => {
+    if (!profile) return;
+    setIsRegeneratingBrief(true);
+    regenerateBriefMutation.mutate({
+      archetype: (profile as any).archetype ?? "luxury_minimal",
+      mood: (profile as any).mood ?? "soft",
+      sceneCategory: undefined,
+      aestheticDescriptors: (profile as any).aesthetic_descriptors ?? undefined,
+      loraPhysicalDescriptors: (profile as any).lora_physical_descriptors ?? undefined,
+    });
+  };
+
   const setBodyTypeMutation = trpc.profile.setBodyType.useMutation({
     onSuccess: () => {
       utils.profile.get.invalidate();
@@ -308,6 +336,13 @@ export default function Profile() {
                       className="btn-luxury btn-gold flex-1"
                     >
                       Save &amp; Share
+                    </button>
+                    <button
+                      onClick={handleRegenerateBrief}
+                      disabled={isRegeneratingBrief}
+                      className="btn-luxury btn-luxury-outline flex-1 disabled:opacity-50"
+                    >
+                      {isRegeneratingBrief ? "Updating..." : "Regenerate"}
                     </button>
                   </div>
                 </div>
