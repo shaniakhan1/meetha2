@@ -39,7 +39,7 @@ export type DbProfile = {
   lora_status: "training" | "ready" | "failed" | null;
   lora_physical_descriptors: string | null;
   uploaded_photo_count: number;
-  body_type: string | null;
+  body_type: "slim" | "athletic" | "curvy" | null;
   body_descriptor: string | null;
   aesthetic_brief: AestheticBrief | null;
   transformation_card_url: string | null;
@@ -372,7 +372,7 @@ export async function updateIdentityBriefCardUrl(
 
 export async function updateBodyType(
   userId: number,
-  bodyType: string
+  bodyType: "slim" | "athletic" | "curvy"
 ): Promise<void> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const sb = getSupabase() as any;

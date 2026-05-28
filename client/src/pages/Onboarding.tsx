@@ -50,7 +50,7 @@ export default function Onboarding() {
   const [step, setStep] = useState<Step>("archetype");
   const [selectedArchetype, setSelectedArchetype] = useState<Archetype | null>(null);
   const [selectedMood, setSelectedMood] = useState<Mood | null>(null);
-  const [selectedBodyType, setSelectedBodyType] = useState<string | null>(null);
+  const [selectedBodyType, setSelectedBodyType] = useState<"slim" | "athletic" | "curvy" | null>(null);
 
   const setBodyTypeMutation = trpc.profile.setBodyType.useMutation();
 
@@ -270,36 +270,48 @@ export default function Onboarding() {
         </div>
       )}
 
-      {/* ─── Step 3: Body Type ─── */}
+      {/* ─── Step 3: Your Silhouette ─── */}
       {step === "body" && (
         <div className="flex-1 flex flex-col px-5 py-8 animate-fade-up opacity-0">
           <div className="mb-8">
             <p className="font-sans text-xs tracking-[0.25em] uppercase text-gold mb-3">Step 3 of 4</p>
             <h1 className="font-serif text-4xl font-light text-charcoal leading-tight mb-3">
-              How should Meetha<br />handle your body?
+              Your<br />Silhouette
             </h1>
             <p className="font-sans text-sm text-charcoal-soft leading-relaxed">
-              Meetha focuses on styling — wardrobe, lighting, and atmosphere. Tell us how closely to preserve your natural proportions.
+              This helps Meetha style cuts, tailoring, and proportions more accurately for you.
             </p>
           </div>
 
           <div className="space-y-3 mb-8">
             {([
-              { value: "preserve exact natural body proportions, do not alter frame or silhouette", label: "Keep me exactly as I am", sub: "Preserve my natural proportions precisely" },
-              { value: "preserve natural proportions with subtle editorial polish", label: "Slight editorial polish", sub: "Natural frame, slightly refined for editorial look" },
-              { value: "editorial styling focus, proportions secondary to aesthetic", label: "Prioritize the aesthetic", sub: "Focus on styling and atmosphere over body accuracy" },
-            ] as { value: string; label: string; sub: string }[]).map(({ value, label, sub }) => (
+              { value: "slim" as const, label: "Slim", sub: "Elongated, fashion-forward cuts with clean lines" },
+              { value: "athletic" as const, label: "Athletic", sub: "Strong, structured tailoring with confident proportions" },
+              { value: "curvy" as const, label: "Curvy", sub: "Elegant silhouette with soft waist emphasis and luxury proportions" },
+            ]).map(({ value, label, sub }) => (
               <button
                 key={value}
                 onClick={() => setSelectedBodyType(value)}
-                className={`w-full text-left p-5 border transition-all duration-200 ${
+                className={`w-full text-left p-5 border-2 transition-all duration-200 ${
                   selectedBodyType === value
                     ? "border-gold bg-gold/10 text-charcoal"
                     : "border-sand/60 bg-warm-white/60 text-charcoal hover:border-gold/40"
                 }`}
               >
-                <p className="font-serif text-lg text-charcoal mb-0.5">{label}</p>
-                <p className="font-sans text-xs text-charcoal-soft">{sub}</p>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="font-serif text-xl text-charcoal mb-0.5">{label}</p>
+                    <p className="font-sans text-xs text-charcoal-soft">{sub}</p>
+                  </div>
+                  {selectedBodyType === value && (
+                    <div className="w-5 h-5 rounded-full border-2 border-gold bg-gold flex items-center justify-center flex-shrink-0">
+                      <div className="w-2 h-2 rounded-full bg-cream" />
+                    </div>
+                  )}
+                  {selectedBodyType !== value && (
+                    <div className="w-5 h-5 rounded-full border-2 border-sand/60 flex-shrink-0" />
+                  )}
+                </div>
               </button>
             ))}
           </div>

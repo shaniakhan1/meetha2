@@ -736,3 +736,15 @@
 - [x] Add "This didn't render right" button to Dashboard generation card (free users only, first gen only, free_retry_used=false)
 - [x] Show upgrade prompt instead of retry button when free_retry_used=true
 - [x] TypeScript check, vitest run, save checkpoint
+
+## V31 -- Silhouette Selector (User-Controlled)
+
+- [ ] Reuse body_type column for silhouette choice (slim/athletic/curvy) -- no new column needed
+- [ ] Define 3 styling token sets in shared/silhouette.ts (clothing cuts, waist emphasis, framing, pose)
+- [ ] Add profile.updateSilhouette tRPC mutation in routers.ts
+- [ ] Add YOUR SILHOUETTE radio selector to Profile.tsx (tasteful, not clinical)
+- [ ] Replace buildBodyPreservationModifier() body_descriptor Tier 0 with silhouette tokens in routers.ts
+- [ ] Update buildCreateStudioPrompt() to use silhouette tokens instead of bodyDescriptor param
+- [ ] TypeScript check (npx tsc --noEmit)
+- [ ] pnpm test (all 23 passing)
+- [ ] webdev_save_checkpoint V31

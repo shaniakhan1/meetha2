@@ -40,6 +40,7 @@ import {
 import { generateAndSaveStyleCard } from "./styleCard";
 import { renderIdentityBriefCard } from "./identityBriefCard";
 import { buildCreateStudioPrompt } from "./createStudioPrompt";
+import { buildSilhouetteModifier } from "../shared/silhouette";
 import {
   ARCHETYPE_DESCRIPTIONS,
   MOOD_DESCRIPTIONS,
@@ -299,58 +300,40 @@ function buildPhysicalAnchor(rawDescriptors: string | null | undefined): string 
 }
 
 /**
- * Keywords in physical_descriptors that indicate a fuller or curvier body type.
- * When any of these are detected, strong body preservation is injected automatically
- * even if the user has not explicitly set a body_preference.
- */
-const FULLER_BODY_KEYWORDS = [
-  "full", "curvy", "plus", "round", "wide", "broad", "thick", "heavy",
-  "large", "ample", "voluptuous", "wide-hipped", "soft body", "fuller",
-  "bigger", "rounder", "substantial",
-];
-
-function detectFullerBody(physicalDescriptors: string | null | undefined): boolean {
-  if (!physicalDescriptors) return false;
-  const lower = physicalDescriptors.toLowerCase();
-  return FULLER_BODY_KEYWORDS.some((kw) => lower.includes(kw));
-}
-
-/**
- * System-level body preservation modifier.
+ * System-level silhouette styling modifier.
  *
  * Injected at the FRONT of every image generation prompt (before scene, archetype,
  * aesthetic layers) so it carries maximum weight in the diffusion model's attention.
  *
- * Three tiers:
- * 1. Explicit body_type saved by user: use their exact preference text verbatim.
- * 2. Auto-detect fuller/curvier body from physical_descriptors: inject full preservation block.
- * 3. No body data at all: inject a minimal baseline anchor to resist the model's default slim bias.
+ * The user selects one of three silhouette styling preferences (slim / athletic / curvy).
+ * These are STYLING PREFERENCES -- they control clothing cuts, waist emphasis, camera
+ * framing, and pose guidance. They are NOT body measurements or biometric labels.
  *
- * This is NOT about making anyone thinner or larger -- it is about making the
- * generated person recognizable as the same person who uploaded the training photos.
+ * The base model bias is: tall, slim, editorial model proportions.
+ * These tokens counteract that bias and give users agency over their visual identity.
+ *
+ * If no silhouette has been set, a minimal baseline anchor resists the model's default slim bias.
  */
 function buildBodyPreservationModifier(
-  bodyType: string | null | undefined,
+  silhouette: "slim" | "athletic" | "curvy" | string | null | undefined,
   physicalDescriptors: string | null | undefined,
-  bodyDescriptor?: string | null | undefined
+  _bodyDescriptor?: string | null | undefined
 ): string {
-  // Tier 0: AI-extracted body descriptor from training photos -- most specific anchor available
-  if (bodyDescriptor && bodyDescriptor.trim().length > 0) {
-    return `IDENTITY PRESERVATION: ${bodyDescriptor.trim()} Preserve her exact body proportions, frame width, arm fullness, bust and waist relationship, facial fullness, and physical presence exactly as described. Do not slim, elongate, editorialize, or alter her natural body composition in any way. This is non-negotiable.`;
+  const validSilhouette = silhouette === "slim" || silhouette === "athletic" || silhouette === "curvy"
+    ? silhouette as "slim" | "athletic" | "curvy"
+    : null;
+
+  const silhouetteModifier = buildSilhouetteModifier(validSilhouette);
+  const physicalAnchor = physicalDescriptors
+    ? `preserve subject's natural complexion and undertones, maintain authentic facial structure,`
+    : "";
+
+  if (silhouetteModifier) {
+    return `STYLING DIRECTION: ${silhouetteModifier}. IDENTITY PRESERVATION: ${physicalAnchor} preserve her natural body proportions and physical presence. Do not slim, elongate, or alter her natural body composition.`;
   }
 
-  // Tier 1: user has an explicit body preference -- use it verbatim as the primary anchor
-  if (bodyType && bodyType.trim().length > 0) {
-    return `IDENTITY PRESERVATION: ${bodyType}. Preserve her exact natural body proportions, weight distribution, silhouette, frame width, arm fullness, bust and waist relationship, facial fullness, and physical presence. Do not slim, elongate, editorialize, or alter her natural body composition in any way.`;
-  }
-
-  // Tier 2: physical descriptors indicate a fuller or curvier body -- auto-inject full preservation
-  if (detectFullerBody(physicalDescriptors)) {
-    return `IDENTITY PRESERVATION: Preserve her exact natural body proportions, frame width, arm fullness, bust and waist relationship, facial fullness, and physical presence. Do not slim, elongate, editorialize, or alter her natural body composition. The subject has a fuller natural frame -- preserve it completely.`;
-  }
-
-  // Tier 3: no body data -- inject minimal baseline to resist model's default editorial-slim bias
-  return `IDENTITY PRESERVATION: Preserve her natural body proportions and physical presence. Do not slim, elongate, or alter her natural body composition.`;
+  // No silhouette set -- inject minimal baseline to resist model's default editorial-slim bias
+  return `IDENTITY PRESERVATION: ${physicalAnchor} preserve her natural body proportions and physical presence. Do not slim, elongate, or alter her natural body composition.`;
 }
 
 // Template scenes that define their own complete, self-contained prompts.
@@ -977,10 +960,23 @@ export const appRouter = router({
      * Free tier always gets the badge. Starter/Pro can opt in or out.
      */
     setBodyType: protectedProcedure
-      .input(z.object({ bodyType: z.string().max(120) }))
+      .input(z.object({ bodyType: z.enum(["slim", "athletic", "curvy"]) }))
       .mutation(async ({ ctx, input }) => {
         const { updateBodyType } = await import("./db");
         await updateBodyType(ctx.user.id, input.bodyType);
+        return { ok: true };
+      }),
+
+    /**
+     * Save the user's silhouette styling preference (slim / athletic / curvy).
+     * This controls clothing cuts, waist emphasis, camera framing, and pose guidance
+     * injected into every generation prompt. It is a STYLING preference, not a body measurement.
+     */
+    updateSilhouette: protectedProcedure
+      .input(z.object({ silhouette: z.enum(["slim", "athletic", "curvy"]) }))
+      .mutation(async ({ ctx, input }) => {
+        const { updateBodyType } = await import("./db");
+        await updateBodyType(ctx.user.id, input.silhouette);
         return { ok: true };
       }),
 

@@ -9,14 +9,14 @@ export default function Profile() {
   const [, navigate] = useLocation();
   const { user, logout } = useAuth();
 
-  const BODY_PREF_OPTIONS = [
-    { value: "preserve exact natural body proportions, do not alter frame or silhouette", label: "Keep me exactly as I am", sub: "Preserve my natural proportions precisely" },
-    { value: "preserve natural proportions with subtle editorial polish", label: "Slight editorial polish", sub: "Natural frame, slightly refined for editorial look" },
-    { value: "editorial styling focus, proportions secondary to aesthetic", label: "Prioritize the aesthetic", sub: "Focus on styling and atmosphere over body accuracy" },
+  const SILHOUETTE_OPTIONS: { value: "slim" | "athletic" | "curvy"; label: string; sub: string }[] = [
+    { value: "slim", label: "Slim", sub: "Elongated, fashion-forward cuts with clean lines" },
+    { value: "athletic", label: "Athletic", sub: "Strong, structured tailoring with confident proportions" },
+    { value: "curvy", label: "Curvy", sub: "Elegant silhouette with soft waist emphasis and luxury proportions" },
   ];
 
   const [editingBody, setEditingBody] = useState(false);
-  const [pendingBodyPref, setPendingBodyPref] = useState<string | null>(null);
+  const [pendingBodyPref, setPendingBodyPref] = useState<"slim" | "athletic" | "curvy" | null>(null);
 
   // LoRA state
   const [loraPhotos, setLoraPhotos] = useState<File[]>([]);
@@ -68,10 +68,10 @@ export default function Profile() {
     }
   }, [profileQuery.data?.lora_status, profileQuery.data?.uploaded_photo_count, profileQuery.data]);
 
-  // Sync body pref from profile
+  // Sync silhouette from profile
   useEffect(() => {
-    if (profile?.body_type) {
-      setPendingBodyPref(profile.body_type);
+    if (profile?.body_type && ["slim", "athletic", "curvy"].includes(profile.body_type)) {
+      setPendingBodyPref(profile.body_type as "slim" | "athletic" | "curvy");
     }
   }, [profile]);
 
@@ -547,10 +547,10 @@ export default function Profile() {
           </div>
         </div>
 
-        {/* ── 5. Body Preference ── */}
+        {/* ── 5. Your Silhouette ── */}
         <div>
-          <div className="flex items-center justify-between mb-4">
-            <p className="font-sans text-xs tracking-[0.18em] uppercase text-charcoal-soft/50">Body Preference</p>
+          <div className="flex items-center justify-between mb-1">
+            <p className="font-sans text-xs tracking-[0.18em] uppercase text-charcoal-soft/50">Your Silhouette</p>
             <button
               onClick={() => setEditingBody(!editingBody)}
               className="font-sans text-xs tracking-widest uppercase text-gold hover:text-charcoal transition-colors"
@@ -558,36 +558,50 @@ export default function Profile() {
               {editingBody ? "Cancel" : "Update"}
             </button>
           </div>
+          <p className="font-sans text-[11px] text-charcoal-soft/50 mb-4 leading-relaxed">
+            Helps Meetha style cuts, tailoring, and proportions more accurately.
+          </p>
 
           {!editingBody ? (
             <div className="p-4 border border-sand bg-warm-white/60">
               {pendingBodyPref ? (
                 <>
                   <p className="font-serif text-sm text-charcoal">
-                    {BODY_PREF_OPTIONS.find((o) => o.value === pendingBodyPref)?.label ?? "Custom"}
+                    {SILHOUETTE_OPTIONS.find((o) => o.value === pendingBodyPref)?.label ?? pendingBodyPref}
                   </p>
                   <p className="font-sans text-xs text-charcoal-soft mt-1">
-                    {BODY_PREF_OPTIONS.find((o) => o.value === pendingBodyPref)?.sub ?? pendingBodyPref}
+                    {SILHOUETTE_OPTIONS.find((o) => o.value === pendingBodyPref)?.sub ?? ""}
                   </p>
                 </>
               ) : (
-                <p className="font-sans text-sm text-charcoal-soft">Not set</p>
+                <p className="font-sans text-sm text-charcoal-soft">Not set &mdash; tap Update to choose</p>
               )}
             </div>
           ) : (
             <div className="space-y-2">
-              {BODY_PREF_OPTIONS.map(({ value, label, sub }) => (
+              {SILHOUETTE_OPTIONS.map(({ value, label, sub }) => (
                 <button
                   key={value}
                   onClick={() => setPendingBodyPref(value)}
-                  className={`w-full text-left p-4 border transition-all duration-200 ${
+                  className={`w-full text-left p-4 border-2 transition-all duration-200 ${
                     pendingBodyPref === value
-                      ? "border-charcoal bg-charcoal text-cream"
-                      : "border-sand bg-warm-white/60 text-charcoal hover:border-charcoal/40"
+                      ? "border-gold bg-gold/10"
+                      : "border-sand bg-warm-white/60 hover:border-gold/40"
                   }`}
                 >
-                  <p className={`font-serif text-base ${pendingBodyPref === value ? "text-cream" : "text-charcoal"}`}>{label}</p>
-                  <p className={`font-sans font-light text-xs mt-1 ${pendingBodyPref === value ? "text-cream/70" : "text-charcoal-soft"}`}>{sub}</p>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-serif text-base text-charcoal">{label}</p>
+                      <p className="font-sans font-light text-xs mt-0.5 text-charcoal-soft">{sub}</p>
+                    </div>
+                    {pendingBodyPref === value ? (
+                      <div className="w-5 h-5 rounded-full border-2 border-gold bg-gold flex items-center justify-center flex-shrink-0">
+                        <div className="w-2 h-2 rounded-full bg-cream" />
+                      </div>
+                    ) : (
+                      <div className="w-5 h-5 rounded-full border-2 border-sand/60 flex-shrink-0" />
+                    )}
+                  </div>
                 </button>
               ))}
               <button
@@ -595,7 +609,7 @@ export default function Profile() {
                 disabled={setBodyTypeMutation.isPending || !pendingBodyPref}
                 className="btn-luxury w-full mt-2"
               >
-                {setBodyTypeMutation.isPending ? "Saving..." : "Save preference"}
+                {setBodyTypeMutation.isPending ? "Saving..." : "Save silhouette"}
               </button>
             </div>
           )}

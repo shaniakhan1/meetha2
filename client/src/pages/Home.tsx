@@ -570,8 +570,17 @@ export default function Home() {
             </p>
           </div>
 
+          {/* Curvy silhouette — full portrait, golden hour hotel suite */}
+          <div className="w-full aspect-[9/16] overflow-hidden">
+            <img
+              src="https://d2xsxph8kpxj0f.cloudfront.net/310519663380647277/W9hp3oxSnRYx5WHCSun39U/curvy-silhouette-test-T6AYZCEqwSqBi8tbjG4HV2.webp"
+              alt="Meetha styling — curvy silhouette, golden hour"
+              className="w-full h-full object-cover object-center"
+            />
+          </div>
+
           {/* Wide cinematic strip — 16:9 keeps it compact */}
-          <div className="w-full aspect-[16/9] overflow-hidden">
+          <div className="w-full aspect-[16/9] overflow-hidden mt-0.5">
             <img
               src="/manus-storage/meetha-gallery-street-back_d0e260dd.webp"
               alt="Meetha styling — street"

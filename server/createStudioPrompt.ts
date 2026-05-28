@@ -1,42 +1,38 @@
 import type { CreateOccasion, CreateEnergy, CreateRefinements } from "../shared/types";
+import { buildSilhouetteModifier } from "../shared/silhouette";
+import type { SilhouetteChoice } from "../shared/silhouette";
 
 /**
- * Keywords in physical_descriptors that indicate a fuller or curvier body type.
- * When any of these are detected, strong body preservation is injected automatically
- * even if the user has not explicitly set a body_preference.
- */
-const FULLER_BODY_KEYWORDS_STUDIO = [
-  "full", "curvy", "plus", "round", "wide", "broad", "thick", "heavy",
-  "large", "ample", "voluptuous", "wide-hipped", "soft body", "fuller",
-  "bigger", "rounder", "substantial",
-];
-
-function detectFullerBodyStudio(physicalDescriptors: string | null | undefined): boolean {
-  if (!physicalDescriptors) return false;
-  const lower = physicalDescriptors.toLowerCase();
-  return FULLER_BODY_KEYWORDS_STUDIO.some((kw) => lower.includes(kw));
-}
-
-/**
- * System-level body preservation modifier for Create Studio.
+ * System-level silhouette styling modifier for Create Studio.
+ *
  * Injected at the FRONT of every prompt for maximum weight.
+ * Uses the user's silhouette styling preference (slim / athletic / curvy) to control
+ * clothing cuts, waist emphasis, camera framing, and pose guidance.
+ *
+ * This is a STYLING PREFERENCE, not a biometric measurement.
+ * If no silhouette has been set, a minimal baseline resists the model's default slim bias.
  */
 function buildBodyPreservationModifier(
-  bodyType: string | null | undefined,
+  silhouette: SilhouetteChoice | string | null | undefined,
   physicalDescriptors: string | null | undefined,
-  bodyDescriptor?: string | null | undefined
+  _bodyDescriptor?: string | null | undefined
 ): string {
-  // Tier 0: AI-extracted body descriptor from training photos -- most specific anchor
-  if (bodyDescriptor && bodyDescriptor.trim().length > 0) {
-    return `IDENTITY PRESERVATION: ${bodyDescriptor.trim()} Preserve her exact body proportions, frame width, arm fullness, bust and waist relationship, facial fullness, and physical presence exactly as described. Do not slim, elongate, editorialize, or alter her natural body composition in any way. This is non-negotiable.`;
+  const validSilhouette: SilhouetteChoice =
+    silhouette === "slim" || silhouette === "athletic" || silhouette === "curvy"
+      ? silhouette
+      : null;
+
+  const silhouetteModifier = buildSilhouetteModifier(validSilhouette);
+  const physicalAnchor = physicalDescriptors
+    ? `preserve subject's natural complexion and undertones, maintain authentic facial structure,`
+    : "";
+
+  if (silhouetteModifier) {
+    return `STYLING DIRECTION: ${silhouetteModifier}. IDENTITY PRESERVATION: ${physicalAnchor} preserve her natural body proportions and physical presence. Do not slim, elongate, or alter her natural body composition.`;
   }
-  if (bodyType && bodyType.trim().length > 0) {
-    return `IDENTITY PRESERVATION: ${bodyType}. Preserve her exact natural body proportions, weight distribution, silhouette, frame width, arm fullness, bust and waist relationship, facial fullness, and physical presence. Do not slim, elongate, editorialize, or alter her natural body composition in any way.`;
-  }
-  if (detectFullerBodyStudio(physicalDescriptors)) {
-    return `IDENTITY PRESERVATION: Preserve her exact natural body proportions, frame width, arm fullness, bust and waist relationship, facial fullness, and physical presence. Do not slim, elongate, editorialize, or alter her natural body composition. The subject has a fuller natural frame -- preserve it completely.`;
-  }
-  return `IDENTITY PRESERVATION: Preserve her natural body proportions and physical presence. Do not slim, elongate, or alter her natural body composition.`;
+
+  // No silhouette set -- inject minimal baseline to resist model's default editorial-slim bias
+  return `IDENTITY PRESERVATION: ${physicalAnchor} preserve her natural body proportions and physical presence. Do not slim, elongate, or alter her natural body composition.`;
 }
 
 // ─── Occasion scene environments ─────────────────────────────────────────────
@@ -117,6 +113,7 @@ const REFINEMENT_TOKENS: Record<string, Record<string, string>> = {
  * Build a cinematic prompt for the Create Studio flow.
  * Occasion sets the environment. Energy sets the visual filter.
  * Refinements toggle specific tokens. Archetype/mood add identity layer.
+ * Silhouette (body_type) controls styling cuts and proportions.
  */
 export function buildCreateStudioPrompt(
   occasion: CreateOccasion,
@@ -127,7 +124,7 @@ export function buildCreateStudioPrompt(
   aestheticDescriptors: string | null | undefined,
   bodyType: string | null | undefined,
   physicalDescriptors: string | null | undefined,
-  bodyDescriptor?: string | null | undefined
+  _bodyDescriptor?: string | null | undefined
 ): string {
   const scene = OCCASION_SCENE[occasion];
   const energyLayer = ENERGY_VISUAL[energy];
@@ -145,8 +142,8 @@ export function buildCreateStudioPrompt(
     ? `calibrated to this specific aesthetic: ${aestheticDescriptors},`
     : "";
 
-  // System-level body preservation modifier -- injected at the front for maximum weight
-  const bodyPreservationModifier = buildBodyPreservationModifier(bodyType, physicalDescriptors, bodyDescriptor);
+  // System-level silhouette styling modifier -- injected at the front for maximum weight
+  const bodyPreservationModifier = buildBodyPreservationModifier(bodyType, physicalDescriptors);
   const physicalLayer = physicalDescriptors
     ? `preserve subject's natural complexion and undertones, maintain authentic facial structure, ${physicalDescriptors},`
     : "";
