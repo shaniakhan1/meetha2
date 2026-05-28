@@ -475,20 +475,26 @@ export default function Dashboard() {
       <div className="flex-1 px-5 pt-6 pb-28">
 
         {/* PRIMARY CTA */}
-        {/* Show training warning above the button when model is not yet ready */}
-        {profile && (profile.lora_status === "training" || ((profile.uploaded_photo_count ?? 0) > 0 && profile.lora_status !== "ready" && profile.lora_status !== "failed")) && (
+        {/* Lock generation for anyone whose model is not yet ready */}
+        {profile && profile.lora_status !== "ready" && (
           <div className="mb-4 px-4 py-3 border border-gold/30 bg-gold/5">
             <p className="font-sans text-xs text-charcoal tracking-wide text-center leading-relaxed">
-              Do not generate content until your Visual Identity Model has finished training.
+              {profile.lora_status === "training"
+                ? "Do not generate new content. Your model is changing."
+                : "Add your photos in Profile to unlock generation."}
             </p>
           </div>
         )}
         <button
           onClick={() => navigate("/generate")}
-          disabled={credits?.credits_remaining === 0 || profile?.lora_status === "training" || ((profile?.uploaded_photo_count ?? 0) > 0 && profile?.lora_status !== "ready" && profile?.lora_status !== "failed")}
+          disabled={credits?.credits_remaining === 0 || profile?.lora_status !== "ready"}
           className="btn-luxury w-full mb-8 disabled:opacity-40 disabled:cursor-not-allowed"
         >
-          {(profile?.lora_status === "training" || ((profile?.uploaded_photo_count ?? 0) > 0 && profile?.lora_status !== "ready" && profile?.lora_status !== "failed")) ? "Training in progress..." : "Generate New Content"}
+          {profile?.lora_status === "training"
+            ? "Your model is changing..."
+            : profile?.lora_status !== "ready"
+            ? "Add photos to unlock"
+            : "Generate New Content"}
         </button>
         {credits?.credits_remaining === 0 && (
           <div className="text-center -mt-6 mb-8 space-y-1">
@@ -527,7 +533,13 @@ export default function Dashboard() {
             {TEMPLATE_CARDS.map((t) => (
               <button
                 key={t.slug}
-                onClick={() => navigate(`/generate?template=${t.slug}`)}
+                onClick={() => {
+                  if (profile?.lora_status !== "ready") {
+                    toast.error(profile?.lora_status === "training" ? "Do not generate new content. Your model is changing." : "Add your photos in Profile to unlock generation.");
+                    return;
+                  }
+                  navigate(`/generate?template=${t.slug}`);
+                }}
                 className="flex-shrink-0 relative overflow-hidden active:scale-[0.97] transition-transform duration-150"
                 style={{ width: "130px", height: "174px", borderRadius: "2px" }}
               >
@@ -595,7 +607,16 @@ export default function Dashboard() {
             <p className="font-sans font-light text-sm text-charcoal-soft mb-6">
               Your first generation will appear here.
             </p>
-            <button onClick={() => navigate("/generate")} className="btn-luxury px-8">
+            <button
+              onClick={() => {
+                if (profile?.lora_status !== "ready") {
+                  toast.error(profile?.lora_status === "training" ? "Do not generate new content. Your model is changing." : "Add your photos in Profile to unlock generation.");
+                  return;
+                }
+                navigate("/generate");
+              }}
+              className="btn-luxury px-8"
+            >
               Create your first
             </button>
           </div>
