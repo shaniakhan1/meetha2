@@ -455,6 +455,17 @@ export default function Profile() {
                 <p className="font-sans text-xs text-charcoal-soft leading-relaxed">Try again with clearer, well-lit solo photos. No group shots, no sunglasses.</p>
                 <button onClick={() => setLoraStatus(null)} className="font-sans text-xs tracking-widest uppercase text-gold hover:text-charcoal transition-colors">Try again</button>
               </>
+            ) : (profileQuery.data?.uploaded_photo_count ?? 0) > 0 ? (
+              /* Locked: photos already submitted — never show upload form again */
+              <div className="flex flex-col items-center justify-center py-10 text-center space-y-4 opacity-60 pointer-events-none select-none">
+                <div className="w-12 h-12 border border-sand rounded-full flex items-center justify-center">
+                  <svg className="w-5 h-5 text-charcoal-soft" viewBox="0 0 20 20" fill="none">
+                    <path d="M10 2a8 8 0 100 16A8 8 0 0010 2zm0 14a6 6 0 110-12 6 6 0 010 12zm-1-9v4l3 1.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </div>
+                <p className="font-sans text-xs tracking-[0.15em] uppercase text-charcoal-soft">Photos submitted</p>
+                <p className="font-sans text-xs text-charcoal-soft/60 leading-relaxed max-w-[200px]">Your Visual Identity Model is being trained. This section is locked.</p>
+              </div>
             ) : (
               /* Upload form */
               <>

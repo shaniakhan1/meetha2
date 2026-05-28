@@ -475,18 +475,21 @@ export default function Dashboard() {
       <div className="flex-1 px-5 pt-6 pb-28">
 
         {/* PRIMARY CTA */}
+        {/* Show training warning above the button when model is not yet ready */}
+        {profile && (profile.lora_status === "training" || ((profile.uploaded_photo_count ?? 0) > 0 && profile.lora_status !== "ready" && profile.lora_status !== "failed")) && (
+          <div className="mb-4 px-4 py-3 border border-gold/30 bg-gold/5">
+            <p className="font-sans text-xs text-charcoal tracking-wide text-center leading-relaxed">
+              Do not generate content until your Visual Identity Model has finished training.
+            </p>
+          </div>
+        )}
         <button
           onClick={() => navigate("/generate")}
-          disabled={credits?.credits_remaining === 0 || profile?.lora_status === "training"}
+          disabled={credits?.credits_remaining === 0 || profile?.lora_status === "training" || ((profile?.uploaded_photo_count ?? 0) > 0 && profile?.lora_status !== "ready" && profile?.lora_status !== "failed")}
           className="btn-luxury w-full mb-8 disabled:opacity-40 disabled:cursor-not-allowed"
         >
-          {profile?.lora_status === "training" ? "Training in progress..." : "Generate New Content"}
+          {(profile?.lora_status === "training" || ((profile?.uploaded_photo_count ?? 0) > 0 && profile?.lora_status !== "ready" && profile?.lora_status !== "failed")) ? "Training in progress..." : "Generate New Content"}
         </button>
-        {profile?.lora_status === "training" && (
-          <p className="font-sans text-xs text-charcoal-soft/60 text-center -mt-6 mb-8 leading-relaxed">
-            Your model is being built. Generation unlocks when training completes.
-          </p>
-        )}
         {credits?.credits_remaining === 0 && (
           <div className="text-center -mt-6 mb-8 space-y-1">
             <button

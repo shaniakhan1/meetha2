@@ -18,6 +18,7 @@ import Templates from "./pages/Templates";
 import Admin from "./pages/Admin";
 import { useAuth } from "./_core/hooks/useAuth";
 import CookieBanner from "./components/CookieBanner";
+import { trpc } from "./lib/trpc";
 
 function ProtectedRoute({ component: Component }: { component: React.ComponentType }) {
   const { isAuthenticated, loading } = useAuth();
@@ -42,6 +43,71 @@ function ProtectedRoute({ component: Component }: { component: React.ComponentTy
   return <Component />;
 }
 
+/** Hard gate: blocks /generate and /templates until lora_status === 'ready'. */
+function TrainingGatedRoute({ component: Component }: { component: React.ComponentType }) {
+  const { isAuthenticated, loading: authLoading } = useAuth();
+  const profileQuery = trpc.profile.get.useQuery(undefined, {
+    enabled: isAuthenticated,
+    refetchInterval: (query) => {
+      const d = query.state.data;
+      if (!d) return false;
+      if (d.lora_status === "training" || ((d.uploaded_photo_count ?? 0) > 0 && d.lora_status !== "ready")) return 15_000;
+      return false;
+    },
+  });
+
+  if (authLoading || (isAuthenticated && profileQuery.isLoading)) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-cream">
+        <div className="w-8 h-8 border-2 border-gold border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return <Redirect to="/sign-in" />;
+  }
+
+  const profile = profileQuery.data;
+  const isTraining = profile && profile.lora_status !== "ready" && ((profile.uploaded_photo_count ?? 0) > 0);
+  const needsUpload = !profile || (profile.uploaded_photo_count ?? 0) === 0;
+
+  // No photos yet — send them to profile to upload
+  if (needsUpload) {
+    return <Redirect to="/profile" />;
+  }
+
+  // Photos uploaded but not ready — show training wall
+  if (isTraining) {
+    return (
+      <div className="min-h-screen bg-cream flex flex-col items-center justify-center px-8 text-center">
+        <p className="font-sans text-[10px] tracking-[0.25em] uppercase text-gold mb-6">Visual Identity Model</p>
+        <h1 className="font-serif text-3xl font-light text-charcoal mb-4 leading-tight">
+          Your model is<br />still training.
+        </h1>
+        <p className="font-sans text-sm font-light text-charcoal-soft leading-relaxed mb-8 max-w-xs">
+          Meetha is learning your face, your coloring, and your visual essence. This usually takes 10–20 minutes.
+        </p>
+        <div className="w-16 h-px bg-gold/40 mb-8" />
+        <p className="font-sans text-xs text-charcoal-soft/60 leading-relaxed max-w-xs">
+          You will be notified when your Visual Identity is ready to generate.
+        </p>
+        <div className="mt-10">
+          <div className="w-6 h-6 border border-gold/40 border-t-gold rounded-full animate-spin mx-auto" />
+        </div>
+        <button
+          onClick={() => window.history.back()}
+          className="mt-12 font-sans text-xs tracking-widest uppercase text-charcoal-soft/50 hover:text-charcoal-soft transition-colors"
+        >
+          Back
+        </button>
+      </div>
+    );
+  }
+
+  return <Component />;
+}
+
 function Router() {
   return (
     <Switch>
@@ -50,7 +116,7 @@ function Router() {
         {() => <ProtectedRoute component={Onboarding} />}
       </Route>
       <Route path="/generate">
-        {() => <ProtectedRoute component={Generate} />}
+        {() => <TrainingGatedRoute component={Generate} />}
       </Route>
       <Route path="/dashboard">
         {() => <ProtectedRoute component={Dashboard} />}
@@ -63,7 +129,9 @@ function Router() {
       <Route path="/preview" component={Preview} />
       <Route path="/privacy" component={Privacy} />
       <Route path="/terms" component={Terms} />
-      <Route path="/templates" component={Templates} />
+      <Route path="/templates">
+        {() => <TrainingGatedRoute component={Templates} />}
+      </Route>
       <Route path="/admin">
         {() => <ProtectedRoute component={Admin} />}
       </Route>
