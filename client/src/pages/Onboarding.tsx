@@ -82,7 +82,16 @@ export default function Onboarding() {
   useEffect(() => {
     if (profileQuery.isLoading || profileQuery.isFetching) return;
     if (profileQuery.data?.onboarding_complete) navigate("/dashboard");
-  }, [profileQuery.isLoading, profileQuery.isFetching, profileQuery.data, navigate]);
+    // If training is in progress (or photos uploaded but not ready), jump straight to the waiting screen
+    const d = profileQuery.data;
+    if (d && step === "archetype") {
+      const isTraining = d.lora_status === "training";
+      const hasPhotos = (d.uploaded_photo_count ?? 0) > 0;
+      if (isTraining || (hasPhotos && d.lora_status !== "ready")) {
+        setStep("training");
+      }
+    }
+  }, [profileQuery.isLoading, profileQuery.isFetching, profileQuery.data, navigate, step]);
 
   // Auto-advance from training step when model is ready
   useEffect(() => {
