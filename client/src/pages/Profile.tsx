@@ -195,10 +195,8 @@ export default function Profile() {
 
   // Save/share style card
   const handleShareCard = async () => {
-    const cardUrl = profile?.transformation_card_url ?? null;
-    if (!cardUrl) { toast.error("No style card found."); return; }
     try {
-      await saveOrShare(cardUrl, "meetha-style-card.jpg", "My Meetha Style Card");
+      await saveOrShareBlob('/api/download/style-card', 'meetha-style-card.jpg', 'My Meetha Style Card');
     } catch {
       toast.error("Could not save. Try downloading directly.");
     }

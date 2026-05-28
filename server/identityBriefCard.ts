@@ -240,9 +240,9 @@ function renderHero(
   ctx.fillStyle = scrimGrad;
   ctx.fillRect(0, 0, W, HERO_H);
 
-  // MEETHA wordmark — top left
+  // meetha.studio wordmark — top left
   ctx.save();
-  ctx.font = sans(11, "700");
+  ctx.font = sans(16, "700");
   ctx.fillStyle = "rgba(255,255,255,0.5)";
   ctx.globalAlpha = 1;
   ctx.textAlign = "left";
@@ -528,9 +528,9 @@ function renderFooter(ctx: SKRSContext2D, y: number, W: number): number {
   // Thin gold rule
   drawGoldRule(ctx, W * 0.35, y, W * 0.3, 0.4);
   y += 28;
-  // MEETHA wordmark
+  // meetha.studio wordmark
   ctx.save();
-  ctx.font = sans(11, "700");
+  ctx.font = sans(18, "700");
   ctx.fillStyle = GOLD;
   ctx.globalAlpha = 0.6;
   ctx.textAlign = "center";
@@ -539,9 +539,9 @@ function renderFooter(ctx: SKRSContext2D, y: number, W: number): number {
   y += 16;
   // Tagline
   ctx.save();
-  ctx.font = sans(8, "400");
+  ctx.font = sans(13, "400");
   ctx.fillStyle = CHARCOAL_MID;
-  ctx.globalAlpha = 0.35;
+  ctx.globalAlpha = 0.45;
   ctx.textAlign = "center";
   ctx.fillText("styled by meetha.studio", W / 2, y);
   ctx.restore();
