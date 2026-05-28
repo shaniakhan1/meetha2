@@ -224,6 +224,11 @@ function DashboardLayoutContent({
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-48">
+                <DropdownMenuItem asChild>
+                  <a href="mailto:hello@frequencyplanner.com" className="cursor-pointer">
+                    <span>Get Help</span>
+                  </a>
+                </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={logout}
                   className="cursor-pointer text-destructive focus:text-destructive"

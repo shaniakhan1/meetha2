@@ -720,6 +720,7 @@ export default function Home() {
           <div className="flex gap-4">
             <a href="/privacy" className="font-sans text-xs text-charcoal-soft/50 hover:text-charcoal-soft transition-colors">Privacy</a>
             <a href="/terms" className="font-sans text-xs text-charcoal-soft/50 hover:text-charcoal-soft transition-colors">Terms</a>
+            <a href="mailto:hello@frequencyplanner.com" className="font-sans text-xs text-charcoal-soft/50 hover:text-charcoal-soft transition-colors">Help</a>
           </div>
           <p className="font-sans text-xs text-charcoal-soft/50">
             © {new Date().getFullYear()} Meetha

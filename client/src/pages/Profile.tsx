@@ -678,6 +678,8 @@ export default function Profile() {
           <a href="/privacy" className="font-sans text-xs text-charcoal-soft/50 hover:text-charcoal-soft transition-colors">Privacy Policy</a>
           <span className="text-charcoal-soft/30 text-xs">&middot;</span>
           <a href="/terms" className="font-sans text-xs text-charcoal-soft/50 hover:text-charcoal-soft transition-colors">Terms of Service</a>
+          <span className="text-charcoal-soft/30 text-xs">&middot;</span>
+          <a href="mailto:hello@frequencyplanner.com" className="font-sans text-xs text-charcoal-soft/50 hover:text-charcoal-soft transition-colors">Get Help</a>
         </div>
 
         {/* Delete account */}
