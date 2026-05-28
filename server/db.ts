@@ -119,7 +119,8 @@ export async function upsertUser(data: {
   const sb = getSupabase() as any;
   const now = new Date().toISOString();
 
-  const { data: existing, error: fetchError } = await sb
+  // ── Step 1: look up by open_id (fastest path, covers returning users on same device)
+  const { data: byOpenId, error: fetchError } = await sb
     .from("users")
     .select("*")
     .eq("open_id", data.openId)
@@ -129,8 +130,8 @@ export async function upsertUser(data: {
     console.error("[db.upsertUser] fetch error:", fetchError.message);
   }
 
-  if (existing) {
-    const row = existing as DbUser;
+  if (byOpenId) {
+    const row = byOpenId as DbUser;
     const { data: updated, error: updateError } = await sb
       .from("users")
       .update({
@@ -147,12 +148,50 @@ export async function upsertUser(data: {
     return { user: (updated as DbUser) ?? null, isNew: false };
   }
 
+  // ── Step 2: Supabase issues a new UUID on each magic-link click.
+  // If open_id lookup missed, check by email before inserting to prevent
+  // duplicate rows for the same human. If found, adopt the new open_id.
+  if (data.email) {
+    const normalizedEmail = data.email.trim().toLowerCase();
+    const { data: byEmail, error: emailFetchError } = await sb
+      .from("users")
+      .select("*")
+      .ilike("email", normalizedEmail)
+      .order("id", { ascending: true })
+      .limit(1)
+      .maybeSingle();
+
+    if (emailFetchError) {
+      console.error("[db.upsertUser] email fetch error:", emailFetchError.message);
+    }
+
+    if (byEmail) {
+      const row = byEmail as DbUser;
+      console.log(`[db.upsertUser] Adopting existing user id=${row.id} for new open_id (email match)`);
+      const { data: updated, error: updateError } = await sb
+        .from("users")
+        .update({
+          open_id: data.openId,
+          name: data.name ?? row.name,
+          login_method: data.loginMethod ?? row.login_method,
+          last_signed_in: now,
+          updated_at: now,
+        })
+        .eq("id", row.id)
+        .select()
+        .single();
+      if (updateError) console.error("[db.upsertUser] adopt update error:", updateError.message);
+      return { user: (updated as DbUser) ?? null, isNew: false };
+    }
+  }
+
+  // ── Step 3: genuinely new user — insert
   const { data: inserted, error: insertError } = await sb
     .from("users")
     .insert({
       open_id: data.openId,
       name: data.name ?? null,
-      email: data.email ?? null,
+      email: data.email ? data.email.trim().toLowerCase() : null,
       login_method: data.loginMethod ?? null,
       role: data.role ?? "user",
       last_signed_in: now,

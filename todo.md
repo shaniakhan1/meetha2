@@ -783,3 +783,11 @@
 - [x] Add selectScenes() helper in identityBriefCard.ts: scores palette/undertone text against warm/cool keyword lists, returns 4 scenes (one per time slot: morning, afternoon, golden_hour, night)
 - [x] Update renderYourWorldsAsync() to accept brief param and use selectScenes() instead of hardcoded WORLD_URLS
 - [x] TypeScript: zero errors
+
+## V36 -- Duplicate User Fix (Magic Link)
+- [x] Root cause: Supabase issues a new UUID on each magic-link click; upsertUser was looking up only by open_id, so each click created a new row
+- [x] Fix upsertUser in server/db.ts: Step 1 = open_id lookup (fast path), Step 2 = email fallback (adopt existing row + update open_id), Step 3 = insert only for genuinely new users
+- [x] Normalize email to lowercase on insert and in email-fallback lookup
+- [x] Write scripts/merge-duplicate-users.sql: idempotent PL/pgSQL script to merge all existing duplicate rows (keep lowest id, reassign profiles/credits/generations/postability_feedback/referrals FKs, sum credits, delete orphans)
+- [x] Write scripts/add-users-email-unique.sql: normalize emails + add partial UNIQUE index on LOWER(email) WHERE email IS NOT NULL
+- [x] TypeScript: zero errors. Vitest: 23/23 passing.
