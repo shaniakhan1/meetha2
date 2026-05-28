@@ -115,10 +115,10 @@ export default function Profile() {
     e.target.value = "";
   };
 
-  /** Compress a single image File to a JPEG Blob at max 1200px, quality 0.85. */
+  /** Compress a single image File to a JPEG Blob at max 800px, quality 0.75 to stay under proxy limits. */
   const compressImage = (file: File): Promise<Blob> =>
     new Promise((resolve) => {
-      const MAX = 1200;
+      const MAX = 800;
       const img = new Image();
       const url = URL.createObjectURL(file);
       img.onload = () => {
@@ -132,7 +132,7 @@ export default function Profile() {
         canvas.width = width; canvas.height = height;
         const ctx = canvas.getContext("2d")!;
         ctx.drawImage(img, 0, 0, width, height);
-        canvas.toBlob((blob) => resolve(blob!), "image/jpeg", 0.85);
+        canvas.toBlob((blob) => resolve(blob!), "image/jpeg", 0.75);
       };
       img.onerror = () => { URL.revokeObjectURL(url); resolve(file); };
       img.src = url;

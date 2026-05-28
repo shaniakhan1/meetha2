@@ -148,12 +148,38 @@ export default function Onboarding() {
     setLoraPreviews((prev) => prev.filter((_, i) => i !== index));
   };
 
+  /** Compress a single image File to a JPEG Blob at max 800px, quality 0.75 to stay under proxy limits. */
+  const compressImage = (file: File): Promise<Blob> =>
+    new Promise((resolve) => {
+      const MAX = 800;
+      const img = new Image();
+      const url = URL.createObjectURL(file);
+      img.onload = () => {
+        URL.revokeObjectURL(url);
+        let { width, height } = img;
+        if (width > MAX || height > MAX) {
+          if (width > height) { height = Math.round((height * MAX) / width); width = MAX; }
+          else { width = Math.round((width * MAX) / height); height = MAX; }
+        }
+        const canvas = document.createElement("canvas");
+        canvas.width = width; canvas.height = height;
+        const ctx = canvas.getContext("2d")!;
+        ctx.drawImage(img, 0, 0, width, height);
+        canvas.toBlob((blob) => resolve(blob!), "image/jpeg", 0.75);
+      };
+      img.onerror = () => { URL.revokeObjectURL(url); resolve(file); };
+      img.src = url;
+    });
+
   const handlePhotosNext = async () => {
     if (loraFiles.length < 10 || !loraConsent) return;
     setLoraUploading(true);
     try {
+      // Compress all photos client-side before upload (max 800px, JPEG 75%)
+      // This keeps 10-20 iPhone photos well under the 32MB proxy request limit
+      const compressed = await Promise.all(loraFiles.map((f) => compressImage(f)));
       const formData = new FormData();
-      loraFiles.forEach((file) => formData.append("photos", file));
+      compressed.forEach((blob, i) => formData.append("photos", blob, `photo_${i + 1}.jpg`));
       const res = await fetch("/api/lora/upload", {
         method: "POST",
         body: formData,

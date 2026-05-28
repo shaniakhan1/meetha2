@@ -218,8 +218,10 @@ export async function handleLoraUpload(req: Request, res: Response) {
 
     return res.json({ requestId, triggerPhrase, status: "training" });
   } catch (err) {
-    console.error("[LoRA Upload]", err);
-    return res.status(500).json({ error: "Training submission failed. Please try again." });
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error("[LoRA Upload] Error:", msg, err);
+    // Return the actual error message so we can diagnose production failures
+    return res.status(500).json({ error: `Training submission failed: ${msg.slice(0, 300)}` });
   }
 }
 
