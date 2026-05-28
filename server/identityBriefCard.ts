@@ -430,13 +430,26 @@ async function renderYourWorldsAsync(
   W: number,
   PAD: number
 ): Promise<number> {
-  const useLocal = process.env.WORLDS_IMAGE_OVERRIDE === "local";
-  const WORLDS = [
-    { label: "Rooftop Diners",      url: useLocal ? "/home/ubuntu/webdev-static-assets/worlds/rooftop-diners.jpg" : "https://meetha.studio/manus-storage/rooftop-diners_ae57a63a.jpg" },
-    { label: "Candlelit Interiors", url: useLocal ? "/home/ubuntu/webdev-static-assets/worlds/candlelit-interiors.jpg" : "https://meetha.studio/manus-storage/candlelit-interiors_7e5108b5.jpg" },
-    { label: "Luxury Hotels",       url: useLocal ? "/home/ubuntu/webdev-static-assets/worlds/luxury-hotels.jpg" : "https://meetha.studio/manus-storage/luxury-hotels_d7e83202.jpg" },
-    { label: "Black Car",           url: useLocal ? "/home/ubuntu/webdev-static-assets/worlds/black-car.jpg" : "https://meetha.studio/manus-storage/black-car_dddf2239.jpg" },
+  const WORLD_URLS = [
+    { label: "Rooftop Diners",      url: "https://meetha.studio/manus-storage/rooftop-diners_ae57a63a.jpg" },
+    { label: "Candlelit Interiors", url: "https://meetha.studio/manus-storage/candlelit-interiors_7e5108b5.jpg" },
+    { label: "Luxury Hotels",       url: "https://meetha.studio/manus-storage/luxury-hotels_d7e83202.jpg" },
+    { label: "Black Car",           url: "https://meetha.studio/manus-storage/black-car_dddf2239.jpg" },
   ];
+
+  // Pre-fetch all world images as buffers in parallel to avoid canvas HTTP issues
+  const WORLDS = await Promise.all(
+    WORLD_URLS.map(async (w) => {
+      try {
+        const res = await fetch(w.url);
+        if (res.ok) {
+          const buf = Buffer.from(await res.arrayBuffer());
+          return { label: w.label, buffer: buf };
+        }
+      } catch { /* fallback */ }
+      return { label: w.label, buffer: null };
+    })
+  );
 
   // Fallback warm colors if image fails to load
   const FALLBACK_COLORS = ["#E6DDD0", "#D8D0C2", "#DDD6C8", "#D4CCBC"];
@@ -456,10 +469,12 @@ async function renderYourWorldsAsync(
     const tx = PAD + col * (TILE_W + GAP);
     const ty = y + row * (TILE_H + GAP);
 
-    // Try to load the real image
+    // Try to load the pre-fetched buffer
     let img: import("@napi-rs/canvas").Image | null = null;
     try {
-      img = await loadImage(WORLDS[i].url);
+      if (WORLDS[i].buffer) {
+        img = await loadImage(WORLDS[i].buffer as Parameters<typeof loadImage>[0]);
+      }
     } catch {
       // fallback to warm placeholder
     }
