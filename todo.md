@@ -759,3 +759,11 @@
 - [x] Fix profile page loading flash: show skeleton not upload form while profileQuery is loading
 - [x] TypeScript: zero errors
 - [x] Vitest: 23 tests passing
+
+## V33 -- SAVE & SHARE Fix (Storage Proxy Rate Limit)
+
+- [x] Create /api/download/brief-card server endpoint (briefCardDownload.ts) that fetches image via service credentials, bypassing /manus-storage/ proxy 429 rate limit
+- [x] Register route in server/_core/index.ts (before /:generationId wildcard)
+- [x] Update Profile.tsx SAVE & SHARE button to use saveOrShareBlob('/api/download/brief-card') instead of saveOrShare(raw /manus-storage/ URL)
+- [x] Import saveOrShareBlob in Profile.tsx
+- [x] TypeScript: 0 errors. Tests: 23/23 passing.

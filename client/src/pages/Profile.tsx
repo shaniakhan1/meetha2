@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { saveOrShare } from "@/lib/saveOrShare";
+import { saveOrShare, saveOrShareBlob } from "@/lib/saveOrShare";
 import { useLocation } from "wouter";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
@@ -301,7 +301,8 @@ export default function Profile() {
                     <button
                       onClick={async () => {
                         try {
-                          await saveOrShare(profile.identity_brief_card_url!, 'meetha-identity-brief.png', 'My Meetha Identity Brief');
+                          // Use server-side endpoint to bypass /manus-storage/ proxy rate limit (429)
+                          await saveOrShareBlob('/api/download/brief-card', 'meetha-identity-brief.png', 'My Meetha Identity Brief');
                         } catch { /* ignore */ }
                       }}
                       className="btn-luxury btn-gold flex-1"
