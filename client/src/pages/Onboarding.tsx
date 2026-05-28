@@ -48,6 +48,7 @@ const MOOD_VISUAL_HINT: Record<Mood, string> = {
 export default function Onboarding() {
   const [, navigate] = useLocation();
   const [step, setStep] = useState<Step>("archetype");
+  const stepInitialized = useRef(false);
   const [selectedArchetype, setSelectedArchetype] = useState<Archetype | null>(null);
   const [selectedMood, setSelectedMood] = useState<Mood | null>(null);
   const [selectedBodyType, setSelectedBodyType] = useState<"slim" | "athletic" | "curvy" | null>(null);
@@ -78,20 +79,22 @@ export default function Onboarding() {
     onError: (err) => toast.error(err.message),
   });
 
-  // Redirect if already onboarded
+  // Redirect if already onboarded, and initialize step from profile data exactly once
   useEffect(() => {
-    if (profileQuery.isLoading || profileQuery.isFetching) return;
-    if (profileQuery.data?.onboarding_complete) navigate("/dashboard");
-    // If training is in progress (or photos uploaded but not ready), jump straight to the waiting screen
+    if (profileQuery.isLoading) return;
     const d = profileQuery.data;
-    if (d && step === "archetype") {
+    if (!d) return;
+    if (d.onboarding_complete) { navigate("/dashboard"); return; }
+    // Only initialize step once — never reset it after the user has progressed
+    if (!stepInitialized.current) {
+      stepInitialized.current = true;
       const isTraining = d.lora_status === "training";
       const hasPhotos = (d.uploaded_photo_count ?? 0) > 0;
       if (isTraining || (hasPhotos && d.lora_status !== "ready")) {
         setStep("training");
       }
     }
-  }, [profileQuery.isLoading, profileQuery.isFetching, profileQuery.data, navigate, step]);
+  }, [profileQuery.isLoading, profileQuery.data, navigate]);
 
   // Auto-advance from training step when model is ready
   useEffect(() => {
