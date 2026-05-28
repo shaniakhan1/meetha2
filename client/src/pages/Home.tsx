@@ -343,11 +343,29 @@ export default function Home() {
           </p>
         </div>
 
-        {/* Full-width brief screenshot */}
+        {/* Brief 1 — yours */}
         <div className="w-full overflow-hidden">
           <img
             src="/manus-storage/identity-brief-sample_debc2c13.png"
             alt="Sample Meetha Identity Brief"
+            className="w-full block"
+            style={{ maxWidth: "520px", margin: "0 auto", display: "block" }}
+          />
+        </div>
+
+        {/* Divider between briefs */}
+        <div className="max-w-sm mx-auto px-6 py-10">
+          <div className="divider-editorial" />
+          <p className="font-sans text-xs tracking-[0.2em] uppercase text-charcoal-soft/40 text-center mt-6">
+            Every identity is different.
+          </p>
+        </div>
+
+        {/* Brief 2 — mom's */}
+        <div className="w-full overflow-hidden">
+          <img
+            src="/manus-storage/identity-brief-mom_a29aec5a.jpeg"
+            alt="Sample Meetha Identity Brief — second user"
             className="w-full block"
             style={{ maxWidth: "520px", margin: "0 auto", display: "block" }}
           />
