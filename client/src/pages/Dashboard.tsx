@@ -73,11 +73,10 @@ export default function Dashboard() {
   const utils = trpc.useUtils();
   const profileQuery = trpc.profile.get.useQuery(undefined, {
     // Poll every 15s while training so the UI auto-transitions when ready.
-    // Also poll when uploaded_photo_count > 0 but lora_status is null (server may be catching up).
+    // lora_status is the single source of truth — no photo-count fallback.
     refetchInterval: (query) => {
       const data = query.state.data;
       if (data?.lora_status === "training") return 15_000;
-      if ((data?.uploaded_photo_count ?? 0) > 0 && !data?.lora_status) return 15_000;
       return false;
     },
   });
@@ -266,6 +265,16 @@ export default function Dashboard() {
     }
   }, [profile?.lora_status, user?.id]);
 
+  // Force profile refetch when the user returns to this tab from the email CTA.
+  // This handles the case where training completed while the app was in the background.
+  useEffect(() => {
+    const handleFocus = () => {
+      profileQuery.refetch();
+    };
+    window.addEventListener("focus", handleFocus);
+    return () => window.removeEventListener("focus", handleFocus);
+  }, [profileQuery]);
+
   const handleDismissTrainingBanner = () => {
     if (!user?.id) return;
     const bannerKey = `meetha_training_banner_dismissed_${user.id}`;
@@ -387,9 +396,8 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Training card — replaces the "Add Photos" step card while training is in progress.
-           Also shows when uploaded_photo_count > 0 but lora_status is null (server catching up). */}
-      {profile && (profile.lora_status === "training" || (profile.uploaded_photo_count > 0 && !profile.lora_status)) && (
+      {/* Training card — shows while lora_status === 'training'. */}
+      {profile && profile.lora_status === "training" && (
         <div
           className="w-full"
           style={{ background: "linear-gradient(135deg, #2C1810 0%, #1a0f09 100%)" }}
@@ -423,7 +431,8 @@ export default function Dashboard() {
           <style>{`@keyframes shimmerProgress { from { width: 20%; opacity: 0.5; } to { width: 70%; opacity: 1; } }`}</style>
         </div>
       )}
-      {profile && ((profile.uploaded_photo_count === 0 && !profile.lora_status) || profile.lora_status === "failed") && (
+      {/* Add photos / retry card — shows when no model is ready and not currently training. */}
+      {profile && (profile.lora_status === null || profile.lora_status === "failed") && (
         <button
           onClick={() => navigate("/profile")}
           className="w-full text-left active:scale-[0.99] transition-transform duration-150"
@@ -475,13 +484,14 @@ export default function Dashboard() {
       <div className="flex-1 px-5 pt-6 pb-28">
 
         {/* PRIMARY CTA */}
-        {/* Lock generation for anyone whose model is not yet ready */}
+        {/* Lock generation for anyone whose model is not yet ready.
+             Source of truth: lora_status === 'ready'. No photo-count check. */}
         {profile && profile.lora_status !== "ready" && (
           <div className="mb-4 px-4 py-3 border border-gold/30 bg-gold/5">
             <p className="font-sans text-xs text-charcoal tracking-wide text-center leading-relaxed">
               {profile.lora_status === "training"
-                ? "Do not generate new content. Your model is changing."
-                : "Add your photos in Profile to unlock generation."}
+                ? "Your model is still training. Check back soon."
+                : "Upload your photos to unlock generation."}
             </p>
           </div>
         )}
@@ -491,9 +501,9 @@ export default function Dashboard() {
           className="btn-luxury w-full mb-8 disabled:opacity-40 disabled:cursor-not-allowed"
         >
           {profile?.lora_status === "training"
-            ? "Your model is changing..."
+            ? "Training in progress..."
             : profile?.lora_status !== "ready"
-            ? "Add photos to unlock"
+            ? "Upload photos to unlock"
             : "Generate New Content"}
         </button>
         {credits?.credits_remaining === 0 && (
@@ -535,7 +545,7 @@ export default function Dashboard() {
                 key={t.slug}
                 onClick={() => {
                   if (profile?.lora_status !== "ready") {
-                    toast.error(profile?.lora_status === "training" ? "Do not generate new content. Your model is changing." : "Add your photos in Profile to unlock generation.");
+                    toast.error(profile?.lora_status === "training" ? "Your model is still training. Check back soon." : "Upload your photos in Profile to unlock generation.");
                     return;
                   }
                   navigate(`/generate?template=${t.slug}`);
@@ -624,8 +634,8 @@ export default function Dashboard() {
                 </button>
                 <p className="font-sans text-xs text-charcoal-soft/50">
                   {profile?.lora_status === "training"
-                    ? "Your model is training — check back soon."
-                    : "Add your photos to unlock generation."}
+                    ? "Your model is training. Check back soon."
+                    : "Upload your photos to unlock generation."}
                 </p>
               </div>
             )}

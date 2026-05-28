@@ -8,7 +8,16 @@ import App from "./App";
 import { getLoginUrl } from "./const";
 import "./index.css";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      // Refetch when the user returns to the tab (e.g. from email CTA).
+      // Ensures lora_status is always fresh after training completes in the background.
+      refetchOnWindowFocus: true,
+      staleTime: 10_000, // 10s — prevents excessive refetches on rapid tab switches
+    },
+  },
+});
 
 const redirectToLoginIfUnauthorized = (error: unknown) => {
   if (!(error instanceof TRPCClientError)) return;

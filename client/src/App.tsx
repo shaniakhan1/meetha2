@@ -51,7 +51,8 @@ function TrainingGatedRoute({ component: Component }: { component: React.Compone
     refetchInterval: (query) => {
       const d = query.state.data;
       if (!d) return false;
-      if (d.lora_status === "training" || ((d.uploaded_photo_count ?? 0) > 0 && d.lora_status !== "ready")) return 15_000;
+      // Only poll while actively training — lora_status is the single source of truth.
+      if (d.lora_status === "training") return 15_000;
       return false;
     },
   });
@@ -69,11 +70,13 @@ function TrainingGatedRoute({ component: Component }: { component: React.Compone
   }
 
   const profile = profileQuery.data;
-  // If lora is ready, always allow through — don't gate on uploaded_photo_count
-  // (existing users trained before the column was added will have count=0 but lora_status=ready)
+  // Source of truth: lora_status === 'ready' means the model is trained and generation is unlocked.
+  // We do NOT gate on uploaded_photo_count — it's unreliable (can be 0 for users trained before
+  // the column existed, or for users whose profile row was created by the upsert fallback).
   const isReady = profile?.lora_status === "ready";
-  const isTraining = profile && profile.lora_status !== "ready" && ((profile.uploaded_photo_count ?? 0) > 0 || profile.lora_status === "training");
-  const needsUpload = !profile || (!isReady && (profile.uploaded_photo_count ?? 0) === 0 && profile.lora_status !== "training");
+  const isTraining = profile?.lora_status === "training";
+  // needsUpload: no profile yet, or profile exists but no training started or failed
+  const needsUpload = !profile || (!isReady && !isTraining);
 
   // No photos yet — send them back to onboarding to upload
   if (needsUpload) {

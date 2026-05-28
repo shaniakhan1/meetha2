@@ -767,3 +767,12 @@
 - [x] Update Profile.tsx SAVE & SHARE button to use saveOrShareBlob('/api/download/brief-card') instead of saveOrShare(raw /manus-storage/ URL)
 - [x] Import saveOrShareBlob in Profile.tsx
 - [x] TypeScript: 0 errors. Tests: 23/23 passing.
+
+## V34 -- Profile Upsert Bug Fix + State Sync
+- [x] Fix updateLoraProfile() to upsert (insert-or-update) -- was already done in prior session
+- [x] Fix handleLoraUpload to ensure a profile row exists -- covered by upsert fix
+- [x] Manually recover Sarah (user_id=29): inserted profile row with lora_status=null (weights URL unrecoverable from Fal.ai; Sarah needs to re-upload)
+- [x] Fix generation gate in Dashboard.tsx: sole source of truth is lora_status===ready, removed uploaded_photo_count fallback
+- [x] Fix App.tsx TrainingGatedRoute: same source-of-truth fix, removed photo count gate
+- [x] Force profile refetch: _resetCache() in AuthCallback, refetchOnWindowFocus globally in QueryClient, explicit focus listener in Dashboard
+- [x] TypeScript: 0 errors. Tests: 23/23 passing.

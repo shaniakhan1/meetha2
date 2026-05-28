@@ -690,7 +690,18 @@ export async function updateLoraProfile(userId: number, data: {
   if (data.loraPhysicalDescriptors !== undefined) patch.lora_physical_descriptors = data.loraPhysicalDescriptors;
   if (data.loraBodyDescriptor !== undefined) patch.body_descriptor = data.loraBodyDescriptor;
   if (data.uploadedPhotoCount !== undefined) patch.uploaded_photo_count = data.uploadedPhotoCount;
-  await sb.from("profiles").update(patch).eq("user_id", userId);
+  // Use upsert so this is safe even when no profile row exists yet.
+  // If the row is missing (e.g. user uploaded photos before completing archetype step),
+  // Supabase will INSERT it with the LoRA fields; if it exists, it will UPDATE.
+  const { error } = await sb
+    .from("profiles")
+    .upsert(
+      { user_id: userId, ...patch },
+      { onConflict: "user_id", ignoreDuplicates: false }
+    );
+  if (error) {
+    console.error(`[updateLoraProfile] Upsert failed for user ${userId}:`, error.message);
+  }
 }
 
 // ─── Postability Feedback ─────────────────────────────────────────────────────

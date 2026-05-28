@@ -23,6 +23,12 @@ type AuthState = {
 let _cachedUser: AuthUser | null = null;
 let _fetched = false;
 
+/** Exported so AuthCallback can bust the cache after a fresh login. */
+export function _resetCache() {
+  _cachedUser = null;
+  _fetched = false;
+}
+
 export function useAuth(options?: { requireAuth?: boolean }) {
   const [, navigate] = useLocation();
   const [state, setState] = useState<AuthState>({
@@ -100,6 +106,7 @@ export function useAuth(options?: { requireAuth?: boolean }) {
     error: state.error,
     isAuthenticated: state.isAuthenticated,
     logout,
+    /** Force a re-fetch of /api/auth/me on next render cycle. */
     refresh: () => { _fetched = false; },
   };
 }

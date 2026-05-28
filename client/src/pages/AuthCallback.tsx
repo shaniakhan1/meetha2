@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
 import { createClient } from "@supabase/supabase-js";
+import { _resetCache } from "@/_core/hooks/useAuth";
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string;
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY as string;
@@ -82,6 +83,9 @@ export default function AuthCallback() {
         return;
       }
 
+      // Bust the auth cache so useAuth re-fetches on next mount.
+      // This ensures lora_status is always fresh after login.
+      _resetCache();
       // Redirect to home - the app will route to onboarding or dashboard
       navigate("/");
     };
