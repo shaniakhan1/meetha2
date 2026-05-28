@@ -11,6 +11,7 @@ import { handleStyleCard } from "../styleCardEndpoint";
 import { handleLoraCheck } from "../loraEmailCron";
 import { handleArchiveGenerations } from "../archiveCron";
 import { handleWelcomeEmail } from "../welcomeEmailCron";
+import { handleDailyMonitor } from "../dailyMonitor";
 import { handleStripeRetrainWebhook } from "../stripeWebhook";
 import { loraUploadMiddleware, handleLoraUpload, handleLoraStatus } from "../loraUpload";
 import { beforePhotoUploadMiddleware, handleBeforePhotoUpload } from "../beforePhotoUpload";
@@ -66,6 +67,7 @@ async function startServer() {
   app.post("/api/scheduled/lora-check", handleLoraCheck);
   app.post("/api/scheduled/archive-generations", handleArchiveGenerations);
   app.post("/api/scheduled/welcome-email", handleWelcomeEmail);
+  app.post("/api/scheduled/daily-monitor", handleDailyMonitor);
   // tRPC API
   app.use(
     "/api/trpc",

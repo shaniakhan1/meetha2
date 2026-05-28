@@ -24,6 +24,7 @@ import { storagePut } from "./storage";
 import { sendLoraReadyEmail, sendLoraFailedEmail, sendLoraTrainingStartedEmail } from "./_core/email";
 import { claimLoraEmailSlot } from "./db";
 import { startPolling } from "./loraPoller";
+import { emitEvent } from "./eventLog";
 
 const BASE_URL =
   process.env.NODE_ENV === "production"
@@ -166,6 +167,9 @@ export async function handleLoraUpload(req: Request, res: Response) {
       return res.status(400).json({ error: "Please upload at least 5 photos for best results" });
     }
 
+    // Emit upload_started immediately so we can track drop-off vs completion
+    emitEvent("upload_started", userId, { photo_count: files.length });
+
     // Convert all photos to JPEG (handles HEIC/HEIF from iPhones and other formats)
     const images = await Promise.all(
       files.map(async (f, i) => ({
@@ -193,6 +197,10 @@ export async function handleLoraUpload(req: Request, res: Response) {
       loraWeightsUrl: null,
       uploadedPhotoCount: images.length,
     });
+
+    // Emit upload_completed and training_started
+    emitEvent("upload_completed", userId, { photo_count: images.length });
+    emitEvent("training_started", userId, { request_id: requestId });
 
     // Send training-started confirmation email (fire and forget)
     getUserById(userId).then(async (user) => {
@@ -230,6 +238,9 @@ export async function handleLoraUpload(req: Request, res: Response) {
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     console.error("[LoRA Upload] Error:", msg, err);
+    // Emit upload_failed for monitoring
+    const uid = await resolveUserId(req).catch(() => null);
+    emitEvent("upload_failed", uid, { error: msg.slice(0, 200) });
     // Return the actual error message so we can diagnose production failures
     return res.status(500).json({ error: `Training submission failed: ${msg.slice(0, 300)}` });
   }

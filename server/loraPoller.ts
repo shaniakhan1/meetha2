@@ -14,6 +14,7 @@ import { createClient } from "@supabase/supabase-js";
 import { ENV } from "./_core/env";
 import { getUserById, updateLoraProfile, claimLoraEmailSlot } from "./db";
 import { sendLoraReadyEmail, sendLoraFailedEmail } from "./_core/email";
+import { emitEvent } from "./eventLog";
 
 // ─── Config ──────────────────────────────────────────────────────────────────
 // Configure Fal.ai credentials once at module load time
@@ -36,6 +37,8 @@ export function startPolling(userId: number, requestId: string): void {
 
   console.log(`[LoraPoller] Starting poll for user ${userId}, requestId: ${requestId}`);
   const startedAt = Date.now();
+  // Store startedAt in a closure-accessible variable for duration calculation
+  const pollerStartedAt = startedAt;
 
   const timer = setInterval(async () => {
     try {
@@ -68,6 +71,7 @@ async function pollOnce(
     console.warn(`[LoraPoller] Timeout for user ${userId} after 2 hours`);
     stopPolling(userId, timer);
     await updateLoraProfile(userId, { loraStatus: "failed" });
+    emitEvent("training_failed", userId, { reason: "timeout", duration_ms: Date.now() - startedAt });
     await sendEmailSafe(userId, "failed");
     return;
   }
@@ -82,6 +86,7 @@ async function pollOnce(
   } else if (statusStr === "FAILED" || statusStr === "ERROR") {
     stopPolling(userId, timer);
     await updateLoraProfile(userId, { loraStatus: "failed" });
+    emitEvent("training_failed", userId, { reason: statusStr, duration_ms: Date.now() - startedAt });
     await sendEmailSafe(userId, "failed");
   }
   // IN_QUEUE or IN_PROGRESS → keep polling
@@ -99,6 +104,7 @@ async function handleCompleted(userId: number, requestId: string): Promise<void>
     if (!weightsUrl) {
       console.error(`[LoraPoller] No weights URL in result for user ${userId}`, data);
       await updateLoraProfile(userId, { loraStatus: "failed" });
+      emitEvent("training_failed", userId, { reason: "no_weights_url" });
       await sendEmailSafe(userId, "failed");
       return;
     }
@@ -108,11 +114,13 @@ async function handleCompleted(userId: number, requestId: string): Promise<void>
       loraWeightsUrl: weightsUrl,
     });
 
+    emitEvent("training_completed", userId);
     console.log(`[LoraPoller] User ${userId} LoRA ready: ${weightsUrl}`);
     await sendEmailSafe(userId, "ready");
   } catch (err) {
     console.error(`[LoraPoller] Failed to finalize completed job for user ${userId}:`, err);
     await updateLoraProfile(userId, { loraStatus: "failed" });
+    emitEvent("training_failed", userId, { reason: "finalize_error" });
     await sendEmailSafe(userId, "failed");
   }
 }

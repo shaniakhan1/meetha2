@@ -38,6 +38,7 @@ import {
   updateTransformationCardUrl,
 } from "./db";
 import { generateAndSaveStyleCard } from "./styleCard";
+import { emitEvent } from "./eventLog";
 import { renderIdentityBriefCard } from "./identityBriefCard";
 import { buildCreateStudioPrompt } from "./createStudioPrompt";
 import { buildSilhouetteModifier } from "../shared/silhouette";
@@ -1552,6 +1553,9 @@ Respond in this exact JSON format:
           landscape: "landscape_16_9",
         };
         const imageSize = input.videoFormat ? VIDEO_FORMAT_SIZE[input.videoFormat] : "portrait_4_3";
+        // Emit generation_attempted before the fal call so we can track attempts vs completions
+        emitEvent("generation_attempted", ctx.user.id, { platform: input.platform, archetype, tier: userCredits.tier });
+
         // Use LoRA generation if user has a trained model, otherwise fall back to FLUX Ultra
         let imageUrl: string;
         let imageKey: string;
@@ -1678,6 +1682,9 @@ Respond in this exact JSON format:
           const sb = getSupabase() as any;
           await sb.from("credits").update({ free_lora_used: true }).eq("user_id", ctx.user.id);
         }
+
+        // Emit generation_completed after image is ready and before saving
+        emitEvent("generation_completed", ctx.user.id, { platform: input.platform, archetype, used_lora: usedLora });
 
         // Save generation
         const generation = await createGeneration({
