@@ -251,26 +251,36 @@ export async function sendWelcomeEmail({
       Welcome to Meetha
     </p>
     <h1 style="margin:0 0 24px;font-size:28px;font-weight:400;color:#2c1810;line-height:1.3;">
-      You are the aesthetic, ${firstName}.
+      A visual identity experience designed to help you see yourself the way a stylist, photographer, and creative director would.
     </h1>
     <p style="margin:0 0 16px;font-size:15px;color:#5c4a3a;line-height:1.7;font-family:system-ui,sans-serif;">
-      You have 1 free generation waiting. It gives you a cinematic image, editorial hooks, and a caption tuned to your frequency.
+      You have 1 free generation waiting.
     </p>
+    <p style="margin:0 0 4px;font-size:15px;color:#5c4a3a;line-height:1.7;font-family:system-ui,sans-serif;">Inside, you'll receive:</p>
+    <ul style="margin:0 0 24px;padding-left:20px;font-size:15px;color:#5c4a3a;line-height:2;font-family:system-ui,sans-serif;">
+      <li>cinematic portrait generations</li>
+      <li>personalized styling direction</li>
+      <li>visual identity insights</li>
+      <li>aesthetic references tailored to your features, energy, and presence</li>
+    </ul>
+    <p style="margin:0 0 4px;font-size:15px;color:#5c4a3a;line-height:1.9;font-family:system-ui,sans-serif;">No posing stress.</p>
+    <p style="margin:0 0 4px;font-size:15px;color:#5c4a3a;line-height:1.9;font-family:system-ui,sans-serif;">No endless Pinterest scrolling.</p>
+    <p style="margin:0 0 32px;font-size:15px;color:#5c4a3a;line-height:1.9;font-family:system-ui,sans-serif;">No guessing what suits you.</p>
     <p style="margin:0 0 32px;font-size:15px;color:#5c4a3a;line-height:1.7;font-family:system-ui,sans-serif;">
-      No filming. No blank page. Just tap Generate and see what comes through.
+      Just upload your photos and discover the version of you that already exists visually.
     </p>
     ${ctaButton(generateUrl, "Discover Your Visual Identity")}
     <p style="margin:0 0 8px;font-size:13px;color:#8b7355;line-height:1.6;font-family:system-ui,sans-serif;text-align:center;">
-      Or browse the <a href="${templatesUrl}" style="color:#8b7355;">template library</a> for a starting point.
+      Or explore the <a href="${templatesUrl}" style="color:#8b7355;">template library</a> for inspiration.
     </p>
   `;
 
-  const text = `Welcome to Meetha, ${firstName}.\n\nYou have 1 free generation waiting. No filming. No blank page.\n\nDiscover your visual identity: ${generateUrl}\n\nOr browse templates: ${templatesUrl}`;
+  const text = `Welcome to Meetha.\n\nA visual identity experience designed to help you see yourself the way a stylist, photographer, and creative director would.\n\nYou have 1 free generation waiting.\n\nInside, you'll receive:\n- cinematic portrait generations\n- personalized styling direction\n- visual identity insights\n- aesthetic references tailored to your features, energy, and presence\n\nNo posing stress.\nNo endless Pinterest scrolling.\nNo guessing what suits you.\n\nJust upload your photos and discover the version of you that already exists visually.\n\nBegin your first generation: ${generateUrl}\n\nOr explore the template library: ${templatesUrl}`;
 
   const { error } = await resend.emails.send({
     from: `${FROM_NAME} <${FROM_ADDRESS}>`,
     to,
-    subject: `You are the aesthetic, ${firstName}.`,
+    subject: `Welcome to Meetha, ${firstName}.`,
     html: emailWrapper(body),
     text,
   });
