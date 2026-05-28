@@ -51,7 +51,7 @@ export type IdentityBrief = {
 
 // ─── Scene / Archetype / Mood Labels ─────────────────────────────────────────
 
-const SCENE_LABELS: Record<string, string> = {
+export const SCENE_LABELS: Record<string, string> = {
   morning_ritual: "Morning Ritual",
   in_motion: "In Motion",
   soft_power_meeting: "Soft Power Meeting",
@@ -59,13 +59,13 @@ const SCENE_LABELS: Record<string, string> = {
   night_out: "Night Out",
   travel_editorial: "Travel Editorial",
   home_sanctuary: "Home Sanctuary",
-  paparazzi_flash: "Paparazzi Flash",
+  paparazzi_flash: "Caught Looking Expensive",
   digital_diary: "Digital Diary",
-  bill_please: "Bill Please",
-  silk_robe_room_service: "Silk Robe Room Service",
-  irish_goodbye: "Irish Goodbye",
-  cleopatra_principle: "Cleopatra Principle",
-  silk_robe_retaliation: "Silk Robe Retaliation",
+  bill_please: "Bill, Please",
+  silk_robe_room_service: "Room Service",
+  irish_goodbye: "The Goodbye",
+  cleopatra_principle: "The Cleopatra Principle",
+  silk_robe_retaliation: "The Robe Reset",
   motion_blur: "The Blur",
 };
 
@@ -223,8 +223,11 @@ function wrapText(ctx: CanvasCtx, text: string, maxWidth: number): string[] {
 export async function buildStyleCard(params: {
   imageUrl: string;
   brief: IdentityBrief;
-  /** Optional hook text to overlay on the image area */
-  hook?: string | null;
+  /**
+   * Template title to overlay on the image (template generations only).
+   * Non-template generations should pass null — no large overlay text.
+   */
+  templateTitle?: string | null;
 }): Promise<Buffer> {
   ensureFonts();
 
@@ -268,36 +271,47 @@ export async function buildStyleCard(params: {
     ctx.fillStyle = grad;
     ctx.fillRect(0, IMAGE_H - 60, CARD_W, 60);
 
-    // Hook text overlay (bottom-center, above watermark)
-    if (params.hook) {
-      const hook = sanitizeText(params.hook);
-      // Gradient scrim for legibility
-      const hookScrim = ctx.createLinearGradient(0, IMAGE_H - 220, 0, IMAGE_H);
-      hookScrim.addColorStop(0, "rgba(13,10,7,0)");
-      hookScrim.addColorStop(1, "rgba(13,10,7,0.72)");
-      ctx.fillStyle = hookScrim;
-      ctx.fillRect(0, IMAGE_H - 220, CARD_W, 220);
+    // Template title overlay (bottom-left, editorial hierarchy)
+    // Only shown for template generations. Non-template: no large overlay text.
+    if (params.templateTitle) {
+      const title = sanitizeText(params.templateTitle).toUpperCase();
+      // Gradient scrim for legibility — taller to accommodate two lines of text
+      const scrim = ctx.createLinearGradient(0, IMAGE_H - 280, 0, IMAGE_H);
+      scrim.addColorStop(0, "rgba(13,10,7,0)");
+      scrim.addColorStop(1, "rgba(13,10,7,0.68)");
+      ctx.fillStyle = scrim;
+      ctx.fillRect(0, IMAGE_H - 280, CARD_W, 280);
 
-      // Hook text — serif italic, centered, wrapping
-      const HOOK_FONT_SIZE = 44;
-      ctx.font = `italic ${HOOK_FONT_SIZE}px MeethaFont`;
-      ctx.fillStyle = "rgba(253,250,245,0.96)";
-      ctx.textAlign = "center";
-      const hookLines = wrapText(ctx, hook, CARD_W - 120);
-      const hookLineH = HOOK_FONT_SIZE * 1.35;
-      const totalHookH = hookLines.length * hookLineH;
-      let hookY = IMAGE_H - 60 - totalHookH + HOOK_FONT_SIZE;
-      for (const line of hookLines.slice(0, 3)) {
-        ctx.fillText(line, CARD_W / 2, hookY);
-        hookY += hookLineH;
+      // meetha.studio — small, left-aligned, above the title
+      const BRAND_FONT_SIZE = 20;
+      ctx.font = `${BRAND_FONT_SIZE}px MeethaFont`;
+      ctx.fillStyle = "rgba(253,250,245,0.60)";
+      ctx.textAlign = "left";
+      ctx.fillText("meetha.studio", 48, IMAGE_H - 110);
+
+      // Template title — larger, bold, left-aligned, uppercase
+      const TITLE_FONT_SIZE = 52;
+      ctx.font = `bold ${TITLE_FONT_SIZE}px MeethaFont`;
+      ctx.fillStyle = "rgba(253,250,245,0.97)";
+      ctx.textAlign = "left";
+      const titleLines = wrapText(ctx, title, CARD_W - 96);
+      const titleLineH = TITLE_FONT_SIZE * 1.2;
+      let titleY = IMAGE_H - 58;
+      // Render bottom-up so the last line sits at the bottom
+      const visibleLines = titleLines.slice(0, 2);
+      titleY = IMAGE_H - 52 - (visibleLines.length - 1) * titleLineH;
+      for (const line of visibleLines) {
+        ctx.fillText(line, 48, titleY);
+        titleY += titleLineH;
       }
+    } else {
+      // Non-template: subtle meetha.studio branding only, bottom-right
+      const BRAND_FONT_SIZE = 22;
+      ctx.font = `${BRAND_FONT_SIZE}px MeethaFont`;
+      ctx.fillStyle = "rgba(255,248,230,0.50)";
+      ctx.textAlign = "right";
+      ctx.fillText("meetha.studio", CARD_W - 48, IMAGE_H - 40);
     }
-
-    // "styled by Meetha" watermark on image (bottom-right, subtle)
-    ctx.font = `bold 34px MeethaFont`;
-    ctx.fillStyle = "rgba(255,248,230,0.75)";
-    ctx.textAlign = "right";
-    ctx.fillText("styled by meetha.studio", CARD_W - 48, IMAGE_H - 40);
   }
 
   // ════════════════════════════════════════════════════════════
@@ -424,10 +438,16 @@ export async function generateAndSaveStyleCard(params: {
   });
 
   // 2. Build the card image
+  // Template generations: use the campaign title as overlay text.
+  // Non-template generations: no large overlay text, only subtle branding.
+  const templateTitle = params.sceneCategory
+    ? (SCENE_LABELS[params.sceneCategory] ?? null)
+    : null;
+
   const cardBuffer = await buildStyleCard({
     imageUrl: params.imageUrl,
     brief,
-    hook: params.hook ?? null,
+    templateTitle,
   });
 
   // 3. Upload to S3

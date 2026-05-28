@@ -742,7 +742,11 @@ export default function Generate() {
               <div className="mb-6">
                 <CinematicPreview
                   imageUrl={result.generation.image_url as string}
-                  hook={generationSource === "template" ? (selectedHook ?? null) : null}
+                  templateTitle={
+                    generationSource === "template" && sceneCategory
+                      ? (SCENE_LABELS[sceneCategory] ?? null)
+                      : null
+                  }
                   animated={false}
                   size="full"
                   platform={result.generation.platform as string | undefined}

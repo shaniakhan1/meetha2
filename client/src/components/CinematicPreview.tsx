@@ -3,7 +3,8 @@ import { PLATFORM_LABELS, type Platform } from "@shared/types";
 
 interface CinematicPreviewProps {
   imageUrl: string;
-  hook: string | null;
+  /** Template title to show as overlay (template generations only). Non-template: pass null. */
+  templateTitle?: string | null;
   animated?: boolean;
   /** "hooks" step shows a small thumbnail; "preview" step shows the full cinematic view */
   size?: "thumb" | "full";
@@ -21,7 +22,7 @@ interface CinematicPreviewProps {
  */
 const CinematicPreview = forwardRef<HTMLDivElement, CinematicPreviewProps>(function CinematicPreview({
   imageUrl,
-  hook,
+  templateTitle = null,
   animated = false,
   size = "full",
   platform,
@@ -72,13 +73,13 @@ const CinematicPreview = forwardRef<HTMLDivElement, CinematicPreviewProps>(funct
       />
 
       {/* ── Bottom gradient scrim ── */}
-      {hook && (
+      {templateTitle && (
         <div
           className="absolute inset-x-0 bottom-0 pointer-events-none"
           style={{
             height: "55%",
             background:
-              "linear-gradient(to top, rgba(0,0,0,0.72) 0%, rgba(0,0,0,0.35) 45%, transparent 100%)",
+              "linear-gradient(to top, rgba(0,0,0,0.68) 0%, rgba(0,0,0,0.28) 50%, transparent 100%)",
           }}
         />
       )}
@@ -105,35 +106,43 @@ const CinematicPreview = forwardRef<HTMLDivElement, CinematicPreviewProps>(funct
         </div>
       )}
 
-      {/* ── Hook text overlay + MEETHA branding ── */}
-      <div
-        className={`absolute inset-x-0 bottom-0 flex flex-col items-center justify-end ${
-          isThumb ? "pb-4 px-3" : "pb-10 px-8"
-        }`}
-      >
-        {hook && (
-          <p
-            className="text-white leading-tight font-serif text-center"
-            style={{
-              fontSize: isThumb ? "clamp(0.75rem, 3vw, 1rem)" : "clamp(1.15rem, 5vw, 1.6rem)",
-              textShadow: "0 1px 8px rgba(0,0,0,0.6), 0 2px 24px rgba(0,0,0,0.3)",
-              letterSpacing: "0.01em",
-              fontWeight: 300,
-            }}
-          >
-            {hook}
-          </p>
-        )}
-        {/* MEETHA wordmark — always visible */}
-        {!isThumb && (
-          <p
-            className="text-white/40 font-sans tracking-[0.2em] uppercase"
-            style={{ fontSize: "8px", marginTop: hook ? "12px" : "0" }}
-          >
-            M  E  E  T  H  A
-          </p>
-        )}
-      </div>
+      {/* ── Template title overlay + branding ── */}
+      {!isThumb && (
+        <div className="absolute inset-x-0 bottom-0 flex flex-col items-start justify-end pb-8 px-6">
+          {templateTitle ? (
+            <>
+              {/* meetha.studio — small, above the title */}
+              <p
+                className="text-white/55 font-sans tracking-[0.18em] uppercase"
+                style={{ fontSize: "9px", marginBottom: "10px" }}
+              >
+                meetha.studio
+              </p>
+              {/* Template title — larger, bold, uppercase, editorial */}
+              <p
+                className="text-white font-serif leading-tight"
+                style={{
+                  fontSize: "clamp(1.1rem, 5vw, 1.55rem)",
+                  fontWeight: 600,
+                  letterSpacing: "0.04em",
+                  textShadow: "0 1px 8px rgba(0,0,0,0.5)",
+                  textTransform: "uppercase",
+                }}
+              >
+                {templateTitle}
+              </p>
+            </>
+          ) : (
+            /* Non-template: subtle meetha.studio branding only */
+            <p
+              className="text-white/35 font-sans tracking-[0.18em] uppercase"
+              style={{ fontSize: "9px" }}
+            >
+              meetha.studio
+            </p>
+          )}
+        </div>
+      )}
 
       {/* ── Loading shimmer ── */}
       {!loaded && (

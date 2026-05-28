@@ -19,7 +19,7 @@ import sharp from "sharp";
 import { createCanvas, GlobalFonts, loadImage } from "@napi-rs/canvas";
 import { authenticateRequest } from "./_core/auth";
 import { getSupabase } from "./_core/supabase";
-import { buildStyleCard, generateIdentityBrief } from "./styleCard";
+import { buildStyleCard, generateIdentityBrief, SCENE_LABELS } from "./styleCard";
 import { storageGetSignedUrl } from "./storage";
 
 // ESM-safe __dirname
@@ -175,17 +175,42 @@ export async function handleStyleCard(req: Request, res: Response) {
     return res.status(403).json({ error: "Forbidden" });
   }
 
-  const hook = generation.selected_hook;
+  // Template title is the canonical overlay text. Hook phrases are no longer shown.
+  const templateTitle = generation.scene_category
+    ? (SCENE_LABELS[generation.scene_category] ?? null)
+    : null;
 
   try {
     let cardBuffer: Buffer;
 
     if (generation.card_url) {
-      // Fast path: fetch stored card and composite hook text on top
-      cardBuffer = await fetchBuffer(generation.card_url);
-      if (hook) {
-        cardBuffer = await compositeHookOntoCard(cardBuffer, hook);
+      // Fast path: fetch stored card.
+      // The stored card was generated with the old hook overlay; re-render from
+      // the original image so the new template-title layout is applied.
+      // Fall through to slow path to ensure correct overlay.
+      let imageUrl = generation.image_url;
+      if (imageUrl.startsWith("/manus-storage/")) {
+        const key = imageUrl.replace("/manus-storage/", "");
+        imageUrl = await storageGetSignedUrl(key);
       }
+      const profileResult = await getSupabase()
+        .from("profiles")
+        .select("aesthetic_descriptors, niche")
+        .eq("user_id", user.id)
+        .single();
+      const profile = profileResult.data as { aesthetic_descriptors: string | null; niche: string | null } | null;
+      const brief = await generateIdentityBrief({
+        archetype: generation.archetype,
+        mood: generation.mood,
+        sceneCategory: generation.scene_category,
+        aestheticDescriptors: profile?.aesthetic_descriptors ?? null,
+        niche: profile?.niche ?? null,
+      });
+      cardBuffer = await buildStyleCard({
+        imageUrl,
+        brief,
+        templateTitle,
+      });
     } else {
       // Slow path: full render (background job not done yet)
       const profileResult = await getSupabase()
@@ -212,7 +237,7 @@ export async function handleStyleCard(req: Request, res: Response) {
       cardBuffer = await buildStyleCard({
         imageUrl,
         brief,
-        hook: hook ?? null,
+        templateTitle,
       });
     }
 
