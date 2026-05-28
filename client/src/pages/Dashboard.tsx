@@ -747,7 +747,7 @@ export default function Dashboard() {
                   </div>
 
                   {/* Actions */}
-                  <div className="shrink-0 px-6 pb-safe pb-8 pt-4 space-y-2">
+                  <div className="shrink-0 px-6 pt-4 space-y-2" style={{ paddingBottom: "max(2rem, env(safe-area-inset-bottom, 1rem))" }}>
                     <button
                       onClick={() => handleDownload(gen.id, gen.selected_hook)}
                       disabled={isDownloading}
@@ -779,7 +779,7 @@ export default function Dashboard() {
                         disabled={retryingId === gen.id}
                         className="w-full font-sans text-[10px] tracking-widest uppercase text-gold/40 hover:text-gold/70 transition-colors py-1 min-h-[32px] disabled:opacity-30 border-t border-cream/5 mt-1 pt-2"
                       >
-                        {retryingId === gen.id ? "Restoring credit..." : "This didn't render right"}
+                        {retryingId === gen.id ? "Restoring credit..." : "I didn't like this. Try again."}
                       </button>
                     )}
                     {/* Upgrade prompt if retry already used */}
