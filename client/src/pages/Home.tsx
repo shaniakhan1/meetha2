@@ -277,7 +277,7 @@ export default function Home() {
           <div className="mb-3">
             <BeforeAfterSlider
               beforeSrc="/manus-storage/shania-before_bb452c9e.webp"
-              afterSrc="/manus-storage/meetha-nightlife-aligned_2737f232.jpg"
+              afterSrc="/manus-storage/homepage-after-white_6a966c1e.jpg"
               beforeLabel="undefined"
               afterLabel="aligned"
               initialPosition={42}
