@@ -607,18 +607,28 @@ export default function Dashboard() {
             <p className="font-sans font-light text-sm text-charcoal-soft mb-6">
               Your first generation will appear here.
             </p>
-            <button
-              onClick={() => {
-                if (profile?.lora_status !== "ready") {
-                  toast.error(profile?.lora_status === "training" ? "Do not generate new content. Your model is changing." : "Add your photos in Profile to unlock generation.");
-                  return;
-                }
-                navigate("/generate");
-              }}
-              className="btn-luxury px-8"
-            >
-              Create your first
-            </button>
+            {profile?.lora_status === "ready" ? (
+              <button
+                onClick={() => navigate("/generate")}
+                className="btn-luxury px-8"
+              >
+                Create your first
+              </button>
+            ) : (
+              <div className="space-y-2">
+                <button
+                  disabled
+                  className="btn-luxury px-8 opacity-30 cursor-not-allowed"
+                >
+                  Create your first
+                </button>
+                <p className="font-sans text-xs text-charcoal-soft/50">
+                  {profile?.lora_status === "training"
+                    ? "Your model is training — check back soon."
+                    : "Add your photos to unlock generation."}
+                </p>
+              </div>
+            )}
           </div>
         ) : (
           <>

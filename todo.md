@@ -748,3 +748,14 @@
 - [ ] TypeScript check (npx tsc --noEmit)
 - [ ] pnpm test (all 23 passing)
 - [ ] webdev_save_checkpoint V31
+
+## V32 -- Onboarding Lock + Training Gate
+
+- [x] Remove "Skip for now" button from onboarding photos step (photos are required)
+- [x] Add training waiting screen in onboarding (polls every 8s, auto-advances when lora_status=ready)
+- [x] After photo upload in onboarding: navigate to training step instead of complete step
+- [x] Fix App.tsx TrainingGatedRoute: redirect no-photo users to /onboarding not /profile
+- [x] Lock dashboard CREATE YOUR FIRST button visually when lora not ready (opacity-30, disabled, helper text)
+- [x] Fix profile page loading flash: show skeleton not upload form while profileQuery is loading
+- [x] TypeScript: zero errors
+- [x] Vitest: 23 tests passing

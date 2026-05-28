@@ -72,9 +72,9 @@ function TrainingGatedRoute({ component: Component }: { component: React.Compone
   const isTraining = profile && profile.lora_status !== "ready" && ((profile.uploaded_photo_count ?? 0) > 0);
   const needsUpload = !profile || (profile.uploaded_photo_count ?? 0) === 0;
 
-  // No photos yet — send them to profile to upload
+  // No photos yet — send them back to onboarding to upload
   if (needsUpload) {
-    return <Redirect to="/profile" />;
+    return <Redirect to="/onboarding" />;
   }
 
   // Photos uploaded but not ready — show training wall

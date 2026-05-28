@@ -370,7 +370,14 @@ export default function Profile() {
         <div>
           <p className="font-sans text-xs tracking-[0.18em] uppercase text-charcoal-soft/50 mb-4">Visual Identity Model</p>
           <div className="p-4 border border-sand bg-warm-white/60 space-y-4">
-            {loraStatus === "ready" ? (
+            {profileQuery.isLoading ? (
+              /* Show skeleton while profile loads — never flash the upload form */
+              <div className="space-y-3 animate-pulse">
+                <div className="h-3 bg-sand/60 rounded w-1/3" />
+                <div className="h-3 bg-sand/40 rounded w-2/3" />
+                <div className="h-3 bg-sand/40 rounded w-1/2" />
+              </div>
+            ) : loraStatus === "ready" ? (
               <>
                 <div className="flex items-center gap-3">
                   <div className="w-2 h-2 rounded-full bg-gold flex-shrink-0" />

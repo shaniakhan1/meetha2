@@ -11,7 +11,7 @@ import {
   type Mood,
 } from "@shared/types";
 
-type Step = "archetype" | "mood" | "body" | "photos" | "complete";
+type Step = "archetype" | "mood" | "body" | "photos" | "training" | "complete";
 
 const ARCHETYPE_SYMBOL: Record<Archetype, string> = {
   luxury_minimal: "◻",
@@ -61,7 +61,17 @@ export default function Onboarding() {
   const [loraUploading, setLoraUploading] = useState(false);
   const loraFileInputRef = useRef<HTMLInputElement>(null);
 
-  const profileQuery = trpc.profile.get.useQuery(undefined, { retry: 3, retryDelay: 500 });
+  const profileQuery = trpc.profile.get.useQuery(undefined, {
+    retry: 3,
+    retryDelay: 500,
+    // Poll every 8s while on the training step
+    refetchInterval: (query) => {
+      const d = query.state.data;
+      if (!d) return false;
+      if (d.lora_status === "training" || ((d.uploaded_photo_count ?? 0) > 0 && d.lora_status !== "ready")) return 8_000;
+      return false;
+    },
+  });
 
   const upsertProfile = trpc.profile.upsert.useMutation({
     onSuccess: () => navigate("/dashboard"),
@@ -73,6 +83,14 @@ export default function Onboarding() {
     if (profileQuery.isLoading || profileQuery.isFetching) return;
     if (profileQuery.data?.onboarding_complete) navigate("/dashboard");
   }, [profileQuery.isLoading, profileQuery.isFetching, profileQuery.data, navigate]);
+
+  // Auto-advance from training step when model is ready
+  useEffect(() => {
+    if (step !== "training") return;
+    if (profileQuery.data?.lora_status === "ready") {
+      setStep("complete");
+    }
+  }, [step, profileQuery.data?.lora_status]);
 
   if (profileQuery.isLoading || profileQuery.isFetching) {
     return (
@@ -87,7 +105,7 @@ export default function Onboarding() {
 
   const archetypes = Object.keys(ARCHETYPE_LABELS) as Archetype[];
   const moods = Object.keys(MOOD_LABELS) as Mood[];
-  const STEPS: Step[] = ["archetype", "mood", "body", "photos"];
+  const STEPS: Step[] = ["archetype", "mood", "body", "photos"]; // "training" and "complete" are not progress-dot steps
   const stepIndex = STEPS.indexOf(step);
 
   const handleLoraFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -117,29 +135,29 @@ export default function Onboarding() {
   };
 
   const handlePhotosNext = async () => {
-    if (loraFiles.length >= 10 && loraConsent) {
-      setLoraUploading(true);
-      try {
-        const formData = new FormData();
-        loraFiles.forEach((file) => formData.append("photos", file));
-        const res = await fetch("/api/lora/upload", {
-          method: "POST",
-          body: formData,
-          credentials: "include",
-        });
-        if (!res.ok) {
-          const err = await res.json().catch(() => ({ error: "Upload failed" }));
-          toast.error(err.error || "Upload failed. You can try again from your profile.");
-        } else {
-          toast.success("Photos uploaded! Training starts in the background, about 20 minutes.");
-        }
-      } catch {
-        toast.error("Upload failed. You can train your look from your profile anytime.");
-      } finally {
+    if (loraFiles.length < 10 || !loraConsent) return;
+    setLoraUploading(true);
+    try {
+      const formData = new FormData();
+      loraFiles.forEach((file) => formData.append("photos", file));
+      const res = await fetch("/api/lora/upload", {
+        method: "POST",
+        body: formData,
+        credentials: "include",
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: "Upload failed" }));
+        toast.error(err.error || "Upload failed. Please try again.");
         setLoraUploading(false);
+        return;
       }
+      // Upload succeeded — move to training waiting screen
+      setStep("training");
+    } catch {
+      toast.error("Upload failed. Please try again.");
+    } finally {
+      setLoraUploading(false);
     }
-    setStep("complete");
   };
 
   const handleComplete = () => {
@@ -352,14 +370,6 @@ export default function Onboarding() {
             </p>
           </div>
 
-          {/* Skip - prominent at top */}
-          <button
-            onClick={() => setStep("complete")}
-            className="w-full py-3.5 mb-5 border-2 border-sand font-sans text-sm text-charcoal-soft hover:border-charcoal/30 hover:text-charcoal transition-all duration-200"
-          >
-            Skip for now. I'll do this later from my profile
-          </button>
-
           {/* What works */}
           <div className="mb-5 p-4 bg-charcoal text-cream">
             <p className="font-sans text-xs font-semibold tracking-[0.12em] uppercase mb-3">What works best</p>
@@ -509,6 +519,30 @@ export default function Onboarding() {
         </div>
       )}
 
+      {/* ─── Training Waiting ─── */}
+      {step === "training" && (
+        <div className="flex-1 flex flex-col items-center justify-center px-8 py-12 text-center animate-fade-up opacity-0">
+          <p className="font-sans text-[10px] tracking-[0.25em] uppercase text-gold mb-8">Visual Identity Model</p>
+          <h1 className="font-serif text-4xl font-light text-charcoal leading-tight mb-5">
+            Your model is<br />being trained.
+          </h1>
+          <div className="w-12 h-px bg-gold/40 mb-6" />
+          <p className="font-sans text-sm font-light text-charcoal-soft leading-relaxed mb-4 max-w-xs">
+            Meetha is learning your face, your coloring, and your visual essence.
+          </p>
+          <p className="font-sans text-sm font-light text-charcoal-soft leading-relaxed mb-10 max-w-xs">
+            This usually takes 10–20 minutes. We'll notify you when it's ready.
+          </p>
+          <div className="flex flex-col items-center gap-3">
+            <div className="w-6 h-6 border border-gold/40 border-t-gold rounded-full animate-spin" />
+            <p className="font-sans text-xs text-charcoal-soft/40 tracking-widest uppercase">Training in progress</p>
+          </div>
+          <p className="mt-12 font-sans text-xs text-charcoal-soft/30 leading-relaxed max-w-xs">
+            You can close this window. Your model will be ready when you return.
+          </p>
+        </div>
+      )}
+
       {/* ─── Complete ─── */}
       {step === "complete" && selectedArchetype && selectedMood && (
         <div className="flex-1 flex flex-col items-center justify-center px-5 py-8 text-center animate-fade-up opacity-0">
@@ -551,21 +585,24 @@ export default function Onboarding() {
               )}
             </div>
 
-            {/* The one big button */}
-            <button
-              onClick={handleComplete}
-              disabled={upsertProfile.isPending}
-              className="btn-luxury w-full py-5 text-base tracking-[0.2em]"
-            >
-              {upsertProfile.isPending ? (
+            {/* Auto-trigger profile save when reaching complete step */}
+            {!upsertProfile.isSuccess && !upsertProfile.isPending && (
+              <button
+                onClick={handleComplete}
+                disabled={upsertProfile.isPending}
+                className="btn-luxury w-full py-5 text-base tracking-[0.2em]"
+              >
+                Start Creating
+              </button>
+            )}
+            {upsertProfile.isPending && (
+              <button disabled className="btn-luxury w-full py-5 text-base tracking-[0.2em] opacity-70">
                 <span className="flex items-center justify-center gap-2">
                   <span className="w-4 h-4 border-2 border-cream border-t-transparent rounded-full animate-spin" />
                   Setting up your account...
                 </span>
-              ) : (
-                "Start Creating"
-              )}
-            </button>
+              </button>
+            )}
           </div>
         </div>
       )}
