@@ -69,8 +69,11 @@ function TrainingGatedRoute({ component: Component }: { component: React.Compone
   }
 
   const profile = profileQuery.data;
-  const isTraining = profile && profile.lora_status !== "ready" && ((profile.uploaded_photo_count ?? 0) > 0);
-  const needsUpload = !profile || (profile.uploaded_photo_count ?? 0) === 0;
+  // If lora is ready, always allow through — don't gate on uploaded_photo_count
+  // (existing users trained before the column was added will have count=0 but lora_status=ready)
+  const isReady = profile?.lora_status === "ready";
+  const isTraining = profile && profile.lora_status !== "ready" && ((profile.uploaded_photo_count ?? 0) > 0 || profile.lora_status === "training");
+  const needsUpload = !profile || (!isReady && (profile.uploaded_photo_count ?? 0) === 0 && profile.lora_status !== "training");
 
   // No photos yet — send them back to onboarding to upload
   if (needsUpload) {
