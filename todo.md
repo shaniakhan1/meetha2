@@ -776,3 +776,10 @@
 - [x] Fix App.tsx TrainingGatedRoute: same source-of-truth fix, removed photo count gate
 - [x] Force profile refetch: _resetCache() in AuthCallback, refetchOnWindowFocus globally in QueryClient, explicit focus listener in Dashboard
 - [x] TypeScript: 0 errors. Tests: 23/23 passing.
+
+## V35+ -- Your Worlds Personalization (Identity Brief)
+- [x] Source and assess 16 editorial scene images across 4 time-of-day moods
+- [x] Upload 10 approved scene images to static storage
+- [x] Add selectScenes() helper in identityBriefCard.ts: scores palette/undertone text against warm/cool keyword lists, returns 4 scenes (one per time slot: morning, afternoon, golden_hour, night)
+- [x] Update renderYourWorldsAsync() to accept brief param and use selectScenes() instead of hardcoded WORLD_URLS
+- [x] TypeScript: zero errors

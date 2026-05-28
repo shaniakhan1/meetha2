@@ -423,19 +423,55 @@ function renderPresence(ctx: SKRSContext2D, brief: AestheticBrief, y: number, W:
   return y + 14;
 }
 
-/** YOUR WORLDS SECTION — 4 cinematic wide-rectangle tiles with real images */
+// ─── Scene Selection ─────────────────────────────────────────────────────────
+
+type SceneEntry = { label: string; url: string; slot: "morning" | "afternoon" | "golden_hour" | "night"; tone: "warm" | "cool" };
+
+const ALL_SCENES: SceneEntry[] = [
+  { label: "Morning Light",          url: "https://meetha.studio/manus-storage/8sYDCLxtY2Ni_f09898c8.jpg",  slot: "morning",      tone: "cool" },
+  { label: "Morning Lounge",         url: "https://meetha.studio/manus-storage/fhhwwApsyhoh_a3ba19ab.jpg", slot: "morning",      tone: "warm" },
+  { label: "Hotel Lobby",            url: "https://meetha.studio/manus-storage/RdmvCDQJGJeE_89c1ff1f.jpg", slot: "afternoon",    tone: "warm" },
+  { label: "Private Aviation",       url: "https://meetha.studio/manus-storage/ka7K48spkBR2_e1262ff7.jpg", slot: "afternoon",    tone: "cool" },
+  { label: "Rooftop at Sunset",      url: "https://meetha.studio/manus-storage/Wwi1SvNTgDyH_dce0c596.jpg", slot: "golden_hour",  tone: "warm" },
+  { label: "Evening Lounge",         url: "https://meetha.studio/manus-storage/41zqV3GF0xF4_2d093184.jpg", slot: "golden_hour",  tone: "warm" },
+  { label: "Hotel Corridor",         url: "https://meetha.studio/manus-storage/gh4xmFozrLg0_264efed3.jpg", slot: "night",        tone: "warm" },
+  { label: "Rooftop at Dusk",        url: "https://meetha.studio/manus-storage/TmKdo6AomZQZ_4a871987.jpg", slot: "night",        tone: "cool" },
+  { label: "Candlelit Dinner",       url: "https://meetha.studio/manus-storage/VtTqLAgZb5bw_0e11bd81.png", slot: "night",        tone: "warm" },
+  { label: "Black Car Flash",        url: "https://meetha.studio/manus-storage/anau89FejTTN_fad1bef6.jpg", slot: "night",        tone: "cool" },
+];
+
+const WARM_KEYWORDS = ["ivory", "terracotta", "sienna", "gold", "blush", "cream", "caramel", "bronze", "rust", "amber", "warm", "honey", "peach", "coral", "sand", "wheat", "tawny", "ochre"];
+const COOL_KEYWORDS = ["charcoal", "navy", "slate", "ash", "steel", "midnight", "obsidian", "smoke", "cool", "silver", "grey", "gray", "cobalt", "indigo", "taupe", "stone"];
+
+function selectScenes(brief: AestheticBrief): SceneEntry[] {
+  const paletteText = [brief.palette ?? "", brief.undertone ?? ""].join(" ").toLowerCase();
+  let warmScore = 0;
+  let coolScore = 0;
+  for (const kw of WARM_KEYWORDS) if (paletteText.includes(kw)) warmScore++;
+  for (const kw of COOL_KEYWORDS) if (paletteText.includes(kw)) coolScore++;
+  // Default to warm on ties or if no palette data
+  const preferWarm = warmScore >= coolScore;
+  const preferredTone: "warm" | "cool" = preferWarm ? "warm" : "cool";
+  const fallbackTone: "warm" | "cool" = preferWarm ? "cool" : "warm";
+
+  const slots: Array<"morning" | "afternoon" | "golden_hour" | "night"> = ["morning", "afternoon", "golden_hour", "night"];
+  return slots.map((slot) => {
+    const preferred = ALL_SCENES.find((s) => s.slot === slot && s.tone === preferredTone);
+    const fallback  = ALL_SCENES.find((s) => s.slot === slot && s.tone === fallbackTone);
+    return preferred ?? fallback ?? ALL_SCENES.find((s) => s.slot === slot)!;
+  });
+}
+
+/** YOUR WORLDS SECTION — 4 cinematic wide-rectangle tiles, personalized by palette */
 async function renderYourWorldsAsync(
   ctx: SKRSContext2D,
   y: number,
   W: number,
-  PAD: number
+  PAD: number,
+  brief: AestheticBrief
 ): Promise<number> {
-  const WORLD_URLS = [
-    { label: "Rooftop Evenings",      url: "https://meetha.studio/manus-storage/rooftop-diners_ae57a63a.jpg" },
-    { label: "Candlelit Restaurants", url: "https://meetha.studio/manus-storage/candlelit-interiors_7e5108b5.jpg" },
-    { label: "Hotel Mirrors",         url: "https://meetha.studio/manus-storage/luxury-hotels_d7e83202.jpg" },
-    { label: "Black Car Flash",       url: "https://meetha.studio/manus-storage/black-car_dddf2239.jpg" },
-  ];
+  const selectedScenes = selectScenes(brief);
+  const WORLD_URLS = selectedScenes.map((s) => ({ label: s.label, url: s.url }));
 
   // Pre-fetch all world images as buffers in parallel to avoid canvas HTTP issues
   const WORLDS = await Promise.all(
@@ -594,7 +630,7 @@ export async function renderIdentityBriefCard(
   y = renderLighting(ctx, brief, y, W, PAD);
   y = renderFabrics(ctx, brief, y, W, PAD);
   y = renderPresence(ctx, brief, y, W, PAD);
-  y = await renderYourWorldsAsync(ctx, y, W, PAD);
+  y = await renderYourWorldsAsync(ctx, y, W, PAD, brief);
 
   // Footer
   const finalY = renderFooter(ctx, y, W);
