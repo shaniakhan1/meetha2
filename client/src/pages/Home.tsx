@@ -330,6 +330,40 @@ export default function Home() {
         </div>
       </section>
 
+      {/* ── Identity Brief Preview ── */}
+      <section className="py-0 bg-cream">
+        <div className="max-w-sm mx-auto px-6 pt-16 pb-8 text-center">
+          <p className="font-sans text-xs tracking-[0.2em] uppercase text-gold mb-4">What you receive</p>
+          <h2 className="font-serif font-light text-charcoal mb-3" style={{ lineHeight: 1.1 }}>
+            Your brief. Built on you.
+          </h2>
+          <div className="divider-editorial" />
+          <p className="font-sans font-light text-sm text-charcoal-soft leading-relaxed mt-4">
+            This is a real Identity Brief from a real Meetha user. Every brief is personal — built from your face, your coloring, your aesthetic frequency.
+          </p>
+        </div>
+
+        {/* Full-width brief screenshot */}
+        <div className="w-full overflow-hidden">
+          <img
+            src="/manus-storage/identity-brief-sample_debc2c13.png"
+            alt="Sample Meetha Identity Brief"
+            className="w-full block"
+            style={{ maxWidth: "520px", margin: "0 auto", display: "block" }}
+          />
+        </div>
+
+        {/* CTA below the brief */}
+        <div className="max-w-sm mx-auto px-6 pt-10 pb-16 text-center">
+          <button onClick={handleCTA} className="btn-luxury w-full max-w-xs mx-auto block">
+            Get your brief
+          </button>
+          <p className="font-sans text-xs text-charcoal-soft/50 mt-3">
+            Free to start. No credit card.
+          </p>
+        </div>
+      </section>
+
       {/* ── How It Works ── */}
       <section className="py-16 px-6 bg-warm-white">
         <div className="max-w-sm mx-auto text-center mb-8">
