@@ -1,7 +1,8 @@
 /**
  * Stripe webhook handler.
  * Handles:
- *   - checkout.session.completed (mode=payment)  → retrain add-on purchase
+ *   - checkout.session.completed (mode=payment, purchase_type=retrain)      → retrain add-on
+ *   - checkout.session.completed (mode=payment, purchase_type=credit_pack)  → Spark Pack top-up
  *   - checkout.session.completed (mode=subscription) → Membership activation
  *   - customer.subscription.updated / deleted → tier sync
  */
@@ -13,6 +14,11 @@ import { getUserById } from "./db";
 import { sendMembershipActivatedEmail } from "./_core/email";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: "2026-04-22.dahlia" });
+
+// ─── Credit pack price → credits mapping ────────────────────────────────────
+const CREDIT_PACK_CREDITS: Record<string, number> = {
+  "price_1TcW5WPMV5P3vLteveuspoUz": 3, // Spark Pack $5 → 3 looks
+};
 
 // ─── Price → tier mapping ──────────────────────────────────────────────────────
 // Membership monthly + annual → "starter" (25 gens)
@@ -163,16 +169,36 @@ export async function handleStripeRetrainWebhook(req: Request, res: Response) {
           }
         }).catch(() => { /* non-fatal */ });
       } else if (session.mode === "payment") {
-        // One-time retrain purchase
-        const sb = getSupabase() as any;
-        const { error } = await sb
-          .from("retrain_purchases")
-          .upsert(
-            { userId, stripeSessionId: session.id, paidAt: new Date().toISOString() },
-            { onConflict: "stripeSessionId", ignoreDuplicates: true }
-          );
-        if (error) throw error;
-        console.log(`[StripeWebhook] Retrain purchase recorded for user ${userId}, session ${session.id}`);
+        const purchaseType = session.metadata?.purchase_type;
+
+        if (purchaseType === "credit_pack") {
+          // Credit pack top-up — add credits directly to the user's balance
+          const priceId = session.metadata?.price_id ?? "";
+          const creditsToAdd = CREDIT_PACK_CREDITS[priceId] ?? 3;
+          const sb = getSupabase() as any;
+          const { data: existing } = await sb
+            .from("credits")
+            .select("credits_remaining")
+            .eq("user_id", userId)
+            .maybeSingle();
+          const current = existing?.credits_remaining ?? 0;
+          await sb.from("credits").update({
+            credits_remaining: current + creditsToAdd,
+            updated_at: new Date().toISOString(),
+          }).eq("user_id", userId);
+          console.log(`[StripeWebhook] Credit pack: +${creditsToAdd} credits for user ${userId} (price ${priceId})`);
+        } else {
+          // One-time retrain purchase
+          const sb = getSupabase() as any;
+          const { error } = await sb
+            .from("retrain_purchases")
+            .upsert(
+              { userId, stripeSessionId: session.id, paidAt: new Date().toISOString() },
+              { onConflict: "stripeSessionId", ignoreDuplicates: true }
+            );
+          if (error) throw error;
+          console.log(`[StripeWebhook] Retrain purchase recorded for user ${userId}, session ${session.id}`);
+        }
       }
     } else if (event.type === "invoice.paid") {
       // Subscription renewal — ensure credits are topped up
@@ -287,6 +313,39 @@ export async function createRetrainCheckoutSession({
     cancel_url: `${origin}/profile?retrain=cancelled`,
   });
 
+  return session.url!;
+}
+
+// ─── Credit pack checkout session ───────────────────────────────────────────
+
+export async function createCreditPackCheckoutSession({
+  userId,
+  userEmail,
+  userName,
+  origin,
+}: {
+  userId: number;
+  userEmail: string | null;
+  userName: string | null;
+  origin: string;
+}): Promise<string> {
+  const SPARK_PACK_PRICE_ID = "price_1TcW5WPMV5P3vLteveuspoUz";
+  const session = await stripe.checkout.sessions.create({
+    mode: "payment",
+    line_items: [{ price: SPARK_PACK_PRICE_ID, quantity: 1 }],
+    customer_email: userEmail ?? undefined,
+    client_reference_id: userId.toString(),
+    metadata: {
+      user_id: userId.toString(),
+      customer_email: userEmail ?? "",
+      customer_name: userName ?? "",
+      price_id: SPARK_PACK_PRICE_ID,
+      purchase_type: "credit_pack",
+    },
+    allow_promotion_codes: true,
+    success_url: `${origin}/dashboard?credits=added`,
+    cancel_url: `${origin}/dashboard`,
+  });
   return session.url!;
 }
 

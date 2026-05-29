@@ -147,6 +147,16 @@ export default function Generate() {
     toast.info("Opening secure checkout...");
   };
 
+  // Spark Pack checkout — $5 for 3 looks
+  const creditPackMutation = trpc.profile.createCreditPackCheckout.useMutation({
+    onSuccess: ({ url }) => { window.open(url, "_blank"); },
+    onError: (err) => { toast.error("Could not start checkout: " + err.message); },
+  });
+  const handleSparkPack = () => {
+    creditPackMutation.mutate({ origin: window.location.origin });
+    toast.info("Opening secure checkout...");
+  };
+
   // Queries — declared early so useEffects below can reference them
   const profileQuery = trpc.profile.get.useQuery();
   const creditsQuery = trpc.credits.get.useQuery();
@@ -353,11 +363,12 @@ export default function Generate() {
           <div className="absolute inset-0 bg-charcoal/40 backdrop-blur-sm" />
           <div className="relative w-full max-w-md bg-cream border-t border-sand px-6 pt-8 pb-10 animate-fade-up opacity-0" onClick={(e) => e.stopPropagation()}>
             <button onClick={() => setShowTopUp(false)} className="absolute top-4 right-5 font-sans text-xs text-charcoal-soft hover:text-charcoal tracking-widest uppercase">Close</button>
-            <p className="font-sans text-xs tracking-[0.15em] uppercase text-charcoal-soft mb-1">Credits</p>
-            <h2 className="font-serif text-2xl text-charcoal mb-2">You have used all your generations.</h2>
-            <p className="font-sans font-light text-xs text-charcoal-soft leading-relaxed mb-6">Membership unlocks 25 generations per month so you can keep building your aesthetic.</p>
+            <p className="font-sans text-xs tracking-[0.15em] uppercase text-charcoal-soft mb-1">Your Looks</p>
+            <h2 className="font-serif text-2xl text-charcoal mb-2">Want to see yourself in more looks?</h2>
+            <p className="font-sans font-light text-xs text-charcoal-soft leading-relaxed mb-6">Get 3 more looks instantly, or unlock 25 every month with Membership.</p>
             <div className="space-y-3">
-              <button onClick={handleMembershipMonthly} disabled={subscriptionCheckoutMutation.isPending} className="btn-luxury btn-gold w-full text-center block disabled:opacity-60">{subscriptionCheckoutMutation.isPending ? "Opening..." : "Membership — $19 / month"}</button>
+              <button onClick={handleSparkPack} disabled={creditPackMutation.isPending} className="btn-luxury btn-gold w-full text-center block disabled:opacity-60">{creditPackMutation.isPending ? "Opening..." : "3 more looks — $5"}</button>
+              <button onClick={handleMembershipMonthly} disabled={subscriptionCheckoutMutation.isPending} className="btn-luxury w-full text-center block disabled:opacity-60 border border-charcoal/20">{subscriptionCheckoutMutation.isPending ? "Opening..." : "Membership — $19 / month (25 looks)"}</button>
               <button onClick={handleMembershipAnnual} disabled={subscriptionCheckoutMutation.isPending} className="w-full py-3 font-sans text-xs tracking-widest uppercase text-charcoal-soft/60 hover:text-charcoal-soft transition-colors text-center block disabled:opacity-60">Annual plan (save 20%)</button>
             </div>
           </div>

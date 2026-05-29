@@ -944,6 +944,22 @@ export const appRouter = router({
       }),
 
     /**
+     * Create a Stripe Checkout Session for the Spark Pack (3 looks, $5 one-time).
+     */
+    createCreditPackCheckout: protectedProcedure
+      .input(z.object({ origin: z.string() }))
+      .mutation(async ({ ctx, input }) => {
+        const { createCreditPackCheckoutSession } = await import("./stripeWebhook");
+        const url = await createCreditPackCheckoutSession({
+          userId: ctx.user.id,
+          userEmail: ctx.user.email,
+          userName: ctx.user.name,
+          origin: input.origin,
+        });
+        return { url };
+      }),
+
+    /**
      * Check if the current user has an unused retrain purchase.
      */
     retrainStatus: protectedProcedure.query(async ({ ctx }) => {

@@ -803,3 +803,14 @@
 - [x] Asymmetric two-column layout: photo 45% left, text right on desktop; stacked on mobile
 - [x] Upload founder photo to static storage (/manus-storage/founder-photo_b6c41300.webp)
 - [x] Final copy with "what you believe you deserve" closing line
+
+## V39 -- Spark Pack Credit Add-on
+- [x] Create Spark Pack product in Stripe ($5, 3 looks) via MCP -- price_1TcW5WPMV5P3vLteveuspoUz
+- [x] Add CREDIT_PACK_CREDITS mapping and credit_pack webhook branch in stripeWebhook.ts
+- [x] Add createCreditPackCheckoutSession helper in stripeWebhook.ts
+- [x] Add createCreditPackCheckout tRPC procedure in routers.ts
+- [x] Add creditPackMutation + handleSparkPack in Generate.tsx
+- [x] Update showTopUp modal in Generate.tsx -- Spark Pack as primary CTA, membership as secondary
+- [x] Add creditPackMutation + handleSparkPack in Dashboard.tsx
+- [x] Update zero-credit block in Dashboard.tsx -- Spark Pack as primary CTA, membership as secondary
+- [x] TypeScript: zero errors. Vitest: 23/23 passing.

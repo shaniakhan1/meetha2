@@ -101,6 +101,16 @@ export default function Dashboard() {
     toast.info("Opening secure checkout...");
   };
 
+  // Spark Pack checkout — $5 for 3 looks
+  const creditPackMutation = trpc.profile.createCreditPackCheckout.useMutation({
+    onSuccess: ({ url }) => { window.open(url, "_blank"); },
+    onError: (err) => { toast.error("Could not start checkout: " + err.message); },
+  });
+  const handleSparkPack = () => {
+    creditPackMutation.mutate({ origin: window.location.origin });
+    toast.info("Opening secure checkout...");
+  };
+
   const profile = profileQuery.data;
   const credits = creditsQuery.data;
   const generationsPage = generationsQuery.data;
@@ -510,13 +520,20 @@ export default function Dashboard() {
             : "Generate New Content"}
         </button>
         {credits?.credits_remaining === 0 && (
-          <div className="text-center -mt-6 mb-8 space-y-1">
+          <div className="-mt-6 mb-8 space-y-2">
+            <button
+              onClick={handleSparkPack}
+              disabled={creditPackMutation.isPending}
+              className="btn-luxury btn-gold w-full text-center block disabled:opacity-60"
+            >
+              {creditPackMutation.isPending ? "Opening..." : "3 more looks — $5"}
+            </button>
             <button
               onClick={handleMembershipMonthly}
               disabled={subscriptionCheckoutMutation.isPending}
-              className="font-sans text-xs text-gold hover:text-charcoal transition-colors tracking-wide block w-full disabled:opacity-60"
+              className="font-sans text-xs text-gold hover:text-charcoal transition-colors tracking-wide block w-full disabled:opacity-60 py-2"
             >
-              {subscriptionCheckoutMutation.isPending ? "Opening..." : "Get more generations ($19 / month)"}
+              {subscriptionCheckoutMutation.isPending ? "Opening..." : "Membership — $19 / month (25 looks)"}
             </button>
             <button
               onClick={handleMembershipAnnual}
