@@ -651,7 +651,7 @@ export async function createReferral(data: {
   return (inserted as DbReferral) ?? null;
 }
 
-/** Complete a referral when referred user signs up. Awards 3 credits to both parties. */
+/** Complete a referral when referred user signs up. Awards 3 credits to referrer, 1 credit to referred friend. */
 export async function completeReferral(referredEmail: string, referredUserId: number): Promise<void> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const sb = getSupabase() as any;
@@ -688,7 +688,7 @@ export async function completeReferral(referredEmail: string, referredUserId: nu
     await sb
       .from("credits")
       .update({
-        credits_remaining: referredCredits.credits_remaining + 3,
+        credits_remaining: referredCredits.credits_remaining + 1,
         updated_at: now,
       })
       .eq("user_id", referredUserId);
