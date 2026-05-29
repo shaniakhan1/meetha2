@@ -1,28 +1,53 @@
 /**
- * saveOrShare — unified save/share helper with strict mobile vs desktop split.
+ * saveOrShare — unified save/share helper.
  *
- * MOBILE  (touch device OR narrow viewport):
- *   → Use blob anchor download — saves directly to Photos on iOS Safari.
- *   → navigator.share() is intentionally NOT used: it routes to Files, not Photos.
+ * Priority order for both functions:
  *
- * DESKTOP (macOS Safari, Chrome, Firefox, etc.):
- *   → Use a direct anchor download with the permanent server URL.
- *   → Also open in a new tab as a Safari fallback.
+ *  1. Web Share API with File support available (feature-detected, not UA-sniffed)
+ *     → navigator.share({ files }) — presents native OS share sheet.
+ *       On iOS Safari this shows "Save Image" → goes directly to Photos.
+ *       On Android Chrome this shows the native share sheet.
+ *
+ *  2. Blob anchor download (all other browsers)
+ *     → Creates a temporary object URL and clicks a hidden <a download> link.
+ *       Works on desktop Chrome, Firefox, desktop Safari, and any browser
+ *       that does not support navigator.share with files.
+ *
+ * Detection: canShareFiles() probes navigator.canShare({ files: [...] }) with
+ * a dummy 1-byte PNG. This is the only reliable cross-browser signal — no
+ * user-agent strings are inspected anywhere in this file.
  */
 
-/** Returns true when we are confident the user is on a touch/mobile device. */
-function isMobileDevice(): boolean {
-  // Prefer pointer media query — most reliable cross-browser signal
-  if (typeof window === "undefined") return false;
-  const coarse = window.matchMedia("(pointer: coarse)").matches;
-  const narrow = window.innerWidth < 768;
-  return coarse || narrow;
+/** Returns true when the browser supports navigator.share with File objects. */
+function canShareFiles(): boolean {
+  if (typeof navigator === "undefined" || typeof navigator.share !== "function") return false;
+  if (typeof navigator.canShare !== "function") return false;
+  try {
+    // Probe with a minimal valid file — browsers that don't support file sharing
+    // will return false here without throwing.
+    const probe = new File([new Uint8Array(1)], "probe.jpg", { type: "image/jpeg" });
+    return navigator.canShare({ files: [probe] });
+  } catch {
+    return false;
+  }
+}
+
+/** Fallback: blob anchor download — works on desktop and non-sharing mobile browsers. */
+function blobAnchorDownload(blob: Blob, filename: string): void {
+  const blobUrl = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = blobUrl;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(blobUrl), 15000);
 }
 
 /**
- * Save or share an image.
+ * Save or share an image from a permanent server URL.
  *
- * @param serverUrl  A permanent server URL (e.g. /manus-storage/...) — used directly on desktop.
+ * @param serverUrl  A permanent server URL (e.g. /manus-storage/...).
  * @param filename   Suggested filename for the download.
  * @param shareText  Optional caption (unused — kept for API compatibility).
  */
@@ -33,50 +58,41 @@ export async function saveOrShare(
 ): Promise<void> {
   void shareText; // kept for API compatibility
 
-  if (isMobileDevice()) {
-    // ── MOBILE: blob anchor download — saves to Photos on iOS Safari ──────────
+  if (canShareFiles()) {
+    // ── Path 1: Web Share API with file support ──────────────────────────────
     try {
       const res = await fetch(serverUrl, { credentials: "include" });
       if (!res.ok) throw new Error(`fetch ${res.status}`);
       const blob = await res.blob();
-      const blobUrl = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = blobUrl;
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      setTimeout(() => URL.revokeObjectURL(blobUrl), 15000);
-    } catch {
-      // Last resort
-      window.open(serverUrl, "_blank");
+      const file = new File([blob], filename, { type: blob.type || "image/jpeg" });
+      await navigator.share({ files: [file] });
+      return;
+    } catch (e) {
+      // AbortError = user dismissed the share sheet — not an error, just return.
+      if (e instanceof Error && e.name === "AbortError") return;
+      // Any other error: fall through to blob anchor download.
     }
-  } else {
-    // ── DESKTOP: direct anchor download — never use navigator.share ─────────
-    // Use the permanent server URL directly so Safari doesn't hang on blobs.
-    const a = document.createElement("a");
-    a.href = serverUrl;
-    a.download = filename;
-    a.target = "_blank";
-    a.rel = "noopener";
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
+  }
 
-    // Safari desktop sometimes ignores the anchor click for cross-origin-ish URLs.
-    // Open in new tab as a reliable fallback.
-    setTimeout(() => {
-      window.open(serverUrl, "_blank", "noopener");
-    }, 300);
+  // ── Path 2: Blob anchor download (desktop + non-sharing browsers) ────────
+  try {
+    const res = await fetch(serverUrl, { credentials: "include" });
+    if (!res.ok) throw new Error(`fetch ${res.status}`);
+    const blob = await res.blob();
+    blobAnchorDownload(blob, filename);
+  } catch {
+    // Last resort: open in new tab
+    window.open(serverUrl, "_blank");
   }
 }
 
 /**
  * Convenience wrapper: fetch a server blob endpoint (e.g. /api/style-card/:id)
- * and then save it using the mobile/desktop split.
+ * and then save/share the result.
  *
- * On mobile: blob anchor download → saves directly to Photos on iOS Safari.
- * On desktop: blob anchor download (no navigator.share).
+ * @param blobEndpoint  Server endpoint that returns the image blob.
+ * @param filename      Suggested filename for the download.
+ * @param shareText     Optional caption (unused — kept for API compatibility).
  */
 export async function saveOrShareBlob(
   blobEndpoint: string,
@@ -89,13 +105,19 @@ export async function saveOrShareBlob(
   if (!res.ok) throw new Error(`Server fetch failed: ${res.status}`);
   const blob = await res.blob();
 
-  // Blob anchor download on all devices — saves to Photos on iOS, Downloads on desktop
-  const blobUrl = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = blobUrl;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  setTimeout(() => URL.revokeObjectURL(blobUrl), 15000);
+  if (canShareFiles()) {
+    // ── Path 1: Web Share API with file support ──────────────────────────────
+    try {
+      const file = new File([blob], filename, { type: blob.type || "image/jpeg" });
+      await navigator.share({ files: [file] });
+      return;
+    } catch (e) {
+      // AbortError = user dismissed — not an error.
+      if (e instanceof Error && e.name === "AbortError") return;
+      // Fall through to blob anchor download.
+    }
+  }
+
+  // ── Path 2: Blob anchor download ─────────────────────────────────────────
+  blobAnchorDownload(blob, filename);
 }
