@@ -839,3 +839,9 @@
 - [x] Fixed iOS mobile download: open in new tab instead of navigator.share (iOS saves to Photos via share icon, avoids Files app confusion)
 - [x] Added recovery campaign UI to Admin.tsx: Dry Run + Send buttons, result summary (sent/failed/no email counts)
 - [x] TypeScript: zero errors. Vitest: 23/23 passing.
+
+## V52 -- Story Card Overlay + Image Overflow Fix
+
+- [x] Share Story Card button now uses full-screen overlay (same pattern as Save Clean Image) — fetches /api/style-card/:id as blob, creates object URL, shows full-screen with "Hold the image to save to your photos" instruction
+- [x] Fixed image overflow in generation card detail modal — image now constrained to max 55vh so Share Story Card and Save Clean Image buttons are always visible below the image
+- [x] Story card overlay properly revokes object URL on close to prevent memory leaks

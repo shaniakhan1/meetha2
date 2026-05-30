@@ -69,6 +69,8 @@ export default function Dashboard() {
   const [trainingBannerDismissed, setTrainingBannerDismissed] = useState(false);
   const [retryingId, setRetryingId] = useState<number | null>(null);
   const [saveOverlayUrl, setSaveOverlayUrl] = useState<string | null>(null);
+  const [storyCardOverlayUrl, setStoryCardOverlayUrl] = useState<string | null>(null);
+  const [loadingStoryCardId, setLoadingStoryCardId] = useState<number | null>(null);
   const prevLoraStatus = useRef<string | null | undefined>(undefined);
 
   const utils = trpc.useUtils();
@@ -211,16 +213,20 @@ export default function Dashboard() {
     }
   };
 
-  /** Save style card — server-rendered via /api/style-card/:id */
-  const handleDownload = async (id: number, hook?: string | null) => {
-    if (downloadingId === id) return;
-    setDownloadingId(id);
+  /** Share Story Card — fetch server-rendered card then show full-screen overlay for long-press save */
+  const handleDownload = async (id: number) => {
+    if (loadingStoryCardId === id) return;
+    setLoadingStoryCardId(id);
     try {
-      await saveOrShareBlob(`/api/style-card/${id}`, `meetha-style-card-${id}.jpg`, hook ?? "Styled by Meetha.");
+      const res = await fetch(`/api/style-card/${id}`);
+      if (!res.ok) throw new Error("Failed to load story card");
+      const blob = await res.blob();
+      const objectUrl = URL.createObjectURL(blob);
+      setStoryCardOverlayUrl(objectUrl);
     } catch (e: unknown) {
-      if (e instanceof Error && e.name !== "AbortError") toast.error("Could not save. Please try again.");
+      if (e instanceof Error && e.name !== "AbortError") toast.error("Could not load story card. Please try again.");
     } finally {
-      setDownloadingId(null);
+      setLoadingStoryCardId(null);
     }
   };
 
@@ -747,11 +753,44 @@ export default function Dashboard() {
               </div>
             )}
 
+            {/* Story Card overlay — full-screen for long-press save on any browser */}
+            {storyCardOverlayUrl && (
+              <div
+                className="fixed inset-0 z-[60] flex flex-col"
+                style={{ background: "rgba(0,0,0,0.97)", animation: "slideUp 180ms cubic-bezier(0.23,1,0.32,1) both" }}
+                onClick={() => { URL.revokeObjectURL(storyCardOverlayUrl); setStoryCardOverlayUrl(null); }}
+              >
+                <div className="flex items-center justify-between px-5 pt-safe pt-4 pb-3 shrink-0" onClick={e => e.stopPropagation()}>
+                  <button
+                    onClick={() => { URL.revokeObjectURL(storyCardOverlayUrl); setStoryCardOverlayUrl(null); }}
+                    className="font-sans text-xs tracking-widest uppercase text-white/50 hover:text-white transition-colors min-h-[44px] pr-4"
+                  >
+                    Close
+                  </button>
+                  <span className="font-sans text-xs tracking-widest uppercase text-white/30">Story Card</span>
+                  <div className="w-16" />
+                </div>
+                <div className="flex-1 flex items-center justify-center px-4 min-h-0" onClick={e => e.stopPropagation()}>
+                  <img
+                    src={storyCardOverlayUrl}
+                    alt="Hold to save story card"
+                    className="max-w-full max-h-full object-contain"
+                    style={{ borderRadius: "2px", userSelect: "none", WebkitUserSelect: "none" }}
+                    onContextMenu={e => e.stopPropagation()}
+                  />
+                </div>
+                <div className="shrink-0 px-6 py-6 text-center" onClick={e => e.stopPropagation()}>
+                  <p className="font-sans text-xs tracking-widest uppercase text-white/40">Hold the image to save to your photos</p>
+                </div>
+              </div>
+            )}
+
             {expandedId !== null && (() => {
               const gen = allGenerations.find((g) => g.id === expandedId);
               if (!gen) return null;
               const hooks = (() => { try { return JSON.parse(gen.hooks) as string[]; } catch { return []; } })();
-              const isDownloading = downloadingId === gen.id;
+              // isDownloading kept for reference but story card now uses loadingStoryCardId
+              const _isDownloading = downloadingId === gen.id;
               return (
                 <div
                   className="fixed inset-0 z-50 flex flex-col"
@@ -773,9 +812,9 @@ export default function Dashboard() {
                     <div className="w-16" />
                   </div>
 
-                  {/* Image */}
-                  <div className="flex-1 flex items-center justify-center px-6 min-h-0">
-                    <div className="relative w-full max-w-xs" style={{ aspectRatio: "9/16" }}>
+                  {/* Image — constrained so buttons below always stay visible */}
+                  <div className="flex items-center justify-center px-6" style={{ maxHeight: "55vh" }}>
+                    <div className="relative w-full max-w-xs" style={{ aspectRatio: "9/16", maxHeight: "55vh" }}>
                       <img
                         src={gen.image_url}
                         alt={gen.selected_hook ?? "Generated content"}
@@ -802,12 +841,12 @@ export default function Dashboard() {
                   {/* Actions */}
                   <div className="shrink-0 px-6 pt-4 space-y-2" style={{ paddingBottom: "max(2rem, env(safe-area-inset-bottom, 1rem))" }}>
                     <button
-                      onClick={() => handleDownload(gen.id, gen.selected_hook)}
-                      disabled={isDownloading}
+                      onClick={() => handleDownload(gen.id)}
+                      disabled={loadingStoryCardId === gen.id}
                       className="w-full font-sans text-xs tracking-widest uppercase text-charcoal bg-cream py-4 hover:bg-cream/90 transition-colors active:scale-[0.98] disabled:opacity-50 min-h-[52px]"
                       style={{ borderRadius: "1px" }}
                     >
-                      {isDownloading ? "Preparing…" : "Share Story Card"}
+                      {loadingStoryCardId === gen.id ? "Loading…" : "Share Story Card"}
                     </button>
 
                     <button
