@@ -1552,15 +1552,9 @@ Respond in this exact JSON format:
           throw new Error("No credits remaining. Please upgrade to continue.");
         }
 
-        // LoRA paywall: free tier gets exactly 1 LoRA generation, then must upgrade
-        const profileForGate = await getProfile(ctx.user.id);
-        const wantsLora = profileForGate?.lora_status === "ready" && profileForGate.lora_weights_url;
-        if (wantsLora && userCredits.tier === "free" && userCredits.free_lora_used) {
-          throw new Error("LORA_PAYWALL");
-        }
-
-        // Get profile for archetype + mood
+        // Get profile for archetype + mood (credits are the only gate — if you have credits, you generate)
         const profile = await getProfile(ctx.user.id);
+        const wantsLora = profile?.lora_status === "ready" && profile.lora_weights_url;
         const archetype = profile?.archetype ?? "luxury_minimal";
         const mood = profile?.mood ?? "soft";
 
