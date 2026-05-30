@@ -1,20 +1,16 @@
 /**
  * saveOrShare — unified save/share helper.
  *
- * iOS Safari behaviour notes:
- *   - navigator.share({ files }) opens the native share sheet.
- *     The sheet shows "Save to Files" as a prominent option and "Save Image"
- *     as a secondary one — users often tap "Save to Files" first by mistake.
- *   - The ONLY reliable way to trigger "Save Image → Photos" directly on iOS
- *     is to open the image in a new tab (window.open). iOS Safari shows a
- *     long-press / download button that saves to Photos.
- *   - On Android Chrome, navigator.share({ files }) works well and opens the
- *     native share sheet with "Save image" as the first option.
+ * iOS Safari behaviour:
+ *   - navigator.share({ files: [file] }) opens the native share sheet.
+ *     The sheet shows "Save Image" as an option which saves directly to Photos.
+ *   - window.open(url) opens a blank tab with a download bar — requires extra taps.
+ *   - The correct iOS approach is: fetch blob → create File → navigator.share({ files })
  *
  * Priority order:
- *  1. Android + Web Share API with File support → navigator.share({ files })
- *  2. iOS Safari → open image in new tab (user taps the download/share icon → Photos)
- *  3. Desktop + everything else → blob anchor <a download> click
+ *  1. Any browser with Web Share API + File support (iOS Safari, Android Chrome)
+ *     → fetch blob → navigator.share({ files: [file] })
+ *  2. Desktop + everything else → blob anchor <a download> click
  */
 
 /** Returns true when running on iOS (iPhone or iPad). */
@@ -23,9 +19,8 @@ function isIOS(): boolean {
   return /iP(hone|ad|od)/.test(navigator.userAgent);
 }
 
-/** Returns true when the browser supports navigator.share with File objects (non-iOS). */
+/** Returns true when the browser supports navigator.share with File objects. */
 function canShareFiles(): boolean {
-  if (isIOS()) return false; // Skip share API on iOS — it routes to Files, not Photos
   if (typeof navigator === "undefined" || typeof navigator.share !== "function") return false;
   if (typeof navigator.canShare !== "function") return false;
   try {
@@ -53,45 +48,39 @@ function blobAnchorDownload(blob: Blob, filename: string): void {
  *
  * @param serverUrl  A permanent server URL (e.g. /manus-storage/...).
  * @param filename   Suggested filename for the download.
- * @param shareText  Optional caption (unused — kept for API compatibility).
  */
 export async function saveOrShare(
   serverUrl: string,
   filename: string,
-  shareText?: string
+  _shareText?: string
 ): Promise<void> {
-  void shareText;
-
-  // ── iOS: open in new tab so user can save to Photos via the share icon ──────
-  if (isIOS()) {
+  // Fetch the blob first (works for both iOS and desktop)
+  let blob: Blob;
+  try {
+    const res = await fetch(serverUrl, { credentials: "include" });
+    if (!res.ok) throw new Error(`fetch ${res.status}`);
+    blob = await res.blob();
+  } catch {
+    // If fetch fails, open in new tab as last resort
     window.open(serverUrl, "_blank");
     return;
   }
 
   if (canShareFiles()) {
-    // ── Android / desktop with Web Share API ────────────────────────────────
+    // iOS Safari + Android Chrome: share sheet with "Save Image" option
     try {
-      const res = await fetch(serverUrl, { credentials: "include" });
-      if (!res.ok) throw new Error(`fetch ${res.status}`);
-      const blob = await res.blob();
-      const file = new File([blob], filename, { type: blob.type || "image/jpeg" });
+      const mimeType = blob.type || "image/jpeg";
+      const file = new File([blob], filename, { type: mimeType });
       await navigator.share({ files: [file] });
       return;
     } catch (e) {
-      if (e instanceof Error && e.name === "AbortError") return;
+      if (e instanceof Error && e.name === "AbortError") return; // User dismissed share sheet
       // Fall through to blob anchor download
     }
   }
 
-  // ── Desktop + fallback: blob anchor download ─────────────────────────────
-  try {
-    const res = await fetch(serverUrl, { credentials: "include" });
-    if (!res.ok) throw new Error(`fetch ${res.status}`);
-    const blob = await res.blob();
-    blobAnchorDownload(blob, filename);
-  } catch {
-    window.open(serverUrl, "_blank");
-  }
+  // Desktop + fallback
+  blobAnchorDownload(blob, filename);
 }
 
 /**
@@ -100,37 +89,35 @@ export async function saveOrShare(
  *
  * @param blobEndpoint  Server endpoint that returns the image blob.
  * @param filename      Suggested filename for the download.
- * @param shareText     Optional caption (unused — kept for API compatibility).
  */
 export async function saveOrShareBlob(
   blobEndpoint: string,
   filename: string,
-  shareText?: string
+  _shareText?: string
 ): Promise<void> {
-  void shareText;
-
-  // ── iOS: open the blob endpoint in a new tab → user saves to Photos ────────
-  if (isIOS()) {
-    window.open(blobEndpoint, "_blank");
-    return;
+  // Fetch the blob from the server endpoint
+  let blob: Blob;
+  try {
+    const res = await fetch(blobEndpoint, { credentials: "include" });
+    if (!res.ok) throw new Error(`Server fetch failed: ${res.status}`);
+    blob = await res.blob();
+  } catch (err) {
+    throw err; // Let caller handle fetch errors
   }
 
-  const res = await fetch(blobEndpoint, { credentials: "include" });
-  if (!res.ok) throw new Error(`Server fetch failed: ${res.status}`);
-  const blob = await res.blob();
-
   if (canShareFiles()) {
-    // ── Android / desktop with Web Share API ────────────────────────────────
+    // iOS Safari + Android Chrome: share sheet with "Save Image" option
     try {
-      const file = new File([blob], filename, { type: blob.type || "image/jpeg" });
+      const mimeType = blob.type || "image/jpeg";
+      const file = new File([blob], filename, { type: mimeType });
       await navigator.share({ files: [file] });
       return;
     } catch (e) {
-      if (e instanceof Error && e.name === "AbortError") return;
+      if (e instanceof Error && e.name === "AbortError") return; // User dismissed share sheet
       // Fall through to blob anchor download
     }
   }
 
-  // ── Desktop + fallback ───────────────────────────────────────────────────
+  // Desktop + fallback
   blobAnchorDownload(blob, filename);
 }
