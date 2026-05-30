@@ -821,3 +821,12 @@
 - [x] Updated stripeWebhook.ts to import price IDs from products.ts (no more hardcoded strings in webhook)
 - [x] Audited all checkout entry points: Home routes to /dashboard, Dashboard/Generate/Profile use correct live price IDs
 - [x] TypeScript: zero errors. Vitest: 23/23 passing.
+
+## V41 -- Referral Copy Fix + Homepage Checkout
+- [x] Fix referral invite copy: Dashboard "Both of you get 3 free generations" -> "You get 3 credits. They get 1 free look."
+- [x] Fix SignIn referral banner: "you both get 3 free generations" -> "get 1 free look on us"
+- [x] Fix auth.ts comment to accurately describe asymmetric referral credit awards
+- [x] Wire homepage Membership button to real Stripe checkout for logged-in users (createSubscriptionCheckout mutation with user_id in metadata)
+- [x] Logged-out visitors: Membership button opens Stripe payment link in new tab (or redirects to sign-in as fallback)
+- [x] Annual price corrected to $152/year (was showing $182 legacy price)
+- [x] TypeScript: zero errors. Vitest: 23/23 passing.

@@ -109,7 +109,7 @@ export default function SignIn() {
             {referrerName
               ? `${referrerName} invited you.`
               : "You were invited."}{" "}
-            <span className="text-gold">Sign up and you both get 3 free generations.</span>
+            <span className="text-gold">Sign up and get 1 free look on us.</span>
           </p>
         </div>
       )}

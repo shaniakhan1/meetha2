@@ -174,7 +174,7 @@ export async function handleSetSession(req: Request, res: Response) {
     return res.status(500).json({ error: "Failed to create user" });
   }
 
-  // Complete any pending referrals for this email (awards 3 credits to both parties)
+  // Complete any pending referrals for this email (awards 3 credits to referrer, 1 credit to referred friend)
   if (supabaseUser.email) {
     try {
       await db.completeReferral(supabaseUser.email, dbUser.id);

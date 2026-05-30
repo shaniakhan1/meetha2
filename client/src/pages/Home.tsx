@@ -41,15 +41,35 @@ const FEATURES = {
   ],
 };
 
-function PricingSection({ handleCTA }: { handleCTA: () => void }) {
+function PricingSection({
+  handleCTA,
+  isAuthenticated,
+  onMembershipCheckout,
+  checkoutPending,
+}: {
+  handleCTA: () => void;
+  isAuthenticated: boolean;
+  onMembershipCheckout: (annual: boolean) => void;
+  checkoutPending: boolean;
+}) {
   const [annual, setAnnual] = useState(false);
 
   const starterLink = annual
     ? import.meta.env.VITE_STRIPE_STARTER_ANNUAL_LINK
     : import.meta.env.VITE_STRIPE_STARTER_LINK;
-  const proLink = annual
-    ? import.meta.env.VITE_STRIPE_PRO_ANNUAL_LINK
-    : import.meta.env.VITE_STRIPE_PRO_LINK;
+
+  const handleMembershipClick = () => {
+    if (isAuthenticated) {
+      // Logged-in: create a real checkout session with user_id in metadata
+      onMembershipCheckout(annual);
+    } else if (starterLink) {
+      // Logged-out: open Stripe payment link in new tab
+      window.open(starterLink, "_blank");
+    } else {
+      // Fallback: redirect to sign-in
+      handleCTA();
+    }
+  };
 
   return (
     <section className="py-16 px-6" style={{ background: "#2C1810" }}>
@@ -116,7 +136,7 @@ function PricingSection({ handleCTA }: { handleCTA: () => void }) {
           <div className="p-5 border border-gold/40 bg-white/5">
             <div className="flex items-baseline justify-between mb-3">
               <p className="font-serif text-lg text-cream">Membership</p>
-              <p className="font-sans text-xs text-sand-dark">{annual ? "$182 / year" : "$19 / mo"}</p>
+              <p className="font-sans text-xs text-sand-dark">{annual ? "$152 / year" : "$19 / mo"}</p>
             </div>
             <ul className="space-y-1.5 mb-5">
               {FEATURES.membership.map((f) => (
@@ -126,15 +146,13 @@ function PricingSection({ handleCTA }: { handleCTA: () => void }) {
                 </li>
               ))}
             </ul>
-            {starterLink ? (
-              <a href={starterLink} target="_blank" rel="noopener noreferrer" className="block w-full py-3 bg-gold/90 hover:bg-gold text-center font-sans text-xs tracking-[0.15em] uppercase text-charcoal transition-colors">
-                Become Her
-              </a>
-            ) : (
-              <button onClick={handleCTA} className="w-full py-3 bg-gold/90 hover:bg-gold font-sans text-xs tracking-[0.15em] uppercase text-charcoal transition-colors">
-                Become Her
-              </button>
-            )}
+            <button
+              onClick={handleMembershipClick}
+              disabled={checkoutPending}
+              className="w-full py-3 bg-gold/90 hover:bg-gold font-sans text-xs tracking-[0.15em] uppercase text-charcoal transition-colors disabled:opacity-60"
+            >
+              {checkoutPending ? "Opening checkout..." : "Become Her"}
+            </button>
           </div>
         </div>
       </div>
@@ -171,6 +189,21 @@ export default function Home() {
     } else {
       navigate("/sign-in");
     }
+  };
+
+  // Membership checkout from homepage — creates a real session with user_id in metadata
+  const subscriptionCheckoutMutation = trpc.profile.createSubscriptionCheckout.useMutation({
+    onSuccess: ({ url }) => { window.open(url, "_blank"); },
+    onError: () => { navigate("/sign-in"); },
+  });
+
+  const handleMembershipCheckout = (annual: boolean) => {
+    const MONTHLY_PRICE = "price_1TafvrPMV5P3vLteuAss2HQB";
+    const ANNUAL_PRICE = "price_1TbNCKPMV5P3vLterPzZXdJ6";
+    subscriptionCheckoutMutation.mutate({
+      origin: window.location.origin,
+      priceId: annual ? ANNUAL_PRICE : MONTHLY_PRICE,
+    });
   };
 
   return (
@@ -722,7 +755,12 @@ export default function Home() {
       </section>
 
       {/* ── Pricing ── */}
-      <PricingSection handleCTA={handleCTA} />
+      <PricingSection
+        handleCTA={handleCTA}
+        isAuthenticated={isAuthenticated}
+        onMembershipCheckout={handleMembershipCheckout}
+        checkoutPending={subscriptionCheckoutMutation.isPending}
+      />
 
       {/* ── Founder ── */}
       <section className="py-20 px-6 bg-cream">

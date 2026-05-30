@@ -598,7 +598,7 @@ export default function Dashboard() {
         <div className="mb-10 py-5 border-t border-b border-sand/40">
           <p className="font-serif text-xl text-charcoal mb-1">Invite a friend</p>
           <p className="font-sans font-light text-sm text-charcoal-soft mb-4">
-            Both of you get 3 free generations.
+            You get 3 credits. They get 1 free look.
           </p>
           {referralUrl ? (
             <button
