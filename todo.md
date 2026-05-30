@@ -814,3 +814,10 @@
 - [x] Add creditPackMutation + handleSparkPack in Dashboard.tsx
 - [x] Update zero-credit block in Dashboard.tsx -- Spark Pack as primary CTA, membership as secondary
 - [x] TypeScript: zero errors. Vitest: 23/23 passing.
+
+## V40 -- Stripe Live Key Fix
+- [x] Updated STRIPE_SECRET_KEY and VITE_STRIPE_PUBLISHABLE_KEY to live mode in Settings -> Payment
+- [x] Expanded products.ts to centralize all live price IDs (sparkPack, MEMBERSHIP_PRICES, PRO_PRICES)
+- [x] Updated stripeWebhook.ts to import price IDs from products.ts (no more hardcoded strings in webhook)
+- [x] Audited all checkout entry points: Home routes to /dashboard, Dashboard/Generate/Profile use correct live price IDs
+- [x] TypeScript: zero errors. Vitest: 23/23 passing.

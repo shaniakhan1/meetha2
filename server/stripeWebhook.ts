@@ -12,24 +12,25 @@ import { getSupabase } from "./_core/supabase";
 import { PLAN_GENERATION_LIMITS } from "../shared/types";
 import { getUserById } from "./db";
 import { sendMembershipActivatedEmail } from "./_core/email";
+import { STRIPE_PRODUCTS, MEMBERSHIP_PRICES, PRO_PRICES } from "./products";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: "2026-04-22.dahlia" });
 
 // ─── Credit pack price → credits mapping ────────────────────────────────────
 const CREDIT_PACK_CREDITS: Record<string, number> = {
-  "price_1TcW5WPMV5P3vLteveuspoUz": 3, // Spark Pack $5 → 3 looks
+  [STRIPE_PRODUCTS.sparkPack.priceId]: STRIPE_PRODUCTS.sparkPack.credits,
 };
 
 // ─── Price → tier mapping ──────────────────────────────────────────────────────
 // Membership monthly + annual → "starter" (25 gens)
 // Pro monthly + annual → "pro" (25 gens)
 const PRICE_TO_TIER: Record<string, "starter" | "pro"> = {
-  "price_1TafvrPMV5P3vLteuAss2HQB": "starter", // Membership $19/month
-  "price_1TbNCKPMV5P3vLterPzZXdJ6": "starter", // Membership $152/year
-  "price_1TbEW0PMV5P3vLtenCWJelOV": "starter", // Membership $182/year (legacy)
-  "price_1Tafx2PMV5P3vLtewxC5j22r": "pro",     // Pro $39/month
-  "price_1TbNCQPMV5P3vLteK2hNyr5X": "pro",     // Pro $252/year
-  "price_1TbEW1PMV5P3vLteOLOovyKO": "pro",     // Pro $374/year (legacy)
+  [MEMBERSHIP_PRICES.monthly]: "starter",      // Membership $19/month
+  [MEMBERSHIP_PRICES.annual]: "starter",       // Membership $152/year
+  [MEMBERSHIP_PRICES.annualLegacy]: "starter", // Membership $182/year (legacy)
+  [PRO_PRICES.monthly]: "pro",                 // Pro $39/month
+  [PRO_PRICES.annual]: "pro",                  // Pro $252/year
+  [PRO_PRICES.annualLegacy]: "pro",            // Pro $374/year (legacy)
 };
 
 // ─── DB helpers ───────────────────────────────────────────────────────────────
@@ -296,7 +297,7 @@ export async function createRetrainCheckoutSession({
     mode: "payment",
     line_items: [
       {
-        price: "price_1TbDWGPMV5P3vLteBwKvgZKl",
+        price: STRIPE_PRODUCTS.retrain.priceId,
         quantity: 1,
       },
     ],
@@ -329,7 +330,7 @@ export async function createCreditPackCheckoutSession({
   userName: string | null;
   origin: string;
 }): Promise<string> {
-  const SPARK_PACK_PRICE_ID = "price_1TcW5WPMV5P3vLteveuspoUz";
+  const SPARK_PACK_PRICE_ID = STRIPE_PRODUCTS.sparkPack.priceId;
   const session = await stripe.checkout.sessions.create({
     mode: "payment",
     line_items: [{ price: SPARK_PACK_PRICE_ID, quantity: 1 }],
