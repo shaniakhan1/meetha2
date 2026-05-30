@@ -108,6 +108,7 @@ export default function Generate() {
   const [aestheticReadOpen, setAestheticReadOpen] = useState(false);
   const [exportLoading, setExportLoading] = useState<"share" | "download" | "raw" | null>(null);
   const [storyCardOverlayUrl, setStoryCardOverlayUrl] = useState<string | null>(null);
+  const [rawImageOverlayUrl, setRawImageOverlayUrl] = useState<string | null>(null);
   const cardRef = useRef<HTMLDivElement>(null);
   const styleCardRef = useRef<HTMLDivElement>(null);
 
@@ -340,12 +341,16 @@ export default function Generate() {
     }
   };
 
-  /** Gen 3+: Save & Share Image — server-rendered via /api/download/:id */
+  /** Gen 3+: Save Image — fetch then show full-screen overlay (iOS long-press) or download (desktop) */
   const handleSaveShareImage = async () => {
     if (!result?.generation?.id) return;
     setExportLoading("raw");
     try {
-      await saveOrShareBlob(`/api/download/${result.generation.id}`, `meetha-${result.generation.id}.jpg`, selectedHook ?? "Styled by Meetha.");
+      const { fetchForSave } = await import("@/lib/saveOrShare");
+      const objectUrl = await fetchForSave(`/api/download/${result.generation.id}`, `meetha-${result.generation.id}.jpg`);
+      if (objectUrl) {
+        setRawImageOverlayUrl(objectUrl);
+      }
     } catch (e: unknown) {
       if (e instanceof Error && e.name !== "AbortError") toast.error("Could not save. Please try again.");
     } finally {
@@ -392,8 +397,42 @@ export default function Generate() {
               onContextMenu={e => e.stopPropagation()}
             />
           </div>
-          <div className="shrink-0 px-6 py-6 text-center" onClick={e => e.stopPropagation()}>
-            <p className="font-sans text-xs tracking-widest uppercase text-white/40">Hold the image to save to your photos</p>
+          <div className="shrink-0 px-6 py-5 text-center" onClick={e => e.stopPropagation()}>
+            <p className="font-sans text-xs tracking-widest uppercase text-white/50 mb-1">Hold the image to save to your photos</p>
+            <p className="font-sans text-[10px] tracking-wider text-white/25">To share on Instagram, save first then upload from your Photos app</p>
+          </div>
+        </div>
+      )}
+
+      {/* Raw Image overlay — full-screen for long-press save on iOS */}
+      {rawImageOverlayUrl && (
+        <div
+          className="fixed inset-0 z-[60] flex flex-col"
+          style={{ background: "rgba(0,0,0,0.97)", animation: "slideUp 180ms cubic-bezier(0.23,1,0.32,1) both" }}
+          onClick={() => { URL.revokeObjectURL(rawImageOverlayUrl); setRawImageOverlayUrl(null); }}
+        >
+          <div className="flex items-center justify-between px-5 pt-4 pb-3 shrink-0" onClick={e => e.stopPropagation()}>
+            <button
+              onClick={() => { URL.revokeObjectURL(rawImageOverlayUrl); setRawImageOverlayUrl(null); }}
+              className="font-sans text-xs tracking-widest uppercase text-white/50 hover:text-white transition-colors min-h-[44px] pr-4"
+            >
+              Close
+            </button>
+            <span className="font-sans text-xs tracking-widest uppercase text-white/30">Save Image</span>
+            <div className="w-16" />
+          </div>
+          <div className="flex-1 flex items-center justify-center px-4 min-h-0" onClick={e => e.stopPropagation()}>
+            <img
+              src={rawImageOverlayUrl}
+              alt="Hold to save"
+              className="max-w-full max-h-full object-contain"
+              style={{ borderRadius: "2px", userSelect: "none", WebkitUserSelect: "none" }}
+              onContextMenu={e => e.stopPropagation()}
+            />
+          </div>
+          <div className="shrink-0 px-6 py-5 text-center" onClick={e => e.stopPropagation()}>
+            <p className="font-sans text-xs tracking-widest uppercase text-white/50 mb-1">Hold the image to save to your photos</p>
+            <p className="font-sans text-[10px] tracking-wider text-white/25">To share on Instagram, save first then upload from your Photos app</p>
           </div>
         </div>
       )}

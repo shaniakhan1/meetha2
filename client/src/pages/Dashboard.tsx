@@ -797,8 +797,9 @@ export default function Dashboard() {
                     onContextMenu={e => e.stopPropagation()}
                   />
                 </div>
-                <div className="shrink-0 px-6 py-6 text-center" onClick={e => e.stopPropagation()}>
-                  <p className="font-sans text-xs tracking-widest uppercase text-white/40">Hold the image to save to your photos</p>
+                <div className="shrink-0 px-6 py-5 text-center" onClick={e => e.stopPropagation()}>
+                  <p className="font-sans text-xs tracking-widest uppercase text-white/50 mb-1">Hold the image to save to your photos</p>
+                  <p className="font-sans text-[10px] tracking-wider text-white/25">To share on Instagram, save first then upload from your Photos app</p>
                 </div>
               </div>
             )}
@@ -829,8 +830,9 @@ export default function Dashboard() {
                     onContextMenu={e => e.stopPropagation()}
                   />
                 </div>
-                <div className="shrink-0 px-6 py-6 text-center" onClick={e => e.stopPropagation()}>
-                  <p className="font-sans text-xs tracking-widest uppercase text-white/40">Hold the image to save to your photos</p>
+                <div className="shrink-0 px-6 py-5 text-center" onClick={e => e.stopPropagation()}>
+                  <p className="font-sans text-xs tracking-widest uppercase text-white/50 mb-1">Hold the image to save to your photos</p>
+                  <p className="font-sans text-[10px] tracking-wider text-white/25">To share on Instagram, save first then upload from your Photos app</p>
                 </div>
               </div>
             )}
@@ -910,7 +912,7 @@ export default function Dashboard() {
                       disabled={false}
                       className="w-full font-sans text-xs tracking-widest uppercase text-cream/40 hover:text-cream/70 transition-colors py-2 min-h-[36px] disabled:opacity-40"
                     >
-                      Save Clean Image
+                      Save Image
                     </button>
                     <button
                       onClick={() => { setExpandedId(null); setConfirmDeleteId(gen.id); }}
