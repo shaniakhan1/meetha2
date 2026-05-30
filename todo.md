@@ -830,3 +830,12 @@
 - [x] Logged-out visitors: Membership button opens Stripe payment link in new tab (or redirects to sign-in as fallback)
 - [x] Annual price corrected to $152/year (was showing $182 legacy price)
 - [x] TypeScript: zero errors. Vitest: 23/23 passing.
+
+## V43 -- Founder Recovery Campaign + Mobile Download Fix
+- [x] Created recovery_emails table in Supabase (userId unique, creditsAdded, sentAt, bonusOnPurchaseUsed)
+- [x] Built recovery email template: Shania's exact founder copy, warm/elegant tone, Resend (from: Shania at Meetha)
+- [x] Built admin.sendRecoveryEmails tRPC procedure: queries free-tier users only (excludes starter/pro), adds 3 credits, sends email, logs in recovery_emails, dryRun flag for preview
+- [x] Updated Stripe webhook: on checkout.session.completed, if user is in recovery_emails and bonus not yet used, add 3 bonus credits (idempotent via bonusOnPurchaseUsed flag)
+- [x] Fixed iOS mobile download: open in new tab instead of navigator.share (iOS saves to Photos via share icon, avoids Files app confusion)
+- [x] Added recovery campaign UI to Admin.tsx: Dry Run + Send buttons, result summary (sent/failed/no email counts)
+- [x] TypeScript: zero errors. Vitest: 23/23 passing.

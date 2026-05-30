@@ -429,3 +429,85 @@ export async function sendMembershipActivatedEmail({
 
   if (error) throw new Error(`Resend error: ${error.message}`);
 }
+
+// ─── Founder Recovery Email ───────────────────────────────────────────────────
+export async function sendRecoveryEmail({
+  to,
+  name,
+  dashboardUrl,
+}: {
+  to: string;
+  name: string | null;
+  dashboardUrl: string;
+}): Promise<void> {
+  const resend = getResend();
+  const firstName = name?.split(" ")[0] ?? null;
+
+  const body = `
+    <p style="margin:0 0 32px;font-size:14px;color:#6b6b6b;line-height:1.9;font-family:system-ui,sans-serif;">
+      When Meetha launched, far more people joined than I expected.
+    </p>
+    <p style="margin:0 0 32px;font-size:14px;color:#6b6b6b;line-height:1.9;font-family:system-ui,sans-serif;">
+      The excitement was incredible.
+    </p>
+    <p style="margin:0 0 32px;font-size:14px;color:#6b6b6b;line-height:1.9;font-family:system-ui,sans-serif;">
+      The reality is that a few things behind the scenes weren't ready for the amount of traffic that came through, and some of you ran into issues when trying to upgrade your account.
+    </p>
+    <p style="margin:0 0 32px;font-size:14px;color:#6b6b6b;line-height:1.9;font-family:system-ui,sans-serif;">
+      We've spent the last few days fixing those problems and making the experience much smoother.
+    </p>
+    <p style="margin:0 0 32px;font-size:14px;color:#6b6b6b;line-height:1.9;font-family:system-ui,sans-serif;">
+      As a thank you for being one of our earliest supporters, I've added <strong style="color:#2c2c2c;">3 complimentary generations</strong> to your account.
+    </p>
+    <p style="margin:0 0 32px;font-size:14px;color:#6b6b6b;line-height:1.9;font-family:system-ui,sans-serif;">
+      And if you decide to become a member, you'll receive <strong style="color:#2c2c2c;">3 additional bonus generations</strong> on top of your membership.
+    </p>
+    ${ctaButton(dashboardUrl, "Use My Generations")}
+    <p style="margin:32px 0 8px;font-size:14px;color:#6b6b6b;line-height:1.9;font-family:system-ui,sans-serif;">
+      Thank you for being here this early. Building Meetha has been one of the most meaningful projects I've ever worked on, and I'm so excited for you to experience what's next.
+    </p>
+    <p style="margin:0 0 4px;font-size:14px;color:#6b6b6b;line-height:1.9;font-family:system-ui,sans-serif;">
+      With gratitude,
+    </p>
+    <p style="margin:0 0 4px;font-size:14px;color:#2c2c2c;font-weight:500;font-family:system-ui,sans-serif;">
+      Shania
+    </p>
+    <p style="margin:0;font-size:12px;color:#9b9b9b;font-family:system-ui,sans-serif;">
+      Founder, Meetha
+    </p>`;
+
+  const text = [
+    "When Meetha launched, far more people joined than I expected.",
+    "",
+    "The excitement was incredible.",
+    "",
+    "The reality is that a few things behind the scenes weren't ready for the amount of traffic that came through, and some of you ran into issues when trying to upgrade your account.",
+    "",
+    "We've spent the last few days fixing those problems and making the experience much smoother.",
+    "",
+    "As a thank you for being one of our earliest supporters, I've added 3 complimentary generations to your account.",
+    "",
+    "And if you decide to become a member, you'll receive 3 additional bonus generations on top of your membership.",
+    "",
+    `Use your generations: ${dashboardUrl}`,
+    "",
+    "Thank you for being here this early. Building Meetha has been one of the most meaningful projects I've ever worked on, and I'm so excited for you to experience what's next.",
+    "",
+    "With gratitude,",
+    "Shania",
+    "Founder, Meetha",
+  ].join("\n");
+
+  const greeting = firstName ? `${firstName},` : "Hello,";
+  void greeting; // firstName available if we want to personalise subject
+
+  const { error } = await resend.emails.send({
+    from: `Shania at Meetha <${FROM_ADDRESS}>`,
+    to,
+    subject: "A thank you from me — and 3 generations on us",
+    html: emailWrapper(body),
+    text,
+  });
+
+  if (error) throw new Error(`Resend error: ${error.message}`);
+}

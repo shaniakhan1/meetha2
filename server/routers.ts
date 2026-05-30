@@ -37,6 +37,10 @@ import {
   updateGenerationCardUrl,
   updateIdentityBriefCardUrl,
   updateTransformationCardUrl,
+  getFreeUsersForRecovery,
+  logRecoveryEmailSent,
+  getRecoveryEmailRecord,
+  markRecoveryBonusUsed,
 } from "./db";
 import { generateAndSaveStyleCard } from "./styleCard";
 import { emitEvent } from "./eventLog";
@@ -2821,6 +2825,56 @@ Be hyper-specific and visual. No generic phrases. This paragraph will be used wo
           .update({ credits_remaining: newBalance, updated_at: new Date().toISOString() })
           .eq("user_id", input.userId);
         return { success: true, newBalance };
+      }),
+
+    /**
+     * Send the founder recovery email to all free-tier users who haven't received it yet.
+     * Adds 3 credits immediately. Returns a summary of sent/skipped counts.
+     * Admin only — safe to call multiple times (idempotent via unique userId constraint).
+     */
+    sendRecoveryEmails: adminProcedure
+      .input(z.object({ dryRun: z.boolean().default(false) }))
+      .mutation(async ({ input, ctx }) => {
+        const { sendRecoveryEmail } = await import("./_core/email");
+        const sb = getSupabase() as any;
+        const baseUrl = ctx.req.headers.origin ?? "https://meetha.studio";
+        const dashboardUrl = `${baseUrl}/dashboard`;
+
+        const users = await getFreeUsersForRecovery();
+        const results: Array<{ userId: number; email: string; status: "sent" | "skipped" | "no_email" }> = [];
+
+        for (const user of users) {
+          if (!user.email) {
+            results.push({ userId: user.id, email: "", status: "no_email" });
+            continue;
+          }
+          if (input.dryRun) {
+            results.push({ userId: user.id, email: user.email, status: "sent" });
+            continue;
+          }
+          try {
+            // Add 3 credits
+            const credits = await getCredits(user.id);
+            const current = credits?.credits_remaining ?? 0;
+            await sb
+              .from("credits")
+              .update({ credits_remaining: current + 3, updated_at: new Date().toISOString() })
+              .eq("user_id", user.id);
+            // Send email
+            await sendRecoveryEmail({ to: user.email, name: user.name ?? null, dashboardUrl });
+            // Log
+            await logRecoveryEmailSent(user.id);
+            results.push({ userId: user.id, email: user.email, status: "sent" });
+          } catch (err) {
+            console.error(`[sendRecoveryEmails] Failed for user ${user.id}:`, err);
+            results.push({ userId: user.id, email: user.email, status: "skipped" });
+          }
+        }
+
+        const sent = results.filter((r) => r.status === "sent").length;
+        const skipped = results.filter((r) => r.status === "skipped").length;
+        const noEmail = results.filter((r) => r.status === "no_email").length;
+        return { sent, skipped, noEmail, dryRun: input.dryRun, results };
       }),
 
     /**

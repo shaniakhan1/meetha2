@@ -794,3 +794,73 @@ export async function savePostabilityFeedback(data: {
     response: data.response,
   });
 }
+
+// ─── Recovery Emails ──────────────────────────────────────────────────────────
+
+export type DbRecoveryEmail = {
+  id: number;
+  user_id: number;
+  credits_added: number;
+  sent_at: string;
+  bonus_on_purchase_used: boolean;
+};
+
+/** Returns all free-tier users who have NOT yet received a recovery email. */
+export async function getFreeUsersForRecovery(): Promise<DbUser[]> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const sb = getSupabase() as any;
+
+  // Get user IDs that already received a recovery email
+  const { data: alreadySent } = await sb
+    .from("recovery_emails")
+    .select("user_id");
+  const sentIds: number[] = (alreadySent ?? []).map((r: { user_id: number }) => r.user_id);
+
+  // Query free-tier credits rows (tier = 'free')
+  let creditsQuery = sb.from("credits").select("user_id").eq("tier", "free");
+  if (sentIds.length > 0) {
+    creditsQuery = creditsQuery.not("user_id", "in", `(${sentIds.join(",")})`);
+  }
+  const { data: freeCredits } = await creditsQuery;
+  const freeUserIds: number[] = (freeCredits ?? []).map((r: { user_id: number }) => r.user_id);
+  if (freeUserIds.length === 0) return [];
+
+  // Fetch full user rows for those IDs
+  const { data: users } = await sb
+    .from("users")
+    .select("*")
+    .in("id", freeUserIds);
+  return (users ?? []) as DbUser[];
+}
+
+/** Log that a recovery email was sent to a user. */
+export async function logRecoveryEmailSent(userId: number): Promise<void> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const sb = getSupabase() as any;
+  await sb.from("recovery_emails").upsert(
+    { user_id: userId, credits_added: 3, sent_at: new Date().toISOString(), bonus_on_purchase_used: false },
+    { onConflict: "user_id" }
+  );
+}
+
+/** Check if a user received a recovery email (for bonus credit on purchase). */
+export async function getRecoveryEmailRecord(userId: number): Promise<DbRecoveryEmail | null> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const sb = getSupabase() as any;
+  const { data } = await sb
+    .from("recovery_emails")
+    .select("*")
+    .eq("user_id", userId)
+    .maybeSingle();
+  return (data as DbRecoveryEmail) ?? null;
+}
+
+/** Mark the bonus-on-purchase as used so it only fires once. */
+export async function markRecoveryBonusUsed(userId: number): Promise<void> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const sb = getSupabase() as any;
+  await sb
+    .from("recovery_emails")
+    .update({ bonus_on_purchase_used: true })
+    .eq("user_id", userId);
+}

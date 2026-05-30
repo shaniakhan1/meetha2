@@ -10,7 +10,7 @@ import type { Request, Response } from "express";
 import Stripe from "stripe";
 import { getSupabase } from "./_core/supabase";
 import { PLAN_GENERATION_LIMITS } from "../shared/types";
-import { getUserById } from "./db";
+import { getUserById, getRecoveryEmailRecord, markRecoveryBonusUsed } from "./db";
 import { sendMembershipActivatedEmail } from "./_core/email";
 import { STRIPE_PRODUCTS, MEMBERSHIP_PRICES, PRO_PRICES } from "./products";
 
@@ -154,6 +154,28 @@ export async function handleStripeRetrainWebhook(req: Request, res: Response) {
         }
         await activateSubscription(userId, tier);
         console.log(`[StripeWebhook] Subscription checkout completed for user ${userId}, tier=${tier}`);
+
+        // Recovery bonus: add 3 extra credits if this user received a recovery email
+        getRecoveryEmailRecord(userId).then(async (record) => {
+          if (record && !record.bonus_on_purchase_used) {
+            const sb = getSupabase() as any;
+            const { data: existing } = await sb
+              .from("credits")
+              .select("credits_remaining")
+              .eq("user_id", userId)
+              .maybeSingle();
+            const current = existing?.credits_remaining ?? 0;
+            await sb.from("credits").update({
+              credits_remaining: current + 3,
+              updated_at: new Date().toISOString(),
+            }).eq("user_id", userId);
+            await markRecoveryBonusUsed(userId);
+            console.log(`[StripeWebhook] Recovery bonus: +3 credits for user ${userId}`);
+          }
+        }).catch((err) =>
+          console.warn("[StripeWebhook] Recovery bonus check error (non-fatal):", err instanceof Error ? err.message : String(err))
+        );
+
         // Send membership-activated email (fire and forget, non-blocking)
         getUserById(userId).then(async (user) => {
           if (user?.email) {

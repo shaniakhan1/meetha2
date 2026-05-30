@@ -40,6 +40,19 @@ export default function Admin() {
     onError: (e) => toast.error(e.message),
   });
 
+  const [recoveryResult, setRecoveryResult] = useState<{ sent: number; skipped: number; noEmail: number; dryRun: boolean } | null>(null);
+  const sendRecoveryMutation = trpc.admin.sendRecoveryEmails.useMutation({
+    onSuccess: (data) => {
+      setRecoveryResult(data);
+      if (data.dryRun) {
+        toast.success(`Dry run: would send to ${data.sent} users.`);
+      } else {
+        toast.success(`Recovery emails sent to ${data.sent} users. ${data.skipped} failed. ${data.noEmail} had no email.`);
+      }
+    },
+    onError: (e) => toast.error(e.message),
+  });
+
   if (!user || user.role !== "admin") {
     return (
       <div className="min-h-screen bg-warm-white flex items-center justify-center">
@@ -96,6 +109,46 @@ export default function Admin() {
             <p className="font-serif text-2xl text-charcoal">
               {users.filter((u) => u.loraStatus === "training").length}
             </p>
+          </div>
+        </div>
+
+        {/* Recovery Campaign */}
+        <div className="border border-amber-200 bg-amber-50/50 p-5 mb-8">
+          <p className="font-sans text-xs tracking-widest uppercase text-amber-700 mb-1">Founder Recovery Campaign</p>
+          <p className="font-sans text-sm text-charcoal mb-1">
+            Sends Shania's recovery email to all <strong>free-tier users</strong> who haven't received it yet.
+            Adds <strong>3 credits immediately</strong>. They receive <strong>3 bonus credits</strong> if they become a member.
+          </p>
+          <p className="font-sans text-xs text-charcoal-soft/60 mb-4">
+            Safe to run multiple times — idempotent. Use Dry Run first to preview the count.
+          </p>
+          <div className="flex items-center gap-3 flex-wrap">
+            <button
+              onClick={() => sendRecoveryMutation.mutate({ dryRun: true })}
+              disabled={sendRecoveryMutation.isPending}
+              className="font-sans text-xs border border-amber-300 px-4 py-2 text-amber-700 hover:border-amber-500 transition-colors disabled:opacity-50"
+            >
+              {sendRecoveryMutation.isPending ? "Running..." : "Dry Run (preview)"}
+            </button>
+            <button
+              onClick={() => {
+                if (confirm("Send recovery emails to all eligible free-tier users? This adds 3 credits to each account and sends the founder email.")) {
+                  sendRecoveryMutation.mutate({ dryRun: false });
+                }
+              }}
+              disabled={sendRecoveryMutation.isPending}
+              className="font-sans text-xs border border-charcoal/40 bg-charcoal px-4 py-2 text-warm-white hover:bg-charcoal/80 transition-colors disabled:opacity-50"
+            >
+              {sendRecoveryMutation.isPending ? "Sending..." : "Send Recovery Emails"}
+            </button>
+            {recoveryResult && (
+              <span className="font-sans text-xs text-charcoal-soft">
+                {recoveryResult.dryRun ? "Preview: " : "Sent: "}
+                <strong>{recoveryResult.sent}</strong> emails
+                {recoveryResult.skipped > 0 && `, ${recoveryResult.skipped} failed`}
+                {recoveryResult.noEmail > 0 && `, ${recoveryResult.noEmail} no email`}
+              </span>
+            )}
           </div>
         </div>
 

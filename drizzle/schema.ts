@@ -107,6 +107,19 @@ export const retrainPurchases = mysqlTable("retrain_purchases", {
 export type RetrainPurchase = typeof retrainPurchases.$inferSelect;
 export type InsertRetrainPurchase = typeof retrainPurchases.$inferInsert;
 
+// ─── Recovery Emails ────────────────────────────────────────────────────────
+
+export const recoveryEmails = mysqlTable("recovery_emails", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull().unique(), // one recovery email per user
+  creditsAdded: int("credits_added").default(3).notNull(),
+  sentAt: timestamp("sentAt").defaultNow().notNull(),
+  bonusOnPurchaseUsed: boolean("bonus_on_purchase_used").default(false).notNull(),
+});
+
+export type RecoveryEmail = typeof recoveryEmails.$inferSelect;
+export type InsertRecoveryEmail = typeof recoveryEmails.$inferInsert;
+
 // ─── Postability Feedback ─────────────────────────────────────────────────────
 
 export const postabilityFeedback = mysqlTable("postability_feedback", {
