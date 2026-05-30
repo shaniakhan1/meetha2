@@ -237,7 +237,7 @@ const NAV_LABELS: Record<string, string> = {
 
 export default function Templates() {
   const [, navigate] = useLocation();
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [hoveredHooks, setHoveredHooks] = useState<Record<string, string | null>>({});
   const [imgErrors, setImgErrors] = useState<Record<string, boolean>>({});
   const cardRefs = useRef<Record<string, HTMLDivElement | null>>({});
@@ -248,6 +248,8 @@ export default function Templates() {
   });
 
   const handleMakeMine = (slug: string) => {
+    // Don't fire while auth is still resolving — prevents false redirect to login on iOS
+    if (authLoading) return;
     if (!user) {
       window.location.href = getLoginUrl();
       return;
