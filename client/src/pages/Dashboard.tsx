@@ -739,20 +739,20 @@ export default function Dashboard() {
                       className="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity duration-200"
                       loading="lazy"
                     />
-                    {/* Subtle bottom scrim with hook text */}
-                    <div
-                      className="absolute inset-x-0 bottom-0 flex items-end pb-1.5 px-1"
-                      style={{ height: "50%", background: "linear-gradient(to top, rgba(26,15,9,0.75) 0%, transparent 100%)" }}
-                    >
-                      {gen.selected_hook && (
+                    {/* Subtle bottom scrim with hook text — only for template generations */}
+                    {gen.scene_category && gen.selected_hook && (
+                      <div
+                        className="absolute inset-x-0 bottom-0 flex items-end pb-1.5 px-1"
+                        style={{ height: "50%", background: "linear-gradient(to top, rgba(26,15,9,0.75) 0%, transparent 100%)" }}
+                      >
                         <p
                           className="font-serif text-cream leading-tight text-center w-full"
                           style={{ fontSize: "clamp(0.5rem, 2vw, 0.65rem)", textShadow: "0 1px 4px rgba(0,0,0,0.6)" }}
                         >
                           {gen.selected_hook}
                         </p>
-                      )}
-                    </div>
+                      </div>
+                    )}
                   </div>
                 </button>
               ))}
@@ -871,20 +871,26 @@ export default function Dashboard() {
                         className="w-full h-full object-cover"
                         style={{ borderRadius: "2px" }}
                       />
-                      {/* Hook + MEETHA overlay */}
-                      <div
-                        className="absolute inset-x-0 bottom-0 flex flex-col items-center pb-6 px-6"
-                        style={{ height: "45%", background: "linear-gradient(to top, rgba(13,10,7,0.8) 0%, transparent 100%)", justifyContent: "flex-end" }}
-                      >
-                        {(gen.selected_hook ?? hooks[0]) && (
-                          <p className="font-serif text-cream text-center leading-snug mb-2"
-                            style={{ fontSize: "clamp(1rem, 4vw, 1.25rem)", textShadow: "0 1px 8px rgba(0,0,0,0.6)" }}
-                          >
-                            {gen.selected_hook ?? hooks[0]}
-                          </p>
-                        )}
-                        <p className="font-sans text-cream/30 tracking-[0.2em] uppercase" style={{ fontSize: "7px" }}>M  E  E  T  H  A</p>
-                      </div>
+                      {/* Hook + MEETHA overlay — only for template generations */}
+                      {gen.scene_category ? (
+                        <div
+                          className="absolute inset-x-0 bottom-0 flex flex-col items-center pb-6 px-6"
+                          style={{ height: "45%", background: "linear-gradient(to top, rgba(13,10,7,0.8) 0%, transparent 100%)", justifyContent: "flex-end" }}
+                        >
+                          {(gen.selected_hook ?? hooks[0]) && (
+                            <p className="font-serif text-cream text-center leading-snug mb-2"
+                              style={{ fontSize: "clamp(1rem, 4vw, 1.25rem)", textShadow: "0 1px 8px rgba(0,0,0,0.6)" }}
+                            >
+                              {gen.selected_hook ?? hooks[0]}
+                            </p>
+                          )}
+                          <p className="font-sans text-cream/30 tracking-[0.2em] uppercase" style={{ fontSize: "7px" }}>M  E  E  T  H  A</p>
+                        </div>
+                      ) : (
+                        <div className="absolute inset-x-0 bottom-0 flex flex-col items-center pb-4" style={{ justifyContent: "flex-end" }}>
+                          <p className="font-sans text-cream/20 tracking-[0.2em] uppercase" style={{ fontSize: "7px" }}>M  E  E  T  H  A</p>
+                        </div>
+                      )}
                     </div>
                   </div>
 

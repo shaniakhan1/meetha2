@@ -71,11 +71,15 @@ export default function AuthCallback() {
     };
 
     const exchangeWithServer = async (accessToken: string) => {
+      // Pass referral code if present (stored by SignIn.tsx from ?ref= param)
+      const refCode = sessionStorage.getItem("meetha_ref_code") ?? undefined;
+      if (refCode) sessionStorage.removeItem("meetha_ref_code");
+
       const res = await fetch("/api/auth/session", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ access_token: accessToken }),
+        body: JSON.stringify({ access_token: accessToken, ...(refCode ? { referralCode: refCode } : {}) }),
       });
 
       if (!res.ok) {

@@ -852,3 +852,9 @@
 - [x] Dashboard "Unlock More Looks" button now opens a polished bottom-sheet upgrade modal (Spark Pack $5 + Membership $19/mo + Annual) instead of scrolling to inline section
 - [x] Confirmed The Blur (motion_blur) is already the 8th card in the Dashboard template shortcut row — no change needed
 - [x] TypeScript: 0 errors. Vitest: 23/23 passing.
+
+## V54 -- Hook overlay fix + referral Google fix
+
+- [x] Hook text overlay now only shows on template-generated images (scene_category set) — both in thumbnail grid and expanded detail modal. Create Studio / free-form generations show only the subtle MEETHA watermark.
+- [x] Referral fix: Google sign-in now passes referral code from sessionStorage through AuthCallback.tsx to /api/auth/session. Server creates the pending referral row and immediately completes it in the same request, so Google OAuth referrals now award credits correctly.
+- [x] TypeScript: 0 errors. Vitest: 23/23 passing.

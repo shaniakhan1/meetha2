@@ -136,7 +136,7 @@ export async function handleMagicLink(req: Request, res: Response) {
  * Verifies the Supabase access token, upserts the user, and sets a session cookie.
  */
 export async function handleSetSession(req: Request, res: Response) {
-  const { access_token } = req.body as { access_token?: string };
+  const { access_token, referralCode } = req.body as { access_token?: string; referralCode?: string };
   if (!access_token) {
     return res.status(400).json({ error: "access_token is required" });
   }
@@ -172,6 +172,18 @@ export async function handleSetSession(req: Request, res: Response) {
   if (!dbUser) {
     console.error("[Auth] upsertUser returned null dbUser");
     return res.status(500).json({ error: "Failed to create user" });
+  }
+
+  // If a referral code was passed (Google OAuth path), create the pending referral now
+  if (referralCode && supabaseUser.email) {
+    try {
+      const referrer = await db.getUserByReferralCode(referralCode);
+      if (referrer && referrer.id !== dbUser.id) {
+        await db.createReferral({ referrerUserId: referrer.id, referredEmail: supabaseUser.email.toLowerCase() });
+      }
+    } catch {
+      // Non-fatal
+    }
   }
 
   // Complete any pending referrals for this email (awards 3 credits to referrer, 1 credit to referred friend)
