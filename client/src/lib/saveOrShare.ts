@@ -1,26 +1,40 @@
 /**
- * saveOrShare — unified save/share helper.
+ * saveOrShare — unified save/share helper for iOS Safari, Chrome iOS, and desktop.
  *
- * iOS Safari strategy:
- *   - navigator.share({ url }) shows the browser share sheet WITHOUT "Save Image"
- *     because iOS treats it as a link, not an image file.
- *   - navigator.share({ files: [imageFile] }) shows "Save Image" in the share sheet.
- *   - iOS Safari DOES allow navigator.share({ files }) after an async fetch,
- *     as long as the fetch completes within ~1 second and the share call
- *     is made directly inside the same async function that was triggered by the tap.
- *   - The key: the async function itself must be called synchronously from the tap handler.
- *     Do NOT wrap in setTimeout or detach from the call stack.
+ * Browser matrix:
  *
- * Priority order:
- *  1. Any browser with Web Share API + File support (iOS Safari, Android Chrome)
- *     → fetch blob → navigator.share({ files: [imageFile] }) → "Save Image" appears
- *  2. Desktop + everything else → blob anchor <a download> click
+ * iOS Safari:
+ *   - navigator.share({ files: [imageFile] }) works and shows "Save Image" in share sheet
+ *   - Must call navigator.share directly from the async function triggered by the tap
+ *
+ * Chrome on iOS:
+ *   - navigator.share({ files }) routes to app share targets (Instagram, etc.) NOT system Photos
+ *   - Best approach: open blob URL in new tab → user long-presses image → "Save to Photos"
+ *   - This is the standard Chrome iOS save flow
+ *
+ * Desktop / Android Chrome:
+ *   - <a download> blob anchor click works reliably
  */
 
-/** Returns true when the browser supports navigator.share with File objects. */
+/** Detect iOS Safari (not Chrome/Firefox on iOS) */
+function isIOSSafari(): boolean {
+  const ua = navigator.userAgent;
+  const isIOS = /iPad|iPhone|iPod/.test(ua);
+  const isSafari = /Safari/.test(ua) && !/CriOS|FxiOS|EdgiOS|OPiOS/.test(ua);
+  return isIOS && isSafari;
+}
+
+/** Detect Chrome on iOS (CriOS) */
+function isChromeiOS(): boolean {
+  return /CriOS/.test(navigator.userAgent);
+}
+
+/** Returns true when the browser supports navigator.share with File objects (iOS Safari only) */
 function canShareFiles(): boolean {
   if (typeof navigator === "undefined" || typeof navigator.share !== "function") return false;
   if (typeof navigator.canShare !== "function") return false;
+  // Only use file sharing on iOS Safari — Chrome iOS routes to app targets instead of Photos
+  if (!isIOSSafari()) return false;
   try {
     const probe = new File([new Uint8Array(1)], "probe.jpg", { type: "image/jpeg" });
     return navigator.canShare({ files: [probe] });
@@ -29,7 +43,23 @@ function canShareFiles(): boolean {
   }
 }
 
-/** Fallback: blob anchor download — works on desktop and non-sharing mobile browsers. */
+/** Open blob URL in new tab — Chrome iOS: user long-presses image to "Save to Photos" */
+function openBlobInNewTab(blob: Blob): void {
+  const blobUrl = URL.createObjectURL(blob);
+  const newTab = window.open(blobUrl, "_blank");
+  if (!newTab) {
+    // Popup blocked — fall back to anchor download
+    const a = document.createElement("a");
+    a.href = blobUrl;
+    a.target = "_blank";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  }
+  setTimeout(() => URL.revokeObjectURL(blobUrl), 30000);
+}
+
+/** Fallback: blob anchor download — works on desktop */
 function blobAnchorDownload(blob: Blob, filename: string): void {
   const blobUrl = URL.createObjectURL(blob);
   const a = document.createElement("a");
@@ -43,8 +73,6 @@ function blobAnchorDownload(blob: Blob, filename: string): void {
 
 /**
  * Save or share an image blob from a server endpoint.
- * On iOS Safari: fetches the blob then calls navigator.share({ files }) which
- * shows "Save Image" in the native share sheet.
  *
  * IMPORTANT: This function must be called directly from a tap/click handler
  * (not inside setTimeout or detached from the gesture call stack).
@@ -64,7 +92,13 @@ export async function saveOrShareBlob(
     throw err;
   }
 
-  // Use navigator.share with the actual file — this shows "Save Image" on iOS
+  // Chrome on iOS: open in new tab so user can long-press → Save to Photos
+  if (isChromeiOS()) {
+    openBlobInNewTab(blob);
+    return;
+  }
+
+  // iOS Safari: use navigator.share({ files }) which shows "Save Image" in share sheet
   if (canShareFiles()) {
     try {
       const mimeType = blob.type || "image/jpeg";
@@ -77,7 +111,7 @@ export async function saveOrShareBlob(
     }
   }
 
-  // Desktop + fallback
+  // Desktop + everything else: blob anchor download
   blobAnchorDownload(blob, filename);
 }
 
