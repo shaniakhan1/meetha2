@@ -68,6 +68,7 @@ export default function Dashboard() {
   const [showLoraReady, setShowLoraReady] = useState(false);
   const [trainingBannerDismissed, setTrainingBannerDismissed] = useState(false);
   const [retryingId, setRetryingId] = useState<number | null>(null);
+  const [saveOverlayUrl, setSaveOverlayUrl] = useState<string | null>(null);
   const prevLoraStatus = useRef<string | null | undefined>(undefined);
 
   const utils = trpc.useUtils();
@@ -223,17 +224,11 @@ export default function Dashboard() {
     }
   };
 
-  /** Save clean image — server-rendered via /api/download/:id */
-  const handleShareStyleCard = async (id: number, hook?: string | null) => {
-    if (sharingCardId === id) return;
-    setSharingCardId(id);
-    try {
-      await saveOrShareBlob(`/api/download/${id}`, `meetha-${id}.jpg`, hook ?? "Styled by Meetha.");
-    } catch (e: unknown) {
-      if (e instanceof Error && e.name !== "AbortError") toast.error("Could not save image. Please try again.");
-    } finally {
-      setSharingCardId(null);
-    }
+  /** Save clean image — open full-screen overlay so user can long-press to save on any browser */
+  const handleShareStyleCard = (id: number) => {
+    const gen = allGenerations.find((g) => g.id === id);
+    if (!gen) return;
+    setSaveOverlayUrl(gen.image_url);
   };
 
   const heroGen = allGenerations[0] ?? null;
@@ -720,6 +715,38 @@ export default function Dashboard() {
             )}
 
             {/* Full-screen detail modal */}
+            {/* Save overlay — full-screen image for long-press save on any browser */}
+            {saveOverlayUrl && (
+              <div
+                className="fixed inset-0 z-[60] flex flex-col"
+                style={{ background: "rgba(0,0,0,0.97)", animation: "slideUp 180ms cubic-bezier(0.23,1,0.32,1) both" }}
+                onClick={() => setSaveOverlayUrl(null)}
+              >
+                <div className="flex items-center justify-between px-5 pt-safe pt-4 pb-3 shrink-0" onClick={e => e.stopPropagation()}>
+                  <button
+                    onClick={() => setSaveOverlayUrl(null)}
+                    className="font-sans text-xs tracking-widest uppercase text-white/50 hover:text-white transition-colors min-h-[44px] pr-4"
+                  >
+                    Close
+                  </button>
+                  <span className="font-sans text-xs tracking-widest uppercase text-white/30">Save Image</span>
+                  <div className="w-16" />
+                </div>
+                <div className="flex-1 flex items-center justify-center px-4 min-h-0" onClick={e => e.stopPropagation()}>
+                  <img
+                    src={saveOverlayUrl}
+                    alt="Hold to save"
+                    className="max-w-full max-h-full object-contain"
+                    style={{ borderRadius: "2px", userSelect: "none", WebkitUserSelect: "none" }}
+                    onContextMenu={e => e.stopPropagation()}
+                  />
+                </div>
+                <div className="shrink-0 px-6 py-6 text-center" onClick={e => e.stopPropagation()}>
+                  <p className="font-sans text-xs tracking-widest uppercase text-white/40">Hold the image to save to your photos</p>
+                </div>
+              </div>
+            )}
+
             {expandedId !== null && (() => {
               const gen = allGenerations.find((g) => g.id === expandedId);
               if (!gen) return null;
@@ -784,11 +811,11 @@ export default function Dashboard() {
                     </button>
 
                     <button
-                      onClick={() => handleShareStyleCard(gen.id, gen.selected_hook)}
-                      disabled={sharingCardId === gen.id}
+                      onClick={() => handleShareStyleCard(gen.id)}
+                      disabled={false}
                       className="w-full font-sans text-xs tracking-widest uppercase text-cream/40 hover:text-cream/70 transition-colors py-2 min-h-[36px] disabled:opacity-40"
                     >
-                      {sharingCardId === gen.id ? "Downloading…" : "Download Clean Image"}
+                      Save Clean Image
                     </button>
                     <button
                       onClick={() => { setExpandedId(null); setConfirmDeleteId(gen.id); }}
