@@ -224,7 +224,9 @@ export default function Generate() {
     onError: (err) => {
       if (err.message === "LORA_PAYWALL") {
         setShowLoraPaywall(true);
-        setStep("select");
+        // Stay on template_preview if we came from a template, otherwise go to select
+        if (!templateSlug) setStep("select");
+        else setStep("template_preview");
       } else {
         toast.error(err.message);
         setStep("select");
@@ -237,7 +239,8 @@ export default function Generate() {
     onError: (err) => {
       if (err.message === "LORA_PAYWALL") {
         setShowLoraPaywall(true);
-        setStep("select");
+        if (!templateSlug) setStep("select");
+        else setStep("template_preview");
       } else {
         toast.error(err.message);
         setStep("select");
@@ -382,8 +385,8 @@ export default function Generate() {
           <div className="relative w-full max-w-md bg-cream border-t border-sand px-6 pt-8 pb-10 animate-fade-up opacity-0" onClick={(e) => e.stopPropagation()}>
             <button onClick={() => setShowLoraPaywall(false)} className="absolute top-4 right-5 font-sans text-xs text-charcoal-soft hover:text-charcoal tracking-widest uppercase">Close</button>
             <p className="font-sans text-xs tracking-[0.15em] uppercase text-gold mb-1">Your Look</p>
-            <h2 className="font-serif text-2xl text-charcoal mb-2">Your first look was on us.</h2>
-            <p className="font-sans font-light text-xs text-charcoal-soft leading-relaxed mb-6">You have seen what Meetha can do with your face. Membership unlocks 25 generations per month so you can keep creating with your look.</p>
+            <h2 className="font-serif text-2xl text-charcoal mb-2">You've seen what your look can do.</h2>
+            <p className="font-sans font-light text-xs text-charcoal-soft leading-relaxed mb-6">Your free personalized look has been used. Membership unlocks 25 generations per month so you can keep creating content that actually looks like you.</p>
             <div className="space-y-3">
               <button onClick={handleMembershipMonthly} disabled={subscriptionCheckoutMutation.isPending} className="btn-luxury btn-gold w-full text-center block disabled:opacity-60">{subscriptionCheckoutMutation.isPending ? "Opening..." : "Membership — $19 / month"}</button>
               <button onClick={handleMembershipAnnual} disabled={subscriptionCheckoutMutation.isPending} className="w-full py-3 font-sans text-xs tracking-widest uppercase text-charcoal-soft/60 hover:text-charcoal-soft transition-colors text-center block disabled:opacity-60">Annual plan (save 20%)</button>
