@@ -845,3 +845,10 @@
 - [x] Share Story Card button now uses full-screen overlay (same pattern as Save Clean Image) — fetches /api/style-card/:id as blob, creates object URL, shows full-screen with "Hold the image to save to your photos" instruction
 - [x] Fixed image overflow in generation card detail modal — image now constrained to max 55vh so Share Story Card and Save Clean Image buttons are always visible below the image
 - [x] Story card overlay properly revokes object URL on close to prevent memory leaks
+
+## V53 -- Generate overlay + 0-credits modal + template row
+
+- [x] Generate.tsx Share Story Card now uses full-screen overlay (same pattern as Dashboard) — fetches /api/style-card/:id as blob, shows full-screen with "Hold the image to save to your photos" instruction
+- [x] Dashboard "Unlock More Looks" button now opens a polished bottom-sheet upgrade modal (Spark Pack $5 + Membership $19/mo + Annual) instead of scrolling to inline section
+- [x] Confirmed The Blur (motion_blur) is already the 8th card in the Dashboard template shortcut row — no change needed
+- [x] TypeScript: 0 errors. Vitest: 23/23 passing.

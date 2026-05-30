@@ -71,6 +71,7 @@ export default function Dashboard() {
   const [saveOverlayUrl, setSaveOverlayUrl] = useState<string | null>(null);
   const [storyCardOverlayUrl, setStoryCardOverlayUrl] = useState<string | null>(null);
   const [loadingStoryCardId, setLoadingStoryCardId] = useState<number | null>(null);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const prevLoraStatus = useRef<string | null | undefined>(undefined);
 
   const utils = trpc.useUtils();
@@ -299,6 +300,56 @@ export default function Dashboard() {
   return (
     <div className="min-h-screen bg-cream flex flex-col">
 
+      {/* 0-credits upgrade modal */}
+      {showUpgradeModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-end justify-center"
+          onClick={() => setShowUpgradeModal(false)}
+        >
+          <div className="absolute inset-0 bg-charcoal/50 backdrop-blur-sm" />
+          <div
+            className="relative w-full max-w-md bg-cream border-t border-sand px-6 pt-8 pb-10"
+            style={{ animation: "slideUp 220ms cubic-bezier(0.23,1,0.32,1) both" }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={() => setShowUpgradeModal(false)}
+              className="absolute top-4 right-5 font-sans text-xs text-charcoal-soft hover:text-charcoal tracking-widest uppercase min-h-[44px]"
+            >
+              Close
+            </button>
+            <p className="font-sans text-xs tracking-[0.15em] uppercase text-gold mb-1">Your Looks</p>
+            <h2 className="font-serif text-2xl font-light text-charcoal mb-2">Ready for more?</h2>
+            <p className="font-sans font-light text-xs text-charcoal-soft leading-relaxed mb-6">
+              Get 3 more looks instantly, or unlock 25 every month with Membership.
+            </p>
+            <div className="space-y-3">
+              <button
+                onClick={() => { setShowUpgradeModal(false); handleSparkPack(); }}
+                disabled={creditPackMutation.isPending}
+                className="btn-luxury btn-gold w-full text-center block disabled:opacity-60"
+              >
+                {creditPackMutation.isPending ? "Opening..." : "3 more looks — $5"}
+              </button>
+              <button
+                onClick={() => { setShowUpgradeModal(false); handleMembershipMonthly(); }}
+                disabled={subscriptionCheckoutMutation.isPending}
+                className="btn-luxury w-full text-center block disabled:opacity-60 border border-charcoal/20"
+              >
+                {subscriptionCheckoutMutation.isPending ? "Opening..." : "Membership — $19 / month (25 looks)"}
+              </button>
+              <button
+                onClick={() => { setShowUpgradeModal(false); handleMembershipAnnual(); }}
+                disabled={subscriptionCheckoutMutation.isPending}
+                className="w-full py-3 font-sans text-xs tracking-widest uppercase text-charcoal-soft/60 hover:text-charcoal-soft transition-colors text-center block disabled:opacity-60"
+              >
+                Annual plan (save up to 40%)
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* LoRA ready celebration overlay */}
       {showLoraReady && (
         <div
@@ -512,8 +563,7 @@ export default function Dashboard() {
         <button
           onClick={() => {
             if (credits?.credits_remaining === 0) {
-              // Scroll to upgrade options instead of doing nothing
-              document.getElementById("upgrade-section")?.scrollIntoView({ behavior: "smooth" });
+              setShowUpgradeModal(true);
             } else {
               navigate("/generate");
             }

@@ -107,6 +107,7 @@ export default function Generate() {
   } | null>(null);
   const [aestheticReadOpen, setAestheticReadOpen] = useState(false);
   const [exportLoading, setExportLoading] = useState<"share" | "download" | "raw" | null>(null);
+  const [storyCardOverlayUrl, setStoryCardOverlayUrl] = useState<string | null>(null);
   const cardRef = useRef<HTMLDivElement>(null);
   const styleCardRef = useRef<HTMLDivElement>(null);
 
@@ -322,14 +323,18 @@ export default function Generate() {
     }
   }, [cardPollQuery.data?.cardUrl]);
 
-  /** Gen 1: Save & Share Style Card — server-rendered via /api/style-card/:id */
+  /** Gen 1: Save & Share Style Card — fetch server-rendered card then show full-screen overlay */
   const handleSaveShareStyleCard = async () => {
     if (!result?.generation?.id) return;
     setExportLoading("share");
     try {
-      await saveOrShareBlob(`/api/style-card/${result.generation.id}`, `meetha-style-card-${result.generation.id}.jpg`, selectedHook ?? "Styled by Meetha.");
+      const res = await fetch(`/api/style-card/${result.generation.id}`);
+      if (!res.ok) throw new Error("Failed to load story card");
+      const blob = await res.blob();
+      const objectUrl = URL.createObjectURL(blob);
+      setStoryCardOverlayUrl(objectUrl);
     } catch (e: unknown) {
-      if (e instanceof Error && e.name !== "AbortError") toast.error("Could not save. Please try again.");
+      if (e instanceof Error && e.name !== "AbortError") toast.error("Could not load story card. Please try again.");
     } finally {
       setExportLoading(null);
     }
@@ -359,6 +364,39 @@ export default function Generate() {
 
   return (
     <div className="min-h-screen bg-cream flex flex-col">
+
+      {/* Story Card overlay — full-screen for long-press save on any browser */}
+      {storyCardOverlayUrl && (
+        <div
+          className="fixed inset-0 z-[60] flex flex-col"
+          style={{ background: "rgba(0,0,0,0.97)", animation: "slideUp 180ms cubic-bezier(0.23,1,0.32,1) both" }}
+          onClick={() => { URL.revokeObjectURL(storyCardOverlayUrl); setStoryCardOverlayUrl(null); }}
+        >
+          <style>{`@keyframes slideUp { from { transform: translateY(6%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }`}</style>
+          <div className="flex items-center justify-between px-5 pt-4 pb-3 shrink-0" onClick={e => e.stopPropagation()}>
+            <button
+              onClick={() => { URL.revokeObjectURL(storyCardOverlayUrl); setStoryCardOverlayUrl(null); }}
+              className="font-sans text-xs tracking-widest uppercase text-white/50 hover:text-white transition-colors min-h-[44px] pr-4"
+            >
+              Close
+            </button>
+            <span className="font-sans text-xs tracking-widest uppercase text-white/30">Story Card</span>
+            <div className="w-16" />
+          </div>
+          <div className="flex-1 flex items-center justify-center px-4 min-h-0" onClick={e => e.stopPropagation()}>
+            <img
+              src={storyCardOverlayUrl}
+              alt="Hold to save story card"
+              className="max-w-full max-h-full object-contain"
+              style={{ borderRadius: "2px", userSelect: "none", WebkitUserSelect: "none" }}
+              onContextMenu={e => e.stopPropagation()}
+            />
+          </div>
+          <div className="shrink-0 px-6 py-6 text-center" onClick={e => e.stopPropagation()}>
+            <p className="font-sans text-xs tracking-widest uppercase text-white/40">Hold the image to save to your photos</p>
+          </div>
+        </div>
+      )}
 
       {/* ── Top-up Modal ── */}
       {showTopUp && (
