@@ -509,18 +509,27 @@ export default function Dashboard() {
           </div>
         )}
         <button
-          onClick={() => navigate("/generate")}
-          disabled={credits?.credits_remaining === 0 || profile?.lora_status !== "ready"}
+          onClick={() => {
+            if (credits?.credits_remaining === 0) {
+              // Scroll to upgrade options instead of doing nothing
+              document.getElementById("upgrade-section")?.scrollIntoView({ behavior: "smooth" });
+            } else {
+              navigate("/generate");
+            }
+          }}
+          disabled={profile?.lora_status !== "ready"}
           className="btn-luxury w-full mb-8 disabled:opacity-40 disabled:cursor-not-allowed"
         >
           {profile?.lora_status === "training"
             ? "Training in progress..."
             : profile?.lora_status !== "ready"
             ? "Upload photos to unlock"
+            : credits?.credits_remaining === 0
+            ? "Unlock More Looks"
             : "Generate New Content"}
         </button>
         {credits?.credits_remaining === 0 && (
-          <div className="-mt-6 mb-8 space-y-2">
+          <div id="upgrade-section" className="-mt-6 mb-8 space-y-2">
             <button
               onClick={handleSparkPack}
               disabled={creditPackMutation.isPending}
