@@ -280,10 +280,10 @@ export default function Home() {
           <div className="divider-editorial animate-fade-in opacity-0 delay-400" />
 
           <p className="font-sans font-light text-base text-charcoal-soft leading-relaxed mb-8 animate-fade-up opacity-0 delay-400">
-            Upload your photos. Meetha reads your coloring, energy, and aesthetic — then shows you exactly who you are visually, and how to show up that way every time.
+            Upload your photos. Meetha reads your coloring, energy, and aesthetic, then shows you exactly who you are visually and how to show up that way every time.
           </p>
 
-          <div className="flex flex-col items-center gap-4 pb-16 animate-fade-up opacity-0 delay-500">
+          <div className="flex flex-col items-center gap-4 pb-10 animate-fade-up opacity-0 delay-500">
             <button onClick={handleCTA} className="btn-luxury w-full max-w-xs">
               Discover your visual identity
             </button>
@@ -291,6 +291,11 @@ export default function Home() {
               1 free generation. No credit card.
             </p>
           </div>
+
+          {/* Hero quote */}
+          <p className="font-serif font-light italic text-charcoal-soft/60 text-sm text-center pb-16 animate-fade-up opacity-0 delay-500" style={{ lineHeight: 1.6 }}>
+            &ldquo;I finally understood why certain colors never felt like me.&rdquo;
+          </p>
         </div>
       </section>
 
@@ -326,6 +331,14 @@ export default function Home() {
           </p>
 
 
+        </div>
+
+        {/* Quote after The Shift */}
+        <div className="max-w-sm mx-auto px-6 pt-10 pb-2 text-center">
+          <p className="font-serif font-light text-charcoal leading-snug" style={{ fontSize: "clamp(1.1rem, 4vw, 1.4rem)" }}>
+            &ldquo;I showed my makeup artist my Meetha images and finally knew exactly what I wanted.&rdquo;
+          </p>
+          <p className="font-sans text-xs tracking-[0.15em] uppercase text-charcoal-soft/40 mt-4">Meetha user</p>
         </div>
       </section>
 
@@ -577,31 +590,38 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ── Social Proof ── */}
+      {/* ── Real Stories ── */}
       <section className="py-16 px-6 bg-cream">
-        <div className="max-w-2xl mx-auto">
-          <div className="divider-editorial mb-12" />
-          <div className="grid grid-cols-1 gap-12 md:grid-cols-2">
-            {/* Testimonial 1 */}
+        <div className="max-w-sm mx-auto">
+          <div className="divider-editorial mb-10" />
+
+          <p className="font-sans text-xs tracking-[0.2em] uppercase text-gold mb-8 text-center">Real Stories</p>
+
+          {/* Two quotes — what people actually did next */}
+          <div className="space-y-10 mb-10">
             <div className="text-center">
-              <blockquote className="font-serif font-light text-charcoal leading-snug mb-5" style={{ fontSize: "clamp(1.3rem, 5vw, 1.75rem)" }}>
-                "It showed me my colors, my jewelry, my makeup. It gave me ideas to improve my content I never would have thought of."
+              <blockquote className="font-serif font-light text-charcoal leading-snug mb-4" style={{ fontSize: "clamp(1.1rem, 4vw, 1.35rem)" }}>
+                &ldquo;I brought my images to my stylist and we built my wardrobe around them.&rdquo;
               </blockquote>
-              <p className="font-sans text-xs tracking-[0.15em] uppercase text-charcoal-soft">
-                Meetha user
-              </p>
+              <p className="font-sans text-xs tracking-[0.15em] uppercase text-charcoal-soft/40">Took her images to her stylist.</p>
             </div>
-            {/* Testimonial 2 */}
+
             <div className="text-center">
-              <blockquote className="font-serif font-light text-charcoal leading-snug mb-5" style={{ fontSize: "clamp(1.3rem, 5vw, 1.75rem)" }}>
-                "I showed these to my photographer and we had the most amazing styling ideas for my shoot. It completely changed how we planned the whole session."
+              <blockquote className="font-serif font-light text-charcoal leading-snug mb-4" style={{ fontSize: "clamp(1.1rem, 4vw, 1.35rem)" }}>
+                &ldquo;I kept generating more images because they made me excited to get dressed up again.&rdquo;
               </blockquote>
-              <p className="font-sans text-xs tracking-[0.15em] uppercase text-charcoal-soft">
-                Meetha user &mdash; content creator
-              </p>
+              <p className="font-sans text-xs tracking-[0.15em] uppercase text-charcoal-soft/40">Bought a dress and booked a beach day.</p>
+            </div>
+
+            <div className="text-center">
+              <blockquote className="font-serif font-light text-charcoal leading-snug mb-4" style={{ fontSize: "clamp(1.1rem, 4vw, 1.35rem)" }}>
+                &ldquo;I used my images as inspiration for a photoshoot and finally had a clear creative direction.&rdquo;
+              </blockquote>
+              <p className="font-sans text-xs tracking-[0.15em] uppercase text-charcoal-soft/40">Planned a photoshoot from her Style Card.</p>
             </div>
           </div>
-          <div className="divider-editorial mt-12" />
+
+          <div className="divider-editorial" />
         </div>
       </section>
 
@@ -754,6 +774,31 @@ export default function Home() {
         </p>
       </section>
 
+      {/* ── The big line ── */}
+      <section className="py-20 px-6 bg-cream text-center">
+        <div className="max-w-sm mx-auto">
+          <p
+            className="font-serif font-light text-charcoal"
+            style={{ fontSize: "clamp(1.6rem, 6vw, 2.4rem)", lineHeight: 1.2 }}
+          >
+            Everyone tells you to visualize your future. Meetha was the first time I could actually see myself in it.
+          </p>
+        </div>
+      </section>
+
+      {/* ── Clarity quote before pricing ── */}
+      <section className="py-16 px-6 bg-warm-white text-center">
+        <div className="max-w-sm mx-auto">
+          <blockquote
+            className="font-serif font-light text-charcoal leading-snug mb-5"
+            style={{ fontSize: "clamp(1.4rem, 5.5vw, 2rem)" }}
+          >
+            &ldquo;I thought I was generating photos. What I actually got was clarity.&rdquo;
+          </blockquote>
+          <p className="font-sans text-xs tracking-[0.15em] uppercase text-charcoal-soft/40">Meetha user</p>
+        </div>
+      </section>
+
       {/* ── Pricing ── */}
       <PricingSection
         handleCTA={handleCTA}
@@ -792,14 +837,14 @@ export default function Home() {
                 The aligned version.
               </p>
               <p className="font-sans font-light text-sm text-charcoal-soft/70 leading-relaxed mb-8">
-                When you start seeing yourself differently, everything else follows — how you dress, how you carry yourself, what you believe you deserve.
+                When you start seeing yourself differently, everything else follows: how you dress, how you carry yourself, what you believe you deserve.
               </p>
               <p className="font-sans font-light text-sm text-charcoal-soft/70 leading-relaxed mb-10">
                 Meetha was never meant to be another AI photo app. It&apos;s a way to visualize the version of yourself you&apos;re already becoming.
               </p>
               <div className="divider-editorial mb-6" />
               <p className="font-sans text-xs tracking-[0.2em] uppercase text-charcoal-soft/50">
-                &mdash;&nbsp;Shania Khan, Founder
+                Shania Khan, Founder
               </p>
             </div>
           </div>

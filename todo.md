@@ -858,3 +858,22 @@
 - [x] Hook text overlay now only shows on template-generated images (scene_category set) — both in thumbnail grid and expanded detail modal. Create Studio / free-form generations show only the subtle MEETHA watermark.
 - [x] Referral fix: Google sign-in now passes referral code from sessionStorage through AuthCallback.tsx to /api/auth/session. Server creates the pending referral row and immediately completes it in the same request, so Google OAuth referrals now award credits correctly.
 - [x] TypeScript: 0 errors. Vitest: 23/23 passing.
+
+## V55 -- Bulletproof save flow
+
+- [x] Removed all navigator.share() calls — they silently fail on iOS when async fetch breaks the gesture chain
+- [x] New fetchForSave() helper: iOS returns object URL for full-screen overlay, desktop triggers anchor download
+- [x] Generate.tsx Save Image now uses full-screen overlay (same as Story Card)
+- [x] All overlays show "Hold the image to save to your photos" + Instagram share note
+- [x] Renamed "Save Clean Image" to "Save Image" everywhere
+- [x] TypeScript: 0 errors. Vitest: 23/23 passing.
+
+## V56 -- Homepage belief quotes + em dash cleanup
+
+- [x] Hero: italic quote under CTA "I finally understood why certain colors never felt like me."
+- [x] After Before/After slider: makeup artist quote (centered, larger serif)
+- [x] Replaced old Social Proof section with "Real Stories" section: 3 real-outcome quotes with oddly-specific context lines
+- [x] Big standalone statement: "Everyone tells you to visualize your future. Meetha was the first time I could actually see myself in it."
+- [x] Clarity quote before Pricing: "I thought I was generating photos. What I actually got was clarity."
+- [x] Founder section: removed em dash from attribution line and body copy
+- [x] TypeScript: 0 errors. Vitest: 22/23 passing (Resend connectivity test unrelated to changes).
