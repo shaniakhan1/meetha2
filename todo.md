@@ -877,3 +877,13 @@
 - [x] Clarity quote before Pricing: "I thought I was generating photos. What I actually got was clarity."
 - [x] Founder section: removed em dash from attribution line and body copy
 - [x] TypeScript: 0 errors. Vitest: 22/23 passing (Resend connectivity test unrelated to changes).
+
+## V57 -- Recalibration modal on Dashboard header
+
+- [x] "Warm Editorial · Grounded and Certain" label in Dashboard header is now tappable — shows "recalibrate" hint in gold
+- [x] Tapping opens a bottom-sheet recalibration modal (same slide-up animation as upgrade modal)
+- [x] Step 1: frequency/archetype picker with current value pre-selected
+- [x] Step 2: energy/mood picker with current value pre-selected, Save button calls profile.upsert
+- [x] On save: profile and aesthetic brief invalidated, Dashboard header updates immediately, toast confirmation
+- [x] LoRA model untouched — only archetype and mood text fields updated
+- [x] TypeScript: 0 errors.

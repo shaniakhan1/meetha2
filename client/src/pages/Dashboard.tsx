@@ -16,9 +16,13 @@ import {
 } from "@/components/ui/alert-dialog";
 import {
   ARCHETYPE_LABELS,
+  ARCHETYPE_DESCRIPTIONS,
   MOOD_LABELS,
+  MOOD_DESCRIPTIONS,
   PLATFORM_LABELS,
   SCENE_LABELS,
+  type Archetype,
+  type Mood,
 } from "@shared/types";
 // storyCardExport removed — export uses server-side /api/style-card/:id and /api/download/:id
 
@@ -72,6 +76,10 @@ export default function Dashboard() {
   const [storyCardOverlayUrl, setStoryCardOverlayUrl] = useState<string | null>(null);
   const [loadingStoryCardId, setLoadingStoryCardId] = useState<number | null>(null);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [showRecalibrate, setShowRecalibrate] = useState(false);
+  const [recalibrateStep, setRecalibrateStep] = useState<"archetype" | "mood">("archetype");
+  const [recalibrateArchetype, setRecalibrateArchetype] = useState<Archetype | null>(null);
+  const [recalibrateMood, setRecalibrateMood] = useState<Mood | null>(null);
   const prevLoraStatus = useRef<string | null | undefined>(undefined);
 
   const utils = trpc.useUtils();
@@ -113,6 +121,29 @@ export default function Dashboard() {
   const handleSparkPack = () => {
     creditPackMutation.mutate({ origin: window.location.origin });
     toast.info("Opening secure checkout...");
+  };
+
+  const upsertProfileMutation = trpc.profile.upsert.useMutation({
+    onSuccess: () => {
+      utils.profile.get.invalidate();
+      utils.profile.getAestheticBrief.invalidate();
+      setShowRecalibrate(false);
+      setRecalibrateStep("archetype");
+      toast.success("Your frequency has been updated.");
+    },
+    onError: (err) => { toast.error(err.message ?? "Could not update. Please try again."); },
+  });
+
+  const handleOpenRecalibrate = () => {
+    setRecalibrateArchetype((profile?.archetype as Archetype) ?? null);
+    setRecalibrateMood((profile?.mood as Mood) ?? null);
+    setRecalibrateStep("archetype");
+    setShowRecalibrate(true);
+  };
+
+  const handleRecalibrateConfirm = () => {
+    if (!recalibrateArchetype || !recalibrateMood) return;
+    upsertProfileMutation.mutate({ archetype: recalibrateArchetype, mood: recalibrateMood });
   };
 
   const profile = profileQuery.data;
@@ -300,6 +331,93 @@ export default function Dashboard() {
   return (
     <div className="min-h-screen bg-cream flex flex-col">
 
+      {/* Recalibration modal */}
+      {showRecalibrate && (
+        <div
+          className="fixed inset-0 z-50 flex items-end justify-center"
+          onClick={() => setShowRecalibrate(false)}
+        >
+          <div className="absolute inset-0 bg-charcoal/60 backdrop-blur-sm" />
+          <div
+            className="relative w-full max-w-md bg-cream border-t border-sand px-5 pt-8 pb-10"
+            style={{ animation: "slideUp 220ms cubic-bezier(0.23,1,0.32,1) both" }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={() => setShowRecalibrate(false)}
+              className="absolute top-4 right-5 font-sans text-xs text-charcoal-soft hover:text-charcoal tracking-widest uppercase min-h-[44px]"
+            >
+              Close
+            </button>
+
+            {recalibrateStep === "archetype" && (
+              <>
+                <p className="font-sans text-xs tracking-[0.2em] uppercase text-gold mb-2">Your Frequency</p>
+                <h2 className="font-serif text-2xl font-light text-charcoal mb-1">What is your frequency?</h2>
+                <p className="font-sans text-xs text-charcoal-soft/70 leading-relaxed mb-5">
+                  This shapes every image Meetha creates for you.
+                </p>
+                <div className="space-y-2">
+                  {(Object.keys(ARCHETYPE_LABELS) as Archetype[]).map((a) => (
+                    <button
+                      key={a}
+                      onClick={() => { setRecalibrateArchetype(a); setRecalibrateStep("mood"); }}
+                      className={`w-full text-left px-4 py-3.5 border-2 transition-all duration-150 active:scale-[0.99] ${
+                        recalibrateArchetype === a
+                          ? "border-gold bg-gold/10"
+                          : "border-sand bg-warm-white hover:border-gold/60"
+                      }`}
+                    >
+                      <p className="font-serif text-base text-charcoal">{ARCHETYPE_LABELS[a]}</p>
+                      <p className="font-sans text-[11px] text-charcoal-soft/70 leading-snug mt-0.5">{ARCHETYPE_DESCRIPTIONS[a]}</p>
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
+
+            {recalibrateStep === "mood" && (
+              <>
+                <p className="font-sans text-xs tracking-[0.2em] uppercase text-gold mb-2">Your Energy</p>
+                <h2 className="font-serif text-2xl font-light text-charcoal mb-1">What is your energy right now?</h2>
+                <p className="font-sans text-xs text-charcoal-soft/70 leading-relaxed mb-5">
+                  This sets the emotional tone of your images. You can change it anytime.
+                </p>
+                <div className="grid grid-cols-2 gap-2 mb-5">
+                  {(Object.keys(MOOD_LABELS) as Mood[]).map((m) => (
+                    <button
+                      key={m}
+                      onClick={() => setRecalibrateMood(m)}
+                      className={`text-left px-4 py-4 border-2 transition-all duration-150 active:scale-[0.99] ${
+                        recalibrateMood === m
+                          ? "border-gold bg-gold/10"
+                          : "border-sand bg-warm-white hover:border-gold/60"
+                      }`}
+                    >
+                      <p className="font-serif text-base text-charcoal">{MOOD_LABELS[m]}</p>
+                      <p className="font-sans text-[11px] text-charcoal-soft/70 leading-snug mt-0.5">{MOOD_DESCRIPTIONS[m]}</p>
+                    </button>
+                  ))}
+                </div>
+                <button
+                  onClick={handleRecalibrateConfirm}
+                  disabled={!recalibrateMood || upsertProfileMutation.isPending}
+                  className="btn-luxury btn-gold w-full disabled:opacity-50"
+                >
+                  {upsertProfileMutation.isPending ? "Saving..." : "Save my frequency"}
+                </button>
+                <button
+                  onClick={() => setRecalibrateStep("archetype")}
+                  className="mt-3 w-full font-sans text-xs text-charcoal-soft/50 hover:text-charcoal-soft transition-colors text-center"
+                >
+                  Back
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* 0-credits upgrade modal */}
       {showUpgradeModal && (
         <div
@@ -422,7 +540,13 @@ export default function Dashboard() {
             <p className="font-sans text-[10px] tracking-[0.2em] uppercase text-gold/70 mb-1">Welcome back</p>
             <h1 className="font-serif text-2xl font-light text-cream leading-tight truncate">{firstName}</h1>
             {archetype && mood && (
-              <p className="font-sans font-light text-xs text-cream/50 mt-0.5 truncate">{archetype} &middot; {mood}</p>
+              <button
+                onClick={handleOpenRecalibrate}
+                className="font-sans font-light text-xs text-cream/50 mt-0.5 truncate text-left hover:text-cream/80 transition-colors active:scale-[0.98] flex items-center gap-1"
+              >
+                <span>{archetype} &middot; {mood}</span>
+                <span className="text-gold/40 text-[9px] tracking-widest uppercase ml-0.5">recalibrate</span>
+              </button>
             )}
             {briefQuery.data?.palette && (
               <p className="font-sans font-light text-[10px] text-cream/30 mt-1 leading-relaxed line-clamp-1">{briefQuery.data.palette}</p>
