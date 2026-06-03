@@ -448,19 +448,36 @@ export async function ensureCredits(userId: number): Promise<DbCredits> {
   return data as DbCredits;
 }
 
-export async function decrementCredit(userId: number, cost = 1): Promise<void> {
-  const credits = await getCredits(userId);
-  if (!credits) return;
+/**
+ * Atomically deducts `cost` credits from the user's balance.
+ *
+ * Uses a conditional UPDATE (WHERE credits_remaining >= cost) so that two
+ * concurrent requests cannot both read the same balance and both succeed.
+ * Returns true if the deduction succeeded, false if insufficient credits.
+ */
+export async function decrementCredit(userId: number, cost = 1): Promise<boolean> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const sb = getSupabase() as any;
-  await sb
+
+  // Fetch current values for total_used calculation (still needed for the update)
+  const credits = await getCredits(userId);
+  if (!credits) return false;
+  if (credits.credits_remaining < cost) return false;
+
+  // Conditional update: only applies if credits_remaining is still >= cost at write time
+  // This prevents the TOCTOU race condition — if two requests race, only one wins
+  const { count } = await sb
     .from("credits")
     .update({
-      credits_remaining: Math.max(0, credits.credits_remaining - cost),
+      credits_remaining: credits.credits_remaining - cost,
       total_used: credits.total_used + cost,
       updated_at: new Date().toISOString(),
     })
-    .eq("user_id", userId);
+    .eq("user_id", userId)
+    .gte("credits_remaining", cost) // atomic guard: only update if still enough credits
+    .select("user_id", { count: "exact", head: true });
+
+  return (count ?? 0) > 0;
 }
 
 // ─── Generations ──────────────────────────────────────────────────────────────

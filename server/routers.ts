@@ -1691,7 +1691,8 @@ Respond in this exact JSON format:
           }
         }
         // Deduct 1 credit for still image
-        await decrementCredit(ctx.user.id, STILL_COST);
+        const deducted = await decrementCredit(ctx.user.id, STILL_COST);
+        if (!deducted) throw new Error("No credits remaining. Please upgrade to continue.");
 
         // Mark free LoRA quota as used after first successful LoRA generation
         if (wantsLora && userCredits.tier === "free" && !userCredits.free_lora_used) {
@@ -1996,7 +1997,8 @@ Return JSON with:
           } catch { /* keep original */ }
         }
         // 7. Deduct 1 credit for voice-to-content
-        await decrementCredit(ctx.user.id, VOICE_COST);
+        const deductedVoice = await decrementCredit(ctx.user.id, VOICE_COST);
+        if (!deductedVoice) throw new Error("No credits remaining. Please upgrade to continue.");
 
         const generation = await createGeneration({
           userId: ctx.user.id,
@@ -2162,7 +2164,8 @@ Return JSON with:
         }
 
         // Deduct credit
-        await decrementCredit(ctx.user.id, STILL_COST);
+        const deducted = await decrementCredit(ctx.user.id, STILL_COST);
+        if (!deducted) throw new Error("No credits remaining. Please upgrade to continue.");
 
         const gen = await createGeneration({
           userId: ctx.user.id,
@@ -2555,7 +2558,8 @@ Respond in this exact JSON format:
         });
 
         // Deduct credits
-        await decrementCredit(ctx.user.id, ANIMATE_COST);
+        const deductedAnimate = await decrementCredit(ctx.user.id, ANIMATE_COST);
+        if (!deductedAnimate) throw new Error("No credits remaining. Please upgrade to continue.");
 
         return { videoUrl };
       }),
@@ -2597,7 +2601,8 @@ Respond in this exact JSON format:
         });
 
         // Deduct 5 credits for video generation
-        await decrementCredit(ctx.user.id, VIDEO_COST);
+        const deductedVideo = await decrementCredit(ctx.user.id, VIDEO_COST);
+        if (!deductedVideo) throw new Error("No credits remaining. Please upgrade to continue.");
 
         return { videoUrl };
       }),

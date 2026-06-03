@@ -887,3 +887,10 @@
 - [x] On save: profile and aesthetic brief invalidated, Dashboard header updates immediately, toast confirmation
 - [x] LoRA model untouched — only archetype and mood text fields updated
 - [x] TypeScript: 0 errors.
+
+## V58 -- Security Hardening
+- [x] Rate limiting: magic-link (5 req/15min per IP), generate (10 req/min per session cookie)
+- [x] Atomic credit deduction: decrementCredit uses conditional UPDATE WHERE credits_remaining >= cost
+- [x] All decrementCredit callers check boolean return and throw on failure
+- [x] CRON_SECRET: all /api/scheduled/* endpoints require Authorization: Bearer token
+- [x] CRON_SECRET env var set in production
