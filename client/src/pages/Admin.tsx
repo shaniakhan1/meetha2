@@ -46,10 +46,16 @@ export default function Admin() {
   const affectedUsersQuery = trpc.admin.listAffectedUsers.useQuery(undefined, { retry: false });
   const [restoreResult, setRestoreResult] = useState<{ restored: number; dryRun: number; failed: number; isDryRun: boolean } | null>(null);
   const [apologyResult, setApologyResult] = useState<{ sent: number; dryRun: number; noEmail: number; failed: number; isDryRun: boolean } | null>(null);
+  // Snapshot of users who were affected — kept even after credits are restored so apology emails can still be sent
+  const [affectedSnapshot, setAffectedSnapshot] = useState<typeof affectedUsersQuery.data | null>(null);
 
   const restoreCreditsMutation = trpc.admin.restoreAffectedCredits.useMutation({
     onSuccess: (data) => {
       setRestoreResult(data);
+      // Save a snapshot before refetch clears the list
+      if (!data.isDryRun && affectedUsersQuery.data && affectedUsersQuery.data.length > 0) {
+        setAffectedSnapshot(affectedUsersQuery.data);
+      }
       affectedUsersQuery.refetch();
       if (data.isDryRun) {
         toast.success(`Dry run: would restore credits for ${data.dryRun} users.`);
@@ -67,6 +73,7 @@ export default function Admin() {
         toast.success(`Dry run: would send apology to ${data.dryRun} users.`);
       } else {
         toast.success(`Apology emails sent to ${data.sent} users.${data.failed > 0 ? ` ${data.failed} failed.` : ""}`);
+        setAffectedSnapshot(null); // Clear snapshot after emails sent
       }
     },
     onError: (e) => toast.error(e.message),
@@ -185,6 +192,15 @@ export default function Admin() {
         {/* V58 Credit Restoration */}
         {(() => {
           const affected = affectedUsersQuery.data ?? [];
+          // Use snapshot if credits already restored (affected list will be empty after restoration)
+          const emailTargets = affectedSnapshot ?? affected;
+          const emailUserList = emailTargets.map((u) => ({
+            userId: u.userId,
+            email: u.email,
+            name: u.name ?? null,
+            creditsRestored: 'phantomDeductions' in u ? (u as { phantomDeductions: number }).phantomDeductions : 0,
+          }));
+          const creditsAlreadyRestored = affected.length === 0 && affectedSnapshot && affectedSnapshot.length > 0;
           return (
             <div className="border border-rose-200 bg-rose-50/40 p-5 mb-8">
               <div className="flex items-center gap-2 mb-1">
@@ -192,8 +208,11 @@ export default function Admin() {
                 {affectedUsersQuery.isLoading && (
                   <span className="font-sans text-xs text-rose-400">Loading...</span>
                 )}
-                {!affectedUsersQuery.isLoading && (
+                {!affectedUsersQuery.isLoading && affected.length > 0 && (
                   <span className="font-sans text-xs text-rose-600 font-semibold">{affected.length} affected user{affected.length !== 1 ? "s" : ""}</span>
+                )}
+                {creditsAlreadyRestored && (
+                  <span className="font-sans text-xs text-green-600 font-semibold">Credits restored — apology emails pending</span>
                 )}
               </div>
               <p className="font-sans text-sm text-charcoal mb-1">
@@ -204,26 +223,28 @@ export default function Admin() {
                 Idempotent — safe to run multiple times. Run Dry Run first to preview.
               </p>
 
-              {/* Affected user list */}
-              {affected.length > 0 && (
+              {/* Affected user list — show live list or snapshot */}
+              {emailTargets.length > 0 && (
                 <div className="mb-4 max-h-48 overflow-y-auto border border-rose-100 bg-white/60 divide-y divide-rose-50">
-                  {affected.map((u) => (
+                  {emailTargets.map((u) => (
                     <div key={u.userId} className="px-3 py-2 flex items-center justify-between gap-4">
                       <div className="min-w-0">
                         <p className="font-sans text-xs text-charcoal truncate">{u.email ?? `User #${u.userId}`}</p>
-                        <p className="font-sans text-xs text-charcoal-soft/60">
-                          {u.actualGenerations} actual gen{u.actualGenerations !== 1 ? "s" : ""} &middot; {u.totalUsed} total_used &middot; {u.creditsRemaining} remaining
-                        </p>
+                        {'actualGenerations' in u && (
+                          <p className="font-sans text-xs text-charcoal-soft/60">
+                            {(u as { actualGenerations: number }).actualGenerations} actual gen{(u as { actualGenerations: number }).actualGenerations !== 1 ? "s" : ""} &middot; {(u as { totalUsed: number }).totalUsed} total_used &middot; {(u as { creditsRemaining: number }).creditsRemaining} remaining
+                          </p>
+                        )}
                       </div>
                       <span className="font-sans text-xs font-semibold text-rose-600 shrink-0">
-                        +{u.phantomDeductions} to restore
+                        {'phantomDeductions' in u ? `+${(u as { phantomDeductions: number }).phantomDeductions} to restore` : `${(u as { creditsRestored: number }).creditsRestored} restored`}
                       </span>
                     </div>
                   ))}
                 </div>
               )}
 
-              {affected.length === 0 && !affectedUsersQuery.isLoading && (
+              {affected.length === 0 && !affectedUsersQuery.isLoading && !affectedSnapshot && (
                 <p className="font-sans text-xs text-green-600 mb-4">No affected users found — all credits are reconciled.</p>
               )}
 
@@ -248,18 +269,19 @@ export default function Admin() {
                 </button>
                 <button
                   onClick={() => {
-                    if (confirm(`Send apology emails to ${affected.length} affected user${affected.length !== 1 ? "s" : ""}?`)) {
-                      sendApologyMutation.mutate({ dryRun: false });
+                    const count = emailUserList.length;
+                    if (confirm(`Send apology emails to ${count} user${count !== 1 ? "s" : ""}?`)) {
+                      sendApologyMutation.mutate({ dryRun: false, users: emailUserList });
                     }
                   }}
-                  disabled={sendApologyMutation.isPending || affected.length === 0}
+                  disabled={sendApologyMutation.isPending || emailUserList.length === 0}
                   className="font-sans text-xs border border-charcoal/40 bg-charcoal px-4 py-2 text-warm-white hover:bg-charcoal/80 transition-colors disabled:opacity-50"
                 >
-                  {sendApologyMutation.isPending ? "Sending..." : "Send Apology Emails"}
+                  {sendApologyMutation.isPending ? "Sending..." : `Send Apology Emails${emailUserList.length > 0 ? ` (${emailUserList.length})` : ""}`}
                 </button>
                 <button
-                  onClick={() => sendApologyMutation.mutate({ dryRun: true })}
-                  disabled={sendApologyMutation.isPending || affected.length === 0}
+                  onClick={() => sendApologyMutation.mutate({ dryRun: true, users: emailUserList })}
+                  disabled={sendApologyMutation.isPending || emailUserList.length === 0}
                   className="font-sans text-xs border border-charcoal/20 px-4 py-2 text-charcoal-soft hover:border-charcoal/40 transition-colors disabled:opacity-50"
                 >
                   Dry Run Emails

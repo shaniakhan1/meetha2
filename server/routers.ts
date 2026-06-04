@@ -2933,14 +2933,36 @@ Be hyper-specific and visual. No generic phrases. This paragraph will be used wo
      * Each email includes the number of credits restored.
      */
     sendApologyEmails: adminProcedure
-      .input(z.object({ dryRun: z.boolean().default(false) }))
+      .input(z.object({
+        dryRun: z.boolean().default(false),
+        // Optional explicit list — pass this when credits are already restored so the query returns empty
+        users: z.array(z.object({
+          userId: z.number(),
+          email: z.string().nullable(),
+          name: z.string().nullable(),
+          creditsRestored: z.number(),
+        })).optional(),
+      }))
       .mutation(async ({ input, ctx }) => {
         const { getAffectedUsers } = await import("./db");
         const { sendApologyEmail } = await import("./_core/email");
         const baseUrl = ctx.req.headers.origin ?? "https://meetha.studio";
         const dashboardUrl = `${baseUrl}/dashboard`;
 
-        const affected = await getAffectedUsers();
+        // Use the explicit list if provided (e.g. after credits already restored), otherwise query live
+        let affected: Array<{ userId: number; email: string | null; name: string | null; creditsRestored: number }>;
+        if (input.users && input.users.length > 0) {
+          affected = input.users;
+        } else {
+          const live = await getAffectedUsers();
+          affected = live.map((u) => ({
+            userId: u.userId,
+            email: u.email,
+            name: u.name,
+            creditsRestored: u.phantomDeductions,
+          }));
+        }
+
         const results: Array<{ userId: number; email: string | null; status: "sent" | "dry_run" | "no_email" | "failed" }> = [];
 
         for (const user of affected) {
@@ -2956,7 +2978,7 @@ Be hyper-specific and visual. No generic phrases. This paragraph will be used wo
             await sendApologyEmail({
               to: user.email,
               name: user.name,
-              creditsRestored: user.phantomDeductions,
+              creditsRestored: user.creditsRestored,
               dashboardUrl,
             });
             results.push({ userId: user.userId, email: user.email, status: "sent" });
