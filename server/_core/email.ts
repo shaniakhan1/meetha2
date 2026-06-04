@@ -511,3 +511,51 @@ export async function sendRecoveryEmail({
 
   if (error) throw new Error(`Resend error: ${error.message}`);
 }
+
+// ─── V58 Apology Email ────────────────────────────────────────────────────────
+
+export async function sendApologyEmail({
+  to,
+  name,
+  creditsRestored,
+  dashboardUrl,
+}: {
+  to: string;
+  name: string | null;
+  creditsRestored: number;
+  dashboardUrl: string;
+}): Promise<void> {
+  const resend = getResend();
+  const firstName = name?.split(" ")[0] ?? null;
+  const greeting = firstName ? firstName : "Hi";
+
+  const body = `
+    <p style="margin:0 0 24px;font-size:24px;color:#2c2c2c;font-weight:400;line-height:1.25;">
+      ${greeting}, we owe you an apology.
+    </p>
+    <p style="margin:0 0 16px;font-size:14px;color:#6b6b6b;line-height:1.9;font-family:system-ui,sans-serif;">
+      Earlier today, a bug in our system deducted credits from your account without delivering the generation you were expecting.
+    </p>
+    <p style="margin:0 0 16px;font-size:14px;color:#6b6b6b;line-height:1.9;font-family:system-ui,sans-serif;">
+      We've fixed the issue and restored <strong>${creditsRestored} credit${creditsRestored !== 1 ? "s" : ""}</strong> to your account. They're available now.
+    </p>
+    <p style="margin:0 0 40px;font-size:14px;color:#6b6b6b;line-height:1.9;font-family:system-ui,sans-serif;">
+      We're sorry this happened. Meetha is built to give you something beautiful, and we fell short of that today.
+    </p>
+    ${ctaButton(dashboardUrl, "Return to Meetha")}
+    <p style="margin:0;font-size:13px;color:#8b7355;line-height:1.6;font-family:system-ui,sans-serif;">
+      — Meetha
+    </p>`;
+
+  const text = `${greeting}, we owe you an apology.\n\nEarlier today, a bug in our system deducted credits from your account without delivering the generation you were expecting.\n\nWe've fixed the issue and restored ${creditsRestored} credit${creditsRestored !== 1 ? "s" : ""} to your account. They're available now.\n\nWe're sorry this happened.\n\n— Meetha\n\n${dashboardUrl}`;
+
+  const { error } = await resend.emails.send({
+    from: `${FROM_NAME} <${FROM_ADDRESS}>`,
+    to,
+    subject: "We fixed a bug and restored your credits",
+    html: emailWrapper(body),
+    text,
+  });
+
+  if (error) throw new Error(`Resend error: ${error.message}`);
+}

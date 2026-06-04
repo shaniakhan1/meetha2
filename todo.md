@@ -894,3 +894,23 @@
 - [x] All decrementCredit callers check boolean return and throw on failure
 - [x] CRON_SECRET: all /api/scheduled/* endpoints require Authorization: Bearer token
 - [x] CRON_SECRET env var set in production
+
+## V59 -- Critical Bug Fix (V58 atomic credit deduction)
+- [x] Removed head:true from Supabase .select() after .update() in decrementCredit
+- [x] head:true suppresses response body, causing count to always be null
+- [x] All credit deductions were returning false, blocking every generation
+
+## V60 -- Reverted to simple read-then-write credit deduction
+- [x] Removed broken atomic credit guard entirely
+- [x] Supabase .select() count with .update() does not work correctly
+- [x] Reverted to original reliable read-then-write pattern
+- [x] Generations working again
+
+## V61 -- V58 Credit Restoration Admin Tools
+- [x] getAffectedUsers() in db.ts: queries users where total_used > actual generation count (phantom deductions)
+- [x] sendApologyEmail() in email.ts: honest direct email "we fixed a bug and restored your credits"
+- [x] listAffectedUsers admin procedure: returns full list with phantom deduction amounts
+- [x] restoreAffectedCredits admin procedure: restores credits + resets total_used to actual count, idempotent, dry-run support
+- [x] sendApologyEmails admin procedure: sends apology to each affected user with credits-restored count, dry-run support
+- [x] Admin.tsx V58 Restoration section: rose-border card, affected user list with per-user detail, Dry Run + Restore All + Send Apology + Dry Run Emails buttons
+- [x] TypeScript: 0 errors. Server: running.

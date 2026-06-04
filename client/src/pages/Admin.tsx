@@ -41,6 +41,36 @@ export default function Admin() {
   });
 
   const [recoveryResult, setRecoveryResult] = useState<{ sent: number; skipped: number; noEmail: number; dryRun: boolean } | null>(null);
+
+  // V58 credit restoration
+  const affectedUsersQuery = trpc.admin.listAffectedUsers.useQuery(undefined, { retry: false });
+  const [restoreResult, setRestoreResult] = useState<{ restored: number; dryRun: number; failed: number; isDryRun: boolean } | null>(null);
+  const [apologyResult, setApologyResult] = useState<{ sent: number; dryRun: number; noEmail: number; failed: number; isDryRun: boolean } | null>(null);
+
+  const restoreCreditsMutation = trpc.admin.restoreAffectedCredits.useMutation({
+    onSuccess: (data) => {
+      setRestoreResult(data);
+      affectedUsersQuery.refetch();
+      if (data.isDryRun) {
+        toast.success(`Dry run: would restore credits for ${data.dryRun} users.`);
+      } else {
+        toast.success(`Credits restored for ${data.restored} users.${data.failed > 0 ? ` ${data.failed} failed.` : ""}`);
+      }
+    },
+    onError: (e) => toast.error(e.message),
+  });
+
+  const sendApologyMutation = trpc.admin.sendApologyEmails.useMutation({
+    onSuccess: (data) => {
+      setApologyResult(data);
+      if (data.isDryRun) {
+        toast.success(`Dry run: would send apology to ${data.dryRun} users.`);
+      } else {
+        toast.success(`Apology emails sent to ${data.sent} users.${data.failed > 0 ? ` ${data.failed} failed.` : ""}`);
+      }
+    },
+    onError: (e) => toast.error(e.message),
+  });
   const sendRecoveryMutation = trpc.admin.sendRecoveryEmails.useMutation({
     onSuccess: (data) => {
       setRecoveryResult(data);
@@ -151,6 +181,110 @@ export default function Admin() {
             )}
           </div>
         </div>
+
+        {/* V58 Credit Restoration */}
+        {(() => {
+          const affected = affectedUsersQuery.data ?? [];
+          return (
+            <div className="border border-rose-200 bg-rose-50/40 p-5 mb-8">
+              <div className="flex items-center gap-2 mb-1">
+                <p className="font-sans text-xs tracking-widest uppercase text-rose-700">V58 Credit Restoration</p>
+                {affectedUsersQuery.isLoading && (
+                  <span className="font-sans text-xs text-rose-400">Loading...</span>
+                )}
+                {!affectedUsersQuery.isLoading && (
+                  <span className="font-sans text-xs text-rose-600 font-semibold">{affected.length} affected user{affected.length !== 1 ? "s" : ""}</span>
+                )}
+              </div>
+              <p className="font-sans text-sm text-charcoal mb-1">
+                Restores credits lost during the V58 atomic deduction bug (June 4, 2026).
+                Phantom deductions = <code className="text-xs bg-rose-100 px-1">total_used - actual_generation_count</code>.
+              </p>
+              <p className="font-sans text-xs text-charcoal-soft/60 mb-4">
+                Idempotent — safe to run multiple times. Run Dry Run first to preview.
+              </p>
+
+              {/* Affected user list */}
+              {affected.length > 0 && (
+                <div className="mb-4 max-h-48 overflow-y-auto border border-rose-100 bg-white/60 divide-y divide-rose-50">
+                  {affected.map((u) => (
+                    <div key={u.userId} className="px-3 py-2 flex items-center justify-between gap-4">
+                      <div className="min-w-0">
+                        <p className="font-sans text-xs text-charcoal truncate">{u.email ?? `User #${u.userId}`}</p>
+                        <p className="font-sans text-xs text-charcoal-soft/60">
+                          {u.actualGenerations} actual gen{u.actualGenerations !== 1 ? "s" : ""} &middot; {u.totalUsed} total_used &middot; {u.creditsRemaining} remaining
+                        </p>
+                      </div>
+                      <span className="font-sans text-xs font-semibold text-rose-600 shrink-0">
+                        +{u.phantomDeductions} to restore
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {affected.length === 0 && !affectedUsersQuery.isLoading && (
+                <p className="font-sans text-xs text-green-600 mb-4">No affected users found — all credits are reconciled.</p>
+              )}
+
+              <div className="flex items-center gap-3 flex-wrap">
+                <button
+                  onClick={() => restoreCreditsMutation.mutate({ dryRun: true })}
+                  disabled={restoreCreditsMutation.isPending || affected.length === 0}
+                  className="font-sans text-xs border border-rose-300 px-4 py-2 text-rose-700 hover:border-rose-500 transition-colors disabled:opacity-50"
+                >
+                  {restoreCreditsMutation.isPending ? "Running..." : "Dry Run (preview)"}
+                </button>
+                <button
+                  onClick={() => {
+                    if (confirm(`Restore credits for ${affected.length} affected user${affected.length !== 1 ? "s" : ""}? This is safe to run multiple times.`)) {
+                      restoreCreditsMutation.mutate({ dryRun: false });
+                    }
+                  }}
+                  disabled={restoreCreditsMutation.isPending || affected.length === 0}
+                  className="font-sans text-xs border border-rose-600 bg-rose-600 px-4 py-2 text-white hover:bg-rose-700 transition-colors disabled:opacity-50"
+                >
+                  {restoreCreditsMutation.isPending ? "Restoring..." : "Restore All Credits"}
+                </button>
+                <button
+                  onClick={() => {
+                    if (confirm(`Send apology emails to ${affected.length} affected user${affected.length !== 1 ? "s" : ""}?`)) {
+                      sendApologyMutation.mutate({ dryRun: false });
+                    }
+                  }}
+                  disabled={sendApologyMutation.isPending || affected.length === 0}
+                  className="font-sans text-xs border border-charcoal/40 bg-charcoal px-4 py-2 text-warm-white hover:bg-charcoal/80 transition-colors disabled:opacity-50"
+                >
+                  {sendApologyMutation.isPending ? "Sending..." : "Send Apology Emails"}
+                </button>
+                <button
+                  onClick={() => sendApologyMutation.mutate({ dryRun: true })}
+                  disabled={sendApologyMutation.isPending || affected.length === 0}
+                  className="font-sans text-xs border border-charcoal/20 px-4 py-2 text-charcoal-soft hover:border-charcoal/40 transition-colors disabled:opacity-50"
+                >
+                  Dry Run Emails
+                </button>
+              </div>
+
+              {/* Results */}
+              {restoreResult && (
+                <p className="font-sans text-xs text-charcoal-soft mt-3">
+                  {restoreResult.isDryRun ? "Preview: " : "Restored: "}
+                  <strong>{restoreResult.isDryRun ? restoreResult.dryRun : restoreResult.restored}</strong> users
+                  {restoreResult.failed > 0 && <span className="text-rose-600">, {restoreResult.failed} failed</span>}
+                </p>
+              )}
+              {apologyResult && (
+                <p className="font-sans text-xs text-charcoal-soft mt-1">
+                  {apologyResult.isDryRun ? "Email preview: " : "Emails sent: "}
+                  <strong>{apologyResult.isDryRun ? apologyResult.dryRun : apologyResult.sent}</strong>
+                  {apologyResult.noEmail > 0 && `, ${apologyResult.noEmail} no email`}
+                  {apologyResult.failed > 0 && <span className="text-rose-600">, {apologyResult.failed} failed</span>}
+                </p>
+              )}
+            </div>
+          );
+        })()}
 
         {/* Search */}
         <input

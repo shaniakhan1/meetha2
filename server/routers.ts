@@ -2877,6 +2877,103 @@ Be hyper-specific and visual. No generic phrases. This paragraph will be used wo
       }),
 
     /**
+     * List all users affected by the V58 credit bug (phantom deductions).
+     * Returns users where total_used > actual generation count.
+     */
+    listAffectedUsers: adminProcedure
+      .query(async () => {
+        const { getAffectedUsers } = await import("./db");
+        return await getAffectedUsers();
+      }),
+
+    /**
+     * Restore credits for all users affected by the V58 bug.
+     * Adds back the phantom deductions to each user's balance.
+     * Idempotent: also resets total_used to match actual generation count.
+     */
+    restoreAffectedCredits: adminProcedure
+      .input(z.object({ dryRun: z.boolean().default(false) }))
+      .mutation(async ({ input }) => {
+        const sb = getSupabase() as any;
+        const { getAffectedUsers } = await import("./db");
+        const affected = await getAffectedUsers();
+        const results: Array<{ userId: number; email: string | null; creditsRestored: number; status: "restored" | "dry_run" | "failed" }> = [];
+
+        for (const user of affected) {
+          if (input.dryRun) {
+            results.push({ userId: user.userId, email: user.email, creditsRestored: user.phantomDeductions, status: "dry_run" });
+            continue;
+          }
+          try {
+            const newBalance = user.creditsRemaining + user.phantomDeductions;
+            const { error } = await sb
+              .from("credits")
+              .update({
+                credits_remaining: newBalance,
+                total_used: user.actualGenerations,
+                updated_at: new Date().toISOString(),
+              })
+              .eq("user_id", user.userId);
+            if (error) throw error;
+            results.push({ userId: user.userId, email: user.email, creditsRestored: user.phantomDeductions, status: "restored" });
+          } catch (err) {
+            console.error(`[restoreAffectedCredits] Failed for user ${user.userId}:`, err);
+            results.push({ userId: user.userId, email: user.email, creditsRestored: 0, status: "failed" });
+          }
+        }
+
+        const restored = results.filter((r) => r.status === "restored").length;
+        const dryRun = results.filter((r) => r.status === "dry_run").length;
+        const failed = results.filter((r) => r.status === "failed").length;
+        return { restored, dryRun, failed, results, isDryRun: input.dryRun };
+      }),
+
+    /**
+     * Send apology emails to all users affected by the V58 bug.
+     * Each email includes the number of credits restored.
+     */
+    sendApologyEmails: adminProcedure
+      .input(z.object({ dryRun: z.boolean().default(false) }))
+      .mutation(async ({ input, ctx }) => {
+        const { getAffectedUsers } = await import("./db");
+        const { sendApologyEmail } = await import("./_core/email");
+        const baseUrl = ctx.req.headers.origin ?? "https://meetha.studio";
+        const dashboardUrl = `${baseUrl}/dashboard`;
+
+        const affected = await getAffectedUsers();
+        const results: Array<{ userId: number; email: string | null; status: "sent" | "dry_run" | "no_email" | "failed" }> = [];
+
+        for (const user of affected) {
+          if (!user.email) {
+            results.push({ userId: user.userId, email: null, status: "no_email" });
+            continue;
+          }
+          if (input.dryRun) {
+            results.push({ userId: user.userId, email: user.email, status: "dry_run" });
+            continue;
+          }
+          try {
+            await sendApologyEmail({
+              to: user.email,
+              name: user.name,
+              creditsRestored: user.phantomDeductions,
+              dashboardUrl,
+            });
+            results.push({ userId: user.userId, email: user.email, status: "sent" });
+          } catch (err) {
+            console.error(`[sendApologyEmails] Failed for user ${user.userId}:`, err);
+            results.push({ userId: user.userId, email: user.email, status: "failed" });
+          }
+        }
+
+        const sent = results.filter((r) => r.status === "sent").length;
+        const dryRun = results.filter((r) => r.status === "dry_run").length;
+        const noEmail = results.filter((r) => r.status === "no_email").length;
+        const failed = results.filter((r) => r.status === "failed").length;
+        return { sent, dryRun, noEmail, failed, results, isDryRun: input.dryRun };
+      }),
+
+    /**
      * Force-regenerate the styling brief for a specific user.
      */
     regenerateBrief: adminProcedure

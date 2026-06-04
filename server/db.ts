@@ -873,3 +873,64 @@ export async function markRecoveryBonusUsed(userId: number): Promise<void> {
     .update({ bonus_on_purchase_used: true })
     .eq("user_id", userId);
 }
+
+// ─── V58 Credit Restoration ───────────────────────────────────────────────────
+
+/**
+ * Returns all users whose total_used credits exceed their actual generation count.
+ * These users lost credits during the V58 bug window (June 4, 2026).
+ * The "phantom deductions" = total_used - actual_generation_count.
+ */
+export async function getAffectedUsers(): Promise<
+  Array<{
+    userId: number;
+    email: string | null;
+    name: string | null;
+    creditsRemaining: number;
+    totalUsed: number;
+    actualGenerations: number;
+    phantomDeductions: number;
+  }>
+> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const sb = getSupabase() as any;
+
+  // Get all credits rows
+  const { data: allCredits } = await sb.from("credits").select("user_id, credits_remaining, total_used");
+  if (!allCredits || allCredits.length === 0) return [];
+
+  const results = [];
+
+  for (const row of allCredits as Array<{ user_id: number; credits_remaining: number; total_used: number }>) {
+    // Count actual non-archived generations for this user
+    const { count } = await sb
+      .from("generations")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", row.user_id)
+      .eq("archived", false);
+
+    const actualGenerations = (count as number) ?? 0;
+    const phantomDeductions = row.total_used - actualGenerations;
+
+    if (phantomDeductions > 0) {
+      // Fetch user email/name
+      const { data: user } = await sb
+        .from("users")
+        .select("email, name")
+        .eq("id", row.user_id)
+        .maybeSingle();
+
+      results.push({
+        userId: row.user_id,
+        email: (user as { email: string | null; name: string | null } | null)?.email ?? null,
+        name: (user as { email: string | null; name: string | null } | null)?.name ?? null,
+        creditsRemaining: row.credits_remaining,
+        totalUsed: row.total_used,
+        actualGenerations,
+        phantomDeductions,
+      });
+    }
+  }
+
+  return results;
+}
