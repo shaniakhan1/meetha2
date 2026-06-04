@@ -466,7 +466,7 @@ export async function decrementCredit(userId: number, cost = 1): Promise<boolean
 
   // Conditional update: only applies if credits_remaining is still >= cost at write time
   // This prevents the TOCTOU race condition — if two requests race, only one wins
-  const { count } = await sb
+  const { error, count } = await sb
     .from("credits")
     .update({
       credits_remaining: credits.credits_remaining - cost,
@@ -475,8 +475,10 @@ export async function decrementCredit(userId: number, cost = 1): Promise<boolean
     })
     .eq("user_id", userId)
     .gte("credits_remaining", cost) // atomic guard: only update if still enough credits
-    .select("user_id", { count: "exact", head: true });
+    .select("user_id", { count: "exact" });
 
+  // If no error and count > 0, the update succeeded
+  if (error) return false;
   return (count ?? 0) > 0;
 }
 
