@@ -372,6 +372,36 @@ export async function createCreditPackCheckoutSession({
   return session.url!;
 }
 
+// ─── Customer Portal session ────────────────────────────────────────────────
+
+export async function createCustomerPortalSession({
+  userId,
+  returnUrl,
+}: {
+  userId: number;
+  returnUrl: string;
+}): Promise<string> {
+  const sb = getSupabase() as any;
+  const { data: row } = await sb
+    .from("credits")
+    .select("stripe_customer_id")
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  const customerId: string | null = row?.stripe_customer_id ?? null;
+
+  if (!customerId) {
+    throw new Error("No Stripe customer found for this account. Please contact support.");
+  }
+
+  const session = await stripe.billingPortal.sessions.create({
+    customer: customerId,
+    return_url: returnUrl,
+  });
+
+  return session.url;
+}
+
 export async function hasUnusedRetrainPurchase(userId: number): Promise<boolean> {
   const sb = getSupabase() as any;
   const { data, error } = await sb

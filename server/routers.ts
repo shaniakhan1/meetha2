@@ -964,6 +964,21 @@ export const appRouter = router({
       }),
 
     /**
+     * Create a Stripe Customer Portal session so the user can manage/cancel their subscription.
+     * Returns a short-lived portal URL.
+     */
+    createPortalSession: protectedProcedure
+      .input(z.object({ returnUrl: z.string() }))
+      .mutation(async ({ ctx, input }) => {
+        const { createCustomerPortalSession } = await import("./stripeWebhook");
+        const url = await createCustomerPortalSession({
+          userId: ctx.user.id,
+          returnUrl: input.returnUrl,
+        });
+        return { url };
+      }),
+
+    /**
      * Check if the current user has an unused retrain purchase.
      */
     retrainStatus: protectedProcedure.query(async ({ ctx }) => {

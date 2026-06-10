@@ -232,6 +232,11 @@ export default function Profile() {
     onError: (err) => toast.error(err.message),
   });
 
+  const createPortalSession = trpc.profile.createPortalSession.useMutation({
+    onSuccess: ({ url }) => { window.open(url, "_blank"); },
+    onError: (err) => toast.error(err.message ?? "Could not open membership portal. Please contact support."),
+  });
+
   // Save/share style card
   const handleShareCard = async () => {
     try {
@@ -302,6 +307,15 @@ export default function Profile() {
               className="btn-luxury btn-gold w-full mt-3"
             >
               {createSubscriptionCheckout.isPending ? "Loading..." : "Membership — $19 / month"}
+            </button>
+          )}
+          {!isFree && (
+            <button
+              onClick={() => createPortalSession.mutate({ returnUrl: window.location.href })}
+              disabled={createPortalSession.isPending}
+              className="w-full mt-3 border border-sand/60 bg-transparent px-4 py-3 font-sans text-xs tracking-widest uppercase text-charcoal-soft hover:border-charcoal/40 hover:text-charcoal transition-colors disabled:opacity-50"
+            >
+              {createPortalSession.isPending ? "Opening..." : "Manage Membership"}
             </button>
           )}
         </div>

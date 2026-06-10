@@ -415,9 +415,14 @@ export async function sendMembershipActivatedEmail({
     <p style="margin:0 0 32px;font-size:14px;color:#6b6b6b;line-height:1.7;font-family:system-ui,sans-serif;">
       Your visual identity experience is now fully unlocked.
     </p>
-    ${ctaButton(dashboardUrl, "Enter Membership")}`;
+    ${ctaButton(dashboardUrl, "Enter Membership")}
+    <p style="margin:24px 0 0;font-size:12px;color:#b8a898;line-height:1.7;font-family:system-ui,sans-serif;text-align:center;">
+      To manage or cancel your membership at any time, visit your
+      <a href="${dashboardUrl.replace('/dashboard', '/profile')}" style="color:#8b7355;text-decoration:none;">Profile page</a>
+      and tap <strong>Manage Membership</strong>.
+    </p>`;
 
-  const text = `${greeting} to Meetha membership.\n\nYour access is now active. Inside, you'll find:\n- expanded cinematic portrait generations\n- premium styling direction\n- your Identity Brief\n- elevated aesthetic references\n\nYour visual identity experience is now fully unlocked.\n\n${dashboardUrl}`;
+  const text = `${greeting} to Meetha membership.\n\nYour access is now active. Inside, you'll find:\n- expanded cinematic portrait generations\n- premium styling direction\n- your Identity Brief\n- elevated aesthetic references\n\nYour visual identity experience is now fully unlocked.\n\n${dashboardUrl}\n\nTo manage or cancel your membership at any time, visit your Profile page and tap Manage Membership: ${dashboardUrl.replace('/dashboard', '/profile')}`;
 
   const { error } = await resend.emails.send({
     from: `${FROM_NAME} <${FROM_ADDRESS}>`,

@@ -898,15 +898,22 @@ export default function Home() {
 
       {/* ── Footer ── */}
       <footer className="py-8 px-6 bg-cream border-t border-sand/30">
-        <div className="max-w-sm mx-auto flex items-center justify-between">
-          <span className="font-serif text-sm tracking-widest text-charcoal">MEETHA</span>
-          <div className="flex gap-4">
-            <a href="/privacy" className="font-sans text-xs text-charcoal-soft/50 hover:text-charcoal-soft transition-colors">Privacy</a>
-            <a href="/terms" className="font-sans text-xs text-charcoal-soft/50 hover:text-charcoal-soft transition-colors">Terms</a>
-            <a href="mailto:hello@frequencyplanner.com" className="font-sans text-xs text-charcoal-soft/50 hover:text-charcoal-soft transition-colors">Help</a>
+        <div className="max-w-lg mx-auto space-y-4">
+          <div className="flex items-center justify-between">
+            <span className="font-serif text-sm tracking-widest text-charcoal">MEETHA</span>
+            <div className="flex gap-4">
+              <a href="/privacy" className="font-sans text-xs text-charcoal-soft/50 hover:text-charcoal-soft transition-colors">Privacy</a>
+              <a href="/terms" className="font-sans text-xs text-charcoal-soft/50 hover:text-charcoal-soft transition-colors">Terms</a>
+              <a href="mailto:hello@meetha.studio" className="font-sans text-xs text-charcoal-soft/50 hover:text-charcoal-soft transition-colors">Help</a>
+            </div>
+            <p className="font-sans text-xs text-charcoal-soft/50">
+              © {new Date().getFullYear()} Meetha
+            </p>
           </div>
-          <p className="font-sans text-xs text-charcoal-soft/50">
-            © {new Date().getFullYear()} Meetha
+          <p className="font-sans text-xs text-charcoal-soft/40 text-center">
+            To manage or cancel your membership at any time,{" "}
+            <a href="/profile" className="text-charcoal-soft/60 underline underline-offset-2 hover:text-charcoal-soft transition-colors">visit your Profile</a>{" "}
+            and tap <span className="text-charcoal-soft/60">Manage Membership</span>.
           </p>
         </div>
       </footer>
