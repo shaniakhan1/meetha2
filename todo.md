@@ -920,3 +920,11 @@
 - [x] Add duplicate training job guard in loraUpload.ts (return 409 if lora_status === 'training')
 - [x] Lower learning rate from 0.0002 to 0.0001 in falLoraTraining.ts
 - [x] Merge two vision LLM calls (physical descriptors + body descriptor) into one combined call
+
+## V65 -- Keep Exploring post-gen card strip
+
+- [x] Audit template catalog for thumbnail URLs and slugs for 3 curated picks
+- [x] Build compact horizontal 3-card strip with portrait thumbnails and short titles
+- [x] Inject strip below save/done buttons on Gen 1 and Gen 2 result screens in Generate.tsx
+- [x] Heading: "Keep Exploring" (not "What's next for you?")
+- [x] Cards navigate to template_preview step on tap (no page reload, instant transition)

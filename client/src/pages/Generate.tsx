@@ -758,6 +758,29 @@ export default function Generate() {
                   Done. Back to Dashboard
                 </button>
               </div>
+
+              {/* ── Keep Exploring strip ── */}
+              <div className="mt-8 pt-6 border-t border-sand/40">
+                <p className="font-serif text-base text-charcoal mb-4">Keep Exploring</p>
+                <div className="flex gap-3 -mx-6 px-6 overflow-x-auto" style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}>
+                  {[
+                    { slug: "irish_goodbye", title: "The Goodbye", image: "https://d2xsxph8kpxj0f.cloudfront.net/310519663380647277/W9hp3oxSnRYx5WHCSun39U/template-irish-goodbye-ktzNEA3LBpMXoScC2CgPoj.webp" },
+                    { slug: "cleopatra_principle", title: "The Cleopatra Principle", image: "https://d2xsxph8kpxj0f.cloudfront.net/310519663380647277/W9hp3oxSnRYx5WHCSun39U/template-cleopatra-RNkWpwxV5GeWZwStmYqiQx.webp" },
+                    { slug: "bill_please", title: "Bill, Please", image: "/manus-storage/template-bill-please_7eacca04.jpg" },
+                  ].map((t) => (
+                    <button
+                      key={t.slug}
+                      onClick={() => { setTemplateSlug(t.slug); setStep("template_preview"); }}
+                      className="flex-shrink-0 relative overflow-hidden active:scale-[0.97] transition-transform duration-150"
+                      style={{ width: "120px", height: "160px", borderRadius: "2px" }}
+                    >
+                      <img src={t.image} alt={t.title} className="absolute inset-0 w-full h-full object-cover" style={{ objectPosition: "center top" }} />
+                      <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom, transparent 45%, rgba(26,15,9,0.88) 100%)" }} />
+                      <p className="absolute bottom-0 left-0 right-0 px-2 pb-2.5 font-serif text-cream leading-tight" style={{ fontSize: "0.65rem" }}>{t.title}</p>
+                    </button>
+                  ))}
+                </div>
+              </div>
             </>
           )}
 
@@ -818,6 +841,29 @@ export default function Generate() {
                 <button onClick={() => navigate("/dashboard")} className="w-full py-3 font-sans text-xs tracking-widest uppercase text-charcoal-soft/40 hover:text-charcoal-soft transition-colors">
                   Done. Back to Dashboard
                 </button>
+              </div>
+
+              {/* ── Keep Exploring strip ── */}
+              <div className="mt-8 pt-6 border-t border-sand/40">
+                <p className="font-serif text-base text-charcoal mb-4">Keep Exploring</p>
+                <div className="flex gap-3 -mx-6 px-6 overflow-x-auto" style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}>
+                  {[
+                    { slug: "silk_robe_retaliation", title: "The Robe Reset", image: "https://d2xsxph8kpxj0f.cloudfront.net/310519663380647277/W9hp3oxSnRYx5WHCSun39U/template-silk-robe-retaliation-MJXwGjfHhTjt3ENoPKdG8s.webp" },
+                    { slug: "irish_goodbye", title: "The Goodbye", image: "https://d2xsxph8kpxj0f.cloudfront.net/310519663380647277/W9hp3oxSnRYx5WHCSun39U/template-irish-goodbye-ktzNEA3LBpMXoScC2CgPoj.webp" },
+                    { slug: "paparazzi_flash", title: "Caught Looking Expensive", image: "/manus-storage/template-paparazzi-flash_24688a24.jpg" },
+                  ].map((t) => (
+                    <button
+                      key={t.slug}
+                      onClick={() => { setTemplateSlug(t.slug); setStep("template_preview"); }}
+                      className="flex-shrink-0 relative overflow-hidden active:scale-[0.97] transition-transform duration-150"
+                      style={{ width: "120px", height: "160px", borderRadius: "2px" }}
+                    >
+                      <img src={t.image} alt={t.title} className="absolute inset-0 w-full h-full object-cover" style={{ objectPosition: "center top" }} />
+                      <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom, transparent 45%, rgba(26,15,9,0.88) 100%)" }} />
+                      <p className="absolute bottom-0 left-0 right-0 px-2 pb-2.5 font-serif text-cream leading-tight" style={{ fontSize: "0.65rem" }}>{t.title}</p>
+                    </button>
+                  ))}
+                </div>
               </div>
             </>
           )}
