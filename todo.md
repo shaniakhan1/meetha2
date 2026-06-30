@@ -914,3 +914,9 @@
 - [x] sendApologyEmails admin procedure: sends apology to each affected user with credits-restored count, dry-run support
 - [x] Admin.tsx V58 Restoration section: rose-border card, affected user list with per-user detail, Dry Run + Restore All + Send Apology + Dry Run Emails buttons
 - [x] TypeScript: 0 errors. Server: running.
+
+## V64 -- LoRA Training Cost Reduction
+
+- [x] Add duplicate training job guard in loraUpload.ts (return 409 if lora_status === 'training')
+- [x] Lower learning rate from 0.0002 to 0.0001 in falLoraTraining.ts
+- [x] Merge two vision LLM calls (physical descriptors + body descriptor) into one combined call

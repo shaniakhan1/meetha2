@@ -75,7 +75,7 @@ export async function submitLoraTraining(
         images_data_url: zipUrl,
         trigger_phrase: triggerPhrase,
         steps: 1000, // ~15-20 min, good quality/speed balance
-        learning_rate: 0.0002,
+        learning_rate: 0.0001, // Lowered from 0.0002 -- closer to Fal default (0.00009), reduces overtraining at 1000 steps
         multiresolution_training: true,
         subject_crop: true,
         create_masks: false,

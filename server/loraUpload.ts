@@ -32,81 +32,72 @@ const BASE_URL =
     : "http://localhost:3000";
 
 /**
- * Analyze the first training photo with vision AI to extract physical descriptors.
- * Returns a compact string like "white/silver hair, warm medium-brown skin, dark brows, hazel eyes"
- * that will be injected into every LoRA generation prompt as a text anchor.
+ * Analyze a training photo with a single vision LLM call to extract both:
+ *   1. Physical descriptors (hair, skin tone, eye color, distinctive features)
+ *   2. Body frame and proportions (body size, silhouette, bust, waist-to-hip ratio)
+ *
+ * Returns { physical, body } -- either field may be null if extraction fails.
+ * Using one call instead of two halves the OpenAI Vision cost per training run.
  */
-async function extractPhysicalDescriptors(photoBuffer: Buffer, mimeType: string): Promise<string | null> {
+async function extractVisualDescriptors(
+  facePhotoBuffer: Buffer,
+  faceMimeType: string,
+  bodyPhotoBuffer: Buffer,
+  bodyMimeType: string
+): Promise<{ physical: string | null; body: string | null }> {
   try {
-    // Upload the photo to storage so we have a stable URL for the vision call
-    const { url } = await storagePut(`lora-analysis/${Date.now()}.jpg`, photoBuffer, mimeType);
-    // Build an absolute URL -- storage returns /manus-storage/... which needs a base
-    const absoluteUrl = url.startsWith("http") ? url : `https://meetha.studio${url}`;
+    // Upload both photos to storage (face photo for physical, body photo for body frame)
+    const [faceUpload, bodyUpload] = await Promise.all([
+      storagePut(`lora-analysis/${Date.now()}-face.jpg`, facePhotoBuffer, faceMimeType),
+      storagePut(`lora-analysis/${Date.now()}-body.jpg`, bodyPhotoBuffer, bodyMimeType),
+    ]);
+    const faceUrl = faceUpload.url.startsWith("http") ? faceUpload.url : `https://meetha.studio${faceUpload.url}`;
+    const bodyUrl = bodyUpload.url.startsWith("http") ? bodyUpload.url : `https://meetha.studio${bodyUpload.url}`;
 
     const result = await invokeLLM({
       messages: [
         {
           role: "system",
-          content: "You are a precise visual analyst. Describe only the physical appearance of the person in the photo. Be specific and factual. Output a single compact comma-separated string of descriptors. Include: hair color and texture, skin tone, eye color if visible, any distinctive features (freckles, strong brows, etc). Do NOT include clothing, background, or subjective adjectives. Example output: white/silver hair, warm medium-brown skin, dark brows, hazel eyes",
+          content: `You are a precise visual analyst for AI image generation. You will be given two photos of the same person.
+Photo 1 (face): extract physical appearance descriptors.
+Photo 2 (body): extract body frame and proportions.
+
+Respond with ONLY a JSON object in this exact format (no markdown, no explanation):
+{"physical":"<compact comma-separated: hair color/texture, skin tone, eye color if visible, distinctive features>","body":"<one sentence: body size category, face shape fullness, arm fullness, bust size, waist-to-hip ratio, overall silhouette>"}
+
+Physical example: "white/silver hair, warm medium-brown skin, dark brows, hazel eyes"
+Body example: "Plus-size woman with a full round face, thick arms, large bust, soft waist, wide natural frame, and generous curves throughout."
+Do NOT include clothing, background, or subjective adjectives.`,
         },
         {
           role: "user",
           content: [
-            {
-              type: "image_url",
-              image_url: { url: absoluteUrl, detail: "low" },
-            },
-            {
-              type: "text",
-              text: "Describe this person's physical appearance as a compact comma-separated list for use as image generation prompt descriptors. Focus on hair color, skin tone, eye color, and any distinctive features.",
-            },
+            { type: "image_url", image_url: { url: faceUrl, detail: "low" } },
+            { type: "image_url", image_url: { url: bodyUrl, detail: "low" } },
+            { type: "text", text: "Analyze both photos and return the JSON descriptor object." },
           ],
         },
       ],
-      maxTokens: 120,
+      maxTokens: 220,
     });
 
     const raw = result.choices?.[0]?.message?.content;
-    if (typeof raw !== "string" || !raw.trim()) return null;
-    // Trim to 200 chars max to keep prompts lean
-    return raw.trim().slice(0, 200);
-  } catch (err) {
-    console.warn("[LoRA] Physical descriptor extraction failed (non-fatal):", err instanceof Error ? err.message : String(err));
-    return null;
-  }
-}
+    if (typeof raw !== "string" || !raw.trim()) return { physical: null, body: null };
 
-/**
- * Analyze a training photo to extract body frame and proportions.
- * Returns an explicit body anchor string injected into every generation prompt
- * to prevent the diffusion model from collapsing to its default slim bias.
- */
-async function extractBodyDescriptor(photoBuffer: Buffer, mimeType: string): Promise<string | null> {
-  try {
-    const { url } = await storagePut(`lora-body-analysis/${Date.now()}.jpg`, photoBuffer, mimeType);
-    const absoluteUrl = url.startsWith("http") ? url : `https://meetha.studio${url}`;
-    const result = await invokeLLM({
-      messages: [
-        {
-          role: "system",
-          content: `You are a precise visual analyst for AI image generation. Describe the body frame and proportions of the person in the photo. Be factual and specific. Focus ONLY on: body size category (slim/average/curvy/plus-size/full-figured), face shape fullness (round/oval/full/defined), arm fullness (slender/average/full/thick), bust size (small/medium/large/full), waist-to-hip ratio (defined/moderate/soft), and overall silhouette (narrow/medium/wide frame). Output a single sentence starting with the subject's body description. Example: "Plus-size woman with a full round face, thick arms, large bust, soft waist, wide natural frame, and generous curves throughout." Do NOT include hair, skin tone, clothing, or background.`,
-        },
-        {
-          role: "user",
-          content: [
-            { type: "image_url", image_url: { url: absoluteUrl, detail: "low" } },
-            { type: "text", text: "Describe this person's body frame and proportions for use as an AI generation preservation anchor. One sentence only." },
-          ],
-        },
-      ],
-      maxTokens: 100,
-    });
-    const raw = result.choices?.[0]?.message?.content;
-    if (typeof raw !== "string" || !raw.trim()) return null;
-    return raw.trim().slice(0, 300);
+    try {
+      const parsed = JSON.parse(raw.trim()) as { physical?: string; body?: string };
+      return {
+        physical: typeof parsed.physical === "string" ? parsed.physical.slice(0, 200) : null,
+        body: typeof parsed.body === "string" ? parsed.body.slice(0, 300) : null,
+      };
+    } catch {
+      // LLM returned non-JSON -- treat entire response as physical descriptor
+      console.warn("[LoRA] Combined descriptor JSON parse failed, using raw as physical");
+      return { physical: raw.trim().slice(0, 200), body: null };
+    }
   } catch (err) {
-    console.warn("[LoRA] Body descriptor extraction failed (non-fatal):", err instanceof Error ? err.message : String(err));
-    return null;
+    console.warn("[LoRA] Visual descriptor extraction failed (non-fatal):", err instanceof Error ? err.message : String(err));
+    return { physical: null, body: null };
   }
 }
 
@@ -162,6 +153,12 @@ export async function handleLoraUpload(req: Request, res: Response) {
     const userId = await resolveUserId(req);
     if (!userId) return res.status(401).json({ error: "Unauthorized" });
 
+    // Guard: reject if a training job is already in progress for this user
+    const existingProfile = await getProfile(userId);
+    if (existingProfile?.lora_status === "training") {
+      return res.status(409).json({ error: "A training job is already in progress. Please wait for it to complete before submitting a new one." });
+    }
+
     const files = req.files as Express.Multer.File[] | undefined;
     if (!files || files.length < 5) {
       return res.status(400).json({ error: "Please upload at least 5 photos for best results" });
@@ -179,14 +176,6 @@ export async function handleLoraUpload(req: Request, res: Response) {
     );
 
     const { requestId, triggerPhrase } = await submitLoraTraining(images, userId);
-
-    // Analyze the first photo with vision AI to extract physical descriptors
-    // This runs in parallel with saving the training state (non-blocking)
-    const firstFile = files[0];
-    const physicalDescriptorsPromise = extractPhysicalDescriptors(
-      firstFile.buffer,
-      firstFile.mimetype
-    );
 
     // Save training state + photo count to profile immediately (don't wait for vision analysis).
     // uploaded_photo_count is the permanent fallback: once > 0, the upload UI is NEVER shown again.
@@ -211,25 +200,21 @@ export async function handleLoraUpload(req: Request, res: Response) {
       }
     }).catch(() => { /* non-fatal */ });
 
-    // Also run body descriptor analysis on a full-body photo if available (prefer 3rd photo for more body context)
-    const bodyAnalysisFile = files.length >= 3 ? files[2] : files[0];
-    const bodyDescriptorPromise = extractBodyDescriptor(bodyAnalysisFile.buffer, bodyAnalysisFile.mimetype);
-
-    // Save physical descriptors once vision analysis completes (fire and forget)
-    physicalDescriptorsPromise.then(async (descriptors) => {
-      if (descriptors) {
-        await updateLoraProfile(userId, { loraPhysicalDescriptors: descriptors });
-        console.log(`[LoRA] Physical descriptors saved for user ${userId}: ${descriptors}`);
-      }
-    }).catch(() => { /* non-fatal */ });
-
-    // Save body descriptor once analysis completes (fire and forget)
-    bodyDescriptorPromise.then(async (descriptor) => {
-      if (descriptor) {
-        await updateLoraProfile(userId, { loraBodyDescriptor: descriptor });
-        console.log(`[LoRA] Body descriptor saved for user ${userId}: ${descriptor}`);
-      }
-    }).catch(() => { /* non-fatal */ });
+    // Single combined vision LLM call for both physical + body descriptors (halves OpenAI Vision cost)
+    const faceFile = files[0];
+    const bodyFile = files.length >= 3 ? files[2] : files[0];
+    extractVisualDescriptors(faceFile.buffer, faceFile.mimetype, bodyFile.buffer, bodyFile.mimetype)
+      .then(async ({ physical, body }: { physical: string | null; body: string | null }) => {
+        if (physical) {
+          await updateLoraProfile(userId, { loraPhysicalDescriptors: physical });
+          console.log(`[LoRA] Physical descriptors saved for user ${userId}: ${physical}`);
+        }
+        if (body) {
+          await updateLoraProfile(userId, { loraBodyDescriptor: body });
+          console.log(`[LoRA] Body descriptor saved for user ${userId}: ${body}`);
+        }
+      })
+      .catch(() => { /* non-fatal */ });
 
     // Start the self-healing background poller (no cron needed)
     startPolling(userId, requestId);
