@@ -35,12 +35,28 @@ function getSessionSecret() {
   return new TextEncoder().encode(ENV.cookieSecret);
 }
 
-export async function createSessionToken(userId: string, email: string): Promise<string> {
+type SessionClaims = {
+  sub: string;
+  email: string;
+  legacyUserId: number | null;
+};
+
+export function getMappedLegacyUserId(appMetadata: unknown): number | null {
+  if (!appMetadata || typeof appMetadata !== "object") return null;
+  const value = (appMetadata as Record<string, unknown>).meetha_legacy_user_id;
+  return typeof value === "number" && Number.isInteger(value) && value > 0 ? value : null;
+}
+
+export async function createSessionToken(
+  userId: string,
+  email: string,
+  legacyUserId: number | null = null,
+): Promise<string> {
   const issuedAt = Date.now();
   const expiresInMs = ONE_YEAR_MS;
   const expirationSeconds = Math.floor((issuedAt + expiresInMs) / 1000);
 
-  return new SignJWT({ sub: userId, email })
+  return new SignJWT({ sub: userId, email, legacyUserId })
     .setProtectedHeader({ alg: "HS256", typ: "JWT" })
     .setExpirationTime(expirationSeconds)
     .sign(getSessionSecret());
@@ -48,14 +64,17 @@ export async function createSessionToken(userId: string, email: string): Promise
 
 export async function verifySessionToken(
   token: string | undefined | null
-): Promise<{ sub: string; email: string } | null> {
+): Promise<SessionClaims | null> {
   if (!token) return null;
   try {
     const { payload } = await jwtVerify(token, getSessionSecret(), { algorithms: ["HS256"] });
     const sub = payload.sub as string;
     const email = payload.email as string;
     if (!sub) return null;
-    return { sub, email };
+    const legacyUserId = typeof payload.legacyUserId === "number" && Number.isInteger(payload.legacyUserId)
+      ? payload.legacyUserId
+      : null;
+    return { sub, email, legacyUserId };
   } catch {
     return null;
   }
@@ -71,7 +90,11 @@ export async function authenticateRequest(req: Request): Promise<DbUser | null> 
   const session = await verifySessionToken(sessionToken);
   if (!session) return null;
 
-  // session.sub is the Supabase auth user ID (UUID), stored as open_id
+  if (session.legacyUserId) {
+    return db.getUserById(session.legacyUserId);
+  }
+
+  // session.sub is the Supabase auth user ID (UUID), stored as open_id for non-duplicate identities
   const user = await db.getUserByOpenId(session.sub);
   return user;
 }
@@ -152,18 +175,30 @@ export async function handleSetSession(req: Request, res: Response) {
 
   console.log("[Auth] supabaseUser id:", supabaseUser.id, "email:", supabaseUser.email);
 
-  // Upsert user in our DB using Supabase auth UUID as open_id
+  // Approved duplicate-email groups are anchored through trusted server-side
+  // Supabase app_metadata. This deliberately avoids rewriting legacy open_id values.
   let dbUser: Awaited<ReturnType<typeof db.upsertUser>>["user"] = null;
   let isNew = false;
   try {
-    const result = await db.upsertUser({
-      openId: supabaseUser.id,
-      email: supabaseUser.email ?? null,
-      name: supabaseUser.user_metadata?.full_name ?? supabaseUser.email?.split("@")[0] ?? null,
-      loginMethod: "magic_link",
-    });
-    dbUser = result.user;
-    isNew = result.isNew;
+    const mappedLegacyUserId = getMappedLegacyUserId(supabaseUser.app_metadata);
+    if (mappedLegacyUserId) {
+      const mappedUser = await db.getUserById(mappedLegacyUserId);
+      const emailMatches = mappedUser?.email?.trim().toLowerCase() === supabaseUser.email?.trim().toLowerCase();
+      if (!mappedUser || !emailMatches) {
+        console.error("[Auth] Rejected invalid legacy-user mapping for Supabase Auth identity");
+        return res.status(409).json({ error: "Account mapping needs review. Please contact support." });
+      }
+      dbUser = mappedUser;
+    } else {
+      const result = await db.upsertUser({
+        openId: supabaseUser.id,
+        email: supabaseUser.email ?? null,
+        name: supabaseUser.user_metadata?.full_name ?? supabaseUser.email?.split("@")[0] ?? null,
+        loginMethod: "magic_link",
+      });
+      dbUser = result.user;
+      isNew = result.isNew;
+    }
   } catch (upsertErr) {
     console.error("[Auth] upsertUser threw:", upsertErr);
     return res.status(500).json({ error: "Failed to create user (upsert threw)" });
@@ -204,7 +239,7 @@ export async function handleSetSession(req: Request, res: Response) {
   }
 
   // Create our own JWT session cookie
-  const sessionToken = await createSessionToken(supabaseUser.id, supabaseUser.email ?? "");
+  const sessionToken = await createSessionToken(supabaseUser.id, supabaseUser.email ?? "", dbUser.id);
   const cookieOptions = getSessionCookieOptions(req);
   res.cookie(COOKIE_NAME, sessionToken, cookieOptions);
 
