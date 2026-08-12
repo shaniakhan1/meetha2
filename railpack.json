@@ -1,0 +1,15 @@
+{
+  "$schema": "https://schema.railpack.com",
+  "provider": "node",
+  "steps": {
+    "install": {
+      "commands": [
+        "pnpm install --no-frozen-lockfile --prefer-offline",
+        "PATH:node_modules/.bin"
+      ]
+    }
+  },
+  "deploy": {
+    "startCommand": "pnpm start"
+  }
+}
