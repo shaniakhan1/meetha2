@@ -4,7 +4,10 @@
   "steps": {
     "install": {
       "commands": [
-        "COPY:. .",
+        {
+          "src": ".",
+          "dest": "."
+        },
         "pnpm install --no-frozen-lockfile --prefer-offline",
         "PATH:node_modules/.bin"
       ]
