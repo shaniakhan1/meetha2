@@ -16,7 +16,6 @@ import { getSupabase } from "./_core/supabase";
 import { updateLoraProfile, claimLoraEmailSlot } from "./db";
 import { pollLoraTraining } from "./_core/falLoraTraining";
 import { sendLoraReadyEmail, sendLoraFailedEmail } from "./_core/email";
-import { sdk } from "./_core/sdk";
 
 const BASE_URL = process.env.NODE_ENV === "production"
   ? "https://meetha.studio"
@@ -24,11 +23,7 @@ const BASE_URL = process.env.NODE_ENV === "production"
 
 export async function handleLoraCheck(req: Request, res: Response) {
   try {
-    // Authenticate as cron -- reject non-cron callers
-    const user = await sdk.authenticateRequest(req);
-    if (!user.isCron) {
-      return res.status(403).json({ error: "cron-only endpoint" });
-    }
+    // Authentication is enforced at route registration by requireCronSecret.
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const sb = getSupabase() as any;
