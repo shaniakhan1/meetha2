@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { saveOrShareBlob } from "@/lib/saveOrShare";
+import { portableAssetUrl } from "@/lib/portableAssetUrl";
 import { useLocation } from "wouter";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
@@ -52,9 +53,9 @@ const TEMPLATE_CARDS = [
   { slug: "digital_diary", title: "Digital Diary", image: "/manus-storage/template-digital-diary_11ffb1d8.jpg" },
   { slug: "bill_please", title: "Bill, Please", image: "/manus-storage/template-bill-please_7eacca04.jpg" },
   { slug: "silk_robe_room_service", title: "Room Service", image: "/manus-storage/template-silk-robe_705e049a.jpg" },
-  { slug: "irish_goodbye", title: "The Goodbye", image: "https://d2xsxph8kpxj0f.cloudfront.net/310519663380647277/W9hp3oxSnRYx5WHCSun39U/template-irish-goodbye-ktzNEA3LBpMXoScC2CgPoj.webp" },
-  { slug: "cleopatra_principle", title: "The Cleopatra Principle", image: "https://d2xsxph8kpxj0f.cloudfront.net/310519663380647277/W9hp3oxSnRYx5WHCSun39U/template-cleopatra-RNkWpwxV5GeWZwStmYqiQx.webp" },
-  { slug: "silk_robe_retaliation", title: "The Robe Reset", image: "https://d2xsxph8kpxj0f.cloudfront.net/310519663380647277/W9hp3oxSnRYx5WHCSun39U/template-silk-robe-retaliation-MJXwGjfHhTjt3ENoPKdG8s.webp" },
+  { slug: "irish_goodbye", title: "The Goodbye", image: portableAssetUrl("https://d2xsxph8kpxj0f.cloudfront.net/310519663380647277/W9hp3oxSnRYx5WHCSun39U/template-irish-goodbye-ktzNEA3LBpMXoScC2CgPoj.webp") },
+  { slug: "cleopatra_principle", title: "The Cleopatra Principle", image: portableAssetUrl("https://d2xsxph8kpxj0f.cloudfront.net/310519663380647277/W9hp3oxSnRYx5WHCSun39U/template-cleopatra-RNkWpwxV5GeWZwStmYqiQx.webp") },
+  { slug: "silk_robe_retaliation", title: "The Robe Reset", image: portableAssetUrl("https://d2xsxph8kpxj0f.cloudfront.net/310519663380647277/W9hp3oxSnRYx5WHCSun39U/template-silk-robe-retaliation-MJXwGjfHhTjt3ENoPKdG8s.webp") },
   { slug: "motion_blur", title: "The Blur", image: "/manus-storage/the-blur-hero-v2_053e32e7.webp" },
 ];
 

@@ -17,7 +17,8 @@ import { createCanvas, loadImage, GlobalFonts } from "@napi-rs/canvas";
 import type { SKRSContext2D } from "@napi-rs/canvas";
 import path from "path";
 import { fileURLToPath } from "url";
-import { AestheticBrief } from "./db";
+import { getProfile } from "./db";
+import { storageGetSignedUrl } from "./storage";
 
 // ESM-safe __dirname
 function getDirname(): string {
@@ -425,19 +426,19 @@ function renderPresence(ctx: SKRSContext2D, brief: AestheticBrief, y: number, W:
 
 // ─── Scene Selection ─────────────────────────────────────────────────────────
 
-type SceneEntry = { label: string; url: string; slot: "morning" | "afternoon" | "golden_hour" | "night"; tone: "warm" | "cool" };
+type SceneEntry = { label: string; key: string; slot: "morning" | "afternoon" | "golden_hour" | "night"; tone: "warm" | "cool" };
 
 const ALL_SCENES: SceneEntry[] = [
-  { label: "Morning Light",          url: "https://meetha.studio/manus-storage/8sYDCLxtY2Ni_f09898c8.jpg",  slot: "morning",      tone: "cool" },
-  { label: "Morning Lounge",         url: "https://meetha.studio/manus-storage/fhhwwApsyhoh_a3ba19ab.jpg", slot: "morning",      tone: "warm" },
-  { label: "Hotel Lobby",            url: "https://meetha.studio/manus-storage/RdmvCDQJGJeE_89c1ff1f.jpg", slot: "afternoon",    tone: "warm" },
-  { label: "Private Aviation",       url: "https://meetha.studio/manus-storage/ka7K48spkBR2_e1262ff7.jpg", slot: "afternoon",    tone: "cool" },
-  { label: "Rooftop at Sunset",      url: "https://meetha.studio/manus-storage/Wwi1SvNTgDyH_dce0c596.jpg", slot: "golden_hour",  tone: "warm" },
-  { label: "Evening Lounge",         url: "https://meetha.studio/manus-storage/41zqV3GF0xF4_2d093184.jpg", slot: "golden_hour",  tone: "warm" },
-  { label: "Hotel Corridor",         url: "https://meetha.studio/manus-storage/gh4xmFozrLg0_264efed3.jpg", slot: "night",        tone: "warm" },
-  { label: "Rooftop at Dusk",        url: "https://meetha.studio/manus-storage/TmKdo6AomZQZ_4a871987.jpg", slot: "night",        tone: "cool" },
-  { label: "Candlelit Dinner",       url: "https://meetha.studio/manus-storage/VtTqLAgZb5bw_0e11bd81.png", slot: "night",        tone: "warm" },
-  { label: "Black Car Flash",        url: "https://meetha.studio/manus-storage/anau89FejTTN_fad1bef6.jpg", slot: "night",        tone: "cool" },
+  { label: "Morning Light",          key: "8sYDCLxtY2Ni_f09898c8.jpg",  slot: "morning",      tone: "cool" },
+  { label: "Morning Lounge",         key: "fhhwwApsyhoh_a3ba19ab.jpg", slot: "morning",      tone: "warm" },
+  { label: "Hotel Lobby",            key: "RdmvCDQJGJeE_89c1ff1f.jpg", slot: "afternoon",    tone: "warm" },
+  { label: "Private Aviation",       key: "ka7K48spkBR2_e1262ff7.jpg", slot: "afternoon",    tone: "cool" },
+  { label: "Rooftop at Sunset",      key: "Wwi1SvNTgDyH_dce0c596.jpg", slot: "golden_hour",  tone: "warm" },
+  { label: "Evening Lounge",         key: "41zqV3GF0xF4_2d093184.jpg", slot: "golden_hour",  tone: "warm" },
+  { label: "Hotel Corridor",         key: "gh4xmFozrLg0_264efed3.jpg", slot: "night",        tone: "warm" },
+  { label: "Rooftop at Dusk",        key: "TmKdo6AomZQZ_4a871987.jpg", slot: "night",        tone: "cool" },
+  { label: "Candlelit Dinner",       key: "VtTqLAgZb5bw_0e11bd81.png", slot: "night",        tone: "warm" },
+  { label: "Black Car Flash",        key: "anau89FejTTN_fad1bef6.jpg", slot: "night",        tone: "cool" },
 ];
 
 const WARM_KEYWORDS = ["ivory", "terracotta", "sienna", "gold", "blush", "cream", "caramel", "bronze", "rust", "amber", "warm", "honey", "peach", "coral", "sand", "wheat", "tawny", "ochre"];
@@ -471,7 +472,7 @@ async function renderYourWorldsAsync(
   brief: AestheticBrief
 ): Promise<number> {
   const selectedScenes = selectScenes(brief);
-  const WORLD_URLS = selectedScenes.map((s) => ({ label: s.label, url: s.url }));
+  const WORLD_URLS = await Promise.all(selectedScenes.map(async (s) => ({ label: s.label, url: await storageGetSignedUrl(s.key) })));
 
   // Pre-fetch all world images as buffers in parallel to avoid canvas HTTP issues
   const WORLDS = await Promise.all(

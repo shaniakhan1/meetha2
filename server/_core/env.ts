@@ -13,6 +13,7 @@ export const ENV = {
   supabaseUrl: process.env.SUPABASE_URL ?? "",
   supabaseAnonKey: process.env.SUPABASE_ANON_KEY ?? "",
   supabaseServiceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY ?? "",
+  supabaseStorageBucket: process.env.SUPABASE_STORAGE_BUCKET ?? "meetha-assets",
   resendApiKey: process.env.RESEND_API_KEY ?? "",
   sentryDsn: process.env.SENTRY_DSN ?? "",
 };
