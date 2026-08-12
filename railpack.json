@@ -3,13 +3,8 @@
   "provider": "node",
   "steps": {
     "install": {
-      "inputs": [
-        {
-          "local": true,
-          "include": ["."]
-        }
-      ],
       "commands": [
+        "COPY:. .",
         "pnpm install --no-frozen-lockfile --prefer-offline",
         "PATH:node_modules/.bin"
       ]
