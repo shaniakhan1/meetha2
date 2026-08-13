@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { runCronJob } from "./cronRunner";
+import { resolveRequestedJob, runCronJob } from "./cronRunner";
 
 describe("Railway cron runner", () => {
   it("calls one protected scheduled endpoint and returns after a successful response", async () => {
@@ -27,5 +27,11 @@ describe("Railway cron runner", () => {
       { CRON_TARGET_URL: "http://meetha.railway.internal", CRON_SECRET: "test-secret" },
       fetcher,
     )).rejects.toThrow("daily-monitor returned HTTP 401");
+  });
+
+  it("accepts pnpm's separator before the scheduled job argument", () => {
+    expect(resolveRequestedJob(["--", "lora-check"])).toBe("lora-check");
+    expect(resolveRequestedJob(["unexpected", "daily-monitor"])).toBe("daily-monitor");
+    expect(resolveRequestedJob(["--"])).toBeNull();
   });
 });

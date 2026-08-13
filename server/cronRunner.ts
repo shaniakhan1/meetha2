@@ -21,6 +21,10 @@ export function isRailwayCronJob(value: string): value is RailwayCronJob {
   return (RAILWAY_CRON_JOBS as readonly string[]).includes(value);
 }
 
+export function resolveRequestedJob(args: string[]): RailwayCronJob | null {
+  return args.find(isRailwayCronJob) ?? null;
+}
+
 /**
  * Invoke one existing protected scheduled endpoint exactly once. The endpoint
  * retains all business logic and its own idempotency guarantees; this runner
@@ -60,7 +64,9 @@ export async function runCronJob(
 }
 
 async function main() {
-  const requestedJob = process.argv[2] ?? "";
+  // pnpm forwards script arguments as `node dist/cronRunner.js -- <job>`.
+  // Select the first valid job name rather than treating the separator as input.
+  const requestedJob = resolveRequestedJob(process.argv.slice(2)) ?? "";
   if (!isRailwayCronJob(requestedJob)) {
     throw new Error(`Usage: cron:run <${RAILWAY_CRON_JOBS.join("|")}>`);
   }
