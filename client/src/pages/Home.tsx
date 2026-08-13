@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
-import { portableAssetUrl } from "@/lib/portableAssetUrl";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { BeforeAfterSlider } from "@/components/BeforeAfterSlider";
@@ -646,7 +645,7 @@ export default function Home() {
           {/* Full portrait */}
           <div className="w-full aspect-[3/4] overflow-hidden">
             <img
-              src={portableAssetUrl("https://d2xsxph8kpxj0f.cloudfront.net/310519663380647277/W9hp3oxSnRYx5WHCSun39U/editorial-01-window-4Ex7ySDHERfgQxSGrLgiqH.webp")}
+              src="https://d2xsxph8kpxj0f.cloudfront.net/310519663380647277/W9hp3oxSnRYx5WHCSun39U/editorial-01-window-4Ex7ySDHERfgQxSGrLgiqH.webp"
               alt="Editorial portrait — window light"
               className="w-full h-full object-cover object-top"
             />
@@ -663,7 +662,7 @@ export default function Home() {
             </div>
             <div className="aspect-[3/4] overflow-hidden">
               <img
-                src={portableAssetUrl("https://d2xsxph8kpxj0f.cloudfront.net/310519663380647277/W9hp3oxSnRYx5WHCSun39U/editorial-02-fullbody-cRGwTXz2gHjynX9ahHDVXB.webp")}
+                src="https://d2xsxph8kpxj0f.cloudfront.net/310519663380647277/W9hp3oxSnRYx5WHCSun39U/editorial-02-fullbody-cRGwTXz2gHjynX9ahHDVXB.webp"
                 alt="Editorial — full body golden hour"
                 className="w-full h-full object-cover object-top"
               />
@@ -683,7 +682,7 @@ export default function Home() {
           {/* Curvy silhouette — full portrait, golden hour hotel suite */}
           <div className="w-full aspect-[9/16] overflow-hidden">
             <img
-              src={portableAssetUrl("https://d2xsxph8kpxj0f.cloudfront.net/310519663380647277/W9hp3oxSnRYx5WHCSun39U/curvy-silhouette-test-T6AYZCEqwSqBi8tbjG4HV2.webp")}
+              src="https://d2xsxph8kpxj0f.cloudfront.net/310519663380647277/W9hp3oxSnRYx5WHCSun39U/curvy-silhouette-test-T6AYZCEqwSqBi8tbjG4HV2.webp"
               alt="Meetha styling — curvy silhouette, golden hour"
               className="w-full h-full object-cover object-center"
             />
@@ -709,7 +708,7 @@ export default function Home() {
             </div>
             <div className="aspect-[3/4] overflow-hidden">
               <img
-                src={portableAssetUrl("https://d2xsxph8kpxj0f.cloudfront.net/310519663380647277/W9hp3oxSnRYx5WHCSun39U/editorial-03-restaurant-JxCbUv26xaboJFEWHABv6g.webp")}
+                src="https://d2xsxph8kpxj0f.cloudfront.net/310519663380647277/W9hp3oxSnRYx5WHCSun39U/editorial-03-restaurant-JxCbUv26xaboJFEWHABv6g.webp"
                 alt="Editorial — candlelit restaurant"
                 className="w-full h-full object-cover object-top"
               />
@@ -726,7 +725,7 @@ export default function Home() {
           {/* Jewelry close-up — changed to 16:9 so it doesn't tower */}
           <div className="w-full aspect-[4/3] overflow-hidden mt-0.5">
             <img
-              src={portableAssetUrl("https://d2xsxph8kpxj0f.cloudfront.net/310519663380647277/W9hp3oxSnRYx5WHCSun39U/editorial-05-jewelry-E7PHF69YfVpDeTTDRyXXDd.webp")}
+              src="https://d2xsxph8kpxj0f.cloudfront.net/310519663380647277/W9hp3oxSnRYx5WHCSun39U/editorial-05-jewelry-E7PHF69YfVpDeTTDRyXXDd.webp"
               alt="Editorial — gold jewelry close-up"
               className="w-full h-full object-cover object-center"
             />
@@ -736,14 +735,14 @@ export default function Home() {
           <div className="grid grid-cols-2 gap-0.5 mt-0.5">
             <div className="aspect-[3/4] overflow-hidden">
               <img
-                src={portableAssetUrl("https://d2xsxph8kpxj0f.cloudfront.net/310519663380647277/W9hp3oxSnRYx5WHCSun39U/editorial-04-motion-PdCsKveuYL5VJ73Dzk4AZe.webp")}
+                src="https://d2xsxph8kpxj0f.cloudfront.net/310519663380647277/W9hp3oxSnRYx5WHCSun39U/editorial-04-motion-PdCsKveuYL5VJ73Dzk4AZe.webp"
                 alt="Editorial — motion street"
                 className="w-full h-full object-cover object-top"
               />
             </div>
             <div className="aspect-[3/4] overflow-hidden">
               <img
-                src={portableAssetUrl("https://d2xsxph8kpxj0f.cloudfront.net/310519663380647277/W9hp3oxSnRYx5WHCSun39U/editorial-06-softlight-X9utC7yPfkFCBqUYhBXkqQ.webp")}
+                src="https://d2xsxph8kpxj0f.cloudfront.net/310519663380647277/W9hp3oxSnRYx5WHCSun39U/editorial-06-softlight-X9utC7yPfkFCBqUYhBXkqQ.webp"
                 alt="Editorial — soft morning light"
                 className="w-full h-full object-cover object-top"
               />

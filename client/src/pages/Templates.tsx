@@ -1,6 +1,5 @@
 import { useState, useRef } from "react";
 import { useLocation } from "wouter";
-import { portableAssetUrl } from "@/lib/portableAssetUrl";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { getLoginUrl } from "@/const";
 import { trpc } from "@/lib/trpc";
@@ -137,7 +136,7 @@ const TEMPLATES = [
       ["The exit is the statement", "Walking away without explaining yourself is the most powerful thing a woman can do."],
       ["Cinematic without trying", "Motion blur, night light, a woman in motion. It looks like a movie still."],
     ],
-    sampleImage: portableAssetUrl("https://d2xsxph8kpxj0f.cloudfront.net/310519663380647277/W9hp3oxSnRYx5WHCSun39U/template-irish-goodbye-ktzNEA3LBpMXoScC2CgPoj.webp"),
+    sampleImage: "https://d2xsxph8kpxj0f.cloudfront.net/310519663380647277/W9hp3oxSnRYx5WHCSun39U/template-irish-goodbye-ktzNEA3LBpMXoScC2CgPoj.webp",
     overlayGradient: "linear-gradient(to bottom, rgba(26,15,9,0.55) 0%, rgba(26,15,9,0.20) 40%, rgba(26,15,9,0.85) 100%)",
     gradient: "linear-gradient(160deg, #1a0f09 0%, #2C1810 50%, #1a0f09 100%)",
     hasFlash: false,
@@ -163,7 +162,7 @@ const TEMPLATES = [
       ["Presence without performance", "No smile, no pose. Just a woman who knows. That stillness is more powerful than any caption."],
       ["The gaze does the work", "Direct eye contact into the lens. The most commanding shot in editorial photography."],
     ],
-    sampleImage: portableAssetUrl("https://d2xsxph8kpxj0f.cloudfront.net/310519663380647277/W9hp3oxSnRYx5WHCSun39U/template-cleopatra-RNkWpwxV5GeWZwStmYqiQx.webp"),
+    sampleImage: "https://d2xsxph8kpxj0f.cloudfront.net/310519663380647277/W9hp3oxSnRYx5WHCSun39U/template-cleopatra-RNkWpwxV5GeWZwStmYqiQx.webp",
     overlayGradient: "linear-gradient(to bottom, rgba(26,10,6,0.40) 0%, rgba(26,10,6,0.08) 35%, rgba(26,10,6,0.82) 100%)",
     gradient: "linear-gradient(160deg, #1a0a06 0%, #2C1810 50%, #1a0a06 100%)",
     hasFlash: false,
@@ -189,7 +188,7 @@ const TEMPLATES = [
       ["Rich Grandma Energy", "Silk robe, no one else in the frame. The fantasy of choosing yourself completely."],
       ["The retaliation is the peace", "She is not angry. She is not sad. She just chose this."],
     ],
-    sampleImage: portableAssetUrl("https://d2xsxph8kpxj0f.cloudfront.net/310519663380647277/W9hp3oxSnRYx5WHCSun39U/template-silk-robe-retaliation-MJXwGjfHhTjt3ENoPKdG8s.webp"),
+    sampleImage: "https://d2xsxph8kpxj0f.cloudfront.net/310519663380647277/W9hp3oxSnRYx5WHCSun39U/template-silk-robe-retaliation-MJXwGjfHhTjt3ENoPKdG8s.webp",
     overlayGradient: "linear-gradient(to bottom, rgba(44,24,16,0.35) 0%, rgba(44,24,16,0.05) 40%, rgba(44,24,16,0.82) 100%)",
     gradient: "linear-gradient(160deg, #2C1810 0%, #3d1f0e 50%, #2C1810 100%)",
     hasFlash: false,

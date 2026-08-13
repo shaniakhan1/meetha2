@@ -32,7 +32,7 @@ export function resolveRequestedJob(args: string[]): RailwayCronJob | null {
  */
 export async function runCronJob(
   job: RailwayCronJob,
-  env: CronEnvironment = process.env,
+  env: CronEnvironment = process.env as CronEnvironment,
   fetcher: FetchLike = fetch,
 ): Promise<{ job: RailwayCronJob; status: number; body: string }> {
   const target = env.CRON_TARGET_URL?.trim();

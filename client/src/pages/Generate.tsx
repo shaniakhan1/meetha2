@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef } from "react";
 import { saveOrShareBlob } from "@/lib/saveOrShare";
-import { portableAssetUrl } from "@/lib/portableAssetUrl";
 import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
@@ -29,9 +28,9 @@ const SCENE_PREVIEW_IMAGES: Record<string, string> = {
   digital_diary: "/manus-storage/template-digital-diary_11ffb1d8.jpg",
   bill_please: "/manus-storage/template-bill-please_7eacca04.jpg",
   silk_robe_room_service: "/manus-storage/template-silk-robe_705e049a.jpg",
-  irish_goodbye: portableAssetUrl("https://d2xsxph8kpxj0f.cloudfront.net/310519663380647277/W9hp3oxSnRYx5WHCSun39U/template-irish-goodbye-ktzNEA3LBpMXoScC2CgPoj.webp"),
-  cleopatra_principle: portableAssetUrl("https://d2xsxph8kpxj0f.cloudfront.net/310519663380647277/W9hp3oxSnRYx5WHCSun39U/template-cleopatra-RNkWpwxV5GeWZwStmYqiQx.webp"),
-  silk_robe_retaliation: portableAssetUrl("https://d2xsxph8kpxj0f.cloudfront.net/310519663380647277/W9hp3oxSnRYx5WHCSun39U/template-silk-robe-retaliation-MJXwGjfHhTjt3ENoPKdG8s.webp"),
+  irish_goodbye: "https://d2xsxph8kpxj0f.cloudfront.net/310519663380647277/W9hp3oxSnRYx5WHCSun39U/template-irish-goodbye-ktzNEA3LBpMXoScC2CgPoj.webp",
+  cleopatra_principle: "https://d2xsxph8kpxj0f.cloudfront.net/310519663380647277/W9hp3oxSnRYx5WHCSun39U/template-cleopatra-RNkWpwxV5GeWZwStmYqiQx.webp",
+  silk_robe_retaliation: "https://d2xsxph8kpxj0f.cloudfront.net/310519663380647277/W9hp3oxSnRYx5WHCSun39U/template-silk-robe-retaliation-MJXwGjfHhTjt3ENoPKdG8s.webp",
 };
 
 type GenStep = "select" | "template_preview" | "generating" | "hooks" | "preview";
@@ -492,9 +491,9 @@ export default function Generate() {
           digital_diary: { number: "Template No. 02", title: "Digital Diary", subtitle: "Taped polaroid. Handwritten note. Dried flower. Analog layering that feels like a page from a real woman's private journal.", features: ["Polaroid and analog layering", "Warm film grain", "Private journal hook"], sampleImage: "/manus-storage/template-digital-diary_11ffb1d8.jpg" },
           bill_please: { number: "Template No. 03", title: "Bill, Please", subtitle: "She reaches for the check. Calm, unbothered, final. The gesture says everything the caption does not.", features: ["Fine dining candlelight aesthetic", "35mm analog warmth", "Quiet power hook"], sampleImage: "/manus-storage/template-bill-please_7eacca04.jpg" },
           silk_robe_room_service: { number: "Template No. 04", title: "Silk Robe Room Service", subtitle: "Hotel suite. Silk robe. Morning light. Room service tray. The luxury of an unhurried morning that belongs entirely to her.", features: ["Luxury hotel suite morning light", "Warm cream and gold tones", "Solitude as luxury hook"], sampleImage: "/manus-storage/template-silk-robe_705e049a.jpg" },
-          irish_goodbye: { number: "Template No. 05", title: "The Goodbye", subtitle: "She is walking away from the party. Seen from behind. Mid-stride. The crowd is blurred. She is not looking back.", features: ["Night exit cinematic energy", "Motion blur crowd", "No-announcement hook"], sampleImage: portableAssetUrl("https://d2xsxph8kpxj0f.cloudfront.net/310519663380647277/W9hp3oxSnRYx5WHCSun39U/template-irish-goodbye-ktzNEA3LBpMXoScC2CgPoj.webp") },
-          cleopatra_principle: { number: "Template No. 06", title: "The Cleopatra Principle", subtitle: "Velvet chaise. Direct eye contact. No smile, no performance. The stillness of someone who has already decided everything.", features: ["Velvet chaise editorial lighting", "Direct gaze presence", "Already decided hook"], sampleImage: portableAssetUrl("https://d2xsxph8kpxj0f.cloudfront.net/310519663380647277/W9hp3oxSnRYx5WHCSun39U/template-cleopatra-RNkWpwxV5GeWZwStmYqiQx.webp") },
-          silk_robe_retaliation: { number: "Template No. 07", title: "The Robe Reset", subtitle: "Floor-to-ceiling windows. Silk robe. Golden hour. Seen from behind. The energy of someone who chose herself and does not need to explain it.", features: ["Golden hour silhouette aesthetic", "Warm amber window light", "Chose herself hook"], sampleImage: portableAssetUrl("https://d2xsxph8kpxj0f.cloudfront.net/310519663380647277/W9hp3oxSnRYx5WHCSun39U/template-silk-robe-retaliation-MJXwGjfHhTjt3ENoPKdG8s.webp") },
+          irish_goodbye: { number: "Template No. 05", title: "The Goodbye", subtitle: "She is walking away from the party. Seen from behind. Mid-stride. The crowd is blurred. She is not looking back.", features: ["Night exit cinematic energy", "Motion blur crowd", "No-announcement hook"], sampleImage: "https://d2xsxph8kpxj0f.cloudfront.net/310519663380647277/W9hp3oxSnRYx5WHCSun39U/template-irish-goodbye-ktzNEA3LBpMXoScC2CgPoj.webp" },
+          cleopatra_principle: { number: "Template No. 06", title: "The Cleopatra Principle", subtitle: "Velvet chaise. Direct eye contact. No smile, no performance. The stillness of someone who has already decided everything.", features: ["Velvet chaise editorial lighting", "Direct gaze presence", "Already decided hook"], sampleImage: "https://d2xsxph8kpxj0f.cloudfront.net/310519663380647277/W9hp3oxSnRYx5WHCSun39U/template-cleopatra-RNkWpwxV5GeWZwStmYqiQx.webp" },
+          silk_robe_retaliation: { number: "Template No. 07", title: "The Robe Reset", subtitle: "Floor-to-ceiling windows. Silk robe. Golden hour. Seen from behind. The energy of someone who chose herself and does not need to explain it.", features: ["Golden hour silhouette aesthetic", "Warm amber window light", "Chose herself hook"], sampleImage: "https://d2xsxph8kpxj0f.cloudfront.net/310519663380647277/W9hp3oxSnRYx5WHCSun39U/template-silk-robe-retaliation-MJXwGjfHhTjt3ENoPKdG8s.webp" },
         };
         const meta = TEMPLATE_META[templateSlug ?? ""] ?? TEMPLATE_META.paparazzi_flash;
         return (
@@ -765,8 +764,8 @@ export default function Generate() {
                 <p className="font-serif text-base text-charcoal mb-4">Keep Exploring</p>
                 <div className="flex gap-3 -mx-6 px-6 overflow-x-auto" style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}>
                   {[
-                    { slug: "irish_goodbye", title: "The Goodbye", image: portableAssetUrl("https://d2xsxph8kpxj0f.cloudfront.net/310519663380647277/W9hp3oxSnRYx5WHCSun39U/template-irish-goodbye-ktzNEA3LBpMXoScC2CgPoj.webp") },
-                    { slug: "cleopatra_principle", title: "The Cleopatra Principle", image: portableAssetUrl("https://d2xsxph8kpxj0f.cloudfront.net/310519663380647277/W9hp3oxSnRYx5WHCSun39U/template-cleopatra-RNkWpwxV5GeWZwStmYqiQx.webp") },
+                    { slug: "irish_goodbye", title: "The Goodbye", image: "https://d2xsxph8kpxj0f.cloudfront.net/310519663380647277/W9hp3oxSnRYx5WHCSun39U/template-irish-goodbye-ktzNEA3LBpMXoScC2CgPoj.webp" },
+                    { slug: "cleopatra_principle", title: "The Cleopatra Principle", image: "https://d2xsxph8kpxj0f.cloudfront.net/310519663380647277/W9hp3oxSnRYx5WHCSun39U/template-cleopatra-RNkWpwxV5GeWZwStmYqiQx.webp" },
                     { slug: "bill_please", title: "Bill, Please", image: "/manus-storage/template-bill-please_7eacca04.jpg" },
                   ].map((t) => (
                     <button
@@ -849,8 +848,8 @@ export default function Generate() {
                 <p className="font-serif text-base text-charcoal mb-4">Keep Exploring</p>
                 <div className="flex gap-3 -mx-6 px-6 overflow-x-auto" style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}>
                   {[
-                    { slug: "silk_robe_retaliation", title: "The Robe Reset", image: portableAssetUrl("https://d2xsxph8kpxj0f.cloudfront.net/310519663380647277/W9hp3oxSnRYx5WHCSun39U/template-silk-robe-retaliation-MJXwGjfHhTjt3ENoPKdG8s.webp") },
-                    { slug: "irish_goodbye", title: "The Goodbye", image: portableAssetUrl("https://d2xsxph8kpxj0f.cloudfront.net/310519663380647277/W9hp3oxSnRYx5WHCSun39U/template-irish-goodbye-ktzNEA3LBpMXoScC2CgPoj.webp") },
+                    { slug: "silk_robe_retaliation", title: "The Robe Reset", image: "https://d2xsxph8kpxj0f.cloudfront.net/310519663380647277/W9hp3oxSnRYx5WHCSun39U/template-silk-robe-retaliation-MJXwGjfHhTjt3ENoPKdG8s.webp" },
+                    { slug: "irish_goodbye", title: "The Goodbye", image: "https://d2xsxph8kpxj0f.cloudfront.net/310519663380647277/W9hp3oxSnRYx5WHCSun39U/template-irish-goodbye-ktzNEA3LBpMXoScC2CgPoj.webp" },
                     { slug: "paparazzi_flash", title: "Caught Looking Expensive", image: "/manus-storage/template-paparazzi-flash_24688a24.jpg" },
                   ].map((t) => (
                     <button

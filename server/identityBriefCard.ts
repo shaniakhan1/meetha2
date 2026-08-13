@@ -20,6 +20,18 @@ import { fileURLToPath } from "url";
 import { getProfile } from "./db";
 import { storageGetSignedUrl } from "./storage";
 
+type AestheticBrief = {
+  palette: string;
+  metals: string;
+  fabrics: string;
+  makeup: string;
+  lighting: string;
+  hair: string;
+  undertone?: string | null;
+  contrast_level?: string | null;
+  lipstick_family?: string | null;
+};
+
 // ESM-safe __dirname
 function getDirname(): string {
   try {
