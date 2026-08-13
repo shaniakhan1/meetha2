@@ -5,8 +5,9 @@
   "license": "MIT",
   "scripts": {
     "dev": "NODE_ENV=development tsx watch server/_core/index.ts",
-    "build": "vite build && esbuild server/_core/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist && mkdir -p dist/fonts && cp server/fonts/* dist/fonts/ && echo 'Fonts copied to dist/fonts/'",
+    "build": "vite build && esbuild server/_core/index.ts server/cronRunner.ts --platform=node --packages=external --bundle --format=esm --outdir=dist && mkdir -p dist/fonts && cp server/fonts/* dist/fonts/ && echo 'Fonts copied to dist/fonts/'",
     "start": "NODE_ENV=production node dist/index.js",
+    "cron:run": "NODE_ENV=production node dist/cronRunner.js",
     "check": "tsc --noEmit",
     "format": "prettier --write .",
     "test": "vitest run",

@@ -244,12 +244,17 @@ export async function handleDailyMonitor(req: Request, res: Response) {
 </html>`;
 
     const resend = new Resend(ENV.resendApiKey);
+    const utcDateKey = now.toISOString().slice(0, 10);
     const { error: sendErr } = await resend.emails.send({
       from: "Meetha <noreply@meetha.studio>",
       to: OWNER_EMAIL,
       subject: `Meetha Daily — ${dateStr}`,
       html,
       text: lines,
+    }, {
+      // Railway may retry a failed or interrupted cron run. Resend rejects a
+      // duplicate request for this UTC report date instead of sending twice.
+      idempotencyKey: `meetha-daily-monitor-${utcDateKey}`,
     });
     if (sendErr) throw new Error(`Resend error: ${sendErr.message}`);
 
