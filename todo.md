@@ -928,3 +928,87 @@
 - [x] Inject strip below save/done buttons on Gen 1 and Gen 2 result screens in Generate.tsx
 - [x] Heading: "Keep Exploring" (not "What's next for you?")
 - [x] Cards navigate to template_preview step on tap (no page reload, instant transition)
+
+## V66 -- Zero-change Railway migration
+
+- [ ] Audit GitHub source, runtime contract, external integrations, scheduled jobs, and Railway compatibility
+- [ ] Run a read-only preflight audit for users without emails, duplicate email identities, LoRA references, and asset-reference counts before auth or storage changes
+- [x] Produce a read-only reconciliation report for each duplicate normalized-email group, including canonical-record recommendations and linked-record counts
+- [x] Record approved canonical Supabase Auth anchors: legacy internal user IDs 10, 14, and 13
+- [ ] Preserve non-canonical duplicate legacy records without merging, deleting, reassigning, or creating duplicate auth identities
+- [x] Run a read-only Supabase Auth inventory to identify pre-existing identities and any email collisions before creating migration identities
+- [x] Compare existing legacy open_id values to Supabase Auth IDs before creating or linking any identity
+- [x] Verify approved canonical IDs 10, 14, and 13 against their existing Supabase Auth identities and audit the single unmatched legacy user read-only
+- [ ] Add a non-destructive auth identity mapping table that anchors one Supabase Auth UUID to the approved canonical legacy user ID while retaining all other legacy rows
+- [x] Verify existing Supabase Auth metadata for approved canonical identities before adding non-destructive legacy-user mapping metadata
+- [x] Add `meetha_legacy_user_id` metadata only to the three approved existing Supabase Auth identities: 10, 14, and 13
+- [ ] Update portable auth sessions to resolve approved Supabase Auth metadata to the mapped legacy user ID without rewriting legacy open_id values
+- [ ] Add only deployment configuration required for Railway; do not change product behavior
+- [ ] Fix Railway frozen-lockfile configuration mismatch so pnpm can install the committed dependency graph unchanged
+- [ ] Reproduce Railway’s pnpm version and frozen-install configuration locally before attempting another staging deployment
+- [ ] Add the repository source layer to the custom Railpack install step so package.json is available during Railway builds
+- [ ] Replace the unsupported local input with Railpack’s supported repository copy command in the install step
+- [ ] Replace the failed string-form copy command with Railpack’s structured copy command object
+- [ ] Verify the structured-copy deployment result from the latest raw Railway build log before any further configuration changes
+- [ ] Remove the custom Railpack steps and restore Railpack’s native source-aware pnpm plan while retaining the required package settings
+- [ ] Resolve the exact failure reported by the final native-plan Railway log without altering application behavior
+- [ ] Resolve the exact failure reported by the latest Railway staging build log without altering application behavior
+- [ ] Provision the existing OAuth and Stripe runtime secrets in the separate Railway project so the server can boot
+- [x] Inventory all persistent asset URL origins and keys read-only before copying any assets to R2
+- [x] Build a read-only manifest of database-backed and static source-media assets before any copy to private Supabase Storage
+- [x] Add server-rendered Identity Brief scene backgrounds to the migration manifest before final storage cutover
+- [x] Verify representative Manus and CloudFront source assets can be retrieved before bulk copy to private Supabase Storage
+- [x] Copy all verified image assets from Manus and CloudFront sources to private `meetha-assets` storage without changing existing URLs or database records
+- [x] Verify every copied object exists in `meetha-assets` and sample-download migrated files before changing any storage reads
+- [x] Add a Supabase-first storage adapter in the Railway source with retained Forge fallback for rollback-safe reads
+- [x] Preserve the existing `/manus-storage/*` public route while serving private Supabase objects through signed redirects
+- [x] Diagnose and resolve the Railway staging `/manus-storage/*` 500 response before any broader flow verification
+- [x] Replace static CloudFront/Manus asset references in Railway source with their verified private-storage route equivalents
+- [x] Copy the HTML Open Graph image and replace its remaining CloudFront metadata references before final staging verification
+- [x] Supersede R2 provisioning in favor of the active Supabase project and its private `meetha-assets` bucket
+- [x] Audit the existing private Supabase Storage bucket and its policies as the preferred no-new-infrastructure migration target
+- [x] Confirm the active Meetha Supabase project initially had no buckets; it is suitable for an isolated private migration target
+- [x] Confirm the active Meetha Supabase project has no prior training-photo bucket; use the newly verified private `meetha-assets` bucket instead
+- [x] Create and verify a private `meetha-assets` bucket in the active Meetha Supabase project, which initially had no storage buckets
+- [x] Diagnose and resolve the latest Railway staging crash using the attached raw log before continuing storage migration
+- [x] Confirm the Railway staging domain now serves the Meetha application after runtime variables were added
+- [x] Confirm Railway staging reaches the portable sign-in route; Manus-hosted media remains unavailable there until R2 migration
+- [x] Verify staging sign-in and magic-link session establishment with portable Supabase Auth
+- [x] Add the Railway staging domain to Supabase Auth and Google OAuth redirect settings, then verify Google sign-in
+- [x] Add `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` to Railway and rebuild the Google OAuth client bundle
+- [x] Authorize Railway CLI through device login for staging-only configuration
+- [ ] Verify staging photo upload and LoRA training submission without duplicate-job creation
+- [ ] Verify staging saved generation media, Style Card, and Identity Brief flows
+- [x] Execute one authorized Railway staging image generation and verify the resulting FAL response and rendered result
+- [x] Verify the newest staging generation record and its saved media resolve from private Supabase Storage
+- [ ] Investigate the unavailable Share action as a separate post-migration UX issue; saving images works and storage migration is verified
+- [ ] Fix the desktop save control requiring a second click as a separate post-migration UX issue; save completes successfully after the second click
+- [ ] Execute one authorized Railway staging LoRA submission using user-selected photos and verify duplicate-job protection
+- [x] Verify the authorized account’s existing ready LoRA reference and deployed duplicate-job guard without initiating paid retraining
+- [ ] Verify the signed-in account’s existing ready LoRA reference and the deployed duplicate-job guard without initiating paid retraining
+- [ ] Verify staging credit balances and authenticated generation access match existing data
+- [ ] Verify staging Stripe $5 top-up, membership checkout, and staging-safe webhook delivery
+- [ ] Verify staging Resend email and Sentry behavior
+- [x] Verify protected scheduled-job behavior with Railway `CRON_SECRET` middleware
+- [x] Remove the redundant Manus SDK cron authentication call now that Railway uses `CRON_SECRET` middleware
+- [x] Remove remaining Manus SDK cron checks from welcome-email, archive-generations, and daily-monitor handlers
+- [x] Document the existing schedules and idempotency behavior for LoRA checks, welcome emails, generation archiving, and daily monitoring
+- [x] Add four short-lived Railway cron runners that execute each existing job and exit cleanly
+- [x] Configure four staggered UTC Railway cron services without changing job business logic
+- [x] Verify service configuration for all four cron services and one successful LoRA run that returned HTTP 200 and exited cleanly
+- [ ] Verify whether an existing durable event record can deduplicate the daily monitor without introducing duplicate emails
+- [ ] Diagnose and resolve the Railway staging crash from the cron-runner deployment before adding cron services
+- [x] Fix Railway pnpm argument forwarding so one-shot cron runners receive their scheduled job name
+- [ ] Complete only the cron runner fix, four-service verification, and owner handoff before requesting any cutover decision
+- [x] Route Railway cron services to the verified protected staging domain when private service DNS is unavailable
+- [x] Configure cron services to build only the short-lived runner instead of the full web application
+- [ ] Verify staging mobile Safari and desktop behavior
+- [ ] Document verified rollback steps before requesting DNS or live webhook cutover
+- [x] Deliver an owner runbook covering GitHub deployments, Railway variables, Supabase Auth and Storage, Stripe webhooks, Resend, FAL, Sentry, scheduled jobs, monitoring, and rollback without Manus
+- [x] Remove the no-op .pnpmfile.cjs and refresh only the stale pnpmfile checksum in pnpm-lock.yaml
+- [ ] Create a separate Meetha Railway project only; do not modify the existing Soft60 project
+- [ ] Securely provision all runtime secrets in the separate Railway project
+- [ ] Configure parallel external callbacks, including Stripe webhooks, auth origins, Resend links, Sentry, and scheduled-job authentication
+- [ ] Verify sign-in, uploads, LoRA training, generation, Style Cards, Identity Briefs, credits, purchases, webhooks, emails, Sentry, scheduled jobs, Mobile Safari, and desktop before cutover
+- [ ] Obtain explicit confirmation before changing public DNS or live Stripe webhook endpoints
+- [ ] Retain Manus production as rollback until Railway production is confirmed stable
