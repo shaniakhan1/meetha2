@@ -988,6 +988,9 @@
 - [ ] Verify the signed-in account’s existing ready LoRA reference and the deployed duplicate-job guard without initiating paid retraining
 - [ ] Verify staging credit balances and authenticated generation access match existing data
 - [ ] Verify staging Stripe $5 top-up, membership checkout, and staging-safe webhook delivery
+- [ ] Execute one authorized smallest Stripe staging payment test and verify checkout return, webhook delivery, and credit fulfillment
+- [ ] Configure Stripe test-mode keys and a test-only webhook only on Railway staging
+- [x] Defer optional Stripe test-mode staging validation; retain existing live Stripe keys and validate checkout/webhook after approved Railway cutover
 - [ ] Verify staging Resend email and Sentry behavior
 - [x] Verify protected scheduled-job behavior with Railway `CRON_SECRET` middleware
 - [x] Remove the redundant Manus SDK cron authentication call now that Railway uses `CRON_SECRET` middleware
