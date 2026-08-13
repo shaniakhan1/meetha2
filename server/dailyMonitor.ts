@@ -16,7 +16,6 @@
 
 import type { Request, Response } from "express";
 import { getSupabase } from "./_core/supabase";
-import { sdk } from "./_core/sdk";
 import { Resend } from "resend";
 import { ENV } from "./_core/env";
 
@@ -24,11 +23,7 @@ const OWNER_EMAIL = process.env.OWNER_EMAIL ?? "hello@frequencyplanner.com";
 
 export async function handleDailyMonitor(req: Request, res: Response) {
   try {
-    // Authenticate as cron — reject anything that isn't the platform heartbeat
-    const user = await sdk.authenticateRequest(req);
-    if (!user.isCron) {
-      return res.status(403).json({ error: "cron-only" });
-    }
+    // CRON_SECRET bearer authentication is enforced by the route middleware.
 
     const sb = getSupabase() as any;
     const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();

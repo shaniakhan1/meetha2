@@ -17,7 +17,6 @@
 import { Request, Response } from "express";
 import { getSupabase } from "./_core/supabase";
 import { sendWelcomeEmail } from "./_core/email";
-import { sdk } from "./_core/sdk";
 
 const BASE_URL =
   process.env.NODE_ENV === "production"
@@ -26,11 +25,7 @@ const BASE_URL =
 
 export async function handleWelcomeEmail(req: Request, res: Response) {
   try {
-    // Authenticate as cron -- reject non-cron callers
-    const user = await sdk.authenticateRequest(req);
-    if (!user.isCron) {
-      return res.status(403).json({ error: "cron-only endpoint" });
-    }
+    // CRON_SECRET bearer authentication is enforced by the route middleware.
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const sb = getSupabase() as any;
