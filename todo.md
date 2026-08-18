@@ -1003,10 +1003,14 @@
 - [ ] Diagnose and resolve the Railway staging crash from the cron-runner deployment before adding cron services
 - [x] Fix Railway pnpm argument forwarding so one-shot cron runners receive their scheduled job name
 - [ ] Complete only the cron runner fix, four-service verification, and owner handoff before requesting any cutover decision
-- [ ] Point meetha.studio and www.meetha.studio to Railway after approved cutover
-- [ ] Change Railway cron targets to https://meetha.studio after domain routing is live
-- [ ] Update the existing live Stripe webhook to https://meetha.studio/api/stripe/webhook after domain routing is live
+- [x] Point meetha.studio and www.meetha.studio to Railway after approved cutover
+- [x] Change Railway cron targets to https://meetha.studio after domain routing is live
+- [x] Verify the existing live Meetha Stripe webhook already targets https://meetha.studio/api/stripe/webhook; no production payment change required
 - [ ] Verify live domain routing, sign-in, asset delivery, and retained Manus rollback before declaring cutover stable
+- [x] Verify Cloudflare nameserver activation and imported email, Supabase, Resend, and website DNS records before changing traffic
+- [x] Restore the Railway custom-domain route after its live Application failed to respond outage
+- [x] Add the missing OPENAI_API_KEY to the Railway Meetha web service and verify live generation recovery
+- [x] Complete Railway production secret parity for confirmed Stripe, checkout, and monitoring variables without copying Manus-only Forge or OAuth configuration
 - [ ] Release the locked Manus custom-domain assignment only after Railway ownership verification is complete
 - [ ] Confirm public DNS resolvers can see both Railway ownership TXT records before releasing the Manus assignment
 - [x] Restore the broken live Manus dashboard template thumbnails before resuming DNS cutover
