@@ -1011,6 +1011,7 @@
 - [x] Restore the Railway custom-domain route after its live Application failed to respond outage
 - [x] Add the missing OPENAI_API_KEY to the Railway Meetha web service and verify live generation recovery
 - [x] Complete Railway production secret parity for confirmed Stripe, checkout, and monitoring variables without copying Manus-only Forge or OAuth configuration
+- [x] Transfer the meetha.studio domain registration from Manus to Cloudflare while retaining the active Cloudflare DNS zone
 - [ ] Release the locked Manus custom-domain assignment only after Railway ownership verification is complete
 - [ ] Confirm public DNS resolvers can see both Railway ownership TXT records before releasing the Manus assignment
 - [x] Restore the broken live Manus dashboard template thumbnails before resuming DNS cutover
