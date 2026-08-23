@@ -1,11 +1,11 @@
 export const HOME_IMAGES = {
-  hero: "/home-v2/hero-window.webp",
+  hero: "/manus-storage/meetha-59-v2_acb77051.jpg",
   styleCardDark: "/manus-storage/meetha-style-card-134_08616de7.jpg",
   styleCardWarm: "/manus-storage/meetha-style-card-133_9a86196c.jpg",
   worldMorning: "/manus-storage/gallery_hands_coffee_b7861070.webp",
   worldMotion: "/manus-storage/gallery_street_lights_8c7a051f.jpg",
   worldDinner: "/manus-storage/meetha-gallery-restaurant_33c494d6.webp",
-  worldNight: "/manus-storage/meetha-gallery-sofa_84cbf7ec.webp",
+  worldNight: "/manus-storage/meetha-gallery-street-back_d0e260dd.webp",
   identityWindow: "/home-v2/identity-window.webp",
   identityCurvy: "/home-v2/identity-curvy.webp",
   identityParis: "/home-v2/identity-paris.webp",
