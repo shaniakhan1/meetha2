@@ -20,24 +20,31 @@ function ensureLogDir() {
 function trimLogFile(logPath: string, maxSize: number) {
   try {
     if (!fs.existsSync(logPath) || fs.statSync(logPath).size <= maxSize) return;
+
     const lines = fs.readFileSync(logPath, "utf-8").split("\n");
     const keptLines: string[] = [];
     let keptBytes = 0;
+
     for (let i = lines.length - 1; i >= 0; i--) {
       const lineBytes = Buffer.byteLength(`${lines[i]}\n`, "utf-8");
       if (keptBytes + lineBytes > TRIM_TARGET_BYTES) break;
       keptLines.unshift(lines[i]);
       keptBytes += lineBytes;
     }
+
     fs.writeFileSync(logPath, keptLines.join("\n"), "utf-8");
-  } catch {}
+  } catch {
+    // Debug logging must never interrupt the app build.
+  }
 }
 
 function writeToLogFile(source: LogSource, entries: unknown[]) {
   if (entries.length === 0) return;
+
   ensureLogDir();
   const logPath = path.join(LOG_DIR, `${source}.log`);
   const lines = entries.map((entry) => `[${new Date().toISOString()}] ${JSON.stringify(entry)}`);
+
   fs.appendFileSync(logPath, `${lines.join("\n")}\n`, "utf-8");
   trimLogFile(logPath, MAX_LOG_SIZE_BYTES);
 }
@@ -45,37 +52,56 @@ function writeToLogFile(source: LogSource, entries: unknown[]) {
 function vitePluginManusDebugCollector(): Plugin {
   return {
     name: "manus-debug-collector",
+
     transformIndexHtml(html) {
       if (process.env.NODE_ENV === "production") return html;
+
       return {
         html,
-        tags: [{ tag: "script", attrs: { src: "/__manus__/debug-collector.js", defer: true }, injectTo: "head" }],
+        tags: [
+          {
+            tag: "script",
+            attrs: { src: "/__manus__/debug-collector.js", defer: true },
+            injectTo: "head",
+          },
+        ],
       };
     },
+
     configureServer(server: ViteDevServer) {
       server.middlewares.use("/__manus__/logs", (req, res, next) => {
         if (req.method !== "POST") return next();
+
         const handlePayload = (payload: any) => {
           if (payload.consoleLogs?.length > 0) writeToLogFile("browserConsole", payload.consoleLogs);
           if (payload.networkRequests?.length > 0) writeToLogFile("networkRequests", payload.networkRequests);
           if (payload.sessionEvents?.length > 0) writeToLogFile("sessionReplay", payload.sessionEvents);
+
           res.writeHead(200, { "Content-Type": "application/json" });
           res.end(JSON.stringify({ success: true }));
         };
+
         const reqBody = (req as { body?: unknown }).body;
         if (reqBody && typeof reqBody === "object") {
-          try { handlePayload(reqBody); } catch (e) {
+          try {
+            handlePayload(reqBody);
+          } catch (error) {
             res.writeHead(400, { "Content-Type": "application/json" });
-            res.end(JSON.stringify({ success: false, error: String(e) }));
+            res.end(JSON.stringify({ success: false, error: String(error) }));
           }
           return;
         }
+
         let body = "";
-        req.on("data", (chunk) => { body += chunk.toString(); });
+        req.on("data", (chunk) => {
+          body += chunk.toString();
+        });
         req.on("end", () => {
-          try { handlePayload(JSON.parse(body)); } catch (e) {
+          try {
+            handlePayload(JSON.parse(body));
+          } catch (error) {
             res.writeHead(400, { "Content-Type": "application/json" });
-            res.end(JSON.stringify({ success: false, error: String(e) }));
+            res.end(JSON.stringify({ success: false, error: String(error) }));
           }
         });
       });
@@ -83,34 +109,7 @@ function vitePluginManusDebugCollector(): Plugin {
   };
 }
 
-function replaceRetiredEditorialImages(): Plugin {
-  const replacements: Record<string, string> = {
-    "https://d2xsxph8kpxj0f.cloudfront.net/310519663380647277/W9hp3oxSnRYx5WHCSun39U/editorial-01-window-4Ex7ySDHERfgQxSGrLgiqH.webp": "/manus-storage/meetha-59-v2_acb77051.jpg",
-    "https://d2xsxph8kpxj0f.cloudfront.net/310519663380647277/W9hp3oxSnRYx5WHCSun39U/editorial-02-fullbody-cRGwTXz2gHjynX9ahHDVXB.webp": "/manus-storage/meetha-style-card-133_9a86196c.jpg",
-    "https://d2xsxph8kpxj0f.cloudfront.net/310519663380647277/W9hp3oxSnRYx5WHCSun39U/curvy-silhouette-test-T6AYZCEqwSqBi8tbjG4HV2.webp": "/manus-storage/meetha-style-card-134_08616de7.jpg",
-    "https://d2xsxph8kpxj0f.cloudfront.net/310519663380647277/W9hp3oxSnRYx5WHCSun39U/editorial-03-restaurant-JxCbUv26xaboJFEWHABv6g.webp": "/editorial/editorial-paris-new.jpg",
-    "https://d2xsxph8kpxj0f.cloudfront.net/310519663380647277/W9hp3oxSnRYx5WHCSun39U/editorial-05-jewelry-E7PHF69YfVpDeTTDRyXXDd.webp": "/manus-storage/gallery_hands_coffee_b7861070.webp",
-    "https://d2xsxph8kpxj0f.cloudfront.net/310519663380647277/W9hp3oxSnRYx5WHCSun39U/editorial-04-motion-PdCsKveuYL5VJ73Dzk4AZe.webp": "/manus-storage/gallery_street_lights_8c7a051f.jpg",
-    "https://d2xsxph8kpxj0f.cloudfront.net/310519663380647277/W9hp3oxSnRYx5WHCSun39U/editorial-06-softlight-X9utC7yPfkFCBqUYhBXkqQ.webp": "/manus-storage/homepage-after-white_6a966c1e.jpg",
-  };
-
-  return {
-    name: "replace-retired-editorial-images",
-    enforce: "pre",
-    transform(code, id) {
-      const normalized = id.replaceAll("\\", "/");
-      if (!normalized.includes("/client/src/pages/Home.tsx")) return null;
-      let next = code;
-      for (const [oldUrl, newUrl] of Object.entries(replacements)) {
-        next = next.split(oldUrl).join(newUrl);
-      }
-      return next === code ? null : { code: next, map: null };
-    },
-  };
-}
-
 const plugins = [
-  replaceRetiredEditorialImages(),
   react(),
   tailwindcss(),
   jsxLocPlugin(),

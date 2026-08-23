@@ -1,45 +1,136 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
-import { BeforeAfterSlider } from "@/components/BeforeAfterSlider";
 
-const WHAT_YOU_LEARN = [
-  {
-    label: "Your color palette",
-    text: "The exact warm ivories, deep ambers, and metals that belong in your frame. The cool tones that fight your skin.",
-  },
-  {
-    label: "Your jewelry direction",
-    text: "Which metals suit your frequency. How to stack. What to reach for before a shoot or a dinner.",
-  },
-  {
-    label: "Your makeup register",
-    text: "Bold lip or skin-forward. Strong brow or soft. The one move that makes every image unmistakably yours.",
-  },
-  {
-    label: "Your lighting brief",
-    text: "Late afternoon window. Hard directional. How to recreate the exact light in your generated images, at home, with your phone.",
-  },
-  {
-    label: "Your fabric frequency",
-    text: "Silk, cashmere, heavyweight jersey, crepe. Anything that catches light. Nothing synthetic. Your wardrobe anchor piece.",
-  },
-];
+const HOME_IMAGES = {
+  hero: "/home-v2/hero-window.webp",
+  styleCardDark: "/manus-storage/meetha-style-card-134_08616de7.jpg",
+  styleCardWarm: "/manus-storage/meetha-style-card-133_9a86196c.jpg",
+  worldMorning: "/manus-storage/gallery_hands_coffee_b7861070.webp",
+  worldMotion: "/manus-storage/gallery_street_lights_8c7a051f.jpg",
+  worldDinner: "/manus-storage/meetha-gallery-restaurant_33c494d6.webp",
+  worldNight: "/manus-storage/meetha-gallery-sofa_84cbf7ec.webp",
+  identityWindow: "/home-v2/identity-window.webp",
+  identityCurvy: "/home-v2/identity-curvy.webp",
+  identityParis: "/home-v2/identity-paris.webp",
+  identitySilver: "/home-v2/identity-silver.webp",
+} as const;
 
-const FEATURES = {
-  free: [
-    "1 look training",
-    "1 cinematic generation",
-    "Share card export",
-    "Watermarked downloads",
-  ],
-  membership: [
-    "25 cinematic generations monthly",
-    "HD exports",
-    "Share cards — no watermark",
-  ],
-};
+if (import.meta.env.DEV) {
+  const paths = Object.values(HOME_IMAGES);
+  if (new Set(paths).size !== paths.length) {
+    console.error("Meetha homepage image inventory contains a duplicate asset.");
+  }
+}
+
+const OUTCOMES = [
+  {
+    number: "01",
+    title: "Dress with clarity",
+    text: "Stop buying pieces that look beautiful on someone else but never quite become you.",
+  },
+  {
+    number: "02",
+    title: "Brief the people helping you",
+    text: "Take your image and Style Card to a stylist, photographer, makeup artist, or hairdresser.",
+  },
+  {
+    number: "03",
+    title: "Build a signature",
+    text: "The more clearly you see your visual language, the less you need trends to tell you who to be.",
+  },
+] as const;
+
+const STEPS = [
+  {
+    number: "01",
+    title: "Upload once",
+    text: "Choose a small set of photos. Meetha privately learns your face and features from the photos you choose.",
+  },
+  {
+    number: "02",
+    title: "Choose your world",
+    text: "Room Service. Paris in Motion. After Dark. Pick the moment. No prompt engineering required.",
+  },
+  {
+    number: "03",
+    title: "Receive the image and the direction",
+    text: "You get the cinematic result plus a Style Card explaining the palette, metals, makeup, lighting, and presence.",
+  },
+] as const;
+
+const STORIES = [
+  {
+    quote: "I brought my images to my stylist and we built my wardrobe around them.",
+    outcome: "She used Meetha to shop with a point of view.",
+  },
+  {
+    quote: "I showed my makeup artist my Meetha images and finally knew exactly what I wanted.",
+    outcome: "She turned the image into a real beauty brief.",
+  },
+  {
+    quote: "I used my images as inspiration for a photoshoot and finally had a clear creative direction.",
+    outcome: "She stopped moodboarding strangers and planned her own shoot.",
+  },
+] as const;
+
+const FAQS = [
+  {
+    question: "Will the images actually look like me?",
+    answer:
+      "Meetha learns your face and features from the photos you upload, then uses that private look profile for your generations. The goal is your face, your proportions, and your presence, not a generic woman wearing your hair.",
+  },
+  {
+    question: "Can other people see the photos I upload?",
+    answer:
+      "No. Your uploads are stored privately and are not visible to other users. They are used to build your private Meetha look profile.",
+  },
+  {
+    question: "Do I need to know fashion or write prompts?",
+    answer:
+      "No. You choose the world and the energy. Meetha handles the visual direction, styling language, and prompt structure for you.",
+  },
+  {
+    question: "What happens after my free look?",
+    answer:
+      "You keep your result and can use the Style Card in real life. Membership is there when you want to keep building your visual world with more generations.",
+  },
+] as const;
+
+function SectionLabel({ children, light = false }: { children: string; light?: boolean }) {
+  return (
+    <p
+      className={`font-sans text-[11px] tracking-[0.24em] uppercase ${
+        light ? "text-gold/80" : "text-gold"
+      }`}
+    >
+      {children}
+    </p>
+  );
+}
+
+function PrimaryButton({
+  onClick,
+  children,
+  light = false,
+}: {
+  onClick: () => void;
+  children: string;
+  light?: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`min-h-12 px-7 py-3.5 font-sans text-xs tracking-[0.16em] uppercase transition-all duration-200 ${
+        light ? "bg-cream text-charcoal hover:bg-white" : "bg-charcoal text-cream hover:bg-[#2b2521]"
+      }`}
+    >
+      {children}
+    </button>
+  );
+}
 
 function PricingSection({
   handleCTA,
@@ -52,7 +143,7 @@ function PricingSection({
   onMembershipCheckout: (annual: boolean) => void;
   checkoutPending: boolean;
 }) {
-  const [annual, setAnnual] = useState(false);
+  const [annual, setAnnual] = useState(true);
 
   const starterLink = annual
     ? import.meta.env.VITE_STRIPE_STARTER_ANNUAL_LINK
@@ -60,99 +151,107 @@ function PricingSection({
 
   const handleMembershipClick = () => {
     if (isAuthenticated) {
-      // Logged-in: create a real checkout session with user_id in metadata
       onMembershipCheckout(annual);
     } else if (starterLink) {
-      // Logged-out: open Stripe payment link in new tab
       window.open(starterLink, "_blank");
     } else {
-      // Fallback: redirect to sign-in
       handleCTA();
     }
   };
 
   return (
-    <section className="py-16 px-6" style={{ background: "#2C1810" }}>
-      <div className="max-w-sm mx-auto">
-        {/* Header */}
-        <div className="text-center mb-10">
-          <p className="font-sans text-xs tracking-[0.2em] uppercase text-gold mb-4">Pricing</p>
-          <h2 className="font-serif font-light text-cream mb-4">Two ways in.</h2>
-          <div className="divider-editorial" />
+    <section id="pricing" className="scroll-mt-24 bg-[#241a15] px-5 py-20 md:px-8 md:py-28">
+      <div className="mx-auto max-w-6xl">
+        <div className="mx-auto mb-12 max-w-2xl text-center">
+          <SectionLabel light>Pricing</SectionLabel>
+          <h2 className="mt-5 font-serif text-4xl font-light leading-[1.02] text-cream md:text-6xl">
+            Start with one look. Stay when you want a world.
+          </h2>
+          <p className="mx-auto mt-5 max-w-xl font-sans text-sm font-light leading-7 text-cream/60 md:text-base">
+            The free experience lets you see the product before making a subscription decision.
+          </p>
         </div>
 
-        {/* Billing toggle */}
-        <div className="flex items-center justify-center gap-4 mb-8">
+        <div className="mb-8 flex items-center justify-center gap-4">
           <button
+            type="button"
             onClick={() => setAnnual(false)}
-            className={`font-sans text-xs tracking-[0.15em] uppercase transition-colors ${
-              !annual ? "text-cream" : "text-sand-dark/50"
-            }`}
+            className={`font-sans text-xs tracking-[0.14em] uppercase ${annual ? "text-cream/40" : "text-cream"}`}
           >
             Monthly
           </button>
-          <div
-            className="w-10 h-5 rounded-full relative cursor-pointer transition-colors"
-            style={{ background: annual ? "#8B6914" : "rgba(255,255,255,0.15)" }}
-            onClick={() => setAnnual(!annual)}
-          >
-            <div
-              className="absolute top-0.5 w-4 h-4 rounded-full bg-cream transition-all"
-              style={{ left: annual ? "calc(100% - 18px)" : "2px" }}
-            />
-          </div>
           <button
+            type="button"
+            aria-label="Toggle annual billing"
+            onClick={() => setAnnual((value) => !value)}
+            className="relative h-6 w-12 rounded-full border border-cream/20 bg-white/10"
+          >
+            <span
+              className={`absolute top-1 h-4 w-4 rounded-full bg-gold transition-all ${
+                annual ? "left-7" : "left-1"
+              }`}
+            />
+          </button>
+          <button
+            type="button"
             onClick={() => setAnnual(true)}
-            className={`font-sans text-xs tracking-[0.15em] uppercase transition-colors ${
-              annual ? "text-cream" : "text-sand-dark/50"
-            }`}
+            className={`font-sans text-xs tracking-[0.14em] uppercase ${annual ? "text-cream" : "text-cream/40"}`}
           >
             Annual
           </button>
         </div>
 
-        {/* Tiers */}
-        <div className="space-y-4">
-          {/* Free */}
-          <div className="p-5 border border-sand/20 bg-white/5">
-            <div className="flex items-baseline justify-between mb-3">
-              <p className="font-serif text-lg text-cream">Free</p>
-              <p className="font-sans text-xs text-sand-dark">$0</p>
+        <div className="grid gap-5 md:grid-cols-2">
+          <div className="flex min-h-[390px] flex-col border border-cream/15 bg-white/[0.03] p-7 md:p-9">
+            <SectionLabel light>First Look</SectionLabel>
+            <div className="mt-5 flex items-end justify-between gap-4">
+              <h3 className="font-serif text-3xl font-light text-cream">Free</h3>
+              <p className="font-sans text-sm text-cream/50">$0</p>
             </div>
-            <ul className="space-y-1.5 mb-5">
-              {FEATURES.free.map((f) => (
-                <li key={f} className="font-sans text-xs text-sand-dark/70 flex gap-2">
-                  <span className="text-gold/60">—</span>
-                  {f}
-                </li>
-              ))}
+            <p className="mt-4 font-sans text-sm font-light leading-7 text-cream/60">
+              For the woman who needs to see it before she believes it.
+            </p>
+            <ul className="mt-8 space-y-3 font-sans text-sm font-light text-cream/75">
+              <li>One Train Your Look setup</li>
+              <li>One cinematic generation</li>
+              <li>One shareable Style Card</li>
+              <li>No credit card required</li>
             </ul>
-            <button onClick={handleCTA} className="w-full py-3 border border-sand/30 font-sans text-xs tracking-[0.15em] uppercase text-cream/70 hover:text-cream transition-colors">
-              Begin
-            </button>
+            <div className="mt-auto pt-10">
+              <PrimaryButton onClick={handleCTA} light>
+                Train My Look
+              </PrimaryButton>
+            </div>
           </div>
 
-          {/* Membership */}
-          <div className="p-5 border border-gold/40 bg-white/5">
-            <div className="flex items-baseline justify-between mb-3">
-              <p className="font-serif text-lg text-cream">Membership</p>
-              <p className="font-sans text-xs text-sand-dark">{annual ? "$152 / year" : "$19 / mo"}</p>
+          <div className="relative flex min-h-[390px] flex-col border border-gold/60 bg-[#33241c] p-7 md:p-9">
+            <span className="absolute right-5 top-5 border border-gold/40 px-3 py-1 font-sans text-[10px] tracking-[0.16em] uppercase text-gold">
+              Build the world
+            </span>
+            <SectionLabel light>Membership</SectionLabel>
+            <div className="mt-5 flex items-end justify-between gap-4">
+              <h3 className="font-serif text-3xl font-light text-cream">{annual ? "$152" : "$19"}</h3>
+              <p className="font-sans text-sm text-cream/50">{annual ? "per year" : "per month"}</p>
             </div>
-            <ul className="space-y-1.5 mb-5">
-              {FEATURES.membership.map((f) => (
-                <li key={f} className="font-sans text-xs text-sand-dark/70 flex gap-2">
-                  <span className="text-gold/60">—</span>
-                  {f}
-                </li>
-              ))}
+            <p className="mt-4 font-sans text-sm font-light leading-7 text-cream/60">
+              For building a recognizable visual identity across more moments, outfits, and seasons.
+            </p>
+            <ul className="mt-8 space-y-3 font-sans text-sm font-light text-cream/75">
+              <li>25 cinematic generations each month</li>
+              <li>High-resolution exports</li>
+              <li>Share cards without a watermark</li>
+              <li>Access to every styling world</li>
             </ul>
-            <button
-              onClick={handleMembershipClick}
-              disabled={checkoutPending}
-              className="w-full py-3 bg-gold/90 hover:bg-gold font-sans text-xs tracking-[0.15em] uppercase text-charcoal transition-colors disabled:opacity-60"
-            >
-              {checkoutPending ? "Opening checkout..." : "Become Her"}
-            </button>
+            <div className="mt-auto pt-10">
+              <button
+                type="button"
+                onClick={handleMembershipClick}
+                disabled={checkoutPending}
+                className="min-h-12 bg-gold px-7 py-3.5 font-sans text-xs tracking-[0.16em] uppercase text-charcoal transition-opacity disabled:opacity-60"
+              >
+                {checkoutPending ? "Opening checkout..." : "Become a member"}
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -167,39 +266,34 @@ export default function Home() {
     enabled: isAuthenticated,
     retry: false,
   });
+  const [openFaq, setOpenFaq] = useState<number | null>(0);
 
   useEffect(() => {
     if (loading) return;
     if (!isAuthenticated) return;
     if (profileQuery.isLoading || profileQuery.isFetching) return;
-    const d = profileQuery.data;
-    // lora_status=ready is the canonical signal that the user is done with setup.
-    // onboarding_complete may be false for users who uploaded photos but never tapped
-    // the final "complete" button, so check both conditions before routing to onboarding.
-    if (d?.onboarding_complete || d?.lora_status === "ready") {
+
+    const profile = profileQuery.data;
+    if (profile?.onboarding_complete || profile?.lora_status === "ready") {
       navigate("/dashboard");
-    } else if (d !== undefined) {
+    } else if (profile !== undefined) {
       navigate("/onboarding");
     }
-  }, [isAuthenticated, loading, profileQuery.isLoading, profileQuery.isFetching, profileQuery.data, navigate]);
+  }, [isAuthenticated, loading, navigate, profileQuery.data, profileQuery.isFetching, profileQuery.isLoading]);
 
   const handleCTA = () => {
-    if (isAuthenticated) {
-      navigate("/dashboard");
-    } else {
-      navigate("/sign-in");
-    }
+    navigate(isAuthenticated ? "/dashboard" : "/sign-in");
   };
 
-  // Membership checkout from homepage — creates a real session with user_id in metadata
   const subscriptionCheckoutMutation = trpc.profile.createSubscriptionCheckout.useMutation({
-    onSuccess: ({ url }) => { window.open(url, "_blank"); },
-    onError: () => { navigate("/sign-in"); },
+    onSuccess: ({ url }) => window.open(url, "_blank"),
+    onError: () => navigate("/sign-in"),
   });
 
   const handleMembershipCheckout = (annual: boolean) => {
     const MONTHLY_PRICE = "price_1TafvrPMV5P3vLteuAss2HQB";
-    const ANNUAL_PRICE = "price_1TbNCKPMV5P3vLterPzZXdJ6";
+    const ANNUAL_PRICE = "price_1TbNCKPMV5P3vLterPzVZXdJ6";
+
     subscriptionCheckoutMutation.mutate({
       origin: window.location.origin,
       priceId: annual ? ANNUAL_PRICE : MONTHLY_PRICE,
@@ -207,716 +301,151 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-cream overflow-x-hidden">
-      {/* ── Nav ── */}
-      <nav className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 py-5 bg-cream/90 backdrop-blur-sm">
-        <span
-          className="font-serif text-xl tracking-widest text-charcoal cursor-pointer"
-          onClick={() => navigate("/")}
-        >
-          MEETHA
-        </span>
-        <button
-          onClick={handleCTA}
-          className="font-sans text-xs tracking-widest uppercase text-charcoal-soft hover:text-charcoal transition-colors duration-200"
-        >
-          {isAuthenticated ? "Dashboard" : "Sign In"}
-        </button>
+    <div className="min-h-screen overflow-x-hidden bg-cream text-charcoal">
+      <nav className="sticky top-0 z-50 border-b border-charcoal/10 bg-cream/95 px-5 py-4 backdrop-blur-md md:px-8">
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-5">
+          <button
+            type="button"
+            onClick={() => navigate("/")}
+            className="font-serif text-xl tracking-[0.22em] text-charcoal md:text-2xl"
+          >
+            MEETHA
+          </button>
+
+          <div className="hidden items-center gap-7 md:flex">
+            <a href="#results" className="font-sans text-xs tracking-[0.12em] uppercase text-charcoal/60 hover:text-charcoal">
+              What you get
+            </a>
+            <a href="#how-it-works" className="font-sans text-xs tracking-[0.12em] uppercase text-charcoal/60 hover:text-charcoal">
+              How it works
+            </a>
+            <a href="#pricing" className="font-sans text-xs tracking-[0.12em] uppercase text-charcoal/60 hover:text-charcoal">
+              Pricing
+            </a>
+          </div>
+
+          <div className="flex items-center gap-3 sm:gap-4">
+            <button
+              type="button"
+              onClick={handleCTA}
+              className="font-sans text-xs tracking-[0.14em] uppercase text-charcoal/70 hover:text-charcoal"
+            >
+              {isAuthenticated ? "Dashboard" : "Sign in"}
+            </button>
+            <button
+              type="button"
+              onClick={handleCTA}
+              className="min-h-11 bg-charcoal px-3 font-sans text-[10px] tracking-[0.12em] uppercase text-cream sm:px-5 sm:text-[11px]"
+            >
+              Train Your Look
+            </button>
+          </div>
+        </div>
       </nav>
 
-      {/* ── Hero ── */}
-      <section className="relative flex flex-col items-center px-6 pt-28 pb-0 text-center overflow-hidden">
-        <div
-          className="absolute inset-0 opacity-30"
-          style={{
-            background:
-              "radial-gradient(ellipse 80% 60% at 50% 40%, oklch(88% 0.025 70 / 0.6) 0%, transparent 70%)",
-          }}
-        />
-
-        <div className="relative z-10 w-full" style={{ maxWidth: "480px" }}>
-          <p className="font-sans text-xs tracking-[0.25em] uppercase text-gold mb-6 animate-fade-up opacity-0 delay-100">
-            The art of becoming visually unforgettable.
-          </p>
-
-          <h1
-            className="font-serif font-light text-charcoal mb-8 animate-fade-up opacity-0 delay-200"
-            style={{ lineHeight: 1.0, fontSize: "clamp(2.8rem, 10vw, 4.5rem)" }}
-          >
-            See yourself<br />
-            the way a stylist<br />
-            would.
-          </h1>
-
-          {/* ── Immediate image proof ── */}
-          <div className="w-full mb-8 animate-fade-up opacity-0 delay-300">
-            {/* Hero portrait */}
-            <div className="w-full aspect-[3/4] overflow-hidden mb-1">
-              <img
-                src="/manus-storage/meetha-59-v2_acb77051.jpg"
-                alt="Meetha styling result"
-                className="w-full h-full object-cover object-center"
-              />
-            </div>
-            {/* Two-column row */}
-            <div className="grid grid-cols-2 gap-1">
-              <div className="aspect-[3/4] overflow-hidden">
-                <img
-                  src="/manus-storage/gallery_street_lights_8c7a051f.jpg"
-                  alt="Meetha styling result"
-                  className="w-full h-full object-cover object-top"
-                />
+      <main>
+        <section className="relative overflow-hidden px-5 pb-16 pt-12 md:px-8 md:pb-24 md:pt-20">
+          <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_78%_25%,rgba(196,163,103,0.19),transparent_34%)]" />
+          <div className="mx-auto grid max-w-7xl items-center gap-12 lg:grid-cols-[0.9fr_1.1fr] lg:gap-16">
+            <div className="max-w-xl">
+              <SectionLabel>Personal styling software, trained on you</SectionLabel>
+              <h1 className="mt-6 font-serif text-[clamp(3.4rem,8vw,7.3rem)] font-light leading-[0.9] tracking-[-0.035em] text-charcoal">
+                See yourself the way a stylist would.
+              </h1>
+              <p className="mt-7 max-w-lg font-sans text-base font-light leading-8 text-charcoal-soft md:text-lg">
+                Train Your Look once. Meetha learns your face, coloring, and proportions, then creates cinematic looks and a Style Card you can take into real life.
+              </p>
+              <div className="mt-8 flex flex-col items-start gap-3 sm:flex-row sm:items-center">
+                <PrimaryButton onClick={handleCTA}>Train My Look</PrimaryButton>
+                <p className="font-sans text-xs text-charcoal/45">1 free generation. No credit card.</p>
               </div>
-              <div className="aspect-[3/4] overflow-hidden">
-                <img
-                  src="/manus-storage/gallery_hands_coffee_b7861070.webp"
-                  alt="Meetha styling result"
-                  className="w-full h-full object-cover"
-                />
+              <div className="mt-9 grid gap-3 border-t border-charcoal/10 pt-6 sm:grid-cols-3">
+                {["Private photos", "Your proportions preserved", "Style direction included"].map((item) => (
+                  <p key={item} className="font-sans text-xs leading-5 text-charcoal/55">
+                    {item}
+                  </p>
+                ))}
               </div>
             </div>
+
+            <div className="relative mx-auto w-full max-w-2xl pb-8 md:pb-12">
+              <div className="relative ml-auto w-[88%] overflow-hidden bg-sand md:w-[82%]">
+                <img
+                  src={HOME_IMAGES.hero}
+                  alt="A cinematic Meetha styling portrait in warm window light"
+                  width={1086}
+                  height={1448}
+                  fetchPriority="high"
+                  decoding="async"
+                  className="h-auto w-full object-cover"
+                />
+              </div>
+
+              <div className="promise-home-brief relative mt--6 w-[88%] border border-charcoal/10 bg-warm-white p-5 shadow-[0_24px_60px_rgba(45,32,24,0.15)] md:absolute md:bottom-0 md:left-0 md:mt-0 md:w-[58%] md:p-7">
+                <div className="flex items-center justify-between gap-4">
+                  <SectionLabel>Your Identity Brief</SectionLabel>
+                  <span className="font-serif text-lg text-gold">M</span>
+                </div>
+                <h2 className="mt-4 font-serif text-2xl font-light leading-tight text-charcoal md:text-3xl">
+                  Warm light. Strong gold. Quiet command.
+                </h2>
+                <div className="mt-5 flex gap-2">
+                  {["#2F4630", "#C59B67", "#4A2F2E", "#F0DFC6", "#B74714"].map((color) => (
+                    <span key={color} className="h-7 flex-1" style={{ backgroundColor: color }} />
+                  ))}
+                </div>
+                <dl className="mt-5 grid gap-3 font-sans text-xs leading-5 text-charcoal/60">
+                  <div className="grid grid-cols-[64px_1fr] gap-3">
+                    <dt className="uppercase tracking-[0.12em] text-gold">Metals</dt>
+                    <dd>Yellow gold and warm bronze</dd>
+                  </div>
+                  <div className="grid grid-cols-[64px_1fr] gap-3">
+                    <dt className="uppercase tracking-[0.12em] text-gold">Light</dt>
+                    <dd>Late afternoon and candlelight</dd>
+                  </div>
+                  <div className="grid grid-cols-[64px_1fr] gap-3">
+                    <dt className="uppercase tracking-[0.12em] text-gold">Presence</dt>
+                    <dd>Grounded, magnetic, unhurried</dd>
+                  </div>
+                </dl>
+              </div>
+            </div>
           </div>
+        </section>
 
-          <div className="divider-editorial animate-fade-in opacity-0 delay-400" />
-
-          <p className="font-sans font-light text-base text-charcoal-soft leading-relaxed mb-8 animate-fade-up opacity-0 delay-400">
-            Upload your photos. Meetha reads your coloring, energy, and aesthetic, then shows you exactly who you are visually and how to show up that way every time.
-          </p>
-
-          <div className="flex flex-col items-center gap-4 pb-10 animate-fade-up opacity-0 delay-500">
-            <button onClick={handleCTA} className="btn-luxury w-full max-w-xs">
-              Discover your visual identity
-            </button>
-            <p className="font-sans text-xs text-charcoal-soft tracking-wide">
-              1 free generation. No credit card.
+        <section className="border-y border-charcoal/10 bg-warm-white px-5 py-7 md:px-8">
+          <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 text-center md:flex-row md:text-left">
+            <p className="font-serif text-xl font-light text-charcoal md:text-2xl">
+              Women have used Meetha to plan wardrobes, makeup, and photoshoots.
+            </p>
+            <p className="max-w-md font-sans text-xs leading-5 text-charcoal/50">
+              The image is not the end product. The clarity you take back into your life is.
             </p>
           </div>
+        </section>
 
-          {/* Hero quote */}
-          <p className="font-serif font-light italic text-charcoal-soft/60 text-sm text-center pb-16 animate-fade-up opacity-0 delay-500" style={{ lineHeight: 1.6 }}>
-            &ldquo;I finally understood why certain colors never felt like me.&rdquo;
-          </p>
-        </div>
-      </section>
-
-      {/* ── Before / After Coherence ── */}
-      <section className="py-16 px-6 bg-warm-white">
-        <div className="max-w-sm mx-auto">
-          <div className="text-center mb-10">
-            <p className="font-sans text-xs tracking-[0.2em] uppercase text-gold mb-4">
-              The shift
-            </p>
-            <h2 className="font-serif font-light text-charcoal mb-3" style={{ lineHeight: 1.1 }}>
-              Your features, styled<br />with intention.
-            </h2>
-            <div className="divider-editorial" />
-            <p className="font-sans font-light text-sm text-charcoal-soft leading-relaxed mt-4">
-              Not a better version of you. The most aligned version of you. Drag to see the difference.
-            </p>
-          </div>
-
-          {/* Interactive drag slider */}
-          <div className="mb-3">
-            <BeforeAfterSlider
-              beforeSrc="/manus-storage/shania-before_bb452c9e.webp"
-              afterSrc="/manus-storage/homepage-after-white_6a966c1e.jpg"
-              beforeLabel="undefined"
-              afterLabel="aligned"
-              initialPosition={42}
-              className="aspect-[3/4] w-full"
-            />
-          </div>
-          <p className="font-sans text-[11px] text-charcoal-soft/60 text-center tracking-wide mb-6">
-            Drag the handle to reveal
-          </p>
-
-
-        </div>
-
-        {/* Quote after The Shift */}
-        <div className="max-w-sm mx-auto px-6 pt-10 pb-2 text-center">
-          <p className="font-serif font-light text-charcoal leading-snug" style={{ fontSize: "clamp(1.1rem, 4vw, 1.4rem)" }}>
-            &ldquo;I showed my makeup artist my Meetha images and finally knew exactly what I wanted.&rdquo;
-          </p>
-          <p className="font-sans text-xs tracking-[0.15em] uppercase text-charcoal-soft/40 mt-4">Meetha user</p>
-        </div>
-      </section>
-
-
-
-      {/* ── What You Learn ── */}
-      <section className="py-16 px-6 bg-cream">
-        <div className="max-w-sm mx-auto text-center">
-          <p className="font-sans text-xs tracking-[0.2em] uppercase text-gold mb-4">
-            Your identity brief
-          </p>
-          <h2 className="font-serif font-light text-charcoal mb-3">
-            Not just images.<br />A brief for your real life.
-          </h2>
-          <div className="divider-editorial" />
-          <p className="font-sans font-light text-sm text-charcoal-soft leading-relaxed mt-4">
-            After every generation, Meetha tells you exactly what it chose and why, so you can recreate it in real life.
-          </p>
-        </div>
-
-        <div className="max-w-sm mx-auto mt-10 space-y-8">
-          {WHAT_YOU_LEARN.map((item, i) => (
-            <div key={i} className="flex gap-5 items-start">
-              <div className="w-px h-12 bg-gold/40 flex-shrink-0 mt-1" />
+        <section className="px-5 py-20 md:px-8 md:py-28">
+          <div className="mx-auto max-w-6xl">
+            <div className="grid gap-10 md:grid-cols-[0.8fr_1.2fr] md:gap-16">
               <div>
-                <p className="font-sans text-xs tracking-[0.15em] uppercase text-charcoal mb-2">
-                  {item.label}
-                </p>
-                <p className="font-sans font-light text-sm text-charcoal-soft leading-relaxed">
-                  {item.text}
-                </p>
+                <SectionLabel>The real problem</SectionLabel>
+                <h2 className="mt-5 font-serif text-4xl font-light leading-[1.04] md:text-6xl">
+                  Most women do not need more inspiration.
+                </h2>
               </div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* ── Identity Brief Preview ── */}
-      <section className="py-0 bg-cream">
-        <div className="max-w-sm mx-auto px-6 pt-16 pb-8 text-center">
-          <p className="font-sans text-xs tracking-[0.2em] uppercase text-gold mb-4">What you receive</p>
-          <h2 className="font-serif font-light text-charcoal mb-3" style={{ lineHeight: 1.1 }}>
-            Your brief. Built on you.
-          </h2>
-          <div className="divider-editorial" />
-          <p className="font-sans font-light text-sm text-charcoal-soft leading-relaxed mt-4">
-            This is a real Identity Brief from a real Meetha user. Every brief is personal — built from your face, your coloring, your aesthetic frequency.
-          </p>
-        </div>
-
-        {/* Brief 1 — yours */}
-        <div className="w-full overflow-hidden">
-          <img
-            src="/manus-storage/identity-brief-sample_debc2c13.png"
-            alt="Sample Meetha Identity Brief"
-            className="w-full block"
-            style={{ maxWidth: "520px", margin: "0 auto", display: "block" }}
-          />
-        </div>
-
-        {/* Divider between briefs */}
-        <div className="max-w-sm mx-auto px-6 py-10">
-          <div className="divider-editorial" />
-          <p className="font-sans text-xs tracking-[0.2em] uppercase text-charcoal-soft/40 text-center mt-6">
-            Every identity is different.
-          </p>
-        </div>
-
-        {/* Brief 2 — mom's */}
-        <div className="w-full overflow-hidden">
-          <img
-            src="/manus-storage/identity-brief-mom_a29aec5a.jpeg"
-            alt="Sample Meetha Identity Brief — second user"
-            className="w-full block"
-            style={{ maxWidth: "520px", margin: "0 auto", display: "block" }}
-          />
-        </div>
-
-        {/* CTA below the brief */}
-        <div className="max-w-sm mx-auto px-6 pt-10 pb-16 text-center">
-          <button onClick={handleCTA} className="btn-luxury w-full max-w-xs mx-auto block">
-            Get your brief
-          </button>
-          <p className="font-sans text-xs text-charcoal-soft/50 mt-3">
-            Free to start. No credit card.
-          </p>
-        </div>
-      </section>
-
-      {/* ── How It Works ── */}
-      <section className="py-16 px-6 bg-warm-white">
-        <div className="max-w-sm mx-auto text-center mb-8">
-          <p className="font-sans text-xs tracking-[0.2em] uppercase text-gold mb-4">
-            How it works
-          </p>
-          <h2 className="font-serif font-light text-charcoal mb-3">
-            Three steps. Under 60 seconds.
-          </h2>
-          <div className="divider-editorial" />
-        </div>
-
-        <div className="max-w-sm mx-auto space-y-4">
-          {[
-            {
-              step: "01",
-              title: "Upload your photos",
-              text: "Meetha trains a personal model on your face. Every image it creates will actually look like you, in any scene, any outfit, any lighting.",
-            },
-            {
-              step: "02",
-              title: "Choose your world",
-              text: "Rooftop Dinner. Airport Lounge. Mediterranean Morning. Bill, Please. Choose the styling world. Meetha handles the rest.",
-            },
-            {
-              step: "03",
-              title: "See yourself",
-              text: "A cinematic image that looks like you — your face, your proportions, your presence — styled for the moment you chose. Plus your Color Analysis: palette, metals, makeup, lighting.",
-            },
-          ].map((item) => (
-            <div key={item.step} className="p-5 border border-sand bg-cream/60">
-              <p className="font-sans text-xs tracking-[0.2em] uppercase text-gold mb-2">
-                {item.step}
-              </p>
-              <h3 className="font-serif text-lg text-charcoal mb-2">{item.title}</h3>
-              <p className="font-sans font-light text-xs text-charcoal-soft leading-relaxed">
-                {item.text}
-              </p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* ── Output Example — Real Style Cards ── */}
-      <section className="py-16 px-6 bg-cream">
-        <div className="max-w-sm mx-auto text-center mb-8">
-          <p className="font-sans text-xs tracking-[0.2em] uppercase text-gold mb-4">
-            What you get
-          </p>
-          <h2 className="font-serif font-light text-charcoal mb-3">
-            A campaign brief for your future self.
-          </h2>
-          <div className="divider-editorial" />
-          <p className="font-sans font-light text-sm text-charcoal-soft leading-relaxed mt-4">
-            Every card is a real output from Meetha. Real faces. Real identities.
-          </p>
-        </div>
-
-        {/* Card 1 — peace changed my face */}
-        <div className="max-w-sm mx-auto mb-6">
-          <div className="border border-sand bg-warm-white overflow-hidden">
-            <div className="relative w-full overflow-hidden" style={{ height: "340px" }}>
-              <img
-                src="/manus-storage/meetha-style-card-134_08616de7.jpg"
-                alt="Meetha style card — peace changed my face"
-                className="w-full h-full object-cover object-top"
-              />
-            </div>
-            <div className="p-5 space-y-3">
-              <p className="font-sans text-xs tracking-[0.15em] uppercase text-gold">
-                Your Identity Brief
-              </p>
-              <div className="space-y-2">
-                {[
-                  ["Palette", "Deep noir, oxblood, and midnight blue dominate, punctuated by flashes of molten gold or stark ivory."],
-                  ["Metals", "Heavy, sculptural gold and blackened silver pieces, often layered, command attention with their raw, untamed finish."],
-                  ["Makeup", "A sharp, smoked-out cat eye or a deep, matte berry lip creates a singular focal point."],
-                  ["Lighting", "Harsh, direct flash from multiple angles captures every glint and shadow, emphasizing dramatic contours."],
-                  ["Presence", "She is a magnetic force, her raw allure amplified by the sudden, intrusive glare of the cameras."],
-                ].map(([label, value]) => (
-                  <div key={label} className="flex gap-3">
-                    <span className="font-sans text-xs text-gold/70 w-16 flex-shrink-0">{label}</span>
-                    <span className="font-sans font-light text-xs text-charcoal-soft leading-relaxed">{value}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Card 2 — warm light and gold */}
-        <div className="max-w-sm mx-auto">
-          <div className="border border-sand bg-warm-white overflow-hidden">
-            <div className="relative w-full overflow-hidden" style={{ height: "340px" }}>
-              <img
-                src="/manus-storage/meetha-style-card-133_9a86196c.jpg"
-                alt="Meetha style card — warm light and gold"
-                className="w-full h-full object-cover object-top"
-              />
-            </div>
-            <div className="p-5 space-y-3">
-              <p className="font-sans text-xs tracking-[0.15em] uppercase text-gold">
-                Your Identity Brief
-              </p>
-              <div className="space-y-2">
-                {[
-                  ["Palette", "Warm earth tones, creamy ivories, and rich browns define her color story, enhanced by soft shadows."],
-                  ["Metals", "Layered gold bracelets and rings, substantial in weight, highlight warm metal hardware."],
-                  ["Makeup", "A deep, precise lip is the focal point, complemented by a warm, sculpted eye and glowing skin."],
-                  ["Lighting", "Golden hour light transitions to intimate candlelight, casting long, dramatic shadows."],
-                  ["Presence", "She commands the frame with a grounded poise, her gaze direct and captivating."],
-                ].map(([label, value]) => (
-                  <div key={label} className="flex gap-3">
-                    <span className="font-sans text-xs text-gold/70 w-16 flex-shrink-0">{label}</span>
-                    <span className="font-sans font-light text-xs text-charcoal-soft leading-relaxed">{value}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-          <p className="font-sans text-xs text-charcoal-soft text-center mt-4 tracking-wide">
-            Generated in under 30 seconds. Styled to you.
-          </p>
-        </div>
-      </section>
-
-      {/* ── The Difference ── */}
-      <section className="py-16 px-6 bg-warm-white">
-        <div className="max-w-sm mx-auto">
-          <div className="text-center mb-8">
-            <p className="font-sans text-xs tracking-[0.2em] uppercase text-gold mb-4">
-              Identity crystallization
-            </p>
-            <h2 className="font-serif font-light text-charcoal mb-3">
-              Stop second-guessing<br />how you present.
-            </h2>
-            <div className="divider-editorial" />
-            <p className="font-sans font-light text-sm text-charcoal-soft leading-relaxed mt-4">
-              Most people think they want better photos. What they actually want is to feel recognizable to themselves. To become visually coherent. To look more like the person they feel inside. That is what Meetha gives you.
-            </p>
-          </div>
-
-          <div className="space-y-3">
-            {[
-              { label: "It trains on your face", text: "Every image actually looks like you. Not a generic model. You." },
-              { label: "It reads your aesthetic", text: "Tell Meetha your references once. Every scene is shaped around your visual frequency." },
-              { label: "It gives you a brief", text: "Not just an image. A complete identity direction you can take to a shoot, a store, or a hairdresser." },
-              { label: "It builds your signature", text: "The more you create, the more refined your brief becomes. You stop following trends. You start setting them." },
-            ].map((item, i) => (
-              <div key={i} className="p-4 border border-sand bg-cream/60">
-                <p className="font-sans text-xs tracking-[0.15em] uppercase text-gold mb-1.5">
-                  {item.label}
+              <div className="md:pt-10">
+                <p className="font-serif text-3xl font-light leading-tight text-charcoal md:text-5xl">
+                  They need a point of view.
                 </p>
-                <p className="font-sans font-light text-xs text-charcoal-soft leading-relaxed">
-                  {item.text}
+                <p className="mt-6 max-w-2xl font-sans text-base font-light leading-8 text-charcoal-soft">
+                  A saved folder full of other women cannot tell you what belongs on your body, in your light, with your face. Meetha turns inspiration into a visual direction that is actually yours.
                 </p>
               </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── Real Stories ── */}
-      <section className="py-16 px-6 bg-cream">
-        <div className="max-w-sm mx-auto">
-          <div className="divider-editorial mb-10" />
-
-          <p className="font-sans text-xs tracking-[0.2em] uppercase text-gold mb-8 text-center">Real Stories</p>
-
-          {/* Two quotes — what people actually did next */}
-          <div className="space-y-10 mb-10">
-            <div className="text-center">
-              <blockquote className="font-serif font-light text-charcoal leading-snug mb-4" style={{ fontSize: "clamp(1.1rem, 4vw, 1.35rem)" }}>
-                &ldquo;I brought my images to my stylist and we built my wardrobe around them.&rdquo;
-              </blockquote>
-              <p className="font-sans text-xs tracking-[0.15em] uppercase text-charcoal-soft/40">Took her images to her stylist.</p>
             </div>
 
-            <div className="text-center">
-              <blockquote className="font-serif font-light text-charcoal leading-snug mb-4" style={{ fontSize: "clamp(1.1rem, 4vw, 1.35rem)" }}>
-                &ldquo;I kept generating more images because they made me excited to get dressed up again.&rdquo;
-              </blockquote>
-              <p className="font-sans text-xs tracking-[0.15em] uppercase text-charcoal-soft/40">Bought a dress and booked a beach day.</p>
-            </div>
-
-            <div className="text-center">
-              <blockquote className="font-serif font-light text-charcoal leading-snug mb-4" style={{ fontSize: "clamp(1.1rem, 4vw, 1.35rem)" }}>
-                &ldquo;I used my images as inspiration for a photoshoot and finally had a clear creative direction.&rdquo;
-              </blockquote>
-              <p className="font-sans text-xs tracking-[0.15em] uppercase text-charcoal-soft/40">Planned a photoshoot from her Style Card.</p>
-            </div>
-          </div>
-
-          <div className="divider-editorial" />
-        </div>
-      </section>
-
-      {/* ── Editorial Gallery ── */}
-      {/* Row A: full-bleed cinematic header */}
-      <section className="bg-charcoal overflow-hidden">
-        <div className="text-center pt-16 pb-8 px-6">
-          <p className="font-sans text-xs tracking-[0.2em] uppercase text-gold mb-4">Every identity is different</p>
-          <h2 className="font-serif font-light text-cream mb-3" style={{ lineHeight: 1.1 }}>
-            Your features, styled<br />with intention.
-          </h2>
-          <div className="divider-editorial" />
-          <p className="font-sans font-light text-sm text-cream/60 leading-relaxed mt-4 max-w-xs mx-auto">
-            Meetha reveals your visual language. It does not replace it.
-          </p>
-        </div>
-
-        {/* Gallery container — capped at 520px on desktop so images don't go wall-to-wall */}
-        <div className="mx-auto w-full" style={{ maxWidth: "520px" }}>
-
-          {/* Full portrait */}
-          <div className="w-full aspect-[3/4] overflow-hidden">
-            <img
-              src="https://d2xsxph8kpxj0f.cloudfront.net/310519663380647277/W9hp3oxSnRYx5WHCSun39U/editorial-01-window-4Ex7ySDHERfgQxSGrLgiqH.webp"
-              alt="Editorial portrait — window light"
-              className="w-full h-full object-cover object-top"
-            />
-          </div>
-
-          {/* Two-column: existing gallery + new full-body */}
-          <div className="grid grid-cols-2 gap-0.5 mt-0.5">
-            <div className="aspect-[3/4] overflow-hidden">
-              <img
-                src="/manus-storage/meetha-17_05094910.jpg"
-                alt="Meetha styling — car window portrait"
-                className="w-full h-full object-cover object-center"
-              />
-            </div>
-            <div className="aspect-[3/4] overflow-hidden">
-              <img
-                src="https://d2xsxph8kpxj0f.cloudfront.net/310519663380647277/W9hp3oxSnRYx5WHCSun39U/editorial-02-fullbody-cRGwTXz2gHjynX9ahHDVXB.webp"
-                alt="Editorial — full body golden hour"
-                className="w-full h-full object-cover object-top"
-              />
-            </div>
-          </div>
-
-          {/* Offset text break */}
-          <div className="px-6 py-10 flex items-end justify-between gap-4">
-            <p className="font-serif font-light text-cream/40" style={{ fontSize: "clamp(2.5rem, 10vw, 4rem)", lineHeight: 1.0 }}>
-              every<br />body.
-            </p>
-            <p className="font-sans text-xs text-cream/40 text-right leading-relaxed max-w-[140px]">
-              Different skin tones.<br />Different shapes.<br />One visual language.
-            </p>
-          </div>
-
-          {/* Curvy silhouette — full portrait, golden hour hotel suite */}
-          <div className="w-full aspect-[9/16] overflow-hidden">
-            <img
-              src="https://d2xsxph8kpxj0f.cloudfront.net/310519663380647277/W9hp3oxSnRYx5WHCSun39U/curvy-silhouette-test-T6AYZCEqwSqBi8tbjG4HV2.webp"
-              alt="Meetha styling — curvy silhouette, golden hour"
-              className="w-full h-full object-cover object-center"
-            />
-          </div>
-
-          {/* Wide cinematic strip — 16:9 keeps it compact */}
-          <div className="w-full aspect-[16/9] overflow-hidden mt-0.5">
-            <img
-              src="/manus-storage/meetha-gallery-street-back_d0e260dd.webp"
-              alt="Meetha styling — street"
-              className="w-full h-full object-cover object-center"
-            />
-          </div>
-
-          {/* Three-column tight grid */}
-          <div className="grid grid-cols-3 gap-0.5 mt-0.5">
-            <div className="aspect-[3/4] overflow-hidden">
-              <img
-                src="/manus-storage/meetha-gallery-restaurant_33c494d6.webp"
-                alt="Meetha styling — restaurant"
-                className="w-full h-full object-cover object-center"
-              />
-            </div>
-            <div className="aspect-[3/4] overflow-hidden">
-              <img
-                src="https://d2xsxph8kpxj0f.cloudfront.net/310519663380647277/W9hp3oxSnRYx5WHCSun39U/editorial-03-restaurant-JxCbUv26xaboJFEWHABv6g.webp"
-                alt="Editorial — candlelit restaurant"
-                className="w-full h-full object-cover object-top"
-              />
-            </div>
-            <div className="aspect-[3/4] overflow-hidden">
-              <img
-                src="/manus-storage/meetha-gallery-sofa_84cbf7ec.webp"
-                alt="Meetha styling — sofa"
-                className="w-full h-full object-cover object-center"
-              />
-            </div>
-          </div>
-
-          {/* Jewelry close-up — changed to 16:9 so it doesn't tower */}
-          <div className="w-full aspect-[4/3] overflow-hidden mt-0.5">
-            <img
-              src="https://d2xsxph8kpxj0f.cloudfront.net/310519663380647277/W9hp3oxSnRYx5WHCSun39U/editorial-05-jewelry-E7PHF69YfVpDeTTDRyXXDd.webp"
-              alt="Editorial — gold jewelry close-up"
-              className="w-full h-full object-cover object-center"
-            />
-          </div>
-
-          {/* Two-column: motion + soft light */}
-          <div className="grid grid-cols-2 gap-0.5 mt-0.5">
-            <div className="aspect-[3/4] overflow-hidden">
-              <img
-                src="https://d2xsxph8kpxj0f.cloudfront.net/310519663380647277/W9hp3oxSnRYx5WHCSun39U/editorial-04-motion-PdCsKveuYL5VJ73Dzk4AZe.webp"
-                alt="Editorial — motion street"
-                className="w-full h-full object-cover object-top"
-              />
-            </div>
-            <div className="aspect-[3/4] overflow-hidden">
-              <img
-                src="https://d2xsxph8kpxj0f.cloudfront.net/310519663380647277/W9hp3oxSnRYx5WHCSun39U/editorial-06-softlight-X9utC7yPfkFCBqUYhBXkqQ.webp"
-                alt="Editorial — soft morning light"
-                className="w-full h-full object-cover object-top"
-              />
-            </div>
-          </div>
-
-          {/* Existing gallery images — hands coffee + car window */}
-          <div className="grid grid-cols-2 gap-0.5 mt-0.5">
-            <div className="aspect-square overflow-hidden">
-              <img
-                src="/manus-storage/meetha-gallery-hands-coffee_2b4e9461.webp"
-                alt="Meetha styling — hands coffee"
-                className="w-full h-full object-cover object-center"
-              />
-            </div>
-            <div className="aspect-square overflow-hidden">
-              <img
-                src="/manus-storage/meetha-gallery-car-window_beac299e.webp"
-                alt="Meetha styling — car window"
-                className="w-full h-full object-cover object-center"
-              />
-            </div>
-          </div>
-
-        </div>{/* end gallery container */}
-
-        <p className="font-sans text-xs text-cream/25 text-center py-8 tracking-[0.2em] uppercase">
-          undefined &rarr; aligned
-        </p>
-      </section>
-
-      {/* ── The big line ── */}
-      <section className="py-20 px-6 bg-cream text-center">
-        <div className="max-w-sm mx-auto">
-          <p
-            className="font-serif font-light text-charcoal"
-            style={{ fontSize: "clamp(1.6rem, 6vw, 2.4rem)", lineHeight: 1.2 }}
-          >
-            Everyone tells you to visualize your future. Meetha was the first time I could actually see myself in it.
-          </p>
-        </div>
-      </section>
-
-      {/* ── Clarity quote before pricing ── */}
-      <section className="py-16 px-6 bg-warm-white text-center">
-        <div className="max-w-sm mx-auto">
-          <blockquote
-            className="font-serif font-light text-charcoal leading-snug mb-5"
-            style={{ fontSize: "clamp(1.4rem, 5.5vw, 2rem)" }}
-          >
-            &ldquo;I thought I was generating photos. What I actually got was clarity.&rdquo;
-          </blockquote>
-          <p className="font-sans text-xs tracking-[0.15em] uppercase text-charcoal-soft/40">Meetha user</p>
-        </div>
-      </section>
-
-      {/* ── Pricing ── */}
-      <PricingSection
-        handleCTA={handleCTA}
-        isAuthenticated={isAuthenticated}
-        onMembershipCheckout={handleMembershipCheckout}
-        checkoutPending={subscriptionCheckoutMutation.isPending}
-      />
-
-      {/* ── Founder ── */}
-      <section className="py-20 px-6 bg-cream">
-        <div className="max-w-4xl mx-auto">
-          {/* Label */}
-          <p className="font-sans text-xs tracking-[0.25em] uppercase text-gold/70 mb-10 text-center">From the Founder</p>
-
-          <div className="flex flex-col md:flex-row gap-12 md:gap-16 items-start">
-            {/* Photo — 45% width on desktop, full width on mobile */}
-            <div className="w-full md:w-[45%] flex-shrink-0">
-              <img
-                src="/manus-storage/founder-photo_b6c41300.webp"
-                alt="Meetha founder"
-                className="w-full object-cover"
-                style={{ aspectRatio: '3/4', objectPosition: 'center top' }}
-              />
-            </div>
-
-            {/* Text */}
-            <div className="flex-1 flex flex-col justify-center md:pt-4">
-              <div className="divider-editorial mb-8" />
-              <p className="font-serif font-light text-charcoal leading-relaxed mb-6" style={{ fontSize: 'clamp(1rem, 2.5vw, 1.125rem)' }}>
-                I built Meetha because most women have never actually seen themselves through the eyes of a stylist, photographer, or creative director.
-              </p>
-              <p className="font-sans font-light text-sm text-charcoal-soft/70 leading-relaxed mb-6">
-                Not the rushed version. Not the insecure one. Not the version shaped by survival mode.
-              </p>
-              <p className="font-serif font-light text-charcoal text-base leading-relaxed mb-6 italic">
-                The aligned version.
-              </p>
-              <p className="font-sans font-light text-sm text-charcoal-soft/70 leading-relaxed mb-8">
-                When you start seeing yourself differently, everything else follows: how you dress, how you carry yourself, what you believe you deserve.
-              </p>
-              <p className="font-sans font-light text-sm text-charcoal-soft/70 leading-relaxed mb-10">
-                Meetha was never meant to be another AI photo app. It&apos;s a way to visualize the version of yourself you&apos;re already becoming.
-              </p>
-              <div className="divider-editorial mb-6" />
-              <p className="font-sans text-xs tracking-[0.2em] uppercase text-charcoal-soft/50">
-                Shania Khan, Founder
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ── Final CTA ── */}
-      <section
-        className="relative px-6 py-24 text-center overflow-hidden"
-        style={{ background: "linear-gradient(160deg, #1a0a05 0%, #2C1810 40%, #1a0f09 100%)" }}
-      >
-        {/* Film grain overlay */}
-        <div
-          className="absolute inset-0 opacity-[0.06] pointer-events-none"
-          style={{
-            backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='1'/%3E%3C/svg%3E")`,
-            backgroundSize: '128px 128px',
-          }}
-        />
-        {/* Ambient light bloom */}
-        <div
-          className="absolute inset-0 pointer-events-none"
-          style={{
-            background: 'radial-gradient(ellipse 70% 50% at 50% 60%, rgba(139,105,20,0.12) 0%, transparent 70%)',
-          }}
-        />
-        <div className="relative z-10 max-w-sm mx-auto">
-          <p className="font-sans text-xs tracking-[0.25em] uppercase text-gold/70 mb-6">
-            Your visual identity
-          </p>
-          <h2
-            className="font-serif font-light text-cream mb-6"
-            style={{ lineHeight: 1.0, fontSize: 'clamp(2.8rem, 10vw, 4.5rem)' }}
-          >
-            Become Her.
-          </h2>
-          <div className="divider-editorial mb-6" />
-          <p className="font-sans font-light text-sm text-sand-dark/80 leading-relaxed mb-10 max-w-xs mx-auto">
-            Train your look once.
-            <br />
-            Meetha turns your photos into cinematic, socially believable moments that feel photographed, not generated.
-          </p>
-          <button onClick={handleCTA} className="btn-luxury btn-gold w-full max-w-xs mx-auto block">
-            Train Your Look
-          </button>
-          <p className="font-sans text-xs text-sand-dark/30 text-center mt-4">
-            Free to start. No credit card required.
-          </p>
-        </div>
-      </section>
-
-      {/* ── Footer ── */}
-      <footer className="py-8 px-6 bg-cream border-t border-sand/30">
-        <div className="max-w-lg mx-auto space-y-4">
-          <div className="flex items-center justify-between">
-            <span className="font-serif text-sm tracking-widest text-charcoal">MEETHA</span>
-            <div className="flex gap-4">
-              <a href="/privacy" className="font-sans text-xs text-charcoal-soft/50 hover:text-charcoal-soft transition-colors">Privacy</a>
-              <a href="/terms" className="font-sans text-xs text-charcoal-soft/50 hover:text-charcoal-soft transition-colors">Terms</a>
-              <a href="mailto:hello@meetha.studio" className="font-sans text-xs text-charcoal-soft/50 hover:text-charcoal-soft transition-colors">Help</a>
-            </div>
-            <p className="font-sans text-xs text-charcoal-soft/50">
-              © {new Date().getFullYear()} Meetha
-            </p>
-          </div>
-          <p className="font-sans text-xs text-charcoal-soft/40 text-center">
-            To manage or cancel your membership at any time,{" "}
-            <a href="/profile" className="text-charcoal-soft/60 underline underline-offset-2 hover:text-charcoal-soft transition-colors">visit your Profile</a>{" "}
-            and tap <span className="text-charcoal-soft/60">Manage Membership</span>.
-          </p>
-        </div>
-      </footer>
-    </div>
-  );
-}
+            <div className="mt-14 grid border-y border-charcoal/10 md:grid-cols-3">
+              {OUTCOMES.map((item, index) => (
+                <article
+                  key={item.number}
+                  className={p-6 md:p-8 ${
+                    index < NQ5TCOMES.length - 1 ? "border-b border-charcoal/10 md:border-b
