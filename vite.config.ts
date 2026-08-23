@@ -86,12 +86,12 @@ function vitePluginManusDebugCollector(): Plugin {
 function replaceRetiredEditorialImages(): Plugin {
   const replacements: Record<string, string> = {
     "https://d2xsxph8kpxj0f.cloudfront.net/310519663380647277/W9hp3oxSnRYx5WHCSun39U/editorial-01-window-4Ex7ySDHERfgQxSGrLgiqH.webp": "/manus-storage/meetha-59-v2_acb77051.jpg",
-    "https://d2xsxph8kpxj0f.cloudfront.net/310519663380647277/W9hp3oxSnRYx5WHCSun39U/editorial-02-fullbody-cRGwTXz2gHjynX9ahHDVXB.webp": "/editorial/editorial-window-new.jpg",
-    "https://d2xsxph8kpxj0f.cloudfront.net/310519663380647277/W9hp3oxSnRYx5WHCSun39U/curvy-silhouette-test-T6AYZCEqwSqBi8tbjG4HV2.webp": "/editorial/editorial-curvy-new.jpg",
+    "https://d2xsxph8kpxj0f.cloudfront.net/310519663380647277/W9hp3oxSnRYx5WHCSun39U/editorial-02-fullbody-cRGwTXz2gHjynX9ahHDVXB.webp": "/manus-storage/meetha-style-card-133_9a86196c.jpg",
+    "https://d2xsxph8kpxj0f.cloudfront.net/310519663380647277/W9hp3oxSnRYx5WHCSun39U/curvy-silhouette-test-T6AYZCEqwSqBi8tbjG4HV2.webp": "/manus-storage/meetha-style-card-134_08616de7.jpg",
     "https://d2xsxph8kpxj0f.cloudfront.net/310519663380647277/W9hp3oxSnRYx5WHCSun39U/editorial-03-restaurant-JxCbUv26xaboJFEWHABv6g.webp": "/editorial/editorial-paris-new.jpg",
     "https://d2xsxph8kpxj0f.cloudfront.net/310519663380647277/W9hp3oxSnRYx5WHCSun39U/editorial-05-jewelry-E7PHF69YfVpDeTTDRyXXDd.webp": "/manus-storage/gallery_hands_coffee_b7861070.webp",
     "https://d2xsxph8kpxj0f.cloudfront.net/310519663380647277/W9hp3oxSnRYx5WHCSun39U/editorial-04-motion-PdCsKveuYL5VJ73Dzk4AZe.webp": "/manus-storage/gallery_street_lights_8c7a051f.jpg",
-    "https://d2xsxph8kpxj0f.cloudfront.net/310519663380647277/W9hp3oxSnRYx5WHCSun39U/editorial-06-softlight-X9utC7yPfkFCBqUYhBXkqQ.webp": "/manus-storage/shania-before_bb452c9e.webp",
+    "https://d2xsxph8kpxj0f.cloudfront.net/310519663380647277/W9hp3oxSnRYx5WHCSun39U/editorial-06-softlight-X9utC7yPfkFCBqUYhBXkqQ.webp": "/manus-storage/homepage-after-white_6a966c1e.jpg",
   };
 
   return {
