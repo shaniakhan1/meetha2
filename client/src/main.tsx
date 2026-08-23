@@ -96,6 +96,32 @@ if ("serviceWorker" in navigator) {
   });
 }
 
+// Hard-replace any remaining Manus-era CloudFront image URLs in the rendered app.
+// This removes the production dependency on the old host even if a browser has an old service worker.
+const legacyEditorialReplacements: Record<string, string> = {
+  "editorial-01-window-4Ex7ySDHERfgQxSGrLgiqH.webp": "/editorial/editorial-diverse-black.jpg",
+  "editorial-02-fullbody-cRGwTXz2gHjynX9ahHDVXB.webp": "/editorial/editorial-diverse-street.jpg",
+  "curvy-silhouette-test-T6AYZCEqwSqBi8tbjG4HV2.webp": "/editorial/editorial-diverse-curvy.jpg",
+  "editorial-03-restaurant-JxCbUv26xaboJFEWHABv6g.webp": "/manus-storage/meetha-gallery-restaurant_33c494d6.webp",
+  "editorial-05-jewelry-E7PHF69YfVpDeTTDRyXXDd.webp": "/manus-storage/gallery_hands_coffee_b7861070.webp",
+  "editorial-04-motion-PdCsKveuYL5VJ73Dzk4AZe.webp": "/editorial/editorial-diverse-black.jpg",
+  "editorial-06-softlight-X9utC7yPfkFCBqUYhBXkqQ.webp": "/editorial/editorial-diverse-curvy.jpg",
+};
+
+const replaceLegacyEditorialImages = () => {
+  document.querySelectorAll<HTMLImageElement>('img[src*="d2xsxph8kpxj0f.cloudfront.net"]').forEach((img) => {
+    const filename = img.src.split("/").pop();
+    const replacement = filename ? legacyEditorialReplacements[filename] : undefined;
+    if (replacement && img.getAttribute("src") !== replacement) {
+      img.setAttribute("src", replacement);
+    }
+  });
+};
+
+const legacyImageObserver = new MutationObserver(replaceLegacyEditorialImages);
+legacyImageObserver.observe(document.documentElement, { childList: true, subtree: true });
+window.addEventListener("load", replaceLegacyEditorialImages);
+
 createRoot(document.getElementById("root")!).render(
   <Sentry.ErrorBoundary fallback={({ error }) => <SentryFallback error={error as Error} />}>
     <trpc.Provider client={trpcClient} queryClient={queryClient}>
@@ -105,3 +131,5 @@ createRoot(document.getElementById("root")!).render(
     </trpc.Provider>
   </Sentry.ErrorBoundary>
 );
+
+queueMicrotask(replaceLegacyEditorialImages);
