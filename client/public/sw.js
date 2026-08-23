@@ -1,15 +1,15 @@
 // Meetha Service Worker — minimal offline shell
-const CACHE_NAME = "meetha-v3";
+const CACHE_NAME = "meetha-v4";
 const OFFLINE_URLS = ["/", "/manifest.json"];
 
 const LEGACY_IMAGE_FALLBACKS = {
-  "editorial-01-window-4Ex7ySDHERfgQxSGrLgiqH.webp": "/editorial/meetha-diverse-editorial.webp",
-  "editorial-02-fullbody-cRGwTXz2gHjynX9ahHDVXB.webp": "/editorial/meetha-diverse-editorial.webp",
-  "curvy-silhouette-test-T6AYZCEqwSqBi8tbjG4HV2.webp": "/editorial/meetha-diverse-editorial.webp",
-  "editorial-03-restaurant-JxCbUv26xaboJFEWHABv6g.webp": "/editorial/meetha-diverse-editorial.webp",
+  "editorial-01-window-4Ex7ySDHERfgQxSGrLgiqH.webp": "/editorial/editorial-diverse-black.jpg",
+  "editorial-02-fullbody-cRGwTXz2gHjynX9ahHDVXB.webp": "/editorial/editorial-diverse-street.jpg",
+  "curvy-silhouette-test-T6AYZCEqwSqBi8tbjG4HV2.webp": "/editorial/editorial-diverse-curvy.jpg",
+  "editorial-03-restaurant-JxCbUv26xaboJFEWHABv6g.webp": "/editorial/editorial-diverse-black.jpg",
   "editorial-05-jewelry-E7PHF69YfVpDeTTDRyXXDd.webp": "/editorial/meetha-diverse-editorial.webp",
-  "editorial-04-motion-PdCsKveuYL5VJ73Dzk4AZe.webp": "/editorial/meetha-diverse-editorial.webp",
-  "editorial-06-softlight-X9utC7yPfkFCBqUYhBXkqQ.webp": "/editorial/meetha-diverse-editorial.webp",
+  "editorial-04-motion-PdCsKveuYL5VJ73Dzk4AZe.webp": "/editorial/editorial-diverse-street.jpg",
+  "editorial-06-softlight-X9utC7yPfkFCBqUYhBXkqQ.webp": "/editorial/editorial-diverse-curvy.jpg",
 };
 
 self.addEventListener("install", (event) => {
