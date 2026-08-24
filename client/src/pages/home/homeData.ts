@@ -9,7 +9,7 @@ export const HOME_IMAGES = {
   identityWindow: "/home-v2/identity-window.webp",
   identityCurvy: "/home-v2/identity-curvy.webp",
   identityParis: "/home-v2/identity-paris.webp",
-  identitySilver: "/home-v2/identity-silver.webp",
+  identitySilver: "/manus-storage/meetha-gallery-sofa_84cbf7ec.webp",
 } as const;
 
 if (import.meta.env.DEV) {
