@@ -75,7 +75,7 @@ export function HomeBottomSections({
               { src: HOME_IMAGES.identityWindow, alt: "South Asian woman in warm window light" },
               { src: HOME_IMAGES.identityCurvy, alt: "Curvy Black woman in a black satin dress" },
               { src: HOME_IMAGES.identityParis, alt: "East Asian woman in a tailored look on a Paris street" },
-              { src: HOME_IMAGES.identitySilver, alt: "Mature silver-haired woman in golden evening light" },
+              { src: HOME_IMAGES.identitySilver, alt: "Woman in soft editorial light" },
             ].map((image, index) => (
               <div key={image.src} className={`overflow-hidden ${index % 2 === 1 ? "md:translate-y-10" : ""}`}>
                 <img
@@ -121,12 +121,23 @@ export function HomeBottomSections({
 
       <section className="px-5 py-20 md:px-8 md:py-28">
         <div className="mx-auto max-w-6xl border-y border-charcoal/10 py-14 md:py-20">
-          <div className="grid gap-10 md:grid-cols-[0.7fr_1.3fr] md:gap-16">
+          <div className="grid gap-10 md:grid-cols-[0.72fr_1.28fr] md:items-start md:gap-16">
             <div>
               <SectionLabel>From the founder</SectionLabel>
               <p className="mt-8 font-sans text-xs tracking-[0.18em] uppercase text-charcoal/50">Shania Khan</p>
+              <div className="mt-7 overflow-hidden bg-sand">
+                <img
+                  src="/manus-storage/founder-photo_b6c41300.webp"
+                  alt="Shania Khan, founder of Meetha"
+                  width={900}
+                  height={1200}
+                  loading="lazy"
+                  decoding="async"
+                  className="aspect-[3/4] h-auto w-full object-cover object-top"
+                />
+              </div>
             </div>
-            <div>
+            <div className="md:pt-2">
               <h2 className="font-serif text-4xl font-light leading-[1.04] md:text-6xl">I did not build Meetha so women could make more content.</h2>
               <p className="mt-7 font-serif text-2xl font-light leading-relaxed text-charcoal md:text-3xl">
                 I built it because most women have never seen themselves through the eyes of a stylist, photographer, and creative director at the same time.
